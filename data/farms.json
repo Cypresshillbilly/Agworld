@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "note": "Demonstration data only. Replace with approved agricultural GIS/database records before production use.",
+  "farms": [
+    {
+      "id": "demo-limpopo-001",
+      "name": "Demo Limpopo Farm",
+      "region": "Limpopo",
+      "status": "Opportunity",
+      "owner": "Demo Farmer",
+      "center": { "lat": -24.78, "lng": 28.32 },
+      "boundary": [
+        { "lat": -24.775, "lng": 28.305 },
+        { "lat": -24.775, "lng": 28.345 },
+        { "lat": -24.795, "lng": 28.350 },
+        { "lat": -24.802, "lng": 28.315 }
+      ],
+      "crops": ["Maize", "Sunflower"],
+      "drones": 0,
+      "tractors": 3,
+      "livestock": 180,
+      "annualHarvest": "Demo record",
+      "lastService": "—",
+      "opportunityScore": 91
+    },
+    {
+      "id": "demo-free-state-001",
+      "name": "Demo Free State Farm",
+      "region": "Free State",
+      "status": "Customer",
+      "owner": "Demo Farmer",
+      "center": { "lat": -28.35, "lng": 26.92 },
+      "boundary": [
+        { "lat": -28.340, "lng": 26.900 },
+        { "lat": -28.340, "lng": 26.945 },
+        { "lat": -28.365, "lng": 26.950 },
+        { "lat": -28.372, "lng": 26.910 }
+      ],
+      "crops": ["Maize", "Wheat"],
+      "drones": 2,
+      "tractors": 5,
+      "livestock": 420,
+      "annualHarvest": "Demo record",
+      "lastService": "2026-08-12",
+      "opportunityScore": 38
+    },
+    {
+      "id": "demo-kwazulu-001",
+      "name": "Demo KZN Farm",
+      "region": "KwaZulu-Natal",
+      "status": "Engaged",
+      "owner": "Demo Farmer",
+      "center": { "lat": -29.62, "lng": 30.42 },
+      "boundary": [
+        { "lat": -29.610, "lng": 30.400 },
+        { "lat": -29.610, "lng": 30.440 },
+        { "lat": -29.635, "lng": 30.445 },
+        { "lat": -29.642, "lng": 30.410 }
+      ],
+      "crops": ["Sugarcane", "Maize"],
+      "drones": 1,
+      "tractors": 4,
+      "livestock": 95,
+      "annualHarvest": "Demo record",
+      "lastService": "2026-07-28",
+      "opportunityScore": 64
+    }
+  ]
+}
