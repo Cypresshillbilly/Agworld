@@ -44,9 +44,15 @@ app.get('/api/farms', async (req,res) => {
 });
 
 app.get('/api/farms/:id', async (req,res) => {
-  const {rows}=await pool.query('SELECT * FROM farm_summary WHERE id=$1',[req.params.id]); if(!rows[0]) return res.status(404).json({error:'farm not found'});
-  const f=rows[0]; const b=await pool.query('SELECT ST_AsGeoJSON(boundary)::json geo FROM farms WHERE id=$1',[req.params.id]); const o=await pool.query('SELECT id,object_type,name,ST_Y(position) lat,ST_X(position) lng,source,properties FROM farm_objects WHERE farm_id=$1',[req.params.id]);
-  res.json({...f,center:{lat:Number(f.latitude),lng:Number(f.longitude)},boundary:b.rows[0]?.geo?.coordinates?.[0]?.map(c=>({lat:c[1],lng:c[0]}))||[],objects:o.rows.map(x=>({id:x.id,type:x.object_type,name:x.name,position:{lat:Number(x.lat),lng:Number(x.lng)},source:x.source,properties:x.properties||{}}))});
+  try {
+    const {rows}=await pool.query(`SELECT id,name,owner,region,status,annual_harvest,last_service,opportunity_score,source,notes,ST_Y(center) latitude,ST_X(center) longitude,ST_AsGeoJSON(boundary)::json boundary_geo FROM farms WHERE id=$1`,[req.params.id]);
+    if(!rows[0]) return res.status(404).json({error:'farm not found'});
+    const f=rows[0];
+    const o=await pool.query('SELECT id,object_type,name,ST_Y(position) lat,ST_X(position) lng,source,properties FROM farm_objects WHERE farm_id=$1',[req.params.id]);
+    const c=await pool.query('SELECT id,crop_type,hectares,season,ST_AsGeoJSON(geometry)::json geometry FROM farm_crops WHERE farm_id=$1 ORDER BY id',[req.params.id]);
+    const boundary=f.boundary_geo?.coordinates?.[0]?.map(x=>({lat:x[1],lng:x[0]}))||[];
+    res.json({id:f.id,name:f.name,owner:f.owner,region:f.region,status:f.status,annualHarvest:f.annual_harvest,lastService:f.last_service,opportunityScore:Number(f.opportunity_score||0),source:f.source,notes:f.notes,center:{lat:Number(f.latitude),lng:Number(f.longitude)},boundary,objects:o.rows.map(x=>({id:x.id,type:x.object_type,name:x.name,position:{lat:Number(x.lat),lng:Number(x.lng)},source:x.source,properties:x.properties||{}})),crops:c.rows});
+  } catch(e){ console.error(e); res.status(500).json({error:'failed to load farm'}); }
 });
 
 app.post('/api/farms', async (req,res) => {
