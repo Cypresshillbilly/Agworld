@@ -42,11 +42,21 @@
     return true;
   }
 
+  function loadGameHud() {
+    if (document.querySelector('script[data-ag-world-game-hud]')) return;
+    const s = document.createElement('script');
+    s.src = 'game-hud.js?v=20260902';
+    s.dataset.agWorldGameHud = 'true';
+    document.body.appendChild(s);
+  }
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+      loadGameHud();
       if (!connect()) setTimeout(connect, 800);
     });
-  } else if (!connect()) {
-    setTimeout(connect, 800);
+  } else {
+    loadGameHud();
+    if (!connect()) setTimeout(connect, 800);
   }
 })();
