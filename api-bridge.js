@@ -105,5 +105,59 @@
     return result;
   };
 
+  // Boundary workflow control: when the modal closes to let the user draw on
+  // the satellite map, provide a prominent action on the map to lock/capture
+  // the boundary and return to the farm form. The boundary is the primary
+  // geographic definition of the farm and must be captured before objects or
+  // farm details are entered.
+  function installBoundaryControl() {
+    if (document.getElementById('boundaryCaptureControl')) return;
+    const mapArea = document.querySelector('.map-area');
+    const mapStatus = document.getElementById('mapStatus');
+    if (!mapArea || !mapStatus) return;
+
+    const wrap = document.createElement('div');
+    wrap.id = 'boundaryCaptureControl';
+    wrap.style.cssText = 'position:absolute;top:58px;left:50%;transform:translateX(-50%);z-index:20;display:none;gap:8px;align-items:center;background:rgba(18,27,31,.96);padding:8px 10px;border:1px solid rgba(0,184,217,.75);box-shadow:0 6px 18px rgba(0,0,0,.35);border-radius:4px;';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = '✓ SAVE BOUNDARY & CONTINUE';
+    button.style.cssText = 'background:#00b8d9;color:#fff;border:0;padding:10px 16px;font-weight:800;font-size:12px;letter-spacing:.4px;cursor:pointer;';
+    button.onclick = () => {
+      if (typeof window.finishBoundary === 'function') {
+        window.finishBoundary();
+      } else {
+        const finish = document.getElementById('finishBoundary');
+        if (finish) finish.click();
+      }
+    };
+
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.textContent = 'CANCEL';
+    cancel.style.cssText = 'background:transparent;color:#fff;border:1px solid #61747b;padding:10px 12px;font-weight:700;font-size:11px;cursor:pointer;';
+    cancel.onclick = () => {
+      if (typeof window.clearBoundary === 'function') window.clearBoundary();
+      const modal = document.getElementById('farmCreateModal');
+      if (modal) modal.classList.add('show');
+    };
+
+    wrap.append(button, cancel);
+    mapArea.style.position = mapArea.style.position || 'relative';
+    mapArea.appendChild(wrap);
+
+    const update = () => {
+      const drawing = mapStatus.textContent.includes('DRAWING MODE');
+      wrap.style.display = drawing ? 'flex' : 'none';
+    };
+    new MutationObserver(update).observe(mapStatus, { childList: true, characterData: true, subtree: true });
+    update();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installBoundaryControl);
+  else installBoundaryControl();
+  setTimeout(installBoundaryControl, 500);
+
   window.AG_WORLD_API = { baseUrl: API_BASE };
 })();
