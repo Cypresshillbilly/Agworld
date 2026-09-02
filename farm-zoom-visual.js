@@ -1,6 +1,6 @@
 /* AG World automatic farm-level visualisation.
-   When the map reaches the interactive farm stage, open the existing farm
-   visual automatically. app.js owns selected-farm state and rendering.
+   The game HUD is loaded once by index.html. This file only handles
+   automatic farm-stage visualisation and must never inject a second HUD.
 */
 (() => {
   let lastOpenedStage = '';
@@ -42,21 +42,11 @@
     return true;
   }
 
-  function loadGameHud() {
-    if (document.querySelector('script[data-ag-world-game-hud]')) return;
-    const s = document.createElement('script');
-    s.src = 'game-hud.js?v=20260902';
-    s.dataset.agWorldGameHud = 'true';
-    document.body.appendChild(s);
-  }
-
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      loadGameHud();
       if (!connect()) setTimeout(connect, 800);
     });
   } else {
-    loadGameHud();
     if (!connect()) setTimeout(connect, 800);
   }
 })();
