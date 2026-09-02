@@ -41,3 +41,12 @@ jobs:
       - name: Deploy to Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Smoke test AG World API
+        run: |
+          set -e
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-connrefused https://ag-world-api.onrender.com/api/health
+          echo
+          curl --fail --silent --show-error --retry 8 --retry-delay 5 --retry-connrefused https://ag-world-api.onrender.com/api/farms
+          echo
+          echo "AG World API smoke test passed."
