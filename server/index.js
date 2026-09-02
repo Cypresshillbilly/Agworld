@@ -12,7 +12,13 @@ const PORT = Number(process.env.PORT || 8080);
 const allowedTypes = new Set(['crop-field','dam','building','tractor','drone','competitor-drone','livestock-area','irrigation']);
 
 const point = p => `SRID=4326;POINT(${Number(p.lng)} ${Number(p.lat)})`;
-const polygon = ring => `SRID=4326;POLYGON((${ring.map(p => `${Number(p.lng)} ${Number(p.lat)}`).join(',')}${ring[0].lat === ring[ring.length-1].lat && ring[0].lng === ring[ring.length-1].lng ? '' : `,${Number(ring[0].lng)} ${Number(ring[0].lat)}`}`))`;
+const polygon = ring => {
+  const coords = ring.map(p => `${Number(p.lng)} ${Number(p.lat)}`).join(',');
+  const first = ring[0];
+  const last = ring[ring.length - 1];
+  const closed = first.lat === last.lat && first.lng === last.lng;
+  return `SRID=4326;POLYGON((${coords}${closed ? '' : `,${Number(first.lng)} ${Number(first.lat)}`}))`;
+};
 
 function validateBoundary(boundary) {
   if (!Array.isArray(boundary) || boundary.length < 3) throw new Error('boundary requires at least 3 points');
