@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "description": "AG World generic farm visual and animation library. Farm records provide the data; this library provides the consistent visual language and behaviour.",
+  "assets": {
+    "maize": { "label": "Maize field", "kind": "crop", "style": "rows", "color": 13225060, "accent": 15198183, "animation": "crop-sway" },
+    "sunflower": { "label": "Sunflower field", "kind": "crop", "style": "rows", "color": 11854080, "accent": 16766720, "animation": "crop-sway" },
+    "wheat": { "label": "Wheat field", "kind": "crop", "style": "rows", "color": 15129575, "accent": 16777191, "animation": "crop-sway" },
+    "sorghum": { "label": "Sorghum field", "kind": "crop", "style": "rows", "color": 11327610, "accent": 14277081, "animation": "crop-sway" },
+    "soybean": { "label": "Soybean field", "kind": "crop", "style": "rows", "color": 10126251, "accent": 12763842, "animation": "crop-sway" },
+    "sugarcane": { "label": "Sugarcane field", "kind": "crop", "style": "rows", "color": 6723826, "accent": 9418647, "animation": "crop-sway" },
+    "orchard": { "label": "Orchard", "kind": "crop", "style": "trees", "color": 5749896, "accent": 8097552, "animation": "tree-sway" },
+    "vineyard": { "label": "Vineyard", "kind": "crop", "style": "rows", "color": 6565460, "accent": 9841920, "animation": "crop-sway" },
+    "pasture": { "label": "Pasture", "kind": "crop", "style": "ground", "color": 6789065, "accent": 8290304, "animation": "grass-sway" },
+    "default-crop": { "label": "Crop field", "kind": "crop", "style": "rows", "color": 10594762, "accent": 13224393, "animation": "crop-sway" },
+    "building": { "label": "Farm building", "kind": "building", "style": "farmhouse", "color": 14067929, "accent": 8021845, "animation": "none" },
+    "tractor": { "label": "Tractor", "kind": "machine", "style": "tractor", "color": 4213079, "accent": 6841730, "animation": "none" },
+    "drone": { "label": "Company drone", "kind": "machine", "style": "drone", "color": 2233101, "accent": 49783, "animation": "drone-hover" },
+    "competitor-drone": { "label": "Competitor drone", "kind": "machine", "style": "drone", "color": 7829367, "accent": 10066329, "animation": "drone-hover" },
+    "dam": { "label": "Dam / water", "kind": "water", "style": "pond", "color": 4496785, "accent": 7309307, "animation": "water-ripple" },
+    "livestock-area": { "label": "Livestock area", "kind": "livestock", "style": "pasture", "color": 7238217, "accent": 10332858, "animation": "animal-graze" },
+    "irrigation": { "label": "Irrigation", "kind": "infrastructure", "style": "pivot", "color": 6636321, "accent": 11077631, "animation": "pivot-turn" }
+  },
+  "animations": {
+    "crop-sway": { "loop": true, "speed": 0.7, "amplitude": 0.035 },
+    "tree-sway": { "loop": true, "speed": 0.45, "amplitude": 0.04 },
+    "grass-sway": { "loop": true, "speed": 0.9, "amplitude": 0.025 },
+    "water-ripple": { "loop": true, "speed": 0.8, "amplitude": 0.06 },
+    "animal-graze": { "loop": true, "speed": 0.6, "amplitude": 0.12 },
+    "drone-hover": { "loop": true, "speed": 1.8, "amplitude": 0.22 },
+    "pivot-turn": { "loop": true, "speed": 0.35, "amplitude": 0.02 },
+    "none": { "loop": false, "speed": 0, "amplitude": 0 }
+  },
+  "cropAliases": {
+    "maize": "maize", "corn": "maize", "sunflower": "sunflower", "wheat": "wheat", "sorghum": "sorghum", "soybean": "soybean", "soya": "soybean", "sugarcane": "sugarcane", "sugar cane": "sugarcane", "orchard": "orchard", "fruit orchard": "orchard", "citrus": "orchard", "citrus orchard": "orchard", "vineyard": "vineyard", "grapes": "vineyard", "pasture": "pasture"
+  }
+}
