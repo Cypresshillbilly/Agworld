@@ -1,0 +1,1 @@
+Temporary placeholder files from an interrupted artwork upload. These are intentionally documented for cleanup.
