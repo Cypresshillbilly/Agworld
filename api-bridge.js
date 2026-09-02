@@ -17,12 +17,28 @@
     });
   }
 
+  function normalizeFarm(farm) {
+    const objects = Array.isArray(farm.objects) ? farm.objects : [];
+    const cropRows = Array.isArray(farm.crops) ? farm.crops : [];
+    const cropNames = cropRows.map(c => typeof c === 'string' ? c : c?.crop_type).filter(Boolean);
+    return {
+      ...farm,
+      crops: cropNames,
+      drones: objects.filter(o => o.type === 'drone').length,
+      tractors: objects.filter(o => o.type === 'tractor').length,
+      livestock: objects.filter(o => o.type === 'livestock-area')
+        .map(o => o.properties?.['Estimated head'])
+        .filter(v => v !== undefined && v !== '').reduce((sum, v) => sum + Number(v || 0), 0) || undefined
+    };
+  }
+
   async function loadApiFarms() {
     const response = await apiFetch('/api/farms');
     if (!response.ok) throw new Error(`API farms request failed: ${response.status}`);
     const data = await response.json();
-    apiFarmIds = new Set((data.farms || []).map(farm => farm.id));
-    return data;
+    const normalized = (data.farms || []).map(normalizeFarm);
+    apiFarmIds = new Set(normalized.map(farm => farm.id));
+    return { ...data, farms: normalized };
   }
 
   async function syncFarms(raw) {
