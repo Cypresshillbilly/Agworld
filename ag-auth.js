@@ -36,7 +36,7 @@
     style.id = 'ag-login-style';
     style.textContent = `
       #ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;color:#eee9d8;font-family:Arial,Helvetica,sans-serif}
-      #ag-login-gate .ag-login-bg{position:absolute;inset:0;background-image:url('assets/ag-world-login-v1.jpg');background-position:center center;background-size:cover;background-repeat:no-repeat}
+      #ag-login-gate .ag-login-bg{position:absolute;inset:0;background-image:url('assets/ag_world_login_v1.jpg');background-position:center center;background-size:cover;background-repeat:no-repeat}
       #ag-login-gate .ag-login-bg:after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 43%,rgba(0,0,0,0) 12%,rgba(0,0,0,.08) 48%,rgba(0,0,0,.48) 100%),linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.22));pointer-events:none}
       #ag-login-gate .ag-login-card{position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);width:min(430px,31vw);padding:0;background:rgba(8,10,9,.76);border:1px solid rgba(216,211,196,.55);border-radius:10px;box-shadow:0 18px 60px rgba(0,0,0,.52),inset 0 1px rgba(255,255,255,.08);overflow:hidden;backdrop-filter:blur(3px)}
       #ag-login-gate .ag-login-card:before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(226,226,214,.75),transparent)}
