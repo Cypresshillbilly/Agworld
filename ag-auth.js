@@ -25,8 +25,8 @@
       <form class="ag-login-card" autocomplete="on">
         <div class="ag-login-title">ENTER AG WORLD</div>
         <div class="ag-login-caption">YOUR TERRITORY AWAITS</div>
-        <label><span>USERNAME</span><input id="agUsername" name="username" autocomplete="username" placeholder="USERNAME" value="${remembered?.username === USERNAME ? USERNAME : ''}" required></label>
-        <label><span>PASSWORD</span><input id="agPassword" name="password" type="password" autocomplete="current-password" placeholder="PASSWORD" value="${remembered?.password || ''}" required></label>
+        <label><span class="sr-only">Username</span><input id="agUsername" name="username" autocomplete="username" placeholder="USERNAME" value="${remembered?.username === USERNAME ? USERNAME : ''}" required></label>
+        <label><span class="sr-only">Password</span><div class="ag-password-wrap"><input id="agPassword" name="password" type="password" autocomplete="current-password" placeholder="PASSWORD" value="${remembered?.password || ''}" required><button type="button" class="ag-show-password" aria-label="Show password">◉</button></div></label>
         <label class="ag-remember"><input id="agRemember" type="checkbox" ${remembered ? 'checked' : ''}><span>REMEMBER MY LOGIN DETAILS</span></label>
         <button class="ag-enter" type="submit">ENTER AG WORLD <b>›</b></button>
         <div class="ag-login-error" id="agLoginError" role="alert"></div>
@@ -35,23 +35,31 @@
     const style = document.createElement('style');
     style.id = 'ag-login-style';
     style.textContent = `
-      #ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;color:#eee9d8;font-family:Georgia,'Times New Roman',serif}
-      #ag-login-gate .ag-login-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(111,108,74,.22),transparent 30%),linear-gradient(180deg,#111719 0%,#252a22 45%,#0b100d 100%);}
-      #ag-login-gate .ag-login-bg:after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,transparent 15%,rgba(0,0,0,.18) 55%,rgba(0,0,0,.72) 100%)}
-      #ag-login-gate .ag-login-card{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);width:min(430px,34vw);padding:28px 30px 26px;background:linear-gradient(160deg,rgba(11,14,13,.96),rgba(22,25,20,.91));border:1px solid rgba(214,202,150,.46);box-shadow:0 25px 90px rgba(0,0,0,.6),inset 0 1px rgba(255,255,255,.1)}
-      #ag-login-gate .ag-login-title{text-align:center;color:#cddc55;font:900 clamp(19px,2vw,29px) Arial,sans-serif;letter-spacing:2px}
-      #ag-login-gate .ag-login-caption{text-align:center;margin:6px 0 22px;font:700 10px Arial,sans-serif;letter-spacing:4px;color:#eee9d8}
-      #ag-login-gate .ag-login-card label:not(.ag-remember){display:block;margin:0 0 12px}.ag-login-card label:not(.ag-remember) span{display:block;margin:0 0 5px;font:700 8px Arial,sans-serif;letter-spacing:2px;color:#a9a58d}
-      #ag-login-gate .ag-login-card input[type=text],#ag-login-gate .ag-login-card input[type=password]{width:100%;box-sizing:border-box;padding:13px 14px;background:rgba(0,0,0,.47);color:#f4f1e6;border:1px solid rgba(223,213,172,.3);outline:0;font:600 14px Arial,sans-serif}
-      #ag-login-gate .ag-login-card input:focus{border-color:#cbd659;box-shadow:0 0 0 1px rgba(203,214,89,.16)}
-      #ag-login-gate .ag-remember{display:flex;align-items:center;gap:9px;margin:5px 0 16px;font:700 8px Arial,sans-serif;letter-spacing:1.4px;color:#bcb9ab;cursor:pointer}.ag-remember input{accent-color:#cbd659;width:14px;height:14px}
-      #ag-login-gate .ag-enter{width:100%;height:52px;border:1px solid #9eae36;background:linear-gradient(180deg,#9cae40,#66762a);color:#fff;font:900 13px Arial,sans-serif;letter-spacing:2px;cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.25),0 7px 18px rgba(0,0,0,.32)}
-      #ag-login-gate .ag-enter:hover{filter:brightness(1.08)}.ag-enter b{float:right;font-size:25px;line-height:12px;font-weight:400}
-      #ag-login-gate .ag-login-error{min-height:18px;margin-top:10px;text-align:center;color:#df8b77;font:700 9px Arial,sans-serif}
-      @media(max-width:900px){#ag-login-gate .ag-login-card{width:min(430px,88vw);top:59%}}
+      #ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;color:#eee9d8;font-family:Arial,Helvetica,sans-serif}
+      #ag-login-gate .ag-login-bg{position:absolute;inset:0;background-image:url('assets/ag-world-login-v1.jpg');background-position:center center;background-size:cover;background-repeat:no-repeat}
+      #ag-login-gate .ag-login-bg:after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 43%,rgba(0,0,0,0) 12%,rgba(0,0,0,.08) 48%,rgba(0,0,0,.48) 100%),linear-gradient(180deg,rgba(0,0,0,.04),rgba(0,0,0,.22));pointer-events:none}
+      #ag-login-gate .ag-login-card{position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);width:min(430px,31vw);padding:0;background:rgba(8,10,9,.76);border:1px solid rgba(216,211,196,.55);border-radius:10px;box-shadow:0 18px 60px rgba(0,0,0,.52),inset 0 1px rgba(255,255,255,.08);overflow:hidden;backdrop-filter:blur(3px)}
+      #ag-login-gate .ag-login-card:before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(226,226,214,.75),transparent)}
+      #ag-login-gate .ag-login-title{padding-top:28px;text-align:center;color:#cfe05c;font:800 29px Arial,sans-serif;letter-spacing:2.3px;text-transform:uppercase}
+      #ag-login-gate .ag-login-caption{text-align:center;margin:7px 0 24px;font:500 13px Arial,sans-serif;letter-spacing:4px;color:#f0eee8}
+      #ag-login-gate .ag-login-card>label{display:block;margin:0 26px 13px}
+      #ag-login-gate .ag-login-card input[type=text],#ag-login-gate .ag-login-card input[type=password]{width:100%;height:54px;box-sizing:border-box;padding:0 16px;background:rgba(2,3,3,.63);color:#f7f4ec;border:1px solid rgba(215,211,199,.55);border-radius:8px;outline:0;font:500 16px Arial,sans-serif;letter-spacing:.4px;box-shadow:inset 0 1px 9px rgba(0,0,0,.18)}
+      #ag-login-gate .ag-password-wrap{position:relative}.ag-password-wrap input{padding-right:52px!important}.ag-show-password{position:absolute;right:9px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:transparent;color:#ededeb;font-size:18px;opacity:.9;cursor:pointer}
+      #ag-login-gate .ag-login-card input:focus{border-color:#d4df6d;box-shadow:0 0 0 1px rgba(212,223,109,.22),inset 0 1px 9px rgba(0,0,0,.18)}
+      #ag-login-gate .ag-remember{display:flex;align-items:center;gap:10px;margin:4px 27px 18px!important;font:500 12px Arial,sans-serif;letter-spacing:1.1px;color:#e2dfd7;cursor:pointer}.ag-remember input{accent-color:#cfdc5b;width:16px;height:16px;margin:0}
+      #ag-login-gate .ag-enter{width:calc(100% - 52px);margin:0 26px 26px;height:56px;border:1px solid #a7b93d;border-radius:8px;background:linear-gradient(180deg,#a6b943,#77852d);color:#fff;font:800 15px Arial,sans-serif;letter-spacing:2px;cursor:pointer;box-shadow:inset 0 1px rgba(255,255,255,.28),0 7px 18px rgba(0,0,0,.3)}
+      #ag-login-gate .ag-enter:hover{filter:brightness(1.06)}.ag-enter b{float:right;font-size:27px;line-height:12px;font-weight:400}
+      #ag-login-gate .ag-login-error{min-height:18px;margin:-12px 26px 14px;text-align:center;color:#e39a86;font:700 10px Arial,sans-serif}
+      #ag-login-gate .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+      @media(max-width:900px){#ag-login-gate .ag-login-card{width:min(430px,88vw);top:60%}}
     `;
     document.head.appendChild(style);
     document.body.appendChild(gate);
+
+    gate.querySelector('.ag-show-password').addEventListener('click', () => {
+      const input = gate.querySelector('#agPassword');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
 
     gate.querySelector('form').addEventListener('submit', async event => {
       event.preventDefault();
