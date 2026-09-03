@@ -12,15 +12,15 @@ html body.ag-profile-mode .sidebar .profile strong:before{content:'NICO VAN ROOY
 html body.ag-profile-mode .sidebar .profile strong:after{content:'SALES REPRESENTATIVE\A Level 7 · Territory 03'!important;display:block!important;white-space:pre!important;margin-top:5px!important;color:#aebfc6!important;font:700 10px/1.5 Arial,sans-serif!important;letter-spacing:.2px!important}
 html body.ag-profile-mode .sidebar .profile span,html body.ag-profile-mode .sidebar .profile br{display:none!important}
 
-/* MY MISSIONS — full-height panel, reaching the footer with the sidebar and map. */
+/* MY MISSIONS — readable cards with full-height panel. */
 html body.ag-profile-mode .missions:before{content:'MY MISSIONS';display:block;flex:0 0 auto;padding:20px 20px 14px;color:#263741;font:900 20px/1 Arial,sans-serif;letter-spacing:.2px;border-bottom:1px solid #e5eaec;box-sizing:border-box}
-html body.ag-profile-mode .missions .mission{flex:0 0 auto;margin:11px 15px!important;padding:16px 15px 14px!important;border:1px solid #d8e0e3!important;border-radius:10px!important;background:#fff!important;box-shadow:0 2px 8px rgba(30,50,60,.09)!important;cursor:pointer!important;min-height:0!important;box-sizing:border-box!important}
-html body.ag-profile-mode .missions .mission:first-of-type{margin-top:14px!important;border-color:#b9d7c0!important}
-html body.ag-profile-mode .missions .mission .tag{color:#15958d!important;font:900 10px/1.2 Arial,sans-serif!important;letter-spacing:.65px!important;text-transform:uppercase!important}
-html body.ag-profile-mode .missions .mission strong{display:block!important;margin-top:7px!important;color:#253640!important;font:900 15px/1.2 Arial,sans-serif!important}
-html body.ag-profile-mode .missions .mission p{margin:7px 0 0!important;color:#68777e!important;font:600 11px/1.45 Arial,sans-serif!important}
-html body.ag-profile-mode .missions .mission .reward{margin-top:9px!important;color:#238d72!important;font:900 10px/1.2 Arial,sans-serif!important}
-html body.ag-profile-mode .missions .mission:after{content:'★';float:right;margin-top:-19px;color:#e5b32b;font:900 21px Arial,sans-serif!important}
+html body.ag-profile-mode .missions .mission{flex:0 0 auto;margin:13px 15px!important;padding:18px 17px 16px!important;border:1px solid #d8e0e3!important;border-radius:10px!important;background:#fff!important;box-shadow:0 2px 8px rgba(30,50,60,.09)!important;cursor:pointer!important;min-height:0!important;box-sizing:border-box!important}
+html body.ag-profile-mode .missions .mission:first-of-type{margin-top:16px!important;border-color:#b9d7c0!important}
+html body.ag-profile-mode .missions .mission .tag{color:#15958d!important;font:900 11px/1.25 Arial,sans-serif!important;letter-spacing:.7px!important;text-transform:uppercase!important}
+html body.ag-profile-mode .missions .mission strong{display:block!important;margin-top:9px!important;padding-right:22px!important;color:#253640!important;font:900 20px/1.18 Arial,sans-serif!important}
+html body.ag-profile-mode .missions .mission p{margin:9px 0 0!important;color:#68777e!important;font:600 14px/1.45 Arial,sans-serif!important}
+html body.ag-profile-mode .missions .mission .reward{margin-top:11px!important;color:#238d72!important;font:900 12px/1.25 Arial,sans-serif!important}
+html body.ag-profile-mode .missions .mission:after{content:'★';float:right;margin-top:-22px;color:#e5b32b;font:900 24px Arial,sans-serif!important}
 
 /* Live navigation */
 html body.ag-profile-mode .sidebar .nav{order:3!important;display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;padding:3px 1px!important;gap:4px!important;margin:0!important;overflow:hidden!important}
@@ -35,9 +35,10 @@ html body.ag-profile-mode .bottom{height:18%!important}
  html body.ag-profile-mode .sidebar .profile:before{width:72px!important;height:72px!important;font-size:26px!important}
  html body.ag-profile-mode .sidebar .nav button{font-size:13px!important;padding:7px 11px!important}
  html body.ag-profile-mode .missions:before{font-size:18px!important;padding:17px 17px 13px!important}
- html body.ag-profile-mode .missions .mission{padding:14px 13px 12px!important}
- html body.ag-profile-mode .missions .mission strong{font-size:14px!important}
- html body.ag-profile-mode .missions .mission p{font-size:10px!important}
+ html body.ag-profile-mode .missions .mission{padding:15px 14px 13px!important}
+ html body.ag-profile-mode .missions .mission strong{font-size:17px!important}
+ html body.ag-profile-mode .missions .mission p{font-size:12px!important}
+ html body.ag-profile-mode .missions .mission .tag{font-size:10px!important}
 }
 @media(max-width:900px){
  html body.ag-profile-mode .sidebar{width:24%!important;bottom:18%!important}
@@ -50,7 +51,7 @@ html body.ag-profile-mode .bottom{height:18%!important}
  html body.ag-profile-mode .sidebar .profile strong:after{font-size:8.5px!important}
  html body.ag-profile-mode .sidebar .nav button{font-size:12px!important;min-height:30px!important;padding:6px 9px!important}
  html body.ag-profile-mode .missions:before{font-size:16px!important;padding:15px 14px 11px!important}
- html body.ag-profile-mode .missions .mission{margin:8px 10px!important;padding:11px 10px 10px!important}
- html body.ag-profile-mode .missions .mission strong{font-size:12px!important}
- html body.ag-profile-mode .missions .mission p{font-size:9px!important}
+ html body.ag-profile-mode .missions .mission{margin:9px 10px!important;padding:13px 12px 12px!important}
+ html body.ag-profile-mode .missions .mission strong{font-size:15px!important}
+ html body.ag-profile-mode .missions .mission p{font-size:11px!important}
 }
