@@ -7,8 +7,8 @@ const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const pct=(a,b)=>b?Math.max(0,Math.min(100,Number(a)/Number(b)*100)):0;
 async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(`${r.status}`);return r.json()}
 function loadCssLast(){
- if(!document.getElementById('ag-live-footer-css-last')){const l=document.createElement('link');l.id='ag-live-footer-css-last';l.rel='stylesheet';l.href='live-profile-footer.css?v=20260918';document.head.appendChild(l)}
- if(!document.getElementById('ag-footer-layout-fix-css')){const f=document.createElement('link');f.id='ag-footer-layout-fix-css';f.rel='stylesheet';f.href='footer-layout-fix.css?v=20260918';document.head.appendChild(f)}
+ if(!document.getElementById('ag-live-footer-css-last')){const l=document.createElement('link');l.id='ag-live-footer-css-last';l.rel='stylesheet';l.href='live-profile-footer.css?v=20260920';document.head.appendChild(l)}
+ if(!document.getElementById('ag-footer-layout-fix-css')){const f=document.createElement('link');f.id='ag-footer-layout-fix-css';f.rel='stylesheet';f.href='footer-layout-fix.css?v=20260920';document.head.appendChild(f)}
 }
 function badgeIcon(i){const icons=[
 '<svg viewBox="0 0 48 48"><path d="M10 25l7-7 8 5 6-8 7 6"/><path d="M7 29l6 6 7-7 7 6 14-14"/><circle cx="17" cy="18" r="3"/><circle cx="31" cy="15" r="3"/></svg>',
@@ -28,14 +28,14 @@ function radarSkillData(p){
  ];
 }
 function skillTree(p){
- const data=radarSkillData(p),cx=105,cy=72,r=48,max=25;
- const pts=data.map((d,i)=>{const a=(-Math.PI/2)+(i*2*Math.PI/data.length),v=Math.max(0,Math.min(max,d[2]))/max;return {x:cx+Math.cos(a)*r*v,y:cy+Math.sin(a)*r*v,ax:cx+Math.cos(a)*r,ay:cy+Math.sin(a)*r,a};});
+ const data=radarSkillData(p),cx=120,cy=76,r=53,max=Math.max(10,...data.map(d=>d[2]));
+ const pointFor=(i,v)=>{const a=(-Math.PI/2)+(i*2*Math.PI/data.length),n=Math.max(0,Math.min(max,v))/max;return {x:cx+Math.cos(a)*r*n,y:cy+Math.sin(a)*r*n,ax:cx+Math.cos(a)*r,ay:cy+Math.sin(a)*r,a};};
+ const pts=data.map((d,i)=>pointFor(i,d[2]));
  const poly=pts.map(q=>`${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ');
- const grid=[1,.75,.5,.25].map(v=>data.map((d,i)=>{const a=(-Math.PI/2)+(i*2*Math.PI/data.length);return `${(cx+Math.cos(a)*r*v).toFixed(1)},${(cy+Math.sin(a)*r*v).toFixed(1)}`}).join(' '));
+ const grid=[1,.75,.5,.25].map(v=>data.map((d,i)=>{const q=pointFor(i,max*v);return `${q.x.toFixed(1)},${q.y.toFixed(1)}`}).join(' '));
  const axes=pts.map(q=>`<line x1="${cx}" y1="${cy}" x2="${q.ax.toFixed(1)}" y2="${q.ay.toFixed(1)}"/>`).join('');
- const labels=data.map((d,i)=>{const q=pts[i],lx=cx+Math.cos(q.a)*(r+13),ly=cy+Math.sin(q.a)*(r+13);let anchor=Math.abs(Math.cos(q.a))<.2?'middle':(Math.cos(q.a)>0?'start':'end');return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}">${d[0]}</text>`}).join('');
- const stats=data.map(d=>`<div class="final-radar-stat"><span>★</span><div><b>${esc(d[1])}</b><strong>${d[2]} ★</strong></div></div>`).join('');
- return `<div class="final-radar-wrap"><div class="final-radar-chart"><svg viewBox="0 0 210 145" role="img" aria-label="Player skill radar"><g class="final-radar-grid">${grid.map(g=>`<polygon points="${g}"/>`).join('')}</g><g class="final-radar-axes">${axes}</g><polygon class="final-radar-fill" points="${poly}"/><polygon class="final-radar-outline" points="${poly}"/>${pts.map(q=>`<circle class="final-radar-points" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="2.5"/>`).join('')}<circle class="final-radar-center" cx="${cx}" cy="${cy}" r="4"/><g class="final-radar-labels">${labels}</g></svg></div><div class="final-radar-stats">${stats}</div></div>`;
+ const labels=data.map((d,i)=>{const q=pts[i],lx=cx+Math.cos(q.a)*(r+12),ly=cy+Math.sin(q.a)*(r+12);const anchor=Math.abs(Math.cos(q.a))<.2?'middle':(Math.cos(q.a)>0?'start':'end');return `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="${anchor}">${d[0]}</text>`}).join('');
+ return `<div class="final-radar-wrap"><svg class="final-radar-chart" viewBox="0 0 240 152" role="img" aria-label="Player skill radar"><g class="final-radar-grid">${grid.map(g=>`<polygon points="${g}"/>`).join('')}</g><g class="final-radar-axes">${axes}</g><polygon class="final-radar-fill" points="${poly}"/><polygon class="final-radar-outline" points="${poly}"/>${pts.map(q=>`<circle class="final-radar-points" cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="2.8"/>`).join('')}<circle class="final-radar-center" cx="${cx}" cy="${cy}" r="4"/><g class="final-radar-labels">${labels}</g></svg></div>`;
 }
 function badgesMarkup(a){return a.slice(0,5).map((x,i)=>`<div class="ag-badge-item"><div class="ag-badge badge-${i%5}"><div class="ag-badge-ribbon"></div><div class="ag-badge-face"><span>${badgeIcon(i)}</span></div></div><span>${esc(x.achievementName)}</span></div>`).join('')||'<div class="ag-progress-note">No achievements recorded</div>'}
 function markup(p,l){
