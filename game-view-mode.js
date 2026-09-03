@@ -4,8 +4,8 @@
 */
 (() => {
   const css = `
-    /* Two deliberate modes: HUD first, original hub second. */
-    .ag-hud { display:none !important; }
+    /* HUD is the fixed authenticated landing view. */
+    .ag-hud { display:block !important; }
     body.ag-premium-mode .ag-hud { display:block !important; }
 
     body.ag-premium-mode { display:block !important; background:#050706 !important; overflow:hidden !important; }
@@ -46,6 +46,7 @@
     window.agWorldEnterPremium = enter;
     window.agWorldExitPremium = exit;
 
+    /* Clicking the map deliberately enters the full-screen game view. */
     document.addEventListener('pointerup', (event) => {
       if (!document.body.classList.contains('ag-premium-mode')) {
         const target = event.target instanceof Element ? event.target : null;
@@ -53,10 +54,12 @@
       }
     }, true);
 
+    /* Escape returns from full-screen game view to the HUD. */
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && document.body.classList.contains('ag-premium-mode')) exit();
     });
 
+    /* The full-screen game's menu returns to the HUD. */
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target || !document.body.classList.contains('ag-premium-mode')) return;
@@ -68,9 +71,10 @@
       }
     }, true);
 
-    // Successful login and restored authenticated sessions always open the HUD.
+    /* Login and every authenticated page refresh start in HUD mode. */
     window.addEventListener('agworld:authenticated', enter);
     if (sessionStorage.getItem('agworld.authenticated') === '1') enter();
+    else exit();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install); else install();
