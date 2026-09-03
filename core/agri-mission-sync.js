@@ -1,98 +1,89 @@
-/* GAME CHANGER Agriculture build — mission cards are rendered ONLY from the Administrator Mission Library. */
+/* GAME CHANGER Agriculture build — Salesman Mission Control is driven only by Mission Library records. */
 (function(){
   'use strict';
   if (/\/admin\.html$/i.test(window.location.pathname)) return;
 
   const KEY = 'gamechanger.missions';
-  const SALES_ROLE = 'agriculture_sales';
+  const PROFILE = '.missions';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-  const readLibrary = () => { try { const value = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(value) ? value : []; } catch (_) { return []; } };
+  const read = () => { try { const x=JSON.parse(localStorage.getItem(KEY)||'[]'); return Array.isArray(x)?x:[]; } catch(_){ return []; } };
 
-  function belongsToAgriSales(mission){
-    const build = String(mission?.build || '').trim().toLowerCase();
-    const role = String(mission?.role || '*').trim().toLowerCase();
-    const agriculture = build === 'agriculture' || build === 'agri build' || build === 'agri';
-    const sales = role === '*' || role === SALES_ROLE || role === 'salesman' || role === 'sales person' || role === 'salesperson';
-    return agriculture && sales;
+  function buildFolder(m){
+    const raw=String(m?.build ?? m?.industryBuild ?? m?.buildName ?? '').trim().toLowerCase();
+    if(raw==='agriculture'||raw==='agri'||raw==='agri build'||raw==='agriculture build') return 'Agri Build';
+    return String(m?.build ?? m?.industryBuild ?? m?.buildName ?? '').trim();
+  }
+  function roleFolder(m){
+    const raw=String(m?.role ?? m?.assignedRole ?? m?.missionRole ?? '').trim().toLowerCase();
+    if(raw==='agriculture_sales'||raw==='salesman'||raw==='sales person'||raw==='salesperson'||raw==='agriculture sales representative') return 'Sales person';
+    if(raw==='*') return 'All Sales People';
+    return String(m?.role ?? m?.assignedRole ?? m?.missionRole ?? '').trim();
+  }
+  function isAgriSales(m){
+    const path=String(m?.folderPath ?? m?.path ?? '').replace(/\\/g,'/').toLowerCase();
+    if(path.includes('agri build/sales person')) return true;
+    return buildFolder(m)==='Agri Build' && (roleFolder(m)==='Sales person'||roleFolder(m)==='All Sales People');
+  }
+  function idOf(m){ return String(m?.id ?? m?.missionId ?? m?.key ?? '').trim(); }
+
+  function cardFor(m){
+    const card=document.createElement('article');
+    card.className='mission gc-library-mission';
+    card.dataset.adminMissionId=idOf(m);
+    card.dataset.action=String(m?.type||'custom').toLowerCase();
+    const type=String(m?.type||'CUSTOM').trim().toUpperCase();
+    const priority=String(m?.priority||'Normal').trim().toUpperCase();
+    const objective=String(m?.objective||'').trim();
+    const success=String(m?.success||m?.successCriteria||'').trim();
+    const xp=Number(m?.xp ?? m?.profileXp ?? m?.profileXP ?? 0);
+    card.innerHTML=`<div class="tag">${esc(type)} · ${esc(priority)} PRIORITY</div><strong>${esc(m?.name||'Untitled mission')}</strong>${objective?`<p>${esc(objective)}</p>`:'<p>Complete this mission according to the assigned workflow.</p>'}<div class="reward">+${Number.isFinite(xp)?xp:0} XP${success?` · ${esc(success)}`:''}</div>`;
+    return card;
+  }
+
+  function style(){
+    if(document.getElementById('gc-library-profile-style')) return;
+    const s=document.createElement('style'); s.id='gc-library-profile-style';
+    s.textContent=`
+      .missions .gc-library-mission{margin:0 0 10px;padding:12px 13px;border:1px solid #dfe7e5;border-radius:7px;background:#fff;box-shadow:0 2px 8px rgba(19,39,46,.07);cursor:pointer}
+      .missions .gc-library-mission:hover{box-shadow:0 4px 12px rgba(19,39,46,.1);border-color:#cbd8d5}
+      .missions .gc-library-mission .tag{font-size:7px;letter-spacing:.8px;font-weight:900;color:#73858b;margin-bottom:5px}
+      .missions .gc-library-mission strong{display:block;font-size:12px;line-height:1.25;color:#172d35;margin-bottom:5px}
+      .missions .gc-library-mission p{font-size:8px;line-height:1.4;color:#718087;margin:0 0 8px}
+      .missions .gc-library-mission .reward{font-size:7px;font-weight:900;color:#6d8e17;letter-spacing:.3px}
+      .missions .gc-library-empty{cursor:default;background:#fafcfb}
+      .missions .gc-library-empty:hover{box-shadow:0 2px 8px rgba(19,39,46,.07);border-color:#dfe7e5}
+    `; document.head.appendChild(s);
   }
 
   function render(){
-    const panel = document.querySelector('.missions');
-    if (!panel) return false;
-
-    const library = readLibrary().filter(belongsToAgriSales);
-    const current = [...panel.querySelectorAll('.mission')];
-    const currentIds = current.map(card => card.dataset.adminMissionId || '').filter(Boolean);
-    const desiredIds = library.map(mission => String(mission.id || ''));
-    const correct = current.length === library.length && currentIds.length === desiredIds.length && currentIds.every((id, index) => id === desiredIds[index]);
-    if (correct) return true;
-
-    /* The existing view-mode script can recreate demonstration cards. Remove them completely. */
-    current.forEach(card => card.remove());
-    panel.querySelectorAll('.mission').forEach(card => card.remove());
-
-    const sectionTitle = panel.querySelector('.section-title');
-    if (sectionTitle) sectionTitle.textContent = 'Assigned missions';
-    const anchor = sectionTitle || panel.lastElementChild;
-
-    if (!library.length) {
-      const empty = document.createElement('div');
-      empty.className = 'mission mission-empty';
-      empty.dataset.authoritativeEmpty = '1';
-      empty.innerHTML = '<div class="tag">MISSION LIBRARY</div><strong>No missions assigned</strong><p>Your Administrator has not assigned a mission under Agri Build / Sales person yet.</p><div class="reward">NO MOCK MISSIONS · CONTROLLED BY MISSION LIBRARY</div>';
-      anchor?.insertAdjacentElement('afterend', empty);
-      return true;
+    const panel=document.querySelector(PROFILE); if(!panel) return false;
+    style();
+    const missions=read().filter(isAgriSales).filter(m=>idOf(m));
+    const ids=new Set(missions.map(idOf));
+    panel.querySelectorAll('.mission').forEach(card=>{ if(!ids.has(String(card.dataset.adminMissionId||''))) card.remove(); });
+    panel.querySelectorAll('.gc-library-empty').forEach(e=>e.remove());
+    const title=panel.querySelector('.section-title'); if(title) title.textContent='Assigned missions';
+    const existing=[...panel.querySelectorAll('.mission[data-admin-mission-id]')];
+    existing.forEach(c=>c.remove());
+    const anchor=title||panel.lastElementChild;
+    if(!missions.length){
+      const empty=document.createElement('article'); empty.className='mission gc-library-empty';
+      empty.innerHTML='<div class="tag">MISSION LIBRARY</div><strong>No missions assigned</strong><p>There are currently no missions under Agri Build / Sales person.</p><div class="reward">MISSIONS COME FROM THE ADMINISTRATOR MISSION LIBRARY</div>';
+      anchor?.insertAdjacentElement('afterend',empty); return true;
     }
-
-    library.forEach(mission => {
-      const card = document.createElement('div');
-      card.className = 'mission';
-      card.dataset.adminMissionId = String(mission.id || '');
-      card.dataset.action = String(mission.type || 'custom').toLowerCase();
-      const type = String(mission.type || 'CUSTOM').trim().toUpperCase();
-      const priority = String(mission.priority || 'Normal').trim().toUpperCase();
-      const objective = String(mission.objective || '').trim();
-      const success = String(mission.success || '').trim();
-      const xp = Number(mission.xp || 0);
-      card.innerHTML = `<div class="tag">${esc(type)} · ${esc(priority)} PRIORITY</div><strong>${esc(mission.name || 'Untitled mission')}</strong>${objective ? `<p>${esc(objective)}</p>` : ''}<div class="reward">+${Number.isFinite(xp) ? xp : 0} XP${success ? ` · ${esc(success)}` : ''}</div>`;
-      anchor?.insertAdjacentElement('afterend', card);
-    });
+    missions.forEach(m=>anchor?.insertAdjacentElement('afterend',cardFor(m)));
     return true;
   }
 
   function start(){
-    let lastSignature = '';
-    let rendering = false;
-    const refresh = () => {
-      if (rendering) return;
-      const signature = localStorage.getItem(KEY) || '';
-      const panel = document.querySelector('.missions');
-      if (!panel) return;
-      const hasForeignCards = [...panel.querySelectorAll('.mission')].some(card => !card.dataset.adminMissionId && !card.dataset.authoritativeEmpty);
-      if (signature !== lastSignature || hasForeignCards) {
-        lastSignature = signature;
-        rendering = true;
-        render();
-        rendering = false;
-      }
-    };
-
-    const observe = () => {
-      const panel = document.querySelector('.missions');
-      if (!panel) return;
-      const observer = new MutationObserver(() => {
-        const foreign = [...panel.querySelectorAll('.mission')].some(card => !card.dataset.adminMissionId && !card.dataset.authoritativeEmpty);
-        if (foreign) { rendering = true; render(); rendering = false; }
-      });
-      observer.observe(panel, { childList:true, subtree:true });
-    };
-
+    let busy=false;
+    const refresh=()=>{ if(busy) return; busy=true; render(); busy=false; };
+    const boot=setInterval(()=>{ if(render()){ clearInterval(boot); } },100);
     refresh();
-    observe();
-    window.addEventListener('storage', event => { if (event.key === KEY) { lastSignature = ''; refresh(); } });
-    window.addEventListener('gamechanger:missions-changed', () => { lastSignature = ''; refresh(); });
-    setInterval(refresh, 500);
+    window.addEventListener('storage',e=>{if(e.key===KEY) refresh();});
+    window.addEventListener('gamechanger:missions-changed',refresh);
+    const watch=setInterval(refresh,1000);
+    window.addEventListener('beforeunload',()=>clearInterval(watch));
   }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true}); else start();
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true}); else start();
 })();
