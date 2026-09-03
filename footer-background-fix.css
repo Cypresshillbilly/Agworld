@@ -1,34 +1,11 @@
-/* AG WORLD — final footer finish. Outer footer is white; subsection cards use a clean pearl-white finish. */
-html body.ag-profile-mode .bottom.ag-profile-footer,
-html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer{
-  background:#ffffff!important;
-  background-image:none!important;
-  border:0!important;
-  border-top:0!important;
-  box-shadow:none!important;
-}
-html body.ag-profile-mode .bottom.ag-profile-footer>.pf-section,
-html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer>.pf-section{
-  background:linear-gradient(145deg,#ffffff 0%,#fdfdfb 45%,#f7f8f5 100%)!important;
-  background-image:linear-gradient(145deg,#ffffff 0%,#fdfdfb 45%,#f7f8f5 100%)!important;
-  border:1px solid #e2e5e1!important;
-  box-shadow:0 4px 12px rgba(50,65,65,.12),inset 0 1px 0 rgba(255,255,255,.95)!important;
-  color:#263740!important;
-}
-html body.ag-profile-mode .bottom.ag-profile-footer>.pf-section:before,
-html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer>.pf-section:before{
-  display:none!important;
-}
-html body.ag-profile-mode .bottom.ag-profile-footer .pf-title,
-html body.ag-profile-mode .bottom.ag-profile-footer .ag-progress-main strong{
-  color:#263740!important;
-}
-html body.ag-profile-mode .bottom.ag-profile-footer .ag-progress-foot,
-html body.ag-profile-mode .bottom.ag-profile-footer .ag-progress-note,
-html body.ag-profile-mode .bottom.ag-profile-footer .live-badges .ag-badge-item>span,
-html body.ag-profile-mode .bottom.ag-profile-footer .ag-leader-row{
-  color:#5d6d72!important;
-}
-html body.ag-profile-mode .bottom.ag-profile-footer .ag-leader-row.current{
-  background:#f0f3ef!important;
-}
+/* AG WORLD — final pearl footer card treatment. */
+html body.ag-profile-mode .bottom.ag-profile-footer,html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer{background:#fff!important;background-image:none!important;border:0!important;border-top:0!important;box-shadow:none!important}
+html body.ag-profile-mode .bottom.ag-profile-footer>.pf-section,html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer>.pf-section{background:linear-gradient(145deg,#fff 0%,#fdfdfb 45%,#f7f8f5 100%)!important;background-image:linear-gradient(145deg,#fff 0%,#fdfdfb 45%,#f7f8f5 100%)!important;border:1px solid #e2e5e1!important;box-shadow:0 4px 12px rgba(50,65,65,.12),inset 0 1px 0 rgba(255,255,255,.95)!important;color:#263740!important}
+html body.ag-profile-mode .bottom.ag-profile-footer>.pf-section:before,html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer>.pf-section:before{display:none!important}
+html body.ag-profile-mode .bottom.ag-profile-footer .pf-title,html body.ag-profile-mode .bottom.ag-profile-footer .ag-progress-main strong{color:#263740!important}
+html body.ag-profile-mode .bottom.ag-profile-footer .ag-progress-foot,html body.ag-profile-mode .bottom.ag-profile-footer .ag-progress-note,html body.ag-profile-mode .bottom.ag-profile-footer .live-badges .ag-badge-item>span,html body.ag-profile-mode .bottom.ag-profile-footer .ag-leader-row{color:#5d6d72!important}
+html body.ag-profile-mode .bottom.ag-profile-footer .ag-leader-row.current{background:#f0f3ef!important}
+/* Readable badge labels. */
+html body.ag-profile-mode .bottom.ag-profile-footer .live-badges .ag-badge-item>span{font:900 9px/1.25 Arial,sans-serif!important;letter-spacing:.15px!important;color:#34474e!important;white-space:normal!important;text-align:center!important;min-height:22px!important;display:block!important}
+html body.ag-profile-mode .bottom.ag-profile-footer .live-badges .ag-badge-item{min-width:62px!important}
+html body.ag-profile-mode .bottom.ag-profile-footer .live-badges .ag-badge{margin-bottom:5px!important}
