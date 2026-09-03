@@ -1,5 +1,18 @@
-/* AG WORLD — Settings + Log Out menu items */
+/* GAME CHANGER — Agriculture profile Settings + Log Out */
 (()=>{
+  // Use the same session keys as the GAME CHANGER authentication gate.
+  // Keep the remembered-login preference intact so it can still prefill the next login.
+  window.agWorldLogout=function(){
+    try{
+      sessionStorage.removeItem('gamechanger.authenticated');
+      sessionStorage.removeItem('gamechanger.role');
+      sessionStorage.removeItem('gamechanger.username');
+      // Clear the legacy key as well for older sessions.
+      sessionStorage.removeItem('agworld.authenticated');
+    }catch(e){}
+    window.location.replace('index.html?loggedout='+Date.now());
+  };
+
   function addItems(){
     const nav=document.querySelector('.sidebar .nav');
     if(!nav)return;
@@ -21,13 +34,11 @@
       b.dataset.menu='logout';
       b.textContent='Log Out';
       b.className='ag-menu-logout';
-      b.addEventListener('click',()=>{
-        if(typeof window.agWorldLogout==='function') window.agWorldLogout();
-        else { sessionStorage.removeItem('agworld.authenticated'); window.location.reload(); }
-      });
+      b.addEventListener('click',window.agWorldLogout);
       nav.appendChild(b);
     }
   }
+
   document.addEventListener('DOMContentLoaded',()=>{
     addItems();
     const observer=new MutationObserver(addItems);
