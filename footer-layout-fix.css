@@ -3,13 +3,10 @@ body.ag-profile-mode .bottom.ag-profile-footer{display:grid!important;grid-templ
 body.ag-profile-mode .bottom.ag-profile-footer .pf-section{min-width:0!important;box-sizing:border-box!important;border:1px solid #d5e0e2!important;border-radius:12px!important;box-shadow:0 6px 16px rgba(30,55,60,.15),0 2px 5px rgba(30,55,60,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;background:linear-gradient(180deg,#fff 0%,#f3f8f6 100%)!important}
 body.ag-profile-mode .bottom.ag-profile-footer .pf-section:before{display:none!important;content:none!important}
 body.ag-profile-mode .bottom.ag-profile-footer>.live-progress{grid-column:1!important;grid-row:1!important}
-body.ag-profile-mode .bottom.ag-profile-footer>.live-progress{grid-column:1!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.live-badges{grid-column:2!important;grid-row:1!important}
 body.ag-profile-mode .bottom.ag-profile-footer>.live-skills{grid-column:3!important;grid-row:1!important;padding-left:12px!important;padding-right:12px!important;display:block!important}
 body.ag-profile-mode .bottom.ag-profile-footer>.live-leaderboard{grid-column:4!important;grid-row:1!important;padding-left:10px!important;padding-right:9px!important}
-/* Badges become their own floating card between progress and skill tree. */
-body.ag-profile-mode .bottom.ag-profile-footer>.live-progress{position:relative!important}
-body.ag-profile-mode .bottom.ag-profile-footer>.live-progress .ag-badges{gap:9px!important}
-/* Make the skill tree visible and compact inside its dedicated footer card. */
+body.ag-profile-mode .bottom.ag-profile-footer>.live-badges .ag-badges{gap:9px!important}
 body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-tree{height:105px!important;margin:0!important;width:100%!important}
 body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node{width:62px!important}
 body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node:nth-child(1){left:0!important;top:0!important}
