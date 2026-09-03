@@ -2,7 +2,7 @@
 (() => {
   const USERS = {
     Admin: {
-      passwordSha256: 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77e',
+      passwordSha256: '3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121',
       role: 'administrator'
     },
     Salesman: {
@@ -20,9 +20,6 @@
     const digest = await crypto.subtle.digest('SHA-256', data);
     return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  function getRole(username) {
-    return USERS[username] ? USERS[username].role : null;
-  }
   function landingFor(role) {
     const registry = window.GAME_CHANGER_ROLES || {};
     return registry[role]?.landing || (role === 'administrator' ? 'admin.html' : 'index.html');
@@ -33,14 +30,8 @@
   function routeExistingSession(role) {
     if (!role) return false;
     const page = currentPage();
-    if (role === 'administrator' && page !== 'admin.html') {
-      location.replace(landingFor(role));
-      return true;
-    }
-    if (role === 'agriculture_sales' && page === 'admin.html') {
-      location.replace(landingFor(role));
-      return true;
-    }
+    if (role === 'administrator' && page !== 'admin.html') { location.replace(landingFor(role)); return true; }
+    if (role === 'agriculture_sales' && page === 'admin.html') { location.replace(landingFor(role)); return true; }
     return false;
   }
   function getRemembered() {
@@ -51,17 +42,14 @@
   }
   function install() {
     if (document.getElementById('ag-login-gate')) return;
-
     const authenticated = sessionStorage.getItem(SESSION_KEY) === '1';
     const role = sessionStorage.getItem(ROLE_KEY);
     if (authenticated && role) {
       if (routeExistingSession(role)) return;
-      document.documentElement.style.visibility = 'visible';
-      document.body.style.visibility = 'visible';
+      document.documentElement.style.visibility = 'visible'; document.body.style.visibility = 'visible';
       window.dispatchEvent(new CustomEvent('gamechanger:authenticated', { detail: { username: sessionStorage.getItem('gamechanger.username') || '', role, restored: true } }));
       return;
     }
-
     const remembered = getRemembered();
     const gate = document.createElement('div'); gate.id = 'ag-login-gate';
     gate.innerHTML = `<img class="ag-login-art" src="${LOGIN_IMAGE}" alt="" aria-hidden="true"><div class="ag-login-panel" role="dialog" aria-label="Enter GAME CHANGER"><div class="gc-login-brand"><strong>GAME <span>CHANGER</span></strong><small>DOMINATE THE TERRITORY</small><em>Build relationships. Drive sales. <b>WIN THE FUTURE.</b></em></div><form class="ag-login-form" autocomplete="off"><label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="username" type="text" autocomplete="off" aria-label="Username" value="${remembered ? remembered.username : ''}" required></label><label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="password" type="password" autocomplete="new-password" aria-label="Password" value="${remembered ? remembered.password : ''}" required><button type="button" class="ag-eye" aria-label="Show password">◉</button></div></label><label class="ag-remember"><input id="agRemember" type="checkbox" ${remembered ? 'checked' : ''}><span></span> REMEMBER ME</label><button class="ag-login-button" type="submit">ENTER GAME CHANGER</button><div class="ag-login-error" id="agLoginError" role="alert"></div></form></div>`;
@@ -96,23 +84,16 @@
     `;
     document.head.appendChild(style); document.body.appendChild(gate);
     document.documentElement.style.visibility = 'visible'; document.body.style.visibility = 'visible';
-
-    const usernameInput = gate.querySelector('#agUsername');
-    const passwordInput = gate.querySelector('#agPassword');
-    const rememberInput = gate.querySelector('#agRemember');
+    const usernameInput = gate.querySelector('#agUsername'); const passwordInput = gate.querySelector('#agPassword'); const rememberInput = gate.querySelector('#agRemember');
     if (!remembered) { usernameInput.value=''; passwordInput.value=''; rememberInput.checked=false; requestAnimationFrame(()=>{usernameInput.value='';passwordInput.value='';}); }
     rememberInput.addEventListener('change',()=>{if(!rememberInput.checked)localStorage.removeItem(REMEMBER_KEY);});
     gate.querySelector('.ag-eye').addEventListener('click',()=>{passwordInput.type=passwordInput.type==='password'?'text':'password';});
     gate.querySelector('form').addEventListener('submit',async event=>{
-      event.preventDefault();
-      const username=usernameInput.value.trim(); const password=passwordInput.value; const error=gate.querySelector('#agLoginError'); error.textContent='';
-      const account=USERS[username]; const hash=await sha256(password);
+      event.preventDefault(); const username=usernameInput.value.trim(); const password=passwordInput.value; const error=gate.querySelector('#agLoginError'); error.textContent=''; const account=USERS[username]; const hash=await sha256(password);
       if(!account||hash!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}
       if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);
       sessionStorage.setItem(SESSION_KEY,'1'); sessionStorage.setItem(ROLE_KEY,account.role); sessionStorage.setItem('gamechanger.username',username);
-      const landing=landingFor(account.role);
-      if(landing!==currentPage()){location.replace(landing);return;}
-      gate.remove(); window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role:account.role}}));
+      const landing=landingFor(account.role); if(landing!==currentPage()){location.replace(landing);return;} gate.remove(); window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role:account.role}}));
     });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
