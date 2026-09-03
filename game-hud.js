@@ -1,6 +1,9 @@
-/* AG WORLD — final strategy-game HUD. Single HUD, no stacked legacy interface. */
+/* AG WORLD — final strategy-game HUD. Visible only in Full Game view. */
 (() => {
   const css = `
+    /* Never overlay the legacy Profile page. */
+    .ag-hud{display:none!important}
+    body.ag-game-mode .ag-hud{display:block!important}
     .ag-hud .ag-objective,.ag-hud .ag-notices,.ag-hud .ag-selected,.ag-hud .ag-filter,.ag-hud .ag-action-row{display:none!important}
     .ag-hud{position:fixed;inset:0;z-index:50000;pointer-events:none;color:#e9e4d5;font-family:Georgia,'Times New Roman',serif;text-shadow:0 2px 4px #000}
     .ag-top{position:absolute;inset:0 0 auto 0;height:112px;pointer-events:auto;background:linear-gradient(180deg,rgba(6,8,8,.94),rgba(6,8,8,.60),transparent)}
