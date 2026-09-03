@@ -1,51 +1,44 @@
-/* AG WORLD — Profile menu: one clean, correctly proportioned user profile. */
-(() => {
+/* AG WORLD — Profile menu: logo at top, single user profile at bottom. */
+(()=>{
   const LOGO_SRC='assets/Logo.png?v=20260903';
   const css=`
-    body.ag-profile-mode .sidebar{width:20%!important;padding:14px 14px 12px!important;box-sizing:border-box!important}
+    body.ag-profile-mode .sidebar{width:20%!important;padding:10px 14px 12px!important;box-sizing:border-box!important}
     body.ag-profile-mode .missions{left:20%!important;width:23%!important;box-sizing:border-box!important}
     body.ag-profile-mode .map-area{left:43%!important;box-sizing:border-box!important}
 
-    /* Keep exactly one profile block at the top of the sidebar. */
-    body.ag-profile-mode .sidebar .brand{display:none!important}
-    body.ag-profile-mode .sidebar .menu-user{
-      display:flex!important;flex-direction:row!important;align-items:center!important;
-      width:100%!important;min-height:124px!important;height:auto!important;
-      margin:0 1px 17px!important;padding:14px 8px!important;
-      gap:16px!important;text-align:left!important;
-      border-top:1px solid rgba(214,196,134,.25)!important;
-      border-bottom:1px solid rgba(214,196,134,.25)!important;
-      box-sizing:border-box!important;overflow:hidden!important
-    }
-    body.ag-profile-mode .sidebar .menu-user-avatar{
+    /* Logo belongs at the top of the sidebar. */
+    body.ag-profile-mode .sidebar .brand{
       display:flex!important;align-items:center!important;justify-content:center!important;
-      width:96px!important;height:96px!important;min-width:96px!important;min-height:96px!important;
-      max-width:96px!important;max-height:96px!important;flex:0 0 96px!important;
-      aspect-ratio:1/1!important;box-sizing:border-box!important;
-      margin:0!important;border-radius:50%!important;overflow:hidden!important;
-      background:#344b56!important;border:2px solid #9eb1b8!important;
-      color:#fff!important;font:900 34px Arial,sans-serif!important;
-      line-height:1!important
+      width:100%!important;height:145px!important;margin:0 0 10px!important;padding:4px 2px!important;
+      background:none!important;border:0!important;box-sizing:border-box!important;overflow:hidden!important;
+      font-size:0!important
     }
-    body.ag-profile-mode .sidebar .menu-user-info{
-      display:flex!important;flex:1 1 auto!important;min-width:0!important;
-      flex-direction:column!important;justify-content:center!important;
-      align-items:flex-start!important;text-align:left!important;overflow:hidden!important
+    body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{
+      display:block!important;width:100%!important;height:auto!important;
+      max-width:310px!important;max-height:140px!important;object-fit:contain!important;
+      object-position:center!important;margin:0 auto!important
     }
-    body.ag-profile-mode .sidebar .menu-user-name{
-      display:block!important;width:100%!important;margin:0!important;
-      color:#eef3f5!important;font:900 17px/1.2 Arial,sans-serif!important;
-      letter-spacing:.6px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important
+    body.ag-profile-mode .sidebar .brand:before,body.ag-profile-mode .sidebar .brand small{display:none!important;content:none!important}
+
+    /* There must never be a second profile directly under the logo. */
+    body.ag-profile-mode .sidebar .menu-user{display:none!important}
+
+    /* Keep the original single profile footer as the only user profile. */
+    body.ag-profile-mode .sidebar .profile{
+      display:block!important;position:absolute!important;left:14px!important;right:14px!important;bottom:9px!important;
+      min-height:72px!important;margin:0!important;padding:10px 8px 7px 52px!important;
+      border-top:1px solid #30444f!important;box-sizing:border-box!important;
+      color:#aebfc6!important;font:700 9px/1.35 Arial,sans-serif!important;text-align:left!important
     }
-    body.ag-profile-mode .sidebar .menu-user-role{
-      display:block!important;width:100%!important;margin:6px 0 0!important;
-      color:#aebfc6!important;font:700 11.5px/1.3 Arial,sans-serif!important;
-      letter-spacing:.3px!important;white-space:normal!important
+    body.ag-profile-mode .sidebar .profile:before{
+      content:'N'!important;position:absolute!important;left:4px!important;top:10px!important;
+      display:flex!important;align-items:center!important;justify-content:center!important;
+      width:42px!important;height:42px!important;margin:0!important;border-radius:50%!important;
+      background:#344b56!important;border:2px solid #9eb1b8!important;color:#fff!important;
+      font:900 18px Arial,sans-serif!important
     }
-    body.ag-profile-mode .sidebar .menu-user-level{
-      display:block!important;width:100%!important;margin:7px 0 0!important;
-      color:#8ea5af!important;font:700 10.5px/1.3 Arial,sans-serif!important;
-      white-space:nowrap!important
+    body.ag-profile-mode .sidebar .profile strong{
+      display:block!important;color:#eef3f5!important;font:900 12px/1.2 Arial,sans-serif!important;margin:0 0 3px!important
     }
 
     body.ag-profile-mode .sidebar .nav{padding:5px 1px!important;gap:6px!important;margin-top:0!important}
@@ -55,74 +48,63 @@
       white-space:nowrap!important;box-sizing:border-box!important
     }
 
-    body.ag-profile-mode .map-area .ag-world-map-logo{
-      display:block!important;position:absolute!important;z-index:55!important;top:18px!important;
-      left:50%!important;transform:translateX(-50%)!important;width:465px!important;height:auto!important;
-      max-width:55%!important;object-fit:contain!important;filter:drop-shadow(0 2px 5px rgba(0,0,0,.22))!important;
-      pointer-events:none!important
-    }
+    /* No AG World logo on the map. */
+    body.ag-profile-mode .map-area .ag-world-map-logo{display:none!important}
 
     body.ag-profile-mode .bottom{height:18%!important}
-    @media(max-width:1100px){body.ag-profile-mode .map-area .ag-world-map-logo{width:360px!important;max-width:52%!important}}
+    @media(max-width:1100px){body.ag-profile-mode .sidebar .brand{height:125px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:120px!important}}
     @media(max-width:900px){
       body.ag-profile-mode .sidebar{width:24%!important}
       body.ag-profile-mode .missions{left:24%!important;width:26%!important}
       body.ag-profile-mode .map-area{left:50%!important}
-      body.ag-profile-mode .map-area .ag-world-map-logo{width:320px!important;max-width:55%!important}
-      body.ag-profile-mode .sidebar .menu-user{min-height:110px!important;padding:10px 7px!important;gap:12px!important}
-      body.ag-profile-mode .sidebar .menu-user-avatar{width:78px!important;height:78px!important;min-width:78px!important;min-height:78px!important;max-width:78px!important;max-height:78px!important;flex-basis:78px!important;font-size:28px!important}
-      body.ag-profile-mode .sidebar .menu-user-name{font-size:15px!important}
-      body.ag-profile-mode .sidebar .menu-user-role{font-size:10px!important}
-      body.ag-profile-mode .sidebar .menu-user-level{font-size:9.5px!important}
+      body.ag-profile-mode .sidebar .brand{height:105px!important}
+      body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:100px!important}
+      body.ag-profile-mode .sidebar .nav button{font-size:13px!important;min-height:44px!important;padding:10px!important}
     }
   `;
 
   function installStyles(){
     let s=document.getElementById('ag-profile-menu-refinement-style');
     if(!s){s=document.createElement('style');s.id='ag-profile-menu-refinement-style';document.head.appendChild(s)}
-    s.textContent=css
+    s.textContent=css;
   }
 
-  function normalizeSidebarProfile(){
-    const s=document.querySelector('.sidebar');
-    if(!s)return;
-    const nav=s.querySelector('.nav');
-    if(!nav)return;
-
-    let user=s.querySelector('.menu-user');
-    const oldProfiles=[...s.querySelectorAll('.profile')];
-
-    // If an older profile exists, turn the first one into the new profile block.
-    if(!user){
-      user=oldProfiles.shift() || document.createElement('div');
-      user.className='menu-user';
-      user.innerHTML='<div class="menu-user-avatar">N</div><div class="menu-user-info"><div class="menu-user-name">NICO</div><div class="menu-user-role">SALES REPRESENTATIVE</div><div class="menu-user-level">Level 7 · Territory 03</div></div>';
-    }
-
-    // Remove every legacy/duplicate profile so only the new block remains.
-    oldProfiles.forEach(p=>p.remove());
-    s.querySelectorAll('.menu-user').forEach(other=>{if(other!==user)other.remove()});
-
-    if(user.parentElement!==s || user.nextElementSibling!==nav)nav.before(user);
-
-    // Rebuild malformed legacy markup while preserving the clean profile block.
-    if(!user.querySelector('.menu-user-avatar') || !user.querySelector('.menu-user-info')){
-      user.innerHTML='<div class="menu-user-avatar">N</div><div class="menu-user-info"><div class="menu-user-name">NICO</div><div class="menu-user-role">SALES REPRESENTATIVE</div><div class="menu-user-level">Level 7 · Territory 03</div></div>';
-    }
+  function installSidebarLogo(){
+    const s=document.querySelector('.sidebar');if(!s)return;
+    const brand=s.querySelector('.brand');if(!brand)return;
+    let logo=brand.querySelector('.ag-world-menu-logo');
+    if(!logo){
+      brand.textContent='';
+      logo=document.createElement('img');
+      logo.className='ag-world-menu-logo';
+      logo.alt='AG World';
+      logo.src=LOGO_SRC;
+      logo.decoding='async';
+      logo.loading='eager';
+      brand.appendChild(logo);
+    }else if(!logo.src.includes('/assets/Logo.png'))logo.src=LOGO_SRC;
   }
 
-  function injectMapLogo(){
-    const map=document.querySelector('.map-area');if(!map)return;
-    let l=map.querySelector('.ag-world-map-logo');
-    if(!l){l=document.createElement('img');l.className='ag-world-map-logo';l.alt='AG World';l.src=LOGO_SRC;l.decoding='async';l.loading='eager';map.appendChild(l)}
-    else if(!l.src.includes('/assets/Logo.png'))l.src=LOGO_SRC
+  function removeDuplicateTopProfile(){
+    const s=document.querySelector('.sidebar');if(!s)return;
+    // Remove all profile blocks created by previous refinements.
+    s.querySelectorAll('.menu-user').forEach(p=>p.remove());
+    // Remove any duplicate .profile elements, keeping only the last/original footer profile.
+    const profiles=[...s.querySelectorAll('.profile')];
+    if(profiles.length>1)profiles.slice(0,-1).forEach(p=>p.remove());
+    // Remove any stale logo accidentally left on the map.
+    document.querySelectorAll('.map-area .ag-world-map-logo').forEach(l=>l.remove());
   }
-
-  function removeSidebarLogo(){document.querySelectorAll('.sidebar .ag-world-menu-logo').forEach(l=>l.remove())}
 
   function install(){
-    installStyles();normalizeSidebarProfile();removeSidebarLogo();injectMapLogo();
-    new MutationObserver(()=>{installStyles();normalizeSidebarProfile();removeSidebarLogo();injectMapLogo()}).observe(document.body,{childList:true,subtree:true})
+    installStyles();
+    removeDuplicateTopProfile();
+    installSidebarLogo();
+    new MutationObserver(()=>{
+      installStyles();
+      removeDuplicateTopProfile();
+      installSidebarLogo();
+    }).observe(document.body,{childList:true,subtree:true});
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
