@@ -21,6 +21,15 @@
     body.ag-profile-mode .map-area { left:36.328125vw !important; height:79.2682927vh !important; }
     body.ag-profile-mode .bottom { left:14.0625vw !important; height:20.7317073vh !important; }
 
+    /* Logout control on the legacy Profile page. */
+    .ag-profile-logout {
+      position:absolute !important; right:18px !important; bottom:18px !important; z-index:60 !important;
+      border:1px solid #ccd7dc !important; background:#fff !important; color:#26343d !important;
+      border-radius:5px !important; padding:8px 13px !important; font:700 9px Arial,sans-serif !important;
+      letter-spacing:.7px !important; cursor:pointer !important; box-shadow:0 2px 8px rgba(20,35,45,.12) !important;
+    }
+    .ag-profile-logout:hover { background:#f0f6f7 !important; }
+
     /* Full Game View: only the V1 game map; Profile page is completely hidden. */
     body.ag-game-mode { display:block !important; background:#050706 !important; overflow:hidden !important; }
     body.ag-game-mode .app-shell {
@@ -36,12 +45,10 @@
     body.ag-game-mode .bottom,
     body.ag-game-mode .map-header,
     body.ag-game-mode .map-status,
-    body.ag-game-mode .farm-card { display:none !important; }
+    body.ag-game-mode .farm-card,
+    body.ag-game-mode .ag-profile-logout { display:none !important; }
     body.ag-game-mode .map-area,
     body.ag-game-mode .map { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; background:#050706 !important; }
-
-    /* Only a deliberate click on the Profile page's map enters Full Game. */
-    .ag-hud .ag-menu { cursor:pointer !important; }
   `;
 
   function install() {
@@ -65,9 +72,32 @@
       window.__AG_WORLD_PREMIUM_MODE = true;
     };
 
+    const logout = () => {
+      sessionStorage.removeItem('agworld.authenticated');
+      localStorage.removeItem('agworld.rememberedLogin');
+      document.body.classList.remove('ag-profile-mode', 'ag-game-mode', 'ag-premium-mode');
+      window.__AG_WORLD_VIEW = 'login';
+      window.__AG_WORLD_PREMIUM_MODE = false;
+      document.getElementById('ag-login-gate')?.remove();
+      window.location.reload();
+    };
+
     window.agWorldEnterProfile = enterProfile;
     window.agWorldEnterPremium = enterGame;
     window.agWorldExitPremium = enterProfile;
+    window.agWorldLogout = logout;
+
+    /* Add one logout button to the legacy Profile page only. */
+    const addLogout = () => {
+      if (document.querySelector('.ag-profile-logout')) return;
+      const button = document.createElement('button');
+      button.className = 'ag-profile-logout';
+      button.type = 'button';
+      button.textContent = 'LOG OFF';
+      button.setAttribute('aria-label', 'Log off AG World');
+      button.addEventListener('click', logout);
+      document.body.appendChild(button);
+    };
 
     document.addEventListener('pointerup', (event) => {
       if (!document.body.classList.contains('ag-profile-mode')) return;
@@ -83,9 +113,15 @@
       enterProfile();
     }, true);
 
-    window.addEventListener('agworld:authenticated', enterProfile);
-    if (sessionStorage.getItem('agworld.authenticated') === '1') enterProfile();
-    else {
+    window.addEventListener('agworld:authenticated', () => {
+      enterProfile();
+      addLogout();
+    });
+
+    if (sessionStorage.getItem('agworld.authenticated') === '1') {
+      enterProfile();
+      addLogout();
+    } else {
       document.body.classList.remove('ag-profile-mode', 'ag-game-mode', 'ag-premium-mode');
       window.__AG_WORLD_VIEW = 'login';
       window.__AG_WORLD_PREMIUM_MODE = false;
