@@ -74,10 +74,14 @@
       if (target && target.closest('#map')) enterGame();
     }, true);
 
-    /* Escape always moves Full Game -> Profile. */
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && document.body.classList.contains('ag-game-mode')) enterProfile();
-    });
+    /* Escape is handled at window-capture level so the map/browser handlers cannot swallow it. */
+    window.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      if (!document.body.classList.contains('ag-game-mode')) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      enterProfile();
+    }, true);
 
     /* Game-view menu returns to the Profile screen. */
     document.addEventListener('click', (event) => {
