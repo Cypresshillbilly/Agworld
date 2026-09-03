@@ -14,8 +14,6 @@
       margin:0 !important; transform:none !important;
       border-radius:0 !important; box-shadow:none !important;
     }
-
-    /* The legacy Profile page keeps its original internal structure. */
     body.ag-profile-mode .sidebar { width:14.0625vw !important; }
     body.ag-profile-mode .missions { left:14.0625vw !important; width:22.265625vw !important; height:79.2682927vh !important; }
     body.ag-profile-mode .map-area { left:36.328125vw !important; height:79.2682927vh !important; }
@@ -73,12 +71,11 @@
     };
 
     const logout = () => {
+      /* Log off the current session. Keep Remember Me credentials intact if the user chose it. */
       sessionStorage.removeItem('agworld.authenticated');
-      localStorage.removeItem('agworld.rememberedLogin');
       document.body.classList.remove('ag-profile-mode', 'ag-game-mode', 'ag-premium-mode');
       window.__AG_WORLD_VIEW = 'login';
       window.__AG_WORLD_PREMIUM_MODE = false;
-      document.getElementById('ag-login-gate')?.remove();
       window.location.reload();
     };
 
@@ -87,7 +84,6 @@
     window.agWorldExitPremium = enterProfile;
     window.agWorldLogout = logout;
 
-    /* Add one logout button to the legacy Profile page only. */
     const addLogout = () => {
       if (document.querySelector('.ag-profile-logout')) return;
       const button = document.createElement('button');
