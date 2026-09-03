@@ -28,7 +28,7 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
 
-/* Administrator UI enhancements: white workspace + working logout. */
+/* Administrator UI enhancements: white workspace + working logout + official GAME CHANGER logo assets. */
 (() => {
   if((location.pathname.split('/').pop()||'index.html').toLowerCase()!=='admin.html')return;
   const style=document.createElement('style');style.id='gc-admin-light-theme';style.textContent=`
@@ -51,6 +51,10 @@
     .mission-head{border-bottom-color:#e0e5df!important}.mission-head h2{color:#20261f!important}.mission-head small{color:#66851e!important}.close{color:#566056!important}
     .mission-body{background:#fff!important}.field label{color:#687168!important}.field input,.field select,.field textarea,.step input{background:#fff!important;color:#20261f!important;border-color:#d6ddd4!important}
     .workflow{border-top-color:#e0e5df!important}.step{background:#fafbfa!important;border-color:#e2e7e1!important}.step-num{background:#edf4e4!important;color:#5d761f!important}.remove-step{color:#687168!important}.mission-footer{border-top-color:#e0e5df!important}.btn.cancel{border-color:#d2d9d0!important;color:#4d564d!important}
+    /* Use the actual uploaded GAME CHANGER artwork instead of text approximations. */
+    .admin-side .gc-mark{box-sizing:border-box;width:100%;height:86px;margin:0 0 2px;background:url('assets/branding/game-changer/primary/game_changer_primary_white.svg') center left/contain no-repeat!important;font-size:0!important;line-height:0!important;color:transparent!important;letter-spacing:0!important}
+    .admin-side .gc-mark span,.admin-side .gc-mark small{display:none!important}
+    .admin-main .eyebrow{box-sizing:border-box;width:205px;height:44px;margin:0 0 5px;background:url('assets/branding/game-changer/horizontal/game_changer_horizontal_dark.svg') left center/contain no-repeat!important;font-size:0!important;line-height:0!important;color:transparent!important;letter-spacing:0!important}
     #gc-logout{margin-top:10px!important;border-top:1px solid rgba(190,214,139,.18)!important;color:#d8a8a8!important}
   `;document.head.appendChild(style);
   const nav=document.querySelector('.admin-nav');
