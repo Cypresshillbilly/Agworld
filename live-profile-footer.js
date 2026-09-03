@@ -1,4 +1,4 @@
-/* AG WORLD — live profile footer. Single-owner layout: Progress / Badges / Leaderboard. */
+/* AG WORLD — live profile footer. Single-owner layout: Progress / Badges / Leaderboard, with Skill Profile swapped into the mission badge slot. */
 (()=>{
 const USER_ID='user-nico-van-rooyen';
 const API=(window.AG_WORLD_CONFIG&&window.AG_WORLD_CONFIG.API_BASE_URL)||(window.AG_WORLD_API&&window.AG_WORLD_API.baseUrl)||'https://ag-world-api.onrender.com';
@@ -7,8 +7,8 @@ const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'
 const pct=(a,b)=>b?Math.max(0,Math.min(100,Number(a)/Number(b)*100)):0;
 async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(`${r.status}`);return r.json()}
 function loadCssLast(){
- if(!document.getElementById('ag-live-footer-css-last')){const l=document.createElement('link');l.id='ag-live-footer-css-last';l.rel='stylesheet';l.href='live-profile-footer.css?v=20260921';document.head.appendChild(l)}
- if(!document.getElementById('ag-footer-layout-fix-css')){const f=document.createElement('link');f.id='ag-footer-layout-fix-css';f.rel='stylesheet';f.href='footer-layout-fix.css?v=20260921';document.head.appendChild(f)}
+ if(!document.getElementById('ag-live-footer-css-last')){const l=document.createElement('link');l.id='ag-live-footer-css-last';l.rel='stylesheet';l.href='live-profile-footer.css?v=20260922';document.head.appendChild(l)}
+ if(!document.getElementById('ag-footer-layout-fix-css')){const f=document.createElement('link');f.id='ag-footer-layout-fix-css';f.rel='stylesheet';f.href='footer-layout-fix.css?v=20260922';document.head.appendChild(f)}
 }
 function badgeIcon(i){const icons=[
 '<svg viewBox="0 0 48 48"><path d="M10 25l7-7 8 5 6-8 7 6"/><path d="M7 29l6 6 7-7 7 6 14-14"/><circle cx="17" cy="18" r="3"/><circle cx="31" cy="15" r="3"/></svg>',
@@ -36,11 +36,11 @@ function markup(p,l){
 function cleanFooter(f){if(!f)return;f.querySelectorAll('.ag-reward-drone,.ag-reward-title,.ag-reward-sub,.ag-reward-bar,.ag-reward-xp').forEach(e=>e.remove());[...f.children].forEach(x=>{if(!x.matches('.live-progress,.live-badges,.live-skills,.live-leaderboard'))x.remove()})}
 function movePanels(){
  const f=document.querySelector('.bottom'),m=document.querySelector('.missions');if(!f||!m)return;
- /* Remove every previous destination copy before moving the single live nodes. */
+ /* One source of truth: remove every old destination copy, then move the two live panels into their swapped locations. */
  m.querySelectorAll('.missions-badges,.missions-skill-profile').forEach(e=>e.remove());
  const badges=f.querySelector('.live-badges'),skills=f.querySelector('.live-skills'),heading=m.querySelector('h1');
  if(skills){skills.classList.add('missions-skill-profile');skills.style.display='block';skills.removeAttribute('aria-hidden');if(heading)m.insertBefore(skills,heading);else m.insertBefore(skills,m.firstElementChild)}
- if(badges){badges.style.display='block';badges.removeAttribute('aria-hidden')}
+ if(badges){badges.classList.remove('missions-badges');badges.style.display='block';badges.removeAttribute('aria-hidden')}
 }
 function render(){const f=document.querySelector('.bottom');if(!f||!profileData)return;f.classList.add('ag-profile-footer');f.innerHTML=markup(profileData,leaderboardData||{territory:profileData.territory,leaders:[]});cleanFooter(f);movePanels()}
 const fallbackProfile={id:USER_ID,name:'Nico van Rooyen',territory:'Territory 03',level:7,xp:6820,xpToNextLevel:10000,regionalPosition:2,achievements:[{achievementName:'First Meeting'},{achievementName:'Opportunity Finder'},{achievementName:'Presentation Pro'},{achievementName:'Proposal Pro'}],skillTotals:{technical:8,operational:6,product:11,management:9,people:13}};
