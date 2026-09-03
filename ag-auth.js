@@ -4,7 +4,7 @@
   const PASSWORD_SHA256 = 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77ee';
   const REMEMBER_KEY = 'agworld.rememberedLogin';
   const SESSION_KEY = 'agworld.authenticated';
-  const LOGIN_IMAGE = '/Agworld/assets/ag_world_login_v2.jpg?v=20260903-0641';
+  const LOGIN_IMAGE = '/Agworld/assets/ag_world_login_v2.jpg?v=20260903-0646';
 
   async function sha256(text) {
     const data = new TextEncoder().encode(text);
@@ -21,7 +21,7 @@
     style.textContent = `
       #ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;font-family:Arial,Helvetica,sans-serif}
       #ag-login-gate .ag-login-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;user-select:none}
-      #ag-login-gate .ag-login-panel{position:absolute;left:50%;top:57%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(442px,calc(100vw - 36px));padding:24px 31px 21px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.92),rgba(10,13,11,.76));box-shadow:0 18px 55px rgba(0,0,0,.6),0 0 26px rgba(180,210,60,.09),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#f4f3eb}
+      #ag-login-gate .ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(442px,calc(100vw - 36px));padding:24px 31px 21px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.92),rgba(10,13,11,.76));box-shadow:0 18px 55px rgba(0,0,0,.6),0 0 26px rgba(180,210,60,.09),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#f4f3eb}
       #ag-login-gate .ag-login-form{margin:0;padding:0;border:0}
       #ag-login-gate .ag-input-wrap{display:block;margin:0 0 13px;color:#bfc2b9;font-size:9px;font-weight:800;letter-spacing:1.3px}
       #ag-login-gate .ag-input-wrap>span{display:block;margin:0 0 5px}
@@ -42,6 +42,8 @@
       @media(max-height:650px) and (orientation:landscape){#ag-login-gate .ag-login-panel{top:59%;width:min(430px,calc(100vw - 30px));padding:14px 24px 12px}.ag-input-wrap{margin-bottom:7px!important}.ag-input-wrap>span{margin-bottom:3px!important}.ag-input-wrap input{height:34px!important}.ag-eye{height:27px!important}.ag-remember{margin-bottom:8px!important}.ag-login-button{height:36px!important}.ag-login-error{min-height:8px!important;margin-top:3px!important}}
     `;
     document.head.appendChild(style); document.body.appendChild(gate);
+    document.documentElement.style.visibility = 'visible';
+    document.body.style.visibility = 'visible';
     gate.querySelector('.ag-eye').addEventListener('click',()=>{const input=gate.querySelector('#agPassword');input.type=input.type==='password'?'text':'password';});
     gate.querySelector('form').addEventListener('submit',async event=>{event.preventDefault();const username=gate.querySelector('#agUsername').value.trim();const password=gate.querySelector('#agPassword').value;const error=gate.querySelector('#agLoginError');error.textContent='';const hash=await sha256(password);if(username!==USERNAME||hash!==PASSWORD_SHA256){error.textContent='INVALID USERNAME OR PASSWORD';return;}if(gate.querySelector('#agRemember').checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);sessionStorage.setItem(SESSION_KEY,'1');gate.remove();window.dispatchEvent(new CustomEvent('agworld:authenticated',{detail:{username}}));});
   }
