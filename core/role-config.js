@@ -16,15 +16,19 @@ window.GAME_CHANGER_ROLES = {
   }
 };
 
-/* Load core administrator mission tooling only on the administrator page. */
+/* Administrator-only enhancements. */
 (function(){
   if (!/\/admin\.html$/i.test(window.location.pathname)) return;
-  const missionEngine = document.createElement('script');
-  missionEngine.src = 'core/mission-engine.js?v=20260903-mission-folders';
-  missionEngine.defer = true;
-  document.head.appendChild(missionEngine);
-  const missionLibrary = document.createElement('script');
-  missionLibrary.src = 'core/mission-library.js?v=20260903-mission-folders';
-  missionLibrary.defer = true;
-  document.head.appendChild(missionLibrary);
+  const mission = document.createElement('script');
+  mission.src = 'core/mission-engine.js?v=20260903-role-build-scope';
+  mission.defer = true;
+  document.head.appendChild(mission);
+  const library = document.createElement('script');
+  library.src = 'core/mission-library.js?v=20260903-mission-delete';
+  library.defer = true;
+  document.head.appendChild(library);
+  const polish = document.createElement('script');
+  polish.src = 'core/admin-ui-polish.js?v=20260903-admin-v4';
+  polish.defer = true;
+  document.head.appendChild(polish);
 })();
