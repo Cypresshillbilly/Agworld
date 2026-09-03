@@ -1,0 +1,9 @@
+/* AG WORLD — final footer background authority. Keep the footer field the same deep colour as the navigation menu. */
+html body.ag-profile-mode .bottom.ag-profile-footer,
+html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer{
+  background:#202b33!important;
+  background-image:none!important;
+  border:0!important;
+  border-top:0!important;
+  box-shadow:none!important;
+}
