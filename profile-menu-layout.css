@@ -1,0 +1,42 @@
+/* AG WORLD — stable Profile sidebar layout. Loaded before runtime view scripts. */
+html body.ag-profile-mode .sidebar{width:20%!important;padding:10px 14px 12px!important;box-sizing:border-box!important}
+html body.ag-profile-mode .missions{left:20%!important;width:23%!important;box-sizing:border-box!important}
+html body.ag-profile-mode .map-area{left:43%!important;box-sizing:border-box!important}
+
+/* Logo */
+html body.ag-profile-mode .sidebar .brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:145px!important;margin:0 0 8px!important;padding:4px 2px!important;box-sizing:border-box!important;background-image:url('/Agworld/assets/Logo.png?v=20260903')!important;background-repeat:no-repeat!important;background-position:center!important;background-size:contain!important;font-size:0!important;color:transparent!important;overflow:hidden!important}
+html body.ag-profile-mode .sidebar .brand:before,html body.ag-profile-mode .sidebar .brand small{display:none!important}
+
+/* Remove the newer duplicate profile block. Use the original runtime profile as the single source of truth. */
+html body.ag-profile-mode .sidebar .menu-user{display:none!important}
+
+/* Profile = fixed two-column layout: avatar LEFT, Profile Summary RIGHT. */
+html body.ag-profile-mode .sidebar .profile{position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;display:grid!important;grid-template-columns:82px minmax(0,1fr)!important;grid-template-rows:82px!important;column-gap:12px!important;align-items:center!important;width:100%!important;height:102px!important;min-height:102px!important;margin:0 0 12px!important;padding:9px 7px!important;border-top:1px solid #30444f!important;border-bottom:1px solid #30444f!important;box-sizing:border-box!important;overflow:hidden!important;text-align:left!important;font-size:0!important}
+html body.ag-profile-mode .sidebar .profile:before{content:'N'!important;display:flex!important;grid-column:1!important;grid-row:1!important;position:static!important;width:82px!important;height:82px!important;margin:0!important;border-radius:50%!important;align-items:center!important;justify-content:center!important;background:#344b56!important;border:2px solid #9eb1b8!important;color:#fff!important;font:900 30px Arial,sans-serif!important;box-sizing:border-box!important}
+html body.ag-profile-mode .sidebar .profile strong{display:block!important;grid-column:2!important;grid-row:1!important;align-self:center!important;position:relative!important;width:100%!important;margin:0!important;padding:0 0 34px!important;color:transparent!important;font:0/0 Arial,sans-serif!important;box-sizing:border-box!important;white-space:nowrap!important;overflow:visible!important}
+html body.ag-profile-mode .sidebar .profile strong:before{content:'NICO VAN ROOYEN'!important;display:block!important;color:#eef3f5!important;font:900 15px/1.2 Arial,sans-serif!important;letter-spacing:.5px!important}
+html body.ag-profile-mode .sidebar .profile strong:after{content:'SALES REPRESENTATIVE\A Level 7 · Territory 03'!important;display:block!important;white-space:pre!important;margin-top:5px!important;color:#aebfc6!important;font:700 10px/1.5 Arial,sans-serif!important;letter-spacing:.2px!important}
+html body.ag-profile-mode .sidebar .profile span,html body.ag-profile-mode .sidebar .profile br{display:none!important}
+
+/* Navigation */
+html body.ag-profile-mode .sidebar .nav{display:flex!important;flex-direction:column!important;padding:5px 1px!important;gap:6px!important;margin-top:0!important}
+html body.ag-profile-mode .sidebar .nav button{width:100%!important;min-height:48px!important;padding:12px 13px!important;font:700 15px/1.2 Arial,sans-serif!important;letter-spacing:.2px!important;white-space:nowrap!important;box-sizing:border-box!important}
+html body.ag-profile-mode .map-area .ag-world-map-logo{display:none!important}
+html body.ag-profile-mode .bottom{height:18%!important}
+
+@media(max-width:1100px){
+ html body.ag-profile-mode .sidebar .brand{height:125px!important}
+ html body.ag-profile-mode .sidebar .profile{grid-template-columns:72px minmax(0,1fr)!important;grid-template-rows:72px!important;height:92px!important;min-height:92px!important}
+ html body.ag-profile-mode .sidebar .profile:before{width:72px!important;height:72px!important;font-size:26px!important}
+}
+@media(max-width:900px){
+ html body.ag-profile-mode .sidebar{width:24%!important}
+ html body.ag-profile-mode .missions{left:24%!important;width:26%!important}
+ html body.ag-profile-mode .map-area{left:50%!important}
+ html body.ag-profile-mode .sidebar .brand{height:105px!important}
+ html body.ag-profile-mode .sidebar .profile{grid-template-columns:60px minmax(0,1fr)!important;grid-template-rows:60px!important;height:78px!important;min-height:78px!important;column-gap:9px!important}
+ html body.ag-profile-mode .sidebar .profile:before{width:60px!important;height:60px!important;font-size:22px!important}
+ html body.ag-profile-mode .sidebar .profile strong:before{font-size:12px!important}
+ html body.ag-profile-mode .sidebar .profile strong:after{font-size:8.5px!important}
+ html body.ag-profile-mode .sidebar .nav button{font-size:13px!important;min-height:44px!important;padding:10px!important}
+}
