@@ -29,6 +29,7 @@ jobs:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           printf 'window.AG_WORLD_CONFIG = { GOOGLE_MAPS_API_KEY: %s };\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > config.js
+          sed -i 's/config.js?v=20260902/config.js?v=20260903-mapfix/' index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
