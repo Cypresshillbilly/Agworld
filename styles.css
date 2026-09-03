@@ -4,7 +4,17 @@
 body.ag-profile-mode .sidebar{border-right:2px solid #46545c;}
 body.ag-profile-mode .missions{border:1px solid #cfd8dc;border-top:2px solid #168aa0;border-right:1px solid #cfd8dc;background:#f8fafb;}
 body.ag-profile-mode .map-area{border:1px solid #c7d1d4;border-top:2px solid #168aa0;background:#dfe7e4;}
-body.ag-profile-mode .bottom{border:1px solid #cfd8dc;border-top:2px solid #168aa0;background:#f8fafb;display:block;padding:0;}
+body.ag-profile-mode .bottom{border:2px solid #395a36;border-top:3px solid #6f9465;background:#426b3d;display:block;padding:0;left:0;right:0;width:100%;z-index:20;color:#fff;}
+body.ag-profile-mode .bottom-panel{padding:14px 20px;}
+body.ag-profile-mode .bottom-panel:not(:last-child){border-right:1px solid rgba(255,255,255,.2);}
+body.ag-profile-mode .bottom{display:grid;grid-template-columns:1.05fr 1fr 1fr;gap:0;}
+body.ag-profile-mode .bottom h3{color:#e4efdf;}
+body.ag-profile-mode .leader{border-bottom-color:rgba(255,255,255,.2);}
+body.ag-profile-mode .leader b{color:#fff;}
+body.ag-profile-mode .ai{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.22);}
+body.ag-profile-mode .ai p{color:#e4efdf;}
+body.ag-profile-mode .ai button{background:#263d24;color:#fff;}
+body.ag-profile-mode .badge{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.45);color:#fff;}
 body.ag-profile-mode .user-profile-section{overflow:hidden;}
 .user-profile-heading{height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #d9e1e4;background:#fff;}
 .profile-eyebrow{font-size:7px;letter-spacing:1.4px;text-transform:uppercase;color:#168aa0;font-weight:700;}
@@ -31,3 +41,6 @@ body.ag-profile-mode .user-profile-section{overflow:hidden;}
 .user-achievements .badge{width:36px;height:36px;font-size:14px;}
 body.ag-profile-mode .map-area .map-header,body.ag-profile-mode .map-area .map-status{z-index:5;}
 @media(max-width:900px){.user-profile-grid>div{padding:10px 12px}.user-profile-heading{padding:0 12px}.user-achievements .badge{width:30px;height:30px;font-size:12px}}
+
+/* Profile User Profile section: full-width green band across the bottom. */
+body.ag-profile-mode .bottom{left:0 !important;right:0 !important;width:100% !important;background:#426b3d !important;border-color:#395a36 !important;}
