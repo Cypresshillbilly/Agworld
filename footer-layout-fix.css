@@ -1,24 +1,26 @@
-/* AG WORLD footer: four floating sections, no green top bars. */
-body.ag-profile-mode .bottom.ag-profile-footer{display:grid!important;grid-template-columns:31% 27% 27% 15%!important;gap:10px!important;padding:10px 12px!important;background:transparent!important;border:0!important;overflow:visible!important;box-sizing:border-box!important}
-body.ag-profile-mode .bottom.ag-profile-footer .pf-section{min-width:0!important;box-sizing:border-box!important;border:1px solid #d5e0e2!important;border-radius:12px!important;box-shadow:0 6px 16px rgba(30,55,60,.15),0 2px 5px rgba(30,55,60,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;background:linear-gradient(180deg,#fff 0%,#f3f8f6 100%)!important}
-body.ag-profile-mode .bottom.ag-profile-footer .pf-section:before{display:none!important;content:none!important}
+/* AG WORLD footer layout lock — four visible floating cards */
+body.ag-profile-mode .bottom.ag-profile-footer{display:grid!important;grid-template-columns:31% 27% 27% 15%!important;grid-template-rows:1fr!important;gap:10px!important;padding:10px 12px!important;background:transparent!important;border:0!important;overflow:visible!important;box-sizing:border-box!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.pf-section{display:block!important;visibility:visible!important;opacity:1!important;min-width:0!important;min-height:0!important;box-sizing:border-box!important}
 body.ag-profile-mode .bottom.ag-profile-footer>.live-progress{grid-column:1!important;grid-row:1!important}
 body.ag-profile-mode .bottom.ag-profile-footer>.live-badges{grid-column:2!important;grid-row:1!important}
-body.ag-profile-mode .bottom.ag-profile-footer>.live-skills{grid-column:3!important;grid-row:1!important;padding-left:12px!important;padding-right:12px!important;display:block!important}
-body.ag-profile-mode .bottom.ag-profile-footer>.live-leaderboard{grid-column:4!important;grid-row:1!important;padding-left:10px!important;padding-right:9px!important}
-body.ag-profile-mode .bottom.ag-profile-footer>.live-badges .ag-badges{gap:9px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-tree{height:105px!important;margin:0!important;width:100%!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node{width:62px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node:nth-child(1){left:0!important;top:0!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node:nth-child(2){left:25%!important;top:0!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node:nth-child(3){right:0!important;left:auto!important;top:0!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node:nth-child(4){left:12%!important;top:56px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-node:nth-child(5){left:58%!important;top:56px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-orb{width:31px!important;height:31px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-name{font-size:6.5px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-state{font-size:5px!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-line.l1{left:15%!important;top:16px!important;width:25%!important;transform:rotate(0deg)!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-line.l2{left:15%!important;top:16px!important;width:50%!important;transform:rotate(27deg)!important}
-body.ag-profile-mode .bottom.ag-profile-footer .ag-skill-line.l3{left:40%!important;top:45px!important;width:30%!important;transform:rotate(-25deg)!important}
-@media(max-width:1100px){body.ag-profile-mode .bottom.ag-profile-footer{grid-template-columns:29% 27% 29% 15%!important;gap:7px!important;padding:7px!important}body.ag-profile-mode .bottom.ag-profile-footer .pf-section{padding:10px!important}body.ag-profile-mode .bottom.ag-profile-footer .ag-badge-item{width:48px!important;flex-basis:48px!important}}
-@media(max-width:900px){body.ag-profile-mode .bottom.ag-profile-footer{grid-template-columns:28% 27% 29% 16%!important;gap:5px!important;padding:5px!important}body.ag-profile-mode .bottom.ag-profile-footer .pf-section{padding:7px!important;border-radius:9px!important}body.ag-profile-mode .bottom.ag-profile-footer .pf-title{font-size:8px!important}}
+body.ag-profile-mode .bottom.ag-profile-footer>.live-skills{grid-column:3!important;grid-row:1!important;display:block!important;visibility:visible!important;opacity:1!important;padding-left:12px!important;padding-right:12px!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.live-leaderboard{grid-column:4!important;grid-row:1!important}
+/* No decorative green bars on the floating footer cards. */
+body.ag-profile-mode .bottom.ag-profile-footer>.pf-section:before{display:none!important;content:none!important}
+/* Dedicated skill-tree card: keep all five skill nodes inside the visible footer area. */
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-tree{display:block!important;visibility:visible!important;opacity:1!important;height:105px!important;position:relative!important;margin:0!important;width:100%!important;overflow:visible!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-node{display:block!important;visibility:visible!important;opacity:1!important;width:62px!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-node:nth-child(1){left:0!important;top:0!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-node:nth-child(2){left:25%!important;top:0!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-node:nth-child(3){right:0!important;left:auto!important;top:0!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-node:nth-child(4){left:12%!important;top:56px!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-node:nth-child(5){left:58%!important;top:56px!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-orb{width:31px!important;height:31px!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-name{font-size:6.5px!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-state{font-size:5px!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-line{display:block!important;visibility:visible!important;opacity:.9!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-line.l1{left:15%!important;top:16px!important;width:25%!important;transform:rotate(0deg)!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-line.l2{left:15%!important;top:16px!important;width:50%!important;transform:rotate(27deg)!important}
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills .ag-skill-line.l3{left:40%!important;top:45px!important;width:30%!important;transform:rotate(-25deg)!important}
+@media(max-width:1100px){body.ag-profile-mode .bottom.ag-profile-footer{grid-template-columns:29% 27% 29% 15%!important;gap:7px!important;padding:7px!important}body.ag-profile-mode .bottom.ag-profile-footer>.pf-section{padding:10px!important}body.ag-profile-mode .bottom.ag-profile-footer .ag-badge-item{width:48px!important;flex-basis:48px!important}}
+@media(max-width:900px){body.ag-profile-mode .bottom.ag-profile-footer{grid-template-columns:28% 27% 29% 16%!important;gap:5px!important;padding:5px!important}body.ag-profile-mode .bottom.ag-profile-footer>.pf-section{padding:7px!important;border-radius:9px!important}body.ag-profile-mode .bottom.ag-profile-footer .pf-title{font-size:8px!important}}
