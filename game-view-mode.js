@@ -1,13 +1,35 @@
 /* AG WORLD dual-layer view controller.
    Logged-in users land in the HUD strategy view.
-   The HUD is the fixed authenticated starting view; Escape/menu can return to the hub.
+   The HUD is the fixed authenticated starting view; the map becomes full-screen only after a deliberate map click.
 */
 (() => {
   const css = `
     /* HUD is the fixed authenticated landing view. */
     .ag-hud { display:block !important; }
-    body.ag-premium-mode .ag-hud { display:block !important; }
 
+    /* Clean HUD canvas: keep the live map as the background, but remove the legacy hub panels. */
+    body:not(.ag-premium-mode) { display:block !important; background:#050706 !important; overflow:hidden !important; }
+    body:not(.ag-premium-mode) .app-shell {
+      position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important;
+      max-width:none !important; max-height:none !important; margin:0 !important; transform:none !important;
+      border-radius:0 !important; box-shadow:none !important; background:#050706 !important;
+    }
+    body:not(.ag-premium-mode) .sidebar,
+    body:not(.ag-premium-mode) .missions,
+    body:not(.ag-premium-mode) .bottom,
+    body:not(.ag-premium-mode) .map-header,
+    body:not(.ag-premium-mode) .map-status,
+    body:not(.ag-premium-mode) .farm-card { display:none !important; }
+    body:not(.ag-premium-mode) .map-area {
+      position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+      background:#050706 !important;
+    }
+    body:not(.ag-premium-mode) .map {
+      position:absolute !important; inset:0 !important; width:100% !important; height:100% !important;
+    }
+
+    /* Full-screen game view: HUD disappears so the two visual layers never overlap. */
+    body.ag-premium-mode .ag-hud { display:none !important; }
     body.ag-premium-mode { display:block !important; background:#050706 !important; overflow:hidden !important; }
     body.ag-premium-mode .app-shell {
       position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important;
@@ -24,7 +46,7 @@
     body.ag-premium-mode .map { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; }
 
     .ag-hud .ag-menu { cursor:pointer !important; }
-    .ag-hud .ag-menu::after { content:'HUB'; position:absolute; right:calc(100% + 8px); top:50%; transform:translateY(-50%); font:900 6px Arial,sans-serif; letter-spacing:1.5px; color:#cdbf86; opacity:.0; transition:opacity .15s ease; pointer-events:none; }
+    .ag-hud .ag-menu::after { content:'GAME MAP'; position:absolute; right:calc(100% + 8px); top:50%; transform:translateY(-50%); font:900 6px Arial,sans-serif; letter-spacing:1.5px; color:#cdbf86; opacity:.0; transition:opacity .15s ease; pointer-events:none; white-space:nowrap; }
     .ag-hud .ag-menu:hover::after { opacity:1; }
   `;
 
