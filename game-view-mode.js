@@ -1,35 +1,20 @@
-/* AG WORLD — three distinct views.
-   1. Login screen       -> controlled by ag-auth.js
-   2. Profile screen     -> authenticated HUD/profile experience
-   3. Full game view     -> deliberate full-screen game map
+/* AG WORLD — two authenticated experiences.
+   1. Login screen -> controlled by ag-auth.js
+   2. Legacy Profile page -> original app-shell with map as a window
+   3. Full Game view -> deliberate full-screen map with the game HUD
 */
 (() => {
   const css = `
-    /* PROFILE SCREEN: HUD + clean live map background only. */
-    .ag-hud { display:block !important; }
-    body.ag-profile-mode { display:block !important; background:#050706 !important; overflow:hidden !important; }
-    body.ag-profile-mode .app-shell {
-      position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important;
-      max-width:none !important; max-height:none !important; margin:0 !important; transform:none !important;
-      border-radius:0 !important; box-shadow:none !important; background:#050706 !important;
-    }
-    body.ag-profile-mode .sidebar,
-    body.ag-profile-mode .missions,
-    body.ag-profile-mode .bottom,
-    body.ag-profile-mode .map-header,
-    body.ag-profile-mode .map-status,
-    body.ag-profile-mode .farm-card { display:none !important; }
-    body.ag-profile-mode .map-area,
-    body.ag-profile-mode .map { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; background:#050706 !important; }
+    /* The legacy profile page is the authenticated default. */
+    body.ag-profile-mode { display:block !important; background:#050706 !important; overflow:auto !important; }
 
-    /* FULL GAME VIEW: only the game map; the profile HUD is completely removed. */
+    /* Full Game is deliberately entered from the legacy map. */
     body.ag-game-mode { display:block !important; background:#050706 !important; overflow:hidden !important; }
     body.ag-game-mode .app-shell {
       position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important;
       max-width:none !important; max-height:none !important; margin:0 !important; transform:none !important;
       border-radius:0 !important; box-shadow:none !important; background:#050706 !important;
     }
-    body.ag-game-mode .ag-hud,
     body.ag-game-mode .sidebar,
     body.ag-game-mode .missions,
     body.ag-game-mode .bottom,
@@ -39,7 +24,8 @@
     body.ag-game-mode .map-area,
     body.ag-game-mode .map { position:absolute !important; inset:0 !important; width:100% !important; height:100% !important; background:#050706 !important; }
 
-    .ag-hud .ag-menu { cursor:pointer !important; }
+    /* Game HUD is visible only in Full Game. */
+    body.ag-game-mode .ag-hud { display:block !important; }
   `;
 
   function install() {
@@ -67,23 +53,23 @@
     window.agWorldEnterPremium = enterGame;
     window.agWorldExitPremium = enterProfile;
 
-    /* ONLY a deliberate map click moves Profile -> Full Game. */
+    /* ONLY a deliberate click/tap on the legacy map enters Full Game. */
     document.addEventListener('pointerup', (event) => {
       if (!document.body.classList.contains('ag-profile-mode')) return;
       const target = event.target instanceof Element ? event.target : null;
       if (target && target.closest('#map')) enterGame();
     }, true);
 
-    /* Escape is handled at window-capture level so the map/browser handlers cannot swallow it. */
+    /* Esc always returns Full Game -> legacy Profile page. */
     window.addEventListener('keydown', (event) => {
-      if (event.key !== 'Escape') return;
-      if (!document.body.classList.contains('ag-game-mode')) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      enterProfile();
+      if (event.key === 'Escape' && document.body.classList.contains('ag-game-mode')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        enterProfile();
+      }
     }, true);
 
-    /* Game-view menu returns to the Profile screen. */
+    /* The game HUD menu also returns to the legacy Profile page. */
     document.addEventListener('click', (event) => {
       const target = event.target instanceof Element ? event.target : null;
       if (!target || !document.body.classList.contains('ag-game-mode')) return;
@@ -95,7 +81,7 @@
       }
     }, true);
 
-    /* Authentication and authenticated refresh ALWAYS start at Profile. */
+    /* Login and every authenticated refresh ALWAYS start on the legacy Profile page. */
     window.addEventListener('agworld:authenticated', enterProfile);
     if (sessionStorage.getItem('agworld.authenticated') === '1') enterProfile();
     else {
