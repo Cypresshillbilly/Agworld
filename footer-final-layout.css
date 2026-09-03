@@ -1,0 +1,21 @@
+/* AG WORLD — final footer layout: four floating cards, no green top bars. */
+body.ag-profile-mode .bottom.ag-profile-footer{display:grid!important;grid-template-columns:31% 24% 30% 15%!important;gap:10px!important;padding:10px 12px!important;background:transparent!important;border:0!important;overflow:visible!important;box-sizing:border-box!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.pf-section{position:relative!important;display:block!important;min-width:0!important;height:100%!important;box-sizing:border-box!important;padding:12px 14px!important;border:1px solid #d5e0e2!important;border-radius:12px!important;background:linear-gradient(180deg,#fff 0%,#f3f8f6 100%)!important;box-shadow:0 6px 16px rgba(30,55,60,.15),0 2px 5px rgba(30,55,60,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;overflow:hidden!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.pf-section:before{display:none!important;content:none!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.live-progress{grid-column:1!important;grid-row:1!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.live-badges{grid-column:2!important;grid-row:1!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.final-skill-tree{grid-column:3!important;grid-row:1!important;visibility:visible!important;opacity:1!important}
+body.ag-profile-mode .bottom.ag-profile-footer>.live-leaderboard{grid-column:4!important;grid-row:1!important}
+body.ag-profile-mode .bottom.ag-profile-footer .pf-title{margin:0 0 8px!important;color:#263740!important;font:900 9px Arial,sans-serif!important;letter-spacing:.8px!important;text-transform:uppercase!important}
+.final-skill-subtitle{margin:-3px 0 5px!important;color:#7b898e!important;font:700 6px Arial,sans-serif!important;letter-spacing:.5px!important;text-transform:uppercase!important}
+.final-skill-grid{position:relative!important;height:82px!important;display:grid!important;grid-template-columns:repeat(5,1fr)!important;align-items:start!important;gap:3px!important;padding-top:3px!important}
+.final-skill-grid:before{content:'';position:absolute!important;left:10%!important;right:10%!important;top:19px!important;height:3px!important;background:linear-gradient(90deg,#a7cfa0,#4d9c70,#a7cfa0)!important;border-radius:3px!important;box-shadow:0 1px 2px rgba(30,80,60,.2)!important}
+.final-skill-node{position:relative!important;z-index:2!important;text-align:center!important;min-width:0!important}
+.final-skill-orb{width:29px!important;height:29px!important;margin:0 auto 3px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;font:900 13px Arial,sans-serif!important;box-sizing:border-box!important;box-shadow:3px 4px 6px rgba(30,70,75,.24),inset 2px 2px 2px rgba(255,255,255,.55),inset -2px -3px 3px rgba(0,0,0,.18)!important}
+.final-skill-node.unlocked .final-skill-orb{background:linear-gradient(145deg,#b7ee8b,#55b34e 45%,#246d3b)!important;border:2px solid #e5f7dc!important;color:#fff!important}
+.final-skill-node.locked .final-skill-orb{background:linear-gradient(145deg,#f5f7f7,#bdc8cc 55%,#78878d)!important;border:2px solid #fff!important;color:#68777d!important}
+.final-skill-name{font:900 5.7px Arial,sans-serif!important;line-height:1.12!important;color:#334850!important;text-shadow:0 1px #fff!important}
+.final-skill-state{margin-top:2px!important;font:900 4.5px Arial,sans-serif!important;color:#4d9b55!important;letter-spacing:.3px!important}
+.final-skill-node.locked .final-skill-state{color:#929da1!important}
+@media(max-width:1100px){body.ag-profile-mode .bottom.ag-profile-footer{grid-template-columns:30% 23% 31% 16%!important;gap:7px!important;padding:7px!important}.final-skill-name{font-size:5px!important}}
+@media(max-width:900px){body.ag-profile-mode .bottom.ag-profile-footer{grid-template-columns:29% 22% 32% 17%!important;gap:5px!important;padding:5px!important}.final-skill-grid{height:76px!important}.final-skill-name{font-size:4.6px!important}}
