@@ -41,16 +41,27 @@ function markup(p,l){
  const badges=achievements.slice(0,5).map((a,i)=>`<div class="ag-badge-item"><div class="ag-badge badge-${i%5}"><div class="ag-badge-ribbon"></div><div class="ag-badge-face"><span>${badgeIcon(i)}</span></div></div><span>${esc(a.achievementName)}</span></div>`).join('')||'<div class="ag-progress-note">No achievements recorded</div>';
  return `<section class="pf-section live-progress"><div class="pf-title">YOUR PROGRESS</div><div class="ag-progress-row"><div class="ag-level-shield"><b>${esc(p.level)}</b><span>LEVEL</span></div><div class="ag-progress-main"><strong>${Number(p.xp).toLocaleString()} / ${Number(p.xpToNextLevel).toLocaleString()} XP</strong><div class="ag-progress-bar"><i style="width:${progress}%"></i></div><div class="ag-progress-foot"><span>Level ${esc(p.level)}</span><span>${Math.round(progress)}%</span></div></div></div><div class="ag-badges-label">BADGES EARNED</div><div class="ag-badges">${badges}</div></section><section class="pf-section live-skills"><div class="pf-title">SKILL TREE</div><div class="ag-skill-caption">Build your field mastery</div>${skillTree(p)}</section><section class="pf-section live-leaderboard"><div class="pf-title">${esc(l?.territory||p.territory)} LEADERBOARD</div><div class="ag-leader-list">${rows}</div><div class="ag-leader-link">Regional position: ${esc(p.regionalPosition??'—')}</div></section>`;
 }
+function removeLegacyReward(f){
+ if(!f)return;
+ f.querySelectorAll('.ag-reward-drone,.ag-reward-title,.ag-reward-sub,.ag-reward-bar,.ag-reward-xp').forEach(el=>el.remove());
+ f.querySelectorAll('.pf-section').forEach(section=>{
+  const title=(section.querySelector('.pf-title')?.textContent||'').trim().toUpperCase();
+  if(title.includes('NEXT LEVEL REWARD'))section.remove();
+ });
+ while(f.children.length>3)f.lastElementChild.remove();
+}
 function render(){
  const f=document.querySelector('.bottom');
  if(!f||!profileData)return;
  f.classList.add('ag-profile-footer');
  f.innerHTML=markup(profileData,leaderboardData||{territory:profileData.territory,leaders:[]});
+ removeLegacyReward(f);
 }
 async function init(){
  loadCssLast();
  if(loading)return;
  const f=document.querySelector('.bottom');if(!f)return;
+ removeLegacyReward(f);
  loading=true;
  try{
   const p=await json(`${API}/api/users/${USER_ID}/profile`);
@@ -62,6 +73,7 @@ async function init(){
 }
 function protect(){
  const f=document.querySelector('.bottom');if(!f)return;
+ removeLegacyReward(f);
  if(profileData && !f.querySelector('.live-progress')) render();
 }
 window.agWorldRefreshProfileFooter=init;
@@ -69,7 +81,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  loadCssLast();
  init();
  const f=document.querySelector('.bottom');
- if(f)new MutationObserver(protect).observe(f,{childList:true,subtree:false});
+ if(f)new MutationObserver(protect).observe(f,{childList:true,subtree:true});
 });
 setTimeout(init,800);
 setTimeout(init,2000);
