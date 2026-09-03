@@ -1,4 +1,4 @@
-/* AG WORLD login-only authentication gate — V1.7 */
+/* AG WORLD login-only authentication gate — V1.8 */
 (() => {
   const USERNAME = 'Admin';
   const PASSWORD_SHA256 = 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77ee';
@@ -19,6 +19,16 @@
   }
   function install() {
     if (document.getElementById('ag-login-gate')) return;
+
+    // An authenticated browser session survives a normal page refresh.
+    // This is separate from Remember Me: it does not save credentials.
+    if (sessionStorage.getItem(SESSION_KEY) === '1') {
+      document.documentElement.style.visibility = 'visible';
+      document.body.style.visibility = 'visible';
+      window.dispatchEvent(new CustomEvent('agworld:authenticated', { detail: { username: USERNAME, restored: true } }));
+      return;
+    }
+
     const remembered = getRemembered();
     const gate = document.createElement('div'); gate.id = 'ag-login-gate';
     gate.innerHTML = `<img class="ag-login-art" src="${LOGIN_IMAGE}" alt="" aria-hidden="true"><div class="ag-login-panel" role="dialog" aria-label="Enter AG World"><form class="ag-login-form" autocomplete="off"><label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="username" type="text" autocomplete="off" aria-label="Username" value="${remembered ? USERNAME : ''}" required></label><label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="password" type="password" autocomplete="new-password" aria-label="Password" value="${remembered ? remembered.password : ''}" required><button type="button" class="ag-eye" aria-label="Show password">◉</button></div></label><label class="ag-remember"><input id="agRemember" type="checkbox" ${remembered ? 'checked' : ''}><span></span> REMEMBER ME</label><button class="ag-login-button" type="submit">ENTER AG WORLD</button><div class="ag-login-error" id="agLoginError" role="alert"></div></form></div>`;
@@ -61,8 +71,6 @@
       requestAnimationFrame(() => { usernameInput.value = ''; passwordInput.value = ''; });
     }
 
-    // The Remember Me choice takes effect immediately. Unticking it removes
-    // the saved credentials, so a refresh cannot restore them.
     rememberInput.addEventListener('change', () => {
       if (!rememberInput.checked) localStorage.removeItem(REMEMBER_KEY);
     });
