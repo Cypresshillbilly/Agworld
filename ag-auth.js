@@ -1,9 +1,18 @@
-/* AG WORLD login-only authentication gate — V1.8 */
+/* GAME CHANGER role-based authentication gate — V2 */
 (() => {
-  const USERNAME = 'Admin';
-  const PASSWORD_SHA256 = 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77ee';
-  const REMEMBER_KEY = 'agworld.rememberedLogin';
-  const SESSION_KEY = 'agworld.authenticated';
+  const USERS = {
+    Admin: {
+      passwordSha256: 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77e',
+      role: 'administrator'
+    },
+    Salesman: {
+      passwordSha256: '75b2324a77561a1b03e3be652b212d9aff91834466726080e138cbdc6466dae4',
+      role: 'agriculture_sales'
+    }
+  };
+  const REMEMBER_KEY = 'gamechanger.rememberedLogin';
+  const SESSION_KEY = 'gamechanger.authenticated';
+  const ROLE_KEY = 'gamechanger.role';
   const LOGIN_IMAGE = '/Agworld/assets/ag_world_login_v2.jpg?v=20260903-0646';
 
   async function sha256(text) {
@@ -11,32 +20,62 @@
     const digest = await crypto.subtle.digest('SHA-256', data);
     return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
   }
+  function getRole(username) {
+    return USERS[username] ? USERS[username].role : null;
+  }
+  function landingFor(role) {
+    const registry = window.GAME_CHANGER_ROLES || {};
+    return registry[role]?.landing || (role === 'administrator' ? 'admin.html' : 'index.html');
+  }
+  function currentPage() {
+    return (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  }
+  function routeExistingSession(role) {
+    if (!role) return false;
+    const page = currentPage();
+    if (role === 'administrator' && page !== 'admin.html') {
+      location.replace(landingFor(role));
+      return true;
+    }
+    if (role === 'agriculture_sales' && page === 'admin.html') {
+      location.replace(landingFor(role));
+      return true;
+    }
+    return false;
+  }
   function getRemembered() {
     try {
       const value = JSON.parse(localStorage.getItem(REMEMBER_KEY) || 'null');
-      return value && value.username === USERNAME && typeof value.password === 'string' ? value : null;
+      return value && USERS[value.username] && typeof value.password === 'string' ? value : null;
     } catch { return null; }
   }
   function install() {
     if (document.getElementById('ag-login-gate')) return;
 
-    // An authenticated browser session survives a normal page refresh.
-    // This is separate from Remember Me: it does not save credentials.
-    if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    const authenticated = sessionStorage.getItem(SESSION_KEY) === '1';
+    const role = sessionStorage.getItem(ROLE_KEY);
+    if (authenticated && role) {
+      if (routeExistingSession(role)) return;
       document.documentElement.style.visibility = 'visible';
       document.body.style.visibility = 'visible';
-      window.dispatchEvent(new CustomEvent('agworld:authenticated', { detail: { username: USERNAME, restored: true } }));
+      window.dispatchEvent(new CustomEvent('gamechanger:authenticated', { detail: { username: sessionStorage.getItem('gamechanger.username') || '', role, restored: true } }));
       return;
     }
 
     const remembered = getRemembered();
     const gate = document.createElement('div'); gate.id = 'ag-login-gate';
-    gate.innerHTML = `<img class="ag-login-art" src="${LOGIN_IMAGE}" alt="" aria-hidden="true"><div class="ag-login-panel" role="dialog" aria-label="Enter AG World"><form class="ag-login-form" autocomplete="off"><label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="username" type="text" autocomplete="off" aria-label="Username" value="${remembered ? USERNAME : ''}" required></label><label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="password" type="password" autocomplete="new-password" aria-label="Password" value="${remembered ? remembered.password : ''}" required><button type="button" class="ag-eye" aria-label="Show password">◉</button></div></label><label class="ag-remember"><input id="agRemember" type="checkbox" ${remembered ? 'checked' : ''}><span></span> REMEMBER ME</label><button class="ag-login-button" type="submit">ENTER AG WORLD</button><div class="ag-login-error" id="agLoginError" role="alert"></div></form></div>`;
+    gate.innerHTML = `<img class="ag-login-art" src="${LOGIN_IMAGE}" alt="" aria-hidden="true"><div class="ag-login-panel" role="dialog" aria-label="Enter GAME CHANGER"><div class="gc-login-brand"><strong>GAME <span>CHANGER</span></strong><small>DOMINATE THE TERRITORY</small><em>Build relationships. Drive sales. <b>WIN THE FUTURE.</b></em></div><form class="ag-login-form" autocomplete="off"><label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="username" type="text" autocomplete="off" aria-label="Username" value="${remembered ? remembered.username : ''}" required></label><label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="password" type="password" autocomplete="new-password" aria-label="Password" value="${remembered ? remembered.password : ''}" required><button type="button" class="ag-eye" aria-label="Show password">◉</button></div></label><label class="ag-remember"><input id="agRemember" type="checkbox" ${remembered ? 'checked' : ''}><span></span> REMEMBER ME</label><button class="ag-login-button" type="submit">ENTER GAME CHANGER</button><div class="ag-login-error" id="agLoginError" role="alert"></div></form></div>`;
     const style = document.createElement('style'); style.id = 'ag-login-style';
     style.textContent = `
       #ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;font-family:Arial,Helvetica,sans-serif}
       #ag-login-gate .ag-login-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;user-select:none}
-      #ag-login-gate .ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(442px,calc(100vw - 36px));padding:24px 31px 21px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.92),rgba(10,13,11,.76));box-shadow:0 18px 55px rgba(0,0,0,.6),0 0 26px rgba(180,210,60,.09),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#f4f3eb}
+      #ag-login-gate .ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(442px,calc(100vw - 36px));padding:21px 31px 21px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78));box-shadow:0 18px 55px rgba(0,0,0,.6),0 0 26px rgba(180,210,60,.09),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#f4f3eb}
+      #ag-login-gate .gc-login-brand{text-align:center;margin:0 0 18px;text-transform:uppercase}
+      #ag-login-gate .gc-login-brand strong{display:block;font-size:26px;font-weight:950;letter-spacing:2.5px;line-height:1;color:#f4f3eb;text-shadow:0 2px 8px #000}
+      #ag-login-gate .gc-login-brand strong span{color:#cfe85b}
+      #ag-login-gate .gc-login-brand small{display:block;margin-top:8px;font-size:8px;font-weight:900;letter-spacing:2.4px;color:#f0f2ea}
+      #ag-login-gate .gc-login-brand em{display:block;margin-top:7px;font-size:8px;font-style:normal;color:#c8cdc3;letter-spacing:.25px}
+      #ag-login-gate .gc-login-brand em b{color:#cfe85b}
       #ag-login-gate .ag-login-form{margin:0;padding:0;border:0}
       #ag-login-gate .ag-input-wrap{display:block;margin:0 0 13px;color:#bfc2b9;font-size:9px;font-weight:800;letter-spacing:1.3px}
       #ag-login-gate .ag-input-wrap>span{display:block;margin:0 0 5px}
@@ -53,30 +92,28 @@
       #ag-login-gate .ag-login-button:hover{filter:brightness(1.08);transform:translateY(-1px)}
       #ag-login-gate .ag-login-button:active{transform:translateY(0)}
       #ag-login-gate .ag-login-error{min-height:13px;margin-top:7px;text-align:center;color:#f0a08c;font:700 9px Arial,sans-serif;letter-spacing:.3px;text-shadow:0 1px 3px #000}
-      @media(max-width:600px){#ag-login-gate .ag-login-panel{top:59%;width:min(420px,calc(100vw - 24px));padding:20px 25px 18px}.ag-input-wrap{margin-bottom:10px!important}.ag-input-wrap input{height:45px!important}.ag-remember{margin-bottom:12px!important}.ag-login-button{height:46px!important}}
-      @media(max-height:650px) and (orientation:landscape){#ag-login-gate .ag-login-panel{top:59%;width:min(430px,calc(100vw - 30px));padding:14px 24px 12px}.ag-input-wrap{margin-bottom:7px!important}.ag-input-wrap>span{margin-bottom:3px!important}.ag-input-wrap input{height:34px!important}.ag-eye{height:27px!important}.ag-remember{margin-bottom:8px!important}.ag-login-button{height:36px!important}.ag-login-error{min-height:8px!important;margin-top:3px!important}}
+      @media(max-width:600px){#ag-login-gate .ag-login-panel{top:59%;width:min(420px,calc(100vw - 24px));padding:18px 25px 18px}.ag-input-wrap{margin-bottom:10px!important}.ag-input-wrap input{height:45px!important}.ag-remember{margin-bottom:12px!important}.ag-login-button{height:46px!important}}
     `;
     document.head.appendChild(style); document.body.appendChild(gate);
-    document.documentElement.style.visibility = 'visible';
-    document.body.style.visibility = 'visible';
+    document.documentElement.style.visibility = 'visible'; document.body.style.visibility = 'visible';
 
     const usernameInput = gate.querySelector('#agUsername');
     const passwordInput = gate.querySelector('#agPassword');
     const rememberInput = gate.querySelector('#agRemember');
-
-    if (!remembered) {
-      usernameInput.value = '';
-      passwordInput.value = '';
-      rememberInput.checked = false;
-      requestAnimationFrame(() => { usernameInput.value = ''; passwordInput.value = ''; });
-    }
-
-    rememberInput.addEventListener('change', () => {
-      if (!rememberInput.checked) localStorage.removeItem(REMEMBER_KEY);
-    });
-
+    if (!remembered) { usernameInput.value=''; passwordInput.value=''; rememberInput.checked=false; requestAnimationFrame(()=>{usernameInput.value='';passwordInput.value='';}); }
+    rememberInput.addEventListener('change',()=>{if(!rememberInput.checked)localStorage.removeItem(REMEMBER_KEY);});
     gate.querySelector('.ag-eye').addEventListener('click',()=>{passwordInput.type=passwordInput.type==='password'?'text':'password';});
-    gate.querySelector('form').addEventListener('submit',async event=>{event.preventDefault();const username=usernameInput.value.trim();const password=passwordInput.value;const error=gate.querySelector('#agLoginError');error.textContent='';const hash=await sha256(password);if(username!==USERNAME||hash!==PASSWORD_SHA256){error.textContent='INVALID USERNAME OR PASSWORD';return;}if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);sessionStorage.setItem(SESSION_KEY,'1');gate.remove();window.dispatchEvent(new CustomEvent('agworld:authenticated',{detail:{username}}));});
+    gate.querySelector('form').addEventListener('submit',async event=>{
+      event.preventDefault();
+      const username=usernameInput.value.trim(); const password=passwordInput.value; const error=gate.querySelector('#agLoginError'); error.textContent='';
+      const account=USERS[username]; const hash=await sha256(password);
+      if(!account||hash!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}
+      if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);
+      sessionStorage.setItem(SESSION_KEY,'1'); sessionStorage.setItem(ROLE_KEY,account.role); sessionStorage.setItem('gamechanger.username',username);
+      const landing=landingFor(account.role);
+      if(landing!==currentPage()){location.replace(landing);return;}
+      gate.remove(); window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role:account.role}}));
+    });
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
