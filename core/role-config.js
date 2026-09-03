@@ -12,6 +12,6 @@ window.GAME_CHANGER_ROLES = {
     return;
   }
   if(/\/index\.html$/i.test(path)||path==='/'||path===''){
-    const sync=document.createElement('script'); sync.src='core/agri-mission-sync.js?v=20260903-library-only-v2'; sync.defer=true; document.head.appendChild(sync);
+    const sync=document.createElement('script'); sync.src='core/agri-mission-sync.js?v=20260903-authoritative-v3'; sync.defer=true; document.head.appendChild(sync);
   }
 })();
