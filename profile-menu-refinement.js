@@ -1,4 +1,4 @@
-/* AG WORLD — Profile menu: logo at top, single user profile at bottom. */
+/* AG WORLD — Profile menu: stable branding without mutation loops. */
 (()=>{
   const LOGO_SRC='/Agworld/assets/Logo.png?v=20260903';
   const css=`
@@ -19,9 +19,54 @@
     @media(max-width:1100px){body.ag-profile-mode .sidebar .brand{height:125px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:120px!important}}
     @media(max-width:900px){body.ag-profile-mode .sidebar{width:24%!important}body.ag-profile-mode .missions{left:24%!important;width:26%!important}body.ag-profile-mode .map-area{left:50%!important}body.ag-profile-mode .sidebar .brand{height:105px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:100px!important}body.ag-profile-mode .sidebar .nav button{font-size:13px!important;min-height:44px!important;padding:10px!important}}
   `;
-  function installStyles(){let s=document.getElementById('ag-profile-menu-refinement-style');if(!s){s=document.createElement('style');s.id='ag-profile-menu-refinement-style';document.head.appendChild(s)}s.textContent=css}
-  function installSidebarLogo(){const s=document.querySelector('.sidebar');if(!s)return;let brand=s.querySelector('.brand');if(!brand){brand=document.createElement('div');brand.className='brand';s.prepend(brand)}let logo=brand.querySelector('.ag-world-menu-logo');if(!logo){brand.textContent='';logo=document.createElement('img');logo.className='ag-world-menu-logo';logo.alt='AG World';logo.src=LOGO_SRC;logo.decoding='async';logo.loading='eager';logo.onerror=()=>{logo.src='/Agworld/assets/Logo.png?v=20260903&retry=1'};brand.appendChild(logo)}else if(!logo.src.includes('/Agworld/assets/Logo.png'))logo.src=LOGO_SRC}
-  function removeDuplicateTopProfile(){const s=document.querySelector('.sidebar');if(!s)return;s.querySelectorAll('.menu-user').forEach(p=>p.remove());const profiles=[...s.querySelectorAll('.profile')];if(profiles.length>1)profiles.slice(0,-1).forEach(p=>p.remove());document.querySelectorAll('.map-area .ag-world-map-logo').forEach(l=>l.remove())}
-  function install(){installStyles();removeDuplicateTopProfile();installSidebarLogo();new MutationObserver(()=>{installStyles();removeDuplicateTopProfile();installSidebarLogo()}).observe(document.body,{childList:true,subtree:true})}
+
+  let observer;
+  function installStyles(){
+    let s=document.getElementById('ag-profile-menu-refinement-style');
+    if(!s){s=document.createElement('style');s.id='ag-profile-menu-refinement-style';document.head.appendChild(s)}
+    if(s.textContent!==css)s.textContent=css;
+  }
+
+  function installSidebarLogo(){
+    const s=document.querySelector('.sidebar');if(!s)return;
+    let brand=s.querySelector('.brand');
+    if(!brand){brand=document.createElement('div');brand.className='brand';s.prepend(brand)}
+    let logo=brand.querySelector('.ag-world-menu-logo');
+    if(!logo){
+      brand.textContent='';
+      logo=document.createElement('img');
+      logo.className='ag-world-menu-logo';
+      logo.alt='AG World';
+      logo.src=LOGO_SRC;
+      logo.decoding='async';
+      logo.loading='eager';
+      brand.appendChild(logo);
+    }else if(!logo.src.includes('/Agworld/assets/Logo.png'))logo.src=LOGO_SRC;
+  }
+
+  function removeDuplicateTopProfile(){
+    const s=document.querySelector('.sidebar');if(!s)return;
+    s.querySelectorAll('.menu-user').forEach(p=>p.remove());
+    const profiles=[...s.querySelectorAll('.profile')];
+    if(profiles.length>1)profiles.slice(0,-1).forEach(p=>p.remove());
+    document.querySelectorAll('.map-area .ag-world-map-logo').forEach(l=>l.remove());
+  }
+
+  function reconcile(){
+    if(observer)observer.disconnect();
+    try{
+      installStyles();
+      removeDuplicateTopProfile();
+      installSidebarLogo();
+    }finally{
+      if(observer)observer.observe(document.body,{childList:true,subtree:true});
+    }
+  }
+
+  function install(){
+    observer=new MutationObserver(reconcile);
+    reconcile();
+  }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
