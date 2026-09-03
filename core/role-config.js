@@ -23,4 +23,8 @@ window.GAME_CHANGER_ROLES = {
   script.src = 'core/mission-engine.js?v=20260903-role-build-scope';
   script.defer = true;
   document.head.appendChild(script);
+  const branding = document.createElement('script');
+  branding.src = 'core/admin-branding-cleanup.js?v=20260903-brand-clean';
+  branding.defer = true;
+  document.head.appendChild(branding);
 })();
