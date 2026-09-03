@@ -1,0 +1,20 @@
+/* AG WORLD — footer layout lock */
+body.ag-profile-mode .bottom.ag-profile-footer{
+  display:grid!important;
+  grid-template-columns:34% 41% 25%!important;
+  gap:12px!important;
+}
+body.ag-profile-mode .bottom.ag-profile-footer > .live-progress{
+  grid-column:1!important;
+  grid-row:1!important;
+}
+body.ag-profile-mode .bottom.ag-profile-footer > .live-skills{
+  grid-column:2!important;
+  grid-row:1!important;
+}
+body.ag-profile-mode .bottom.ag-profile-footer > .live-leaderboard{
+  grid-column:3!important;
+  grid-row:1!important;
+}
+/* The skill tree belongs in the footer — directly between badges/progress and leaderboard. */
+body.ag-profile-mode .bottom.ag-profile-footer .live-skills{display:block!important;}
