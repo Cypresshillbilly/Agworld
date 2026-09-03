@@ -58,20 +58,23 @@
   function render(){
     const panel=document.querySelector(PROFILE); if(!panel) return false;
     style();
-    const missions=read().filter(isAgriSales).filter(m=>idOf(m));
+    /* Use the exact same mission ordering as the Mission Library: build → role → mission name. */
+    const missions=read().filter(isAgriSales).filter(m=>idOf(m)).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base'}));
     const ids=new Set(missions.map(idOf));
     panel.querySelectorAll('.mission').forEach(card=>{ if(!ids.has(String(card.dataset.adminMissionId||''))) card.remove(); });
     panel.querySelectorAll('.gc-library-empty').forEach(e=>e.remove());
     const title=panel.querySelector('.section-title'); if(title) title.textContent='Assigned missions';
-    const existing=[...panel.querySelectorAll('.mission[data-admin-mission-id]')];
-    existing.forEach(c=>c.remove());
+    panel.querySelectorAll('.mission[data-admin-mission-id]').forEach(c=>c.remove());
     const anchor=title||panel.lastElementChild;
     if(!missions.length){
       const empty=document.createElement('article'); empty.className='mission gc-library-empty';
       empty.innerHTML='<div class="tag">MISSION LIBRARY</div><strong>No missions assigned</strong><p>There are currently no missions under Agri Build / Sales person.</p><div class="reward">MISSIONS COME FROM THE ADMINISTRATOR MISSION LIBRARY</div>';
       anchor?.insertAdjacentElement('afterend',empty); return true;
     }
-    missions.forEach(m=>anchor?.insertAdjacentElement('afterend',cardFor(m)));
+    /* Insert the complete ordered set at once so DOM insertion cannot reverse the library order. */
+    const fragment=document.createDocumentFragment();
+    missions.forEach(m=>fragment.appendChild(cardFor(m)));
+    anchor?.parentNode?.insertBefore(fragment,anchor.nextSibling);
     return true;
   }
 
