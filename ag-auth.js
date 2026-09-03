@@ -4,7 +4,8 @@
   const PASSWORD_SHA256 = 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77ee';
   const REMEMBER_KEY = 'agworld.rememberedLogin';
   const SESSION_KEY = 'agworld.authenticated';
-  const LOGIN_IMAGE = '/Agworld/assets/ag_world_login_v1.jpg?v=20260902-2016';
+  // V2 is the corrected 16:9 login artwork. Cache-buster forces GitHub Pages to fetch it again.
+  const LOGIN_IMAGE = '/Agworld/assets/ag_world_login_v2.jpg?v=20260903-0614';
 
   async function sha256(text) {
     const data = new TextEncoder().encode(text);
