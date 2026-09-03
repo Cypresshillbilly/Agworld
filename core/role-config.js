@@ -16,11 +16,15 @@ window.GAME_CHANGER_ROLES = {
   }
 };
 
-/* Load the core Mission Engine enhancements wherever the role registry is loaded. */
+/* Load core administrator mission tooling only on the administrator page. */
 (function(){
   if (!/\/admin\.html$/i.test(window.location.pathname)) return;
-  const script = document.createElement('script');
-  script.src = 'core/mission-engine.js?v=20260903-role-build-scope';
-  script.defer = true;
-  document.head.appendChild(script);
+  const missionEngine = document.createElement('script');
+  missionEngine.src = 'core/mission-engine.js?v=20260903-mission-folders';
+  missionEngine.defer = true;
+  document.head.appendChild(missionEngine);
+  const missionLibrary = document.createElement('script');
+  missionLibrary.src = 'core/mission-library.js?v=20260903-mission-folders';
+  missionLibrary.defer = true;
+  document.head.appendChild(missionLibrary);
 })();
