@@ -6,83 +6,12 @@ let profileData=null, leaderboardData=null, loading=false;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pct=(a,b)=>b?Math.max(0,Math.min(100,Number(a)/Number(b)*100)):0;
 async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(`${r.status}`);return r.json();}
-function loadCssLast(){
- if(document.getElementById('ag-live-footer-css-last'))return;
- const l=document.createElement('link');l.id='ag-live-footer-css-last';l.rel='stylesheet';l.href='live-profile-footer.css?v=20260906-3d';document.head.appendChild(l);
-}
-function badgeIcon(i){
- const icons=[
-  '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 25l7-7 8 5 6-8 7 6"/><path d="M7 29l6 6 7-7 7 6 14-14"/><circle cx="17" cy="18" r="3"/><circle cx="31" cy="15" r="3"/></svg>',
-  '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="13"/><path d="M24 8v8M24 32v8M8 24h8M32 24h8M14 14l6 6M28 28l6 6"/><path d="M24 17l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2-4.5-4.4 6.2-.9z"/></svg>',
-  '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M16 9h16v7c0 8-4 13-8 13s-8-5-8-13z"/><path d="M16 13H9v4c0 6 4 9 9 9M32 13h7v4c0 6-4 9-9 9"/><path d="M24 29v8M17 40h14"/><path d="M20 14h8"/></svg>',
-  '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7l4.8 10 10.8 1.5-7.8 7.5 1.9 10.7L24 32l-9.7 4.7 1.9-10.7-7.8-7.5L19.2 17z"/><path d="M24 12v18M18 20h12"/></svg>',
-  '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="21" width="22" height="18" rx="3"/><path d="M18 21v-5c0-8 12-8 12 0v5"/><circle cx="24" cy="29" r="2"/><path d="M24 31v4"/></svg>'
- ];
- return icons[i%icons.length];
-}
-function skillTree(p){
- const achievements=Array.isArray(p.achievements)?p.achievements:[];
- const names=achievements.map(a=>String(a.achievementName||'').toLowerCase());
- const has=term=>names.some(n=>n.includes(term));
- const nodes=[
-  {name:'Technical knowledge',short:'TECH',on:has('technical')},
-  {name:'Operational knowledge',short:'OPS',on:has('operational')},
-  {name:'Product Knowledge',short:'PRODUCT',on:has('product')},
-  {name:'Management skills',short:'MANAGEMENT',on:has('management')},
-  {name:'People skills',short:'PEOPLE',on:has('people')}
- ];
- return `<div class="ag-skill-tree">${nodes.map((n,i)=>`<div class="ag-skill-node ${n.on?'unlocked':'locked'}" data-node="${i}"><div class="ag-skill-orb"><span>${n.on?'✓':'+'}</span></div><div class="ag-skill-name">${esc(n.name)}</div><div class="ag-skill-state">${n.on?'UNLOCKED':'LOCKED'}</div></div>`).join('')}<div class="ag-skill-line l1"></div><div class="ag-skill-line l2"></div><div class="ag-skill-line l3"></div><div class="ag-skill-line l4"></div></div>`;
-}
-function markup(p,l){
- const achievements=Array.isArray(p.achievements)?p.achievements:[];
- const progress=pct(p.xp,p.xpToNextLevel);
- const leaders=(Array.isArray(l?.leaders)?l.leaders:[]).slice(0,5);
- const rows=leaders.map((r,i)=>`<div class="ag-leader-row ${r.id===p.id?'current':''}"><span class="ag-rank">${i+1}</span><span>${esc(r.name)}</span><span class="ag-leader-xp">${Number(r.xp).toLocaleString()} XP</span></div>`).join('')||'<div class="ag-progress-note">No regional data available</div>';
- const badges=achievements.slice(0,5).map((a,i)=>`<div class="ag-badge-item"><div class="ag-badge badge-${i%5}"><div class="ag-badge-ribbon"></div><div class="ag-badge-face"><span>${badgeIcon(i)}</span></div></div><span>${esc(a.achievementName)}</span></div>`).join('')||'<div class="ag-progress-note">No achievements recorded</div>';
- return `<section class="pf-section live-progress"><div class="pf-title">YOUR PROGRESS</div><div class="ag-progress-row"><div class="ag-level-shield"><b>${esc(p.level)}</b><span>LEVEL</span></div><div class="ag-progress-main"><strong>${Number(p.xp).toLocaleString()} / ${Number(p.xpToNextLevel).toLocaleString()} XP</strong><div class="ag-progress-bar"><i style="width:${progress}%"></i></div><div class="ag-progress-foot"><span>Level ${esc(p.level)}</span><span>${Math.round(progress)}%</span></div></div></div><div class="ag-badges-label">BADGES EARNED</div><div class="ag-badges">${badges}</div></section><section class="pf-section live-skills"><div class="pf-title">SKILL TREE</div><div class="ag-skill-caption">Build your field mastery</div>${skillTree(p)}</section><section class="pf-section live-leaderboard"><div class="pf-title">${esc(l?.territory||p.territory)} LEADERBOARD</div><div class="ag-leader-list">${rows}</div><div class="ag-leader-link">Regional position: ${esc(p.regionalPosition??'—')}</div></section>`;
-}
-function removeLegacyReward(f){
- if(!f)return;
- f.querySelectorAll('.ag-reward-drone,.ag-reward-title,.ag-reward-sub,.ag-reward-bar,.ag-reward-xp').forEach(el=>el.remove());
- f.querySelectorAll('.pf-section').forEach(section=>{
-  const title=(section.querySelector('.pf-title')?.textContent||'').trim().toUpperCase();
-  if(title.includes('NEXT LEVEL REWARD'))section.remove();
- });
- while(f.children.length>3)f.lastElementChild.remove();
-}
-function render(){
- const f=document.querySelector('.bottom');
- if(!f||!profileData)return;
- f.classList.add('ag-profile-footer');
- f.innerHTML=markup(profileData,leaderboardData||{territory:profileData.territory,leaders:[]});
- removeLegacyReward(f);
-}
-async function init(){
- loadCssLast();
- if(loading)return;
- const f=document.querySelector('.bottom');if(!f)return;
- removeLegacyReward(f);
- loading=true;
- try{
-  const p=await json(`${API}/api/users/${USER_ID}/profile`);
-  profileData=p;
-  try{leaderboardData=await json(`${API}/api/users/${USER_ID}/leaderboard`);}catch(e){leaderboardData={territory:p.territory,leaders:[]};}
-  render();
- }catch(e){console.warn('AG World profile API unavailable:',e);}
- finally{loading=false;}
-}
-function protect(){
- const f=document.querySelector('.bottom');if(!f)return;
- removeLegacyReward(f);
- if(profileData && !f.querySelector('.live-progress')) render();
-}
-window.agWorldRefreshProfileFooter=init;
-document.addEventListener('DOMContentLoaded',()=>{
- loadCssLast();
- init();
- const f=document.querySelector('.bottom');
- if(f)new MutationObserver(protect).observe(f,{childList:true,subtree:true});
-});
-setTimeout(init,800);
-setTimeout(init,2000);
-})();
+function loadCssLast(){if(document.getElementById('ag-live-footer-css-last'))return;const l=document.createElement('link');l.id='ag-live-footer-css-last';l.rel='stylesheet';l.href='live-profile-footer.css?v=20260903-footer4';document.head.appendChild(l)}
+function badgeIcon(i){const icons=['<svg viewBox="0 0 48 48"><path d="M10 25l7-7 8 5 6-8 7 6"/><path d="M7 29l6 6 7-7 7 6 14-14"/><circle cx="17" cy="18" r="3"/><circle cx="31" cy="15" r="3"/></svg>','<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="13"/><path d="M24 8v8M24 32v8M8 24h8M32 24h8M14 14l6 6M28 28l6 6"/><path d="M24 17l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2-4.5-4.4 6.2-.9z"/></svg>','<svg viewBox="0 0 48 48"><path d="M16 9h16v7c0 8-4 13-8 13s-8-5-8-13z"/><path d="M16 13H9v4c0 6 4 9 9 9M32 13h7v4c0 6-4 9-9 9"/><path d="M24 29v8M17 40h14"/><path d="M20 14h8"/></svg>','<svg viewBox="0 0 48 48"><path d="M24 7l4.8 10 10.8 1.5-7.8 7.5 1.9 10.7L24 32l-9.7 4.7 1.9-10.7-7.8-7.5L19.2 17z"/><path d="M24 12v18M18 20h12"/></svg>','<svg viewBox="0 0 48 48"><rect x="13" y="21" width="22" height="18" rx="3"/><path d="M18 21v-5c0-8 12-8 12 0v5"/><circle cx="24" cy="29" r="2"/><path d="M24 31v4"/></svg>'];return icons[i%icons.length]}
+function skillTree(p){const a=Array.isArray(p.achievements)?p.achievements:[],names=a.map(x=>String(x.achievementName||'').toLowerCase()),has=t=>names.some(n=>n.includes(t));const nodes=[['Technical knowledge','TECH',has('technical')],['Operational knowledge','OPS',has('operational')],['Product Knowledge','PRODUCT',has('product')],['Management skills','MANAGEMENT',has('management')],['People skills','PEOPLE',has('people')]];return `<div class="ag-skill-tree">${nodes.map((n,i)=>`<div class="ag-skill-node ${n[2]?'unlocked':'locked'}" data-node="${i}"><div class="ag-skill-orb"><span>${n[2]?'✓':'+'}</span></div><div class="ag-skill-name">${esc(n[0])}</div><div class="ag-skill-state">${n[2]?'UNLOCKED':'LOCKED'}</div></div>`).join('')}<div class="ag-skill-line l1"></div><div class="ag-skill-line l2"></div><div class="ag-skill-line l3"></div></div>`}
+function markup(p,l){const a=Array.isArray(p.achievements)?p.achievements:[],progress=pct(p.xp,p.xpToNextLevel),leaders=(Array.isArray(l?.leaders)?l.leaders:[]).slice(0,5);const rows=leaders.map((r,i)=>`<div class="ag-leader-row ${r.id===p.id?'current':''}"><span class="ag-rank">${i+1}</span><span>${esc(r.name)}</span><span class="ag-leader-xp">${Number(r.xp).toLocaleString()} XP</span></div>`).join('')||'<div class="ag-progress-note">No regional data available</div>';const badges=a.slice(0,5).map((x,i)=>`<div class="ag-badge-item"><div class="ag-badge badge-${i%5}"><div class="ag-badge-ribbon"></div><div class="ag-badge-face"><span>${badgeIcon(i)}</span></div></div><span>${esc(x.achievementName)}</span></div>`).join('')||'<div class="ag-progress-note">No achievements recorded</div>';return `<section class="pf-section live-progress"><div class="pf-title">YOUR PROGRESS</div><div class="ag-progress-row"><div class="ag-level-shield"><b>${esc(p.level)}</b><span>LEVEL</span></div><div class="ag-progress-main"><strong>${Number(p.xp).toLocaleString()} / ${Number(p.xpToNextLevel).toLocaleString()} XP</strong><div class="ag-progress-bar"><i style="width:${progress}%"></i></div><div class="ag-progress-foot"><span>Level ${esc(p.level)}</span><span>${Math.round(progress)}%</span></div></div></div><div class="ag-badges-label">BADGES EARNED</div><div class="ag-badges">${badges}</div></section><section class="pf-section live-skills"><div class="pf-title">SKILL TREE</div><div class="ag-skill-caption">FIELD MASTERY</div>${skillTree(p)}</section><section class="pf-section live-leaderboard"><div class="pf-title">${esc(l?.territory||p.territory)} LEADERBOARD</div><div class="ag-leader-list">${rows}</div><div class="ag-leader-link">Regional position: ${esc(p.regionalPosition??'—')}</div></section>`}
+function removeLegacyReward(f){if(!f)return;f.querySelectorAll('.ag-reward-drone,.ag-reward-title,.ag-reward-sub,.ag-reward-bar,.ag-reward-xp').forEach(e=>e.remove());f.querySelectorAll('.pf-section').forEach(s=>{const t=(s.querySelector('.pf-title')?.textContent||'').trim().toUpperCase();if(t.includes('NEXT LEVEL REWARD'))s.remove()});while(f.children.length>3)f.lastElementChild.remove()}
+function render(){const f=document.querySelector('.bottom');if(!f||!profileData)return;f.classList.add('ag-profile-footer');f.innerHTML=markup(profileData,leaderboardData||{territory:profileData.territory,leaders:[]});removeLegacyReward(f)}
+async function init(){loadCssLast();if(loading)return;const f=document.querySelector('.bottom');if(!f)return;removeLegacyReward(f);loading=true;try{const p=await json(`${API}/api/users/${USER_ID}/profile`);profileData=p;try{leaderboardData=await json(`${API}/api/users/${USER_ID}/leaderboard`)}catch(e){leaderboardData={territory:p.territory,leaders:[]}}render()}catch(e){console.warn('AG World profile API unavailable:',e)}finally{loading=false}}
+function protect(){const f=document.querySelector('.bottom');if(!f)return;removeLegacyReward(f);if(profileData&&!f.querySelector('.live-progress'))render()}
+window.agWorldRefreshProfileFooter=init;document.addEventListener('DOMContentLoaded',()=>{loadCssLast();init();const f=document.querySelector('.bottom');if(f)new MutationObserver(protect).observe(f,{childList:true,subtree:true})});setTimeout(init,800);setTimeout(init,2000)})();
