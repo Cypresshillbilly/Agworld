@@ -1,9 +1,21 @@
-/* AG WORLD — final footer background authority. Keep the footer field the same deep colour as the navigation menu. */
+/* AG WORLD — final footer background authority. Outer footer stays white; subsection cards use a softened version of the navigation-menu colour. */
 html body.ag-profile-mode .bottom.ag-profile-footer,
 html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer{
-  background:#202b33!important;
+  background:#ffffff!important;
   background-image:none!important;
   border:0!important;
   border-top:0!important;
   box-shadow:none!important;
+}
+html body.ag-profile-mode .bottom.ag-profile-footer>.pf-section,
+html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer>.pf-section{
+  background:#29424d!important;
+  background-image:none!important;
+  border:1px solid #38535e!important;
+  box-shadow:0 4px 12px rgba(30,55,60,.14)!important;
+  color:#f2f6f7!important;
+}
+html body.ag-profile-mode .bottom.ag-profile-footer>.pf-section:before,
+html body.ag-profile-mode .bottom.user-profile-section.ag-profile-footer>.pf-section:before{
+  display:none!important;
 }
