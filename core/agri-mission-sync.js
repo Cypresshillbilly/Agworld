@@ -1,74 +1,61 @@
-/* GAME CHANGER Agriculture build — sync Administrator missions to the Salesman Profile. */
+/* GAME CHANGER Agriculture build — the Salesman Profile reads its missions from the Administrator Mission Library. */
 (function(){
   'use strict';
   if (/\/admin\.html$/i.test(window.location.pathname)) return;
 
   const KEY = 'gamechanger.missions';
-  const SALES_ROLE = 'agriculture_sales';
-  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const normal = value => String(value || '').trim().toLowerCase().replace(/[\s_-]+/g,' ');
   const read = () => {
     try { const value = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(value) ? value : []; }
     catch (_) { return []; }
   };
-  const isAgriculture = mission => /^agriculture$/i.test(String(mission?.build || '').trim());
-  const isSalesMission = mission => {
-    const role = String(mission?.role || '*').trim().toLowerCase();
-    return role === '*' || role === SALES_ROLE || role === 'salesman' || role === 'sales person' || role === 'salesperson';
+  const isAgriculture = mission => ['agriculture','agri build','agri'].includes(normal(mission?.build));
+  const isSalesRole = mission => {
+    const role = normal(mission?.role || '*');
+    return role === '*' || ['agriculture sales','agriculture sales representative','agriculture salesman','salesman','sales person','salesperson'].includes(role) || role.replace(/ /g,'_') === 'agriculture_sales';
   };
-  const typeLabel = type => {
-    const value = String(type || 'Mission').trim().toUpperCase();
-    return value === 'FOLLOW-UP' ? 'FOLLOW-UP' : value;
-  };
-  const defaultDescription = mission => {
-    const type = String(mission?.type || '').toLowerCase();
-    if (type === 'visit') return 'Complete the assigned customer visit and record the outcome.';
-    if (type === 'training') return 'Complete the assigned training activity and record the result.';
-    if (type === 'opportunity') return 'Progress the assigned opportunity and record the next action.';
-    return 'Complete this assigned mission according to the mission objective and success criteria.';
-  };
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 
   function render(){
     const panel = document.querySelector('.missions');
-    if (!panel) return false;
-    const missions = read().filter(isAgriculture).filter(isSalesMission);
-    const title = panel.querySelector('h1');
-    if (title) title.textContent = 'MISSION CONTROL';
+    const sectionTitle = panel?.querySelector('.section-title');
+    if (!panel || !sectionTitle) return false;
+
+    const missions = read().filter(isAgriculture).filter(isSalesRole);
     panel.querySelectorAll('.mission').forEach(card => card.remove());
+    sectionTitle.textContent = 'Assigned missions';
 
-    const sectionTitle = panel.querySelector('.section-title');
-    if (sectionTitle) sectionTitle.textContent = missions.length ? 'Assigned missions' : 'Assigned missions';
-
-    const anchor = sectionTitle || panel.lastElementChild;
+    let anchor = sectionTitle;
     if (!missions.length) {
       const empty = document.createElement('div');
       empty.className = 'mission mission-empty';
-      empty.innerHTML = '<div class="tag">MISSION LIBRARY</div><strong>No missions assigned</strong><p>There are currently no missions under Agri Build / Sales person for this profile.</p><div class="reward">MISSIONS ARE CONTROLLED BY THE ADMINISTRATOR</div>';
-      anchor?.insertAdjacentElement('afterend', empty);
+      empty.innerHTML = '<div class="tag">MISSION LIBRARY</div><strong>No missions assigned</strong><p>The Administrator has not assigned any missions to the Agri Build / Sales person profile yet.</p><div class="reward">MISSIONS ARE CONTROLLED BY THE ADMINISTRATOR</div>';
+      anchor.insertAdjacentElement('afterend', empty);
       return true;
     }
 
     missions.forEach(mission => {
       const card = document.createElement('div');
       card.className = 'mission';
-      card.dataset.action = String(mission.type || 'custom').toLowerCase();
+      card.dataset.action = normal(mission.type).replace(/ /g,'-') || 'custom';
       card.dataset.adminMissionId = mission.id || '';
+      const type = String(mission.type || 'Custom').toUpperCase();
       const priority = String(mission.priority || 'Normal').toUpperCase();
-      const type = typeLabel(mission.type);
-      const description = mission.objective || defaultDescription(mission);
-      const reward = Number(mission.xp ?? mission.profileXp ?? 0);
-      card.innerHTML = `<div class="tag">${esc(type)} · ${esc(priority)} PRIORITY</div><strong>${esc(mission.name || 'Untitled mission')}</strong><p>${esc(description)}</p><div class="reward">+${Number.isFinite(reward) ? reward : 0} XP · ${esc(mission.success || 'Mission progress')}</div>`;
-      anchor?.insertAdjacentElement('afterend', card);
+      const objective = mission.objective || 'Complete the assigned mission and record the required outcome.';
+      const success = mission.success || 'Mission completed according to the defined success criteria.';
+      const xp = Number(mission.xp ?? mission.profileXp ?? 0);
+      card.innerHTML = `<div class="tag">${esc(type)} · ${esc(priority)} PRIORITY</div><strong>${esc(mission.name || 'Untitled mission')}</strong><p>${esc(objective)}</p><div class="reward">+${Number.isFinite(xp) ? xp : 0} XP · ${esc(success)}</div>`;
+      anchor.insertAdjacentElement('afterend', card);
+      anchor = card;
     });
     return true;
   }
 
   function start(){
     let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      if (render() || tries > 80) clearInterval(timer);
-    }, 100);
+    const timer = setInterval(() => { tries += 1; if (render() || tries > 120) clearInterval(timer); }, 100);
     window.addEventListener('storage', event => { if (event.key === KEY) render(); });
+    window.addEventListener('gamechanger:missions-changed', render);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once:true});
