@@ -5,19 +5,28 @@
 */
 (() => {
   const css = `
-    /* PROFILE SCREEN: keep the legacy profile page, but make it fill the browser window. */
+    /* PROFILE SCREEN: full browser window. */
     body.ag-profile-mode { display:block !important; background:#eef1f3 !important; overflow:hidden !important; }
     body.ag-profile-mode .app-shell {
-      position:fixed !important; inset:0 !important;
-      width:100vw !important; height:100vh !important;
-      max-width:none !important; max-height:none !important;
-      margin:0 !important; transform:none !important;
+      position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important;
+      max-width:none !important; max-height:none !important; margin:0 !important; transform:none !important;
       border-radius:0 !important; box-shadow:none !important;
     }
     body.ag-profile-mode .sidebar { width:14.0625vw !important; }
     body.ag-profile-mode .missions { left:14.0625vw !important; width:22.265625vw !important; height:79.2682927vh !important; }
     body.ag-profile-mode .map-area { left:36.328125vw !important; height:79.2682927vh !important; }
-    body.ag-profile-mode .bottom { left:14.0625vw !important; height:20.7317073vh !important; }
+    body.ag-profile-mode .bottom { left:0 !important; width:100vw !important; height:20.7317073vh !important; bottom:0 !important; }
+
+    /* The User Profile is the full-width footer of the Profile page. */
+    body.ag-profile-mode .bottom {
+      border:2px solid #315b35 !important;
+      border-left:0 !important; border-right:0 !important; border-bottom:0 !important;
+      background:#315b35 !important;
+      color:#fff !important;
+    }
+
+    /* Keep footer content inside the full-width User Profile section. */
+    body.ag-profile-mode .bottom > * { position:relative; z-index:1; }
 
     /* Logout control on the legacy Profile page. */
     .ag-profile-logout {
@@ -28,13 +37,11 @@
     }
     .ag-profile-logout:hover { background:#f0f6f7 !important; }
 
-    /* Full Game View: only the V1 game map; Profile page is completely hidden. */
+    /* Full Game View: V1 only. */
     body.ag-game-mode { display:block !important; background:#050706 !important; overflow:hidden !important; }
     body.ag-game-mode .app-shell {
-      position:fixed !important; inset:0 !important;
-      width:100vw !important; height:100vh !important;
-      max-width:none !important; max-height:none !important;
-      margin:0 !important; transform:none !important;
+      position:fixed !important; inset:0 !important; width:100vw !important; height:100vh !important;
+      max-width:none !important; max-height:none !important; margin:0 !important; transform:none !important;
       border-radius:0 !important; box-shadow:none !important; background:#050706 !important;
     }
     body.ag-game-mode .ag-hud,
@@ -71,7 +78,7 @@
     };
 
     const logout = () => {
-      /* Log off the current session. Keep Remember Me credentials intact if the user chose it. */
+      /* End the current authenticated session. Remember Me remains available. */
       sessionStorage.removeItem('agworld.authenticated');
       document.body.classList.remove('ag-profile-mode', 'ag-game-mode', 'ag-premium-mode');
       window.__AG_WORLD_VIEW = 'login';
@@ -104,19 +111,13 @@
     window.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape') return;
       if (!document.body.classList.contains('ag-game-mode')) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      enterProfile();
+      event.preventDefault(); event.stopImmediatePropagation(); enterProfile();
     }, true);
 
-    window.addEventListener('agworld:authenticated', () => {
-      enterProfile();
-      addLogout();
-    });
+    window.addEventListener('agworld:authenticated', () => { enterProfile(); addLogout(); });
 
     if (sessionStorage.getItem('agworld.authenticated') === '1') {
-      enterProfile();
-      addLogout();
+      enterProfile(); addLogout();
     } else {
       document.body.classList.remove('ag-profile-mode', 'ag-game-mode', 'ag-premium-mode');
       window.__AG_WORLD_VIEW = 'login';
