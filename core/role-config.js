@@ -5,6 +5,7 @@ window.GAME_CHANGER_ROLES = {
 };
 (function(){
   const path=window.location.pathname;
+  const context=document.createElement('script'); context.src='core/agri-build-context.js?v=20260903-build-context-v1'; context.defer=true; document.head.appendChild(context);
   if(/\/admin\.html$/i.test(path)){
     const mission=document.createElement('script'); mission.src='core/mission-engine.js?v=20260903-role-build-scope-v2'; mission.defer=true; document.head.appendChild(mission);
     const library=document.createElement('script'); library.src='core/mission-library.js?v=20260903-mission-delete-v2'; library.defer=true; document.head.appendChild(library);
@@ -12,6 +13,6 @@ window.GAME_CHANGER_ROLES = {
     return;
   }
   if(/\/index\.html$/i.test(path)||path==='/'||path===''){
-    const sync=document.createElement('script'); sync.src='core/agri-mission-sync.js?v=20260903-library-cards-v4'; sync.defer=true; document.head.appendChild(sync);
+    const sync=document.createElement('script'); sync.src='core/agri-mission-sync.js?v=20260903-library-cards-v5'; sync.defer=true; document.head.appendChild(sync);
   }
 })();
