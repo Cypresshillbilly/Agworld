@@ -1,4 +1,4 @@
-/* AG WORLD — Profile menu refinement. One-pass only: no observers or polling. */
+/* AG WORLD — Profile menu refinement. Sidebar-only observer: stable and does not create a load loop. */
 (()=>{
   const LOGO_SRC='/Agworld/assets/Logo.png?v=20260903';
   const STYLE_ID='ag-profile-menu-refinement-style';
@@ -24,10 +24,12 @@
     if(document.getElementById(STYLE_ID))return;
     const s=document.createElement('style');s.id=STYLE_ID;s.textContent=css;document.head.appendChild(s);
   }
-  function applyOnce(){
+  function applySidebar(){
     installStyles();
     const s=document.querySelector('.sidebar');
-    if(!s)return;
+    if(!s)return false;
+    const observer=s.__agWorldSidebarObserver;
+    if(observer)observer.disconnect();
     s.querySelectorAll('.menu-user').forEach(p=>p.remove());
     const profiles=[...s.querySelectorAll('.profile')];
     if(profiles.length>1)profiles.slice(0,-1).forEach(p=>p.remove());
@@ -35,8 +37,19 @@
     if(!brand){brand=document.createElement('div');brand.className='brand';s.prepend(brand)}
     let logo=brand.querySelector('.ag-world-menu-logo');
     if(!logo){logo=document.createElement('img');logo.className='ag-world-menu-logo';logo.alt='AG World';logo.decoding='async';logo.loading='eager';brand.replaceChildren(logo)}
-    logo.src=LOGO_SRC;
+    if(logo.getAttribute('src')!==LOGO_SRC)logo.setAttribute('src',LOGO_SRC);
     document.querySelectorAll('.map-area .ag-world-map-logo').forEach(l=>l.remove());
+    if(observer)observer.observe(s,{childList:true,subtree:true});
+    return true;
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyOnce,{once:true});else applyOnce();
+  function start(){
+    installStyles();
+    const s=document.querySelector('.sidebar');
+    if(!s)return;
+    applySidebar();
+    const observer=new MutationObserver(()=>applySidebar());
+    s.__agWorldSidebarObserver=observer;
+    observer.observe(s,{childList:true,subtree:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
