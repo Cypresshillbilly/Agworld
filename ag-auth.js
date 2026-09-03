@@ -1,4 +1,4 @@
-/* AG WORLD login-only authentication gate — V1.6 */
+/* AG WORLD login-only authentication gate — V1.7 */
 (() => {
   const USERNAME = 'Admin';
   const PASSWORD_SHA256 = 'e11cc812d74ac85a0aa6ff6ab4c4e1d43510930d4d988ee2609648d7d7da77ee';
@@ -54,14 +54,18 @@
     const passwordInput = gate.querySelector('#agPassword');
     const rememberInput = gate.querySelector('#agRemember');
 
-    // On refresh, credentials are restored ONLY when they were explicitly remembered.
-    // Clear any browser autofill when there is no remembered login.
     if (!remembered) {
       usernameInput.value = '';
       passwordInput.value = '';
       rememberInput.checked = false;
       requestAnimationFrame(() => { usernameInput.value = ''; passwordInput.value = ''; });
     }
+
+    // The Remember Me choice takes effect immediately. Unticking it removes
+    // the saved credentials, so a refresh cannot restore them.
+    rememberInput.addEventListener('change', () => {
+      if (!rememberInput.checked) localStorage.removeItem(REMEMBER_KEY);
+    });
 
     gate.querySelector('.ag-eye').addEventListener('click',()=>{passwordInput.type=passwordInput.type==='password'?'text':'password';});
     gate.querySelector('form').addEventListener('submit',async event=>{event.preventDefault();const username=usernameInput.value.trim();const password=passwordInput.value;const error=gate.querySelector('#agLoginError');error.textContent='';const hash=await sha256(password);if(username!==USERNAME||hash!==PASSWORD_SHA256){error.textContent='INVALID USERNAME OR PASSWORD';return;}if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);sessionStorage.setItem(SESSION_KEY,'1');gate.remove();window.dispatchEvent(new CustomEvent('agworld:authenticated',{detail:{username}}));});
