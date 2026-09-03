@@ -5,15 +5,13 @@ function loadCss(){
   const l=document.createElement('link');
   l.id='ag-final-footer-css';
   l.rel='stylesheet';
-  l.href='footer-final-layout.css?v=20260916';
+  l.href='footer-final-layout.css?v=20260918';
   document.head.appendChild(l);
 }
 function fix(){
   const f=document.querySelector('.bottom');
-  if(!f)return;
+  if(!f||!document.body.classList.contains('ag-profile-mode'))return;
   f.classList.add('ag-profile-footer');
-  /* Do not rewrite footer contents here. live-profile-footer.js is the single
-     owner of the three footer panels and moves BADGES EARNED above MISSION CONTROL. */
   const progress=f.querySelector('.live-progress');
   const skills=f.querySelector('.live-skills,.final-skill-tree');
   const leader=f.querySelector('.live-leaderboard');
