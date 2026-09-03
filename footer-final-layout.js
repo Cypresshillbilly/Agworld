@@ -1,15 +1,35 @@
-/* AG WORLD — Dota-style radar skill profile in footer. */
+/* AG WORLD — footer layout controller. Live profile footer owns content and badge relocation. */
 (()=>{
-const skills=[{key:'technical',name:'TECHNICAL',icon:'⚙'},{key:'operational',name:'OPERATIONAL',icon:'◈'},{key:'product',name:'PRODUCT',icon:'✦'},{key:'management',name:'MANAGEMENT',icon:'◆'},{key:'people',name:'PEOPLE',icon:'●'}],MAX=25;
-function esc(v){return String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
-function values(){const v=window.AG_WORLD_SKILL_TOTALS||{};return skills.map(s=>Math.max(0,Math.min(MAX,Number(v[s.key])||0)))}
-function polar(cx,cy,r,i){const a=-Math.PI/2+i*2*Math.PI/skills.length;return [cx+Math.cos(a)*r,cy+Math.sin(a)*r]}
-function points(cx,cy,r,vals){return vals.map((v,i)=>polar(cx,cy,r*v/MAX,i).map(n=>n.toFixed(1)).join(',')).join(' ')}
-function grid(cx,cy,r){let x='';for(let n=1;n<=5;n++){const rr=r*n/5;x+=`<polygon points="${skills.map((_,i)=>polar(cx,cy,rr,i).map(v=>v.toFixed(1)).join(',')).join(' ')}"/>`}return x}
-function axes(cx,cy,r){return skills.map((_,i)=>{const p=polar(cx,cy,r,i);return `<line x1="${cx}" y1="${cy}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}"/>`}).join('')}
-function labels(cx,cy,r){return skills.map((s,i)=>{const p=polar(cx,cy,r+12,i),a=Math.abs(p[0]-cx)<7?'middle':p[0]<cx?'end':'start';return `<text x="${p[0].toFixed(1)}" y="${p[1].toFixed(1)}" text-anchor="${a}">${esc(s.name)}</text>`}).join('')}
-function skillMarkup(){const vals=values(),total=vals.reduce((a,b)=>a+b,0),poly=points(104,62,46,vals);return `<section class="pf-section live-skills final-skill-tree"><div class="pf-title">SKILL PROFILE</div><div class="final-skill-subtitle">${total} ★ TOTAL SKILL STARS</div><div class="final-radar-wrap"><div class="final-radar-chart"><svg viewBox="0 0 210 128" aria-label="Player skill radar chart"><g class="final-radar-grid">${grid(104,62,46)}</g><g class="final-radar-axes">${axes(104,62,46)}</g><polygon class="final-radar-fill" points="${poly}"></polygon><polyline class="final-radar-outline" points="${poly}"></polyline><g class="final-radar-points">${vals.map((v,i)=>{const p=polar(104,62,46*v/MAX,i);return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.2"></circle>`}).join('')}</g><circle class="final-radar-center" cx="104" cy="62" r="3"></circle><g class="final-radar-labels">${labels(104,62,46)}</g></svg></div><div class="final-radar-stats">${skills.map((s,i)=>`<div class="final-radar-stat"><span>${s.icon}</span><div><b>${esc(s.name)}</b><strong>${vals[i]} ★</strong></div></div>`).join('')}</div></div></section>`}
-function fix(){const f=document.querySelector('.bottom.ag-profile-footer,.bottom');if(!f)return;f.classList.add('ag-profile-footer');const old=f.querySelector('.final-skill-tree');if(old)old.remove();let leader=f.querySelector('.live-leaderboard');if(!leader){const sections=[...f.children];leader=sections.find(s=>(s.textContent||'').toUpperCase().includes('LEADERBOARD'))}if(!leader)return;const holder=document.createElement('div');holder.innerHTML=skillMarkup();f.insertBefore(holder.firstElementChild,leader);f.querySelectorAll('.pf-section').forEach(s=>{const title=(s.querySelector('.pf-title')?.textContent||'').toUpperCase();if(title.includes('NEXT LEVEL REWARD'))s.remove()})}
-function loadCss(){const old=document.getElementById('ag-final-footer-css');if(old)old.remove();const l=document.createElement('link');l.id='ag-final-footer-css';l.rel='stylesheet';l.href='footer-final-layout.css?v=20260915-radar';document.head.appendChild(l)}
-function start(){loadCss();fix();const f=document.querySelector('.bottom');if(f)new MutationObserver(()=>{if(!f.querySelector('.final-skill-tree'))fix()}).observe(f,{childList:true});setTimeout(fix,500);setTimeout(fix,1200);setTimeout(fix,2500)}
-document.addEventListener('DOMContentLoaded',start);setTimeout(start,1500)})();
+function loadCss(){
+  if(document.getElementById('ag-final-footer-css'))return;
+  const l=document.createElement('link');
+  l.id='ag-final-footer-css';
+  l.rel='stylesheet';
+  l.href='footer-final-layout.css?v=20260916';
+  document.head.appendChild(l);
+}
+function fix(){
+  const f=document.querySelector('.bottom');
+  if(!f)return;
+  f.classList.add('ag-profile-footer');
+  /* Do not rewrite footer contents here. live-profile-footer.js is the single
+     owner of the three footer panels and moves BADGES EARNED above MISSION CONTROL. */
+  const progress=f.querySelector('.live-progress');
+  const skills=f.querySelector('.live-skills,.final-skill-tree');
+  const leader=f.querySelector('.live-leaderboard');
+  if(progress)progress.style.gridColumn='1';
+  if(skills)skills.style.gridColumn='2';
+  if(leader)leader.style.gridColumn='3';
+}
+function start(){
+  loadCss();
+  fix();
+  const f=document.querySelector('.bottom');
+  if(f)new MutationObserver(()=>fix()).observe(f,{childList:true,subtree:true});
+  setTimeout(fix,500);
+  setTimeout(fix,1200);
+  setTimeout(fix,2500);
+}
+document.addEventListener('DOMContentLoaded',start);
+setTimeout(start,1500);
+})();
