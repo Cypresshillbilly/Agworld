@@ -7,5 +7,7 @@ window.AG_WORLD_CONFIG = {
 // still initializes normally.
 const AGWORLD_SPATIAL_SOURCES = {
   municipalities: 'https://nspdr.dlrrd.gov.za/server/rest/services/NationalDatasets/MunicipalDemarcationBoard/MapServer/3/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson',
-  towns: 'https://gis.westerncape.gov.za/server2/rest/services/SpatialDataWarehouse/AfriGIS_Boundaries/MapServer/9/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson'
+  // National Surveyor-General town polygons, rather than the previous
+  // Western Cape-hosted AfriGIS endpoint.
+  towns: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/130/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&f=geojson'
 };
