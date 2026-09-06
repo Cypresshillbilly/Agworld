@@ -49,6 +49,71 @@ function saveLocal() {
   localStorage.setItem('agworld-farms-v2', JSON.stringify(farms.map(cleanFarm)));
 }
 
+function geometryToBoundary(geometry) {
+  if (!geometry) return [];
+  const ring = geometry.type === 'Polygon' ? geometry.coordinates?.[0]
+    : geometry.type === 'MultiPolygon' ? geometry.coordinates?.[0]?.[0] : [];
+  return (ring || []).map(([lng, lat]) => ({ lat, lng }));
+}
+
+function normaliseSpatialFeatures(geojson, level) {
+  const features = geojson?.features || [];
+  return features.map((feature, index) => {
+    const p = feature.properties || {};
+    const name = p.MUNICNAME || p.NameCode || p.S12_NAME || p.SGADMIN || p.SGTOWN || p.TOWN || p.NAME || p.name || `${level} ${index + 1}`;
+    const sourceId = p.MUNICCODE || p.MUNICCD || p.AG_SGAD_ID || p.OBJECTID || index + 1;
+    const boundary = geometryToBoundary(feature.geometry);
+    const center = boundary.length ? centroid(boundary) : null;
+    return {
+      id: `ag-${level}-${String(sourceId).toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      code: String(sourceId),
+      name,
+      regionLabel: name,
+      level,
+      parentId: null,
+      status: 'Active',
+      control: 0,
+      owner: 'Unassigned',
+      source: level === 'municipality' ? 'Municipal Demarcation Board / DLRRD' : 'AfriGIS / Surveyor General via Western Cape GIS',
+      boundary,
+      center,
+      properties: p
+    };
+  }).filter(x => x.boundary.length >= 3);
+}
+
+function pointInPolygon(point, polygon) {
+  if (!point || !polygon?.length) return false;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].lng, yi = polygon[i].lat;
+    const xj = polygon[j].lng, yj = polygon[j].lat;
+    const intersect = ((yi > point.lat) !== (yj > point.lat)) &&
+      (point.lng < ((xj - xi) * (point.lat - yi)) / ((yj - yi) || Number.EPSILON) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+function linkHierarchySpatialParents() {
+  municipalities.forEach(m => {
+    const province = territories.find(p => pointInPolygon(m.center, p.boundary));
+    if (province) m.parentId = province.id;
+  });
+  towns.forEach(t => {
+    const municipality = municipalities.find(m => pointInPolygon(t.center, m.boundary));
+    if (municipality) t.parentId = municipality.id;
+  });
+  farms.forEach(f => {
+    if (!f.boundary?.length) return;
+    const center = centroid(f.boundary);
+    const municipality = municipalities.find(m => pointInPolygon(center, m.boundary));
+    const town = towns.find(t => pointInPolygon(center, t.boundary));
+    if (municipality) f.municipalityId = municipality.id;
+    if (town) f.townId = town.id;
+  });
+}
+
 async function loadFarms() {
   try {
     const [farmResponse, territoryResponse] = await Promise.all([
@@ -71,6 +136,17 @@ async function loadFarms() {
     municipalities = territoryData.municipalities || [];
     towns = territoryData.towns || [];
 
+    // Load real municipal and town boundary layers from the published GIS services.
+    // If a remote service is temporarily unavailable, the application still opens
+    // using the hierarchy manifest and retries on the next page load.
+    const [municipalLayer, townLayer] = await Promise.allSettled([
+      fetch(AGWORLD_SPATIAL_SOURCES.municipalities).then(r => { if (!r.ok) throw new Error('municipal layer'); return r.json(); }),
+      fetch(AGWORLD_SPATIAL_SOURCES.towns).then(r => { if (!r.ok) throw new Error('town layer'); return r.json(); })
+    ]);
+    if (municipalLayer.status === 'fulfilled') municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
+    if (townLayer.status === 'fulfilled') towns = normaliseSpatialFeatures(townLayer.value, 'town');
+    linkHierarchySpatialParents();
+
     // Backfill territory links for existing farm records.
     farms.forEach(farm => {
       if (!farm.territoryId) {
@@ -78,6 +154,7 @@ async function loadFarms() {
         if (match) farm.territoryId = match.id;
       }
     });
+    linkHierarchySpatialParents();
     initMap();
   } catch (error) {
     $('mapStatus').textContent = 'Agriculture world data could not be loaded.';
@@ -108,7 +185,7 @@ window.agWorldMapReady = () => {
   towns.forEach(addTerritory);
   farms.forEach(addFarm);
   updateZoomStage();
-  $('mapStatus').textContent = `Satellite map active · Country → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns · ${farms.length} farms`;
+  $('mapStatus').textContent = `Live GIS hierarchy · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
 };
 
 function addTerritory(territory) {
