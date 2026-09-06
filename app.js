@@ -220,13 +220,15 @@ async function loadSpatialLayersInBackground() {
 }
 
 function renderGoogleMap() {
-  try {
-    if (!window.google || !google.maps || !google.maps.Map) {
-      throw new Error('Google Maps API loaded without the Map library');
-    }
+  if (!window.google?.maps?.Map) {
+    const message = 'Google Maps JavaScript API finished loading but the Map constructor is unavailable. Check Maps JavaScript API activation and API-key restrictions.';
+    console.error('AG World map:', message, window.google);
+    $('mapStatus').textContent = message;
+    return;
+  }
 
-    // Use the proven V1 base-map initialisation first. Territory and GIS overlays
-    // are deliberately kept out of this critical path.
+  try {
+    // Exact V1 base-map path: create the satellite map before any farm or GIS work.
     map = new google.maps.Map($('map'), {
       center: { lat: -29, lng: 24 },
       zoom: 5,
@@ -242,17 +244,16 @@ function renderGoogleMap() {
     map.addListener('zoom_changed', updateZoomStage);
     farms.forEach(addFarm);
     updateZoomStage();
-
     $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded`;
   } catch (error) {
     console.error('AG World Google Maps initialisation failed:', error);
-    $('mapStatus').textContent = `Google Maps loaded but could not initialise: ${error.message}`;
+    $('mapStatus').textContent = `Google Maps initialisation failed: ${error.message}`;
   }
 }
 
 function initMap() {
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
-    $('mapStatus').textContent = 'Google satellite mapping is inactive: no API key is configured.';
+    $('mapStatus').textContent = 'Google satellite mapping is inactive: no API key is available to the dashboard.';
     return;
   }
 
@@ -261,51 +262,29 @@ function initMap() {
     return;
   }
 
-  if (document.getElementById('agworld-google-maps-script')) return;
+  const existing = document.getElementById('agworld-google-maps-script');
+  if (existing) return;
 
   $('mapStatus').textContent = 'Connecting to Google Maps…';
 
-  let settled = false;
-  const fail = message => {
-    if (settled) return;
-    settled = true;
-    console.error('AG World map:', message);
-    $('mapStatus').textContent = message;
-  };
-
-  // Google calls this only when the Maps API itself has finished initialising.
   window.agWorldMapReady = () => {
-    if (settled) return;
-    settled = true;
-    $('mapStatus').textContent = 'Google Maps ready · rendering satellite imagery…';
-    requestAnimationFrame(() => requestAnimationFrame(renderGoogleMap));
+    renderGoogleMap();
   };
 
   window.gm_authFailure = () => {
-    fail('Google Maps authorisation failed. Enable Maps JavaScript API, billing and the GitHub Pages website referrer for this key.');
+    $('mapStatus').textContent = 'Google Maps authorisation failed. Check the Maps JavaScript API, billing and GitHub Pages HTTP referrer restriction.';
   };
 
+  // Deliberately use the same simple loader pattern as the earlier V1 build.
   const script = document.createElement('script');
   script.id = 'agworld-google-maps-script';
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&callback=agWorldMapReady`;
   script.async = true;
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&libraries=drawing&loading=async&callback=agWorldMapReady`;
-
-  script.onload = () => {
-    // The API may complete after this event; the callback above is authoritative.
-    if (!settled) $('mapStatus').textContent = 'Google Maps script downloaded · waiting for API initialisation…';
-  };
-
+  script.defer = true;
   script.onerror = () => {
-    fail('Google Maps could not be downloaded. Check the connection, browser blocking, API key restrictions or Google Cloud billing.');
+    $('mapStatus').textContent = 'Google Maps script could not be downloaded.';
   };
-
   document.head.appendChild(script);
-
-  setTimeout(() => {
-    if (!settled) {
-      fail('Google Maps did not initialise within 20 seconds. This usually means the API key is restricted incorrectly, the Maps JavaScript API is disabled, or billing is not active.');
-    }
-  }, 20000);
 }
 
 function addTerritory(territory) {
