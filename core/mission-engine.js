@@ -51,7 +51,7 @@
       const role=document.getElementById('missionRole')?.value || '*';
       const build=buildSelect.value || 'Agriculture';
       const workflow=[...document.querySelectorAll('#steps input')].map(i=>i.value.trim()).filter(Boolean);
-      window.GAME_CHANGER_MISSION_STORE?.create({name,build,role,type,priority,objective,success,xp:Number(xpInput?.value || 0),workflow});
+      window.GAME_CHANGER_MISSIONS?.create({name,build,role,type,priority,objective,success,xp:Number(xpInput?.value || 0),workflow});
     },true);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
