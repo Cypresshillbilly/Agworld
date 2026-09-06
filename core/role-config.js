@@ -13,7 +13,7 @@ window.GAME_CHANGER_ROLES = {
   const start=()=>{
     if(path==='admin.html'){
       load('core/mission-engine.js?v=admin-stable-v2');
-      load('core/mission-library.js?v=admin-stable-v2');
+      load('core/mission-library.js?v=admin-dark-library-v3');
       load('core/admin-ui-polish.js?v=admin-stable-v2');
       return;
     }
