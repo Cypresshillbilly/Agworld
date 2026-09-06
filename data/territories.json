@@ -1,45 +1,321 @@
 {
-  "schemaVersion": 1,
-  "note": "Initial Ag World territory structure. Territory boundaries are broad game-management zones and can later be replaced by approved operational GIS territories.",
+  "schemaVersion": 2,
+  "note": "All nine South African provinces are initial Ag World territories. Current boundaries are broad game-management placeholders centred on each province and should later be replaced with authoritative provincial GIS boundaries.",
   "territories": [
     {
-      "id": "ag-territory-01-limpopo",
+      "id": "ag-territory-01-eastern-cape",
       "code": "01",
-      "name": "Limpopo Agricultural Territory",
-      "regionLabel": "Limpopo",
-      "regions": ["Limpopo"],
+      "name": "Eastern Cape Agricultural Territory",
+      "regionLabel": "Eastern Cape",
+      "regions": [
+        "Eastern Cape"
+      ],
       "status": "Active",
-      "control": 58,
+      "control": 42,
       "owner": "Unassigned",
-      "description": "Northern agriculture territory focused on opportunity development and precision agriculture adoption.",
-      "center": {"lat": -24.4, "lng": 29.2},
-      "boundary": [{"lat":-22.2,"lng":26.0},{"lat":-22.2,"lng":31.4},{"lat":-25.8,"lng":31.4},{"lat":-25.8,"lng":26.0}]
+      "description": "Ag World Eastern Cape provincial territory.",
+      "center": {
+        "lat": -32,
+        "lng": 25.6
+      },
+      "boundary": [
+        {
+          "lat": -29.2,
+          "lng": 21.8
+        },
+        {
+          "lat": -29.2,
+          "lng": 29.400000000000002
+        },
+        {
+          "lat": -34.8,
+          "lng": 29.400000000000002
+        },
+        {
+          "lat": -34.8,
+          "lng": 21.8
+        }
+      ]
     },
     {
       "id": "ag-territory-02-free-state",
       "code": "02",
       "name": "Free State Agricultural Territory",
       "regionLabel": "Free State",
-      "regions": ["Free State"],
+      "regions": [
+        "Free State"
+      ],
       "status": "Active",
       "control": 72,
-      "owner": "Ag World",
-      "description": "Central agricultural territory with strong commercial farming potential.",
-      "center": {"lat": -28.4, "lng": 26.7},
-      "boundary": [{"lat":-26.4,"lng":24.0},{"lat":-26.4,"lng":30.0},{"lat":-30.2,"lng":30.0},{"lat":-30.2,"lng":24.0}]
+      "owner": "Unassigned",
+      "description": "Ag World Free State provincial territory.",
+      "center": {
+        "lat": -28.5,
+        "lng": 26.8
+      },
+      "boundary": [
+        {
+          "lat": -26.6,
+          "lng": 23.8
+        },
+        {
+          "lat": -26.6,
+          "lng": 29.8
+        },
+        {
+          "lat": -30.4,
+          "lng": 29.8
+        },
+        {
+          "lat": -30.4,
+          "lng": 23.8
+        }
+      ]
     },
     {
-      "id": "ag-territory-03-kzn",
+      "id": "ag-territory-03-gauteng",
       "code": "03",
+      "name": "Gauteng Agricultural Territory",
+      "regionLabel": "Gauteng",
+      "regions": [
+        "Gauteng"
+      ],
+      "status": "Active",
+      "control": 65,
+      "owner": "Unassigned",
+      "description": "Ag World Gauteng provincial territory.",
+      "center": {
+        "lat": -26.1,
+        "lng": 28.1
+      },
+      "boundary": [
+        {
+          "lat": -25.3,
+          "lng": 26.700000000000003
+        },
+        {
+          "lat": -25.3,
+          "lng": 29.5
+        },
+        {
+          "lat": -26.900000000000002,
+          "lng": 29.5
+        },
+        {
+          "lat": -26.900000000000002,
+          "lng": 26.700000000000003
+        }
+      ]
+    },
+    {
+      "id": "ag-territory-04-kwazulu-natal",
+      "code": "04",
       "name": "KwaZulu-Natal Agricultural Territory",
       "regionLabel": "KwaZulu-Natal",
-      "regions": ["KwaZulu-Natal"],
+      "regions": [
+        "KwaZulu-Natal"
+      ],
       "status": "Active",
       "control": 74,
       "owner": "Nico van Rooyen",
-      "description": "Assigned sales territory for the Agriculture Sales Representative.",
-      "center": {"lat": -29.4, "lng": 30.6},
-      "boundary": [{"lat":-27.0,"lng":28.2},{"lat":-27.0,"lng":33.2},{"lat":-31.8,"lng":33.2},{"lat":-31.8,"lng":28.2}]
+      "description": "Ag World KwaZulu-Natal provincial territory.",
+      "center": {
+        "lat": -28.7,
+        "lng": 30.7
+      },
+      "boundary": [
+        {
+          "lat": -26.5,
+          "lng": 28.599999999999998
+        },
+        {
+          "lat": -26.5,
+          "lng": 32.8
+        },
+        {
+          "lat": -30.9,
+          "lng": 32.8
+        },
+        {
+          "lat": -30.9,
+          "lng": 28.599999999999998
+        }
+      ]
+    },
+    {
+      "id": "ag-territory-05-limpopo",
+      "code": "05",
+      "name": "Limpopo Agricultural Territory",
+      "regionLabel": "Limpopo",
+      "regions": [
+        "Limpopo"
+      ],
+      "status": "Active",
+      "control": 58,
+      "owner": "Unassigned",
+      "description": "Ag World Limpopo provincial territory.",
+      "center": {
+        "lat": -23.8,
+        "lng": 29.8
+      },
+      "boundary": [
+        {
+          "lat": -21.8,
+          "lng": 26.7
+        },
+        {
+          "lat": -21.8,
+          "lng": 32.9
+        },
+        {
+          "lat": -25.8,
+          "lng": 32.9
+        },
+        {
+          "lat": -25.8,
+          "lng": 26.7
+        }
+      ]
+    },
+    {
+      "id": "ag-territory-06-mpumalanga",
+      "code": "06",
+      "name": "Mpumalanga Agricultural Territory",
+      "regionLabel": "Mpumalanga",
+      "regions": [
+        "Mpumalanga"
+      ],
+      "status": "Active",
+      "control": 55,
+      "owner": "Unassigned",
+      "description": "Ag World Mpumalanga provincial territory.",
+      "center": {
+        "lat": -25.4,
+        "lng": 30.9
+      },
+      "boundary": [
+        {
+          "lat": -23.7,
+          "lng": 28.9
+        },
+        {
+          "lat": -23.7,
+          "lng": 32.9
+        },
+        {
+          "lat": -27.099999999999998,
+          "lng": 32.9
+        },
+        {
+          "lat": -27.099999999999998,
+          "lng": 28.9
+        }
+      ]
+    },
+    {
+      "id": "ag-territory-07-northern-cape",
+      "code": "07",
+      "name": "Northern Cape Agricultural Territory",
+      "regionLabel": "Northern Cape",
+      "regions": [
+        "Northern Cape"
+      ],
+      "status": "Active",
+      "control": 38,
+      "owner": "Unassigned",
+      "description": "Ag World Northern Cape provincial territory.",
+      "center": {
+        "lat": -29,
+        "lng": 21.5
+      },
+      "boundary": [
+        {
+          "lat": -23.8,
+          "lng": 15.8
+        },
+        {
+          "lat": -23.8,
+          "lng": 27.2
+        },
+        {
+          "lat": -34.2,
+          "lng": 27.2
+        },
+        {
+          "lat": -34.2,
+          "lng": 15.8
+        }
+      ]
+    },
+    {
+      "id": "ag-territory-08-north-west",
+      "code": "08",
+      "name": "North West Agricultural Territory",
+      "regionLabel": "North West",
+      "regions": [
+        "North West"
+      ],
+      "status": "Active",
+      "control": 49,
+      "owner": "Unassigned",
+      "description": "Ag World North West provincial territory.",
+      "center": {
+        "lat": -26.7,
+        "lng": 25.8
+      },
+      "boundary": [
+        {
+          "lat": -24.7,
+          "lng": 22.8
+        },
+        {
+          "lat": -24.7,
+          "lng": 28.8
+        },
+        {
+          "lat": -28.7,
+          "lng": 28.8
+        },
+        {
+          "lat": -28.7,
+          "lng": 22.8
+        }
+      ]
+    },
+    {
+      "id": "ag-territory-09-western-cape",
+      "code": "09",
+      "name": "Western Cape Agricultural Territory",
+      "regionLabel": "Western Cape",
+      "regions": [
+        "Western Cape"
+      ],
+      "status": "Active",
+      "control": 61,
+      "owner": "Unassigned",
+      "description": "Ag World Western Cape provincial territory.",
+      "center": {
+        "lat": -33.3,
+        "lng": 19.8
+      },
+      "boundary": [
+        {
+          "lat": -30.799999999999997,
+          "lng": 16
+        },
+        {
+          "lat": -30.799999999999997,
+          "lng": 23.6
+        },
+        {
+          "lat": -35.8,
+          "lng": 23.6
+        },
+        {
+          "lat": -35.8,
+          "lng": 16
+        }
+      ]
     }
   ]
 }
