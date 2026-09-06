@@ -7,6 +7,15 @@
     const form=panel?.querySelector('.ag-login-form');
     if(!gate||!panel||!brand||!form)return;
 
+    if(!brand.querySelector('img.ag-official-gamechanger-logo')){
+      brand.innerHTML='';
+      const img=document.createElement('img');
+      img.className='ag-official-gamechanger-logo';
+      img.src='assets/branding/game-changer/horizontal/game_changer_horizontal_dark.svg';
+      img.alt='GAME CHANGER';
+      brand.appendChild(img);
+    }
+
     if(!panel.querySelector('.ag-login-wide')){
       const wide=document.createElement('div');
       wide.className='ag-login-wide';
@@ -66,6 +75,14 @@
   width:100%;
   margin:0;
   text-align:left;
+}
+#ag-login-gate .ag-official-gamechanger-logo{
+  display:block;
+  width:100%;
+  max-width:355px;
+  height:auto;
+  object-fit:contain;
+  background:transparent;
 }
 #ag-login-gate .gc-login-brand strong{
   font-size:clamp(34px,4vw,58px);
