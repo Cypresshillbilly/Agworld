@@ -289,6 +289,17 @@
   function renderMissionSidebar() {
     const side = document.querySelector('.missions');
     if (!side) return;
+
+    // Chapters 1 and 2 are player progression chapters. The main My Missions
+    // area belongs to the Chapter Engine until the player reaches Chapter 3.
+    const progression = window.AGWorldProgression;
+    const progressionState = progression?.getState?.();
+    if (progressionState && Number(progressionState.currentChapter) < 3) {
+      const oldList = document.getElementById('territoryMissionList');
+      if (oldList) oldList.remove();
+      return;
+    }
+
     let box = document.getElementById('territoryMissionList');
     if (!box) {
       box = document.createElement('div');
