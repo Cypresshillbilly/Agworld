@@ -1532,6 +1532,39 @@ if (aiAction) aiAction.onclick = () => { const farm = farms.filter(f => (f.drone
 document.querySelectorAll('.mission').forEach(mission => mission.onclick = () => toast(`Mission opened: ${mission.querySelector('strong').textContent}`));
 document.querySelectorAll('.nav button').forEach(button => button.onclick = () => { document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active')); button.classList.add('active'); toast(`${button.textContent.trim()} selected`); });
 window.addEventListener('resize', () => { const host = $('farmScene'); if (renderer && host.clientWidth) { camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(host.clientWidth, host.clientHeight); } });
+// Authentication can remove the login gate after the map has already been
+// created. A Google map initialised while its container is hidden may appear
+// blank in a fresh/incognito session. Re-layout it after authentication and
+// retry the GIS load if the first background request raced the login flow.
+function refreshMapAfterAuthentication() {
+  if (!map) {
+    loadFarms().catch(error => console.warn('AG World map retry failed', error));
+    return;
+  }
+  try {
+    google.maps.event.trigger(map, 'resize');
+    const center = map.getCenter() || new google.maps.LatLng(-29, 24);
+    map.setCenter(center);
+    updateZoomStage();
+    syncVisibleTownOverlays();
+  } catch (error) {
+    console.warn('AG World map post-login refresh failed', error);
+  }
+  // If a session reached the map before GIS completed, make one controlled
+  // retry. This is particularly important for a second player/incognito window.
+  if (!municipalities.length && !window.__AG_WORLD_GIS_RETRYING) {
+    window.__AG_WORLD_GIS_RETRYING = true;
+    setTimeout(() => {
+      loadSpatialLayersInBackground()
+        .catch(error => console.warn('AG World GIS retry failed', error))
+        .finally(() => { window.__AG_WORLD_GIS_RETRYING = false; });
+    }, 350);
+  }
+}
+window.addEventListener('gamechanger:authenticated', refreshMapAfterAuthentication);
+window.addEventListener('agworld:supabase-authenticated', refreshMapAfterAuthentication);
+window.addEventListener('agworld:player-ready', refreshMapAfterAuthentication);
+window.addEventListener('pageshow', () => setTimeout(refreshMapAfterAuthentication, 100));
 loadFarms();
 window.AG_WORLD_WORLD = {
   get countries(){ return countries; },
