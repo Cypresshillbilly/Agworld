@@ -167,7 +167,7 @@ async function fetchSpatialLayer(url, label) {
 }
 
 async function loadSpatialLayersInBackground() {
-  if (!window.AGWORLD_SPATIAL_SOURCES) return;
+  if (typeof AGWORLD_SPATIAL_SOURCES === 'undefined') return;
   const [municipalLayer, townLayer] = await Promise.allSettled([
     fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.municipalities, 'municipal layer'),
     fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.towns, 'town layer')
