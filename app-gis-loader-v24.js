@@ -453,6 +453,20 @@ async function fetchSpatialLayer(url, label, timeoutMs = 20000) {
   }
 }
 
+async function fetchSpatialLayerWithRetry(url, label, timeoutMs = 60000, attempts = 3) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fetchSpatialLayer(url, label + ' attempt ' + attempt, timeoutMs);
+    } catch (error) {
+      lastError = error;
+      console.warn('AG World GIS retry', { label, attempt, attempts, error });
+      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, attempt * 1200));
+    }
+  }
+  throw lastError;
+}
+
 async function loadSpatialLayersInBackground() {
   console.info('AG World GIS loader v24 started');
   // Use verified layer-specific field names directly. This avoids a stale
@@ -468,8 +482,8 @@ async function loadSpatialLayersInBackground() {
 
   const countryPromise = fetchSpatialLayer(spatialSources.country, 'country boundary', 30000);
   const provincePromise = fetchSpatialLayer(spatialSources.provinces, 'provincial boundaries', 30000);
-  const municipalPromise = fetchSpatialLayer(spatialSources.municipalities, 'municipal boundaries', 60000);
-  const townPromise = fetchSpatialLayer(spatialSources.towns, 'town boundaries');
+  const municipalPromise = fetchSpatialLayerWithRetry(spatialSources.municipalities, 'municipal boundaries', 90000, 3);
+  const townPromise = fetchSpatialLayerWithRetry(spatialSources.towns, 'town boundaries', 90000, 3);
 
   municipalPromise.then(() => {
     $('mapStatus').textContent = 'GIS loading · Municipalities: downloaded · Towns: still loading…';
@@ -1552,7 +1566,7 @@ function refreshMapAfterAuthentication() {
   }
   // If a session reached the map before GIS completed, make one controlled
   // retry. This is particularly important for a second player/incognito window.
-  if (!municipalities.length && !window.__AG_WORLD_GIS_RETRYING) {
+  if ((!municipalities.length || !towns.length) && !window.__AG_WORLD_GIS_RETRYING) {
     window.__AG_WORLD_GIS_RETRYING = true;
     setTimeout(() => {
       loadSpatialLayersInBackground()
