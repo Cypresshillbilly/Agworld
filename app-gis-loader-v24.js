@@ -406,7 +406,7 @@ async function loadFarms() {
     }
 
     // Remote GIS layers load independently of both the map and local datasets.
-    loadSpatialLayersInBackground().catch(error => { console.error('GIS background loader failed:', error); const status = $('mapStatus'); if (status) status.textContent = 'Satellite map active · GIS detail is temporarily unavailable'; });
+    loadSpatialLayersInBackground();
   } catch (error) {
     console.error('AG World farm/territory data load failed:', error);
     const detail = error?.name === 'AbortError'
@@ -469,7 +469,7 @@ async function loadSpatialLayersInBackground() {
   const countryPromise = fetchSpatialLayer(spatialSources.country, 'country boundary', 30000);
   const provincePromise = fetchSpatialLayer(spatialSources.provinces, 'provincial boundaries', 30000);
   const municipalPromise = fetchSpatialLayer(spatialSources.municipalities, 'municipal boundaries', 60000);
-  // Town GeoJSON is extremely large and can lock the browser while parsing/rendering.\n  // Keep the live map responsive; towns are loaded later on demand instead.\n  const townPromise = Promise.resolve(null);
+  const townPromise = fetchSpatialLayer(spatialSources.towns, 'town boundaries');
 
   municipalPromise.then(() => {
     $('mapStatus').textContent = 'GIS loading · Municipalities: downloaded · Towns: still loading…';
@@ -526,10 +526,10 @@ async function loadSpatialLayersInBackground() {
     municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
   } else { errors.push('municipal boundaries'); errorDetails.push(municipalLayer.reason?.message || 'unknown municipal error'); }
 
-  if (townLayer.status === 'fulfilled' && townLayer.value) {
+  if (townLayer.status === 'fulfilled') {
     towns.forEach(item => { if (item._polygon) item._polygon.setMap(null); if (item._marker) item._marker.setMap(null); });
     towns = normaliseSpatialFeatures(townLayer.value, 'town');
-  } else if (townLayer.status === 'rejected') { errors.push('town boundaries'); errorDetails.push(townLayer.reason?.message || 'unknown town error'); }
+  } else { errors.push('town boundaries'); errorDetails.push(townLayer.reason?.message || 'unknown town error'); }
 
   linkHierarchySpatialParents();
   seedDemoFarms();
