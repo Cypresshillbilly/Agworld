@@ -50,10 +50,35 @@ function saveLocal() {
 }
 
 function geometryToBoundary(geometry) {
-  if (!geometry) return [];
-  const ring = geometry.type === 'Polygon' ? geometry.coordinates?.[0]
-    : geometry.type === 'MultiPolygon' ? geometry.coordinates?.[0]?.[0] : [];
-  return (ring || []).map(([lng, lat]) => ({ lat, lng }));
+  if (!geometry?.coordinates) return [];
+
+  // Pick the largest outer ring so multipolygon municipalities/towns do not
+  // disappear simply because their first geometry part is a tiny island.
+  const rings = geometry.type === 'Polygon'
+    ? [geometry.coordinates?.[0]]
+    : geometry.type === 'MultiPolygon'
+      ? geometry.coordinates.map(part => part?.[0])
+      : [];
+
+  const valid = rings.filter(ring => Array.isArray(ring) && ring.length >= 3);
+  if (!valid.length) return [];
+
+  const ringArea = ring => {
+    let area = 0;
+    for (let i = 0; i < ring.length; i++) {
+      const [x1, y1] = ring[i];
+      const [x2, y2] = ring[(i + 1) % ring.length];
+      area += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(area);
+  };
+
+  const ring = valid.reduce((largest, candidate) =>
+    ringArea(candidate) > ringArea(largest) ? candidate : largest
+  );
+
+  return ring.map(([lng, lat]) => ({ lat: Number(lat), lng: Number(lng) }))
+    .filter(point => Number.isFinite(point.lat) && Number.isFinite(point.lng));
 }
 
 function normaliseSpatialFeatures(geojson, level) {
@@ -188,11 +213,19 @@ async function fetchWithTimeout(url, timeoutMs) {
 
 async function fetchSpatialLayer(url, label) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  // National GIS polygon services can take longer than the old 8-second limit.
+  const timeout = setTimeout(() => controller.abort(), 45000);
   try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(label);
-    return await response.json();
+    const response = await fetch(url, {
+      signal: controller.signal,
+      cache: 'no-store',
+      headers: { Accept: 'application/geo+json, application/json' }
+    });
+    if (!response.ok) throw new Error(`${label}: HTTP ${response.status}`);
+    const data = await response.json();
+    if (data?.error) throw new Error(`${label}: ${data.error.message || 'GIS service error'}`);
+    if (!Array.isArray(data?.features)) throw new Error(`${label}: no GeoJSON features returned`);
+    return data;
   } finally {
     clearTimeout(timeout);
   }
@@ -200,22 +233,49 @@ async function fetchSpatialLayer(url, label) {
 
 async function loadSpatialLayersInBackground() {
   if (typeof AGWORLD_SPATIAL_SOURCES === 'undefined') return;
+
+  $('mapStatus').textContent = 'Loading municipal and town boundaries in the background…';
+
   const [municipalLayer, townLayer] = await Promise.allSettled([
     fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.municipalities, 'municipal layer'),
     fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.towns, 'town layer')
   ]);
 
-  if (municipalLayer.status === 'fulfilled') municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
-  if (townLayer.status === 'fulfilled') towns = normaliseSpatialFeatures(townLayer.value, 'town');
+  const errors = [];
+  if (municipalLayer.status === 'fulfilled') {
+    municipalities.forEach(item => {
+      if (item._polygon) item._polygon.setMap(null);
+      if (item._marker) item._marker.setMap(null);
+    });
+    municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
+  } else {
+    console.error('Municipal GIS load failed:', municipalLayer.reason);
+    errors.push('municipal boundaries');
+  }
+
+  if (townLayer.status === 'fulfilled') {
+    towns.forEach(item => {
+      if (item._polygon) item._polygon.setMap(null);
+      if (item._marker) item._marker.setMap(null);
+    });
+    towns = normaliseSpatialFeatures(townLayer.value, 'town');
+  } else {
+    console.error('Town GIS load failed:', townLayer.reason);
+    errors.push('town boundaries');
+  }
+
   linkHierarchySpatialParents();
 
-  // If the base map is already ready, add only the freshly loaded layers now.
-  // If it is still loading, agWorldMapReady will use the updated arrays.
   if (map) {
-    if (municipalLayer.status === 'fulfilled') municipalities.forEach(addTerritory);
-    if (townLayer.status === 'fulfilled') towns.forEach(addTerritory);
+    municipalities.forEach(addTerritory);
+    towns.forEach(addTerritory);
     updateZoomStage();
-    $('mapStatus').textContent = `Live GIS hierarchy · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
+
+    if (errors.length) {
+      $('mapStatus').textContent = `GIS hierarchy partially loaded · ${municipalities.length} Municipalities · ${towns.length} Towns · failed: ${errors.join(', ')}`;
+    } else {
+      $('mapStatus').textContent = `Live GIS hierarchy · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
+    }
   }
 }
 
