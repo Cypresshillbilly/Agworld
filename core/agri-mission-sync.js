@@ -2,6 +2,9 @@
 (function(){
   'use strict';
   if (/\/admin\.html$/i.test(window.location.pathname)) return;
+  // AG World uses the authenticated Player Progression Engine as the single mission source.
+  // Never allow the legacy Mission Library renderer to clear or replace Chapter missions.
+  if (window.__AGWORLD_USE_PLAYER_PROGRESSION === true) return;
 
   const KEY = 'gamechanger.missions';
   const STATUS_KEY = 'gamechanger.mission-status';
