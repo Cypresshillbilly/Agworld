@@ -12,7 +12,7 @@
 
   function buildFolder(m){
     const raw=String(m?.build ?? m?.industryBuild ?? m?.buildName ?? '').trim().toLowerCase();
-    if(raw==='agriculture'||raw==='agri'||raw==='agri build'||raw==='agriculture build') return 'Agri Build';
+    if(raw==='agriculture'||raw==='agri'||raw==='agri build'||raw==='agriculture build'||raw==='ag world'||raw==='agworld') return 'Agri Build';
     return String(m?.build ?? m?.industryBuild ?? m?.buildName ?? '').trim();
   }
   function roleFolder(m){
