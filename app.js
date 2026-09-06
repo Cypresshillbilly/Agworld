@@ -2,6 +2,9 @@ const CONFIG = window.AG_WORLD_CONFIG || {};
 
 let farms = [];
 let territories = [];
+let countries = [];
+let municipalities = [];
+let towns = [];
 let territoryMarkers = [];
 let map = null;
 let selected = null;
@@ -63,7 +66,10 @@ async function loadFarms() {
     const byId = new Map(base.map(f => [f.id, f]));
     stored.forEach(f => byId.set(f.id, f));
     farms = [...byId.values()];
+    countries = territoryData.countries || [];
     territories = territoryData.territories || [];
+    municipalities = territoryData.municipalities || [];
+    towns = territoryData.towns || [];
 
     // Backfill territory links for existing farm records.
     farms.forEach(farm => {
@@ -96,10 +102,13 @@ window.agWorldMapReady = () => {
     gestureHandling: 'greedy', tilt: 0, rotateControl: false
   });
   map.addListener('zoom_changed', updateZoomStage);
+  countries.forEach(addTerritory);
   territories.forEach(addTerritory);
+  municipalities.forEach(addTerritory);
+  towns.forEach(addTerritory);
   farms.forEach(addFarm);
   updateZoomStage();
-  $('mapStatus').textContent = `Satellite map active · ${territories.length} territories · ${farms.length} farm records loaded`;
+  $('mapStatus').textContent = `Satellite map active · Country → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns · ${farms.length} farms`;
 };
 
 function addTerritory(territory) {
@@ -118,7 +127,7 @@ function addTerritory(territory) {
     position: territory.center || centroid(territory.boundary),
     map,
     title: territory.name,
-    label: { text: String(territory.code || 'T'), color: '#fff', fontSize: '10px', fontWeight: '700' }
+    label: { text: String(territory.code || (territory.level === 'country' ? 'ZA' : territory.level === 'municipality' ? 'M' : territory.level === 'town' ? 'T' : 'P')), color: '#fff', fontSize: '10px', fontWeight: '700' }
   });
   marker.addListener('click', () => selectTerritory(territory, true));
   territory._polygon = polygon;
@@ -127,11 +136,16 @@ function addTerritory(territory) {
 }
 
 function selectTerritory(territory, zoom = true) {
-  const territoryFarms = farms.filter(f => f.territoryId === territory.id);
+  const descendants = new Set([territory.id]);
+  if ((territory.level || 'province') === 'country') territories.filter(p => p.parentId === territory.id).forEach(p => descendants.add(p.id));
+  if ((territory.level || 'province') === 'province') municipalities.filter(m => m.parentId === territory.id).forEach(m => descendants.add(m.id));
+  if ((territory.level || 'province') === 'municipality') towns.filter(t => t.parentId === territory.id).forEach(t => descendants.add(t.id));
+  const territoryFarms = farms.filter(f => descendants.has(f.townId) || descendants.has(f.municipalityId) || descendants.has(f.territoryId));
   const opportunity = territoryFarms.reduce((sum, f) => sum + (Number(f.opportunityScore) || 0), 0);
   $('farmCard').classList.add('show');
   $('farmName').textContent = territory.name;
-  $('farmMeta').textContent = `TERRITORY ${territory.code || ''} · ${territory.regionLabel || 'AG WORLD'} · ${territory.status || 'Active'}`;
+  const levelLabel = String(territory.level || 'province').toUpperCase();
+  $('farmMeta').textContent = `${levelLabel} · ${territory.regionLabel || territory.name || 'AG WORLD'} · ${territory.status || 'Active'}`;
   $('farmDrones').textContent = territoryFarms.reduce((n, f) => n + (Number(f.drones) || 0), 0);
   $('farmTractors').textContent = territoryFarms.reduce((n, f) => n + (Number(f.tractors) || 0), 0);
   $('farmCrops').textContent = territoryFarms.length;
@@ -199,9 +213,23 @@ function refreshMapVisibility() {
   const zoom = map.getZoom();
   const showBoundaries = zoom >= 8;
   const showObjects = zoom >= 12;
+  // Hierarchical territory visibility:
+  // Country (national) → Province → Municipality → Town → Farm.
+  countries.forEach(country => {
+    if (country._polygon) country._polygon.setMap(zoom < 6 ? map : null);
+    if (country._marker) country._marker.setMap(zoom < 5.5 ? map : null);
+  });
   territories.forEach(territory => {
-    if (territory._polygon) territory._polygon.setMap(zoom < 9 ? map : null);
-    if (territory._marker) territory._marker.setMap(zoom < 8 ? map : null);
+    if (territory._polygon) territory._polygon.setMap(zoom >= 5.5 && zoom < 8.5 ? map : null);
+    if (territory._marker) territory._marker.setMap(zoom >= 5.5 && zoom < 7.5 ? map : null);
+  });
+  municipalities.forEach(municipality => {
+    if (municipality._polygon) municipality._polygon.setMap(zoom >= 8 && zoom < 11.5 ? map : null);
+    if (municipality._marker) municipality._marker.setMap(zoom >= 8 && zoom < 10.5 ? map : null);
+  });
+  towns.forEach(town => {
+    if (town._polygon) town._polygon.setMap(zoom >= 11 && zoom < 13.5 ? map : null);
+    if (town._marker) town._marker.setMap(zoom >= 11 && zoom < 13 ? map : null);
   });
   farms.forEach(farm => {
     if (farm._polygon) farm._polygon.setMap(showBoundaries ? map : null);
@@ -213,8 +241,9 @@ function refreshMapVisibility() {
 function updateZoomStage() {
   if (!map) return;
   const zoom = map.getZoom();
-  const stage = zoom < 7 ? 1 : zoom < 9 ? 2 : zoom < 12 ? 3 : 4;
-  $('zoomStage').textContent = `ZOOM ${stage} · ${['NATIONAL OVERVIEW', 'REGIONAL FARMS', 'FARM BOUNDARY', 'INTERACTIVE FARM'][stage - 1]}`;
+  const stage = zoom < 5.5 ? 1 : zoom < 8 ? 2 : zoom < 11 ? 3 : zoom < 13 ? 4 : 5;
+  const labels = ['COUNTRY · SOUTH AFRICA','PROVINCIAL TERRITORIES','MUNICIPAL TERRITORIES','TOWN TERRITORIES','FARM & ASSET LEVEL'];
+  $('zoomStage').textContent = `ZOOM ${stage} · ${labels[stage - 1]}`;
   refreshMapVisibility();
   if (stage >= 3 && selected) showFarmDetail(selected);
 }
@@ -712,4 +741,11 @@ document.querySelectorAll('.mission').forEach(mission => mission.onclick = () =>
 document.querySelectorAll('.nav button').forEach(button => button.onclick = () => { document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active')); button.classList.add('active'); toast(`${button.textContent.trim()} selected`); });
 window.addEventListener('resize', () => { const host = $('farmScene'); if (renderer && host.clientWidth) { camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(host.clientWidth, host.clientHeight); } });
 loadFarms();
-window.AG_WORLD_WORLD = { get territories(){ return territories; }, get farms(){ return farms; }, selectTerritory, selectFarm };
+window.AG_WORLD_WORLD = {
+  get countries(){ return countries; },
+  get provinces(){ return territories; },
+  get municipalities(){ return municipalities; },
+  get towns(){ return towns; },
+  get farms(){ return farms; },
+  selectTerritory, selectFarm
+};
