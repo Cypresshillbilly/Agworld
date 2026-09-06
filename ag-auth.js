@@ -65,6 +65,12 @@
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
     gate.querySelector('form').addEventListener('submit',async e=>{
       e.preventDefault();
+      if(!master){
+        e.preventDefault();
+        const error=gate.querySelector('.ag-login-error');
+        error.textContent='PLEASE USE JOIN THE COMPANY / SIGN IN';
+        return;
+      }
       const account=(master ? MASTER_USERS : AGWORLD_USERS)[username.value.trim()];
       const error=gate.querySelector('.ag-login-error');
       error.textContent='';
