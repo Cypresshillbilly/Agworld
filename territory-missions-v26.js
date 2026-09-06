@@ -207,6 +207,16 @@
       renderMissionSidebar();
       renderPanelMissions();
 
+      // Keep the selected territory visibly highlighted after its normal
+      // control colour is recalculated.
+      if (activeTerritory?._polygon) {
+        activeTerritory._polygon.setOptions({
+          strokeColor: '#ffffff',
+          strokeOpacity: 1,
+          strokeWeight: 4
+        });
+      }
+
       const status = document.getElementById('mapStatus');
       if (status && typeof territoryGameSummary === 'function') {
         const summary = territoryGameSummary(activeTerritory);
@@ -228,7 +238,6 @@
     markMissionCompleted(mission);
     refreshTerritoryControl();
 
-    if (typeof selectFarm === 'function') selectFarm(farm, false);
     if (typeof toast === 'function') toast(`MISSION COMPLETE · ${farm.name} is now controlled by The Company · +${mission.xp} XP`);
   }
 
