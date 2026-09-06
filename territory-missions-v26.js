@@ -159,13 +159,7 @@
     return result;
   };
 
-  const observer = new MutationObserver(() => {
-    if (activeTerritory && document.getElementById('territoryInfoPanel')?.classList.contains('show')) {
-      renderPanelMissions();
-    }
-  });
-  const panel = document.getElementById('territoryInfoPanel');
-  if (panel) observer.observe(panel, { childList: true, subtree: true });
+
 
   const style = document.createElement('style');
   style.textContent = `
