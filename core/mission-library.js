@@ -19,12 +19,12 @@
 
   function buildFolder(build){
     const value = String(build || 'Agriculture').trim();
-    if (/^agriculture$/i.test(value)) return 'Agri Build';
+    if (/^(agriculture|ag world|agworld)$/i.test(value)) return 'Agri Build';
     return value || 'Other Build';
   }
 
   function roleFolder(role, build){
-    if (!role || role === '*') return /^agriculture$/i.test(String(build || '')) ? 'All Sales People' : 'All Users';
+    if (!role || role === '*') return /^(agriculture|ag world|agworld)$/i.test(String(build || '')) ? 'All Sales People' : 'All Users';
     if (String(role).toLowerCase() === 'agriculture_sales') return 'Sales person';
     const registry = window.GAME_CHANGER_ROLES || {};
     const label = registry[role]?.label || role;
@@ -75,8 +75,9 @@
     const tree = document.getElementById('gcMissionTree');
     const count = document.getElementById('gcMissionCount');
     if (!tree) return false;
-    const activeBuild = window.GAME_CHANGER_BUILD?.current?.()?.label || 'Agriculture';
-    const missions = read().filter(mission => String(mission.build || '').toLowerCase() === String(activeBuild).toLowerCase());
+    const activeBuildId = window.GAME_CHANGER_BUILD?.get?.() || 'agriculture';
+    const aliases = activeBuildId === 'agriculture' ? ['agriculture','agri','agri build','agriculture build','ag world','agworld'] : [String(window.GAME_CHANGER_BUILD?.current?.()?.label || activeBuildId).toLowerCase()];
+    const missions = read().filter(mission => aliases.includes(String(mission.build || '').trim().toLowerCase()));
     if (count) count.textContent = `${missions.length} ${missions.length === 1 ? 'MISSION' : 'MISSIONS'}`;
 
     const groups = {};
