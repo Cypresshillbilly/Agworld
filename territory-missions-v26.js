@@ -225,7 +225,7 @@
     }
   }
 
-  function completeMission(mission) {
+  async function completeMission(mission) {
     if (!mission || isCompleted(mission)) return;
     const farm = farmCollection().find(f => String(f.id) === String(mission.farmId));
     if (!farm) {
@@ -233,10 +233,43 @@
       return;
     }
 
+    // Apply immediately for a responsive game, then write the same change to
+    // the shared Company world with the authenticated employee as the actor.
     applyCompanyControl(farm);
     saveFarmOverride(farm);
     markMissionCompleted(mission);
     refreshTerritoryControl();
+
+    try {
+      const shared = window.AGWorldSharedFarms;
+      if (!shared || !window.AGWorldBackend?.getUser?.()) throw new Error('Shared player session is not ready.');
+      await shared.removeCompetitor(farm);
+      await shared.addOurDrone(farm);
+
+      const u = window.AGWorldBackend.getUser();
+      const db = window.supabase?.createClient?.('https://vcnkspaljmsjvonftfcw.supabase.co','sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o');
+      if (db && u) {
+        await db.from('ag_mission_progress').upsert({
+          player_id:u.id, mission_id:mission.id, chapter:3, status:'completed',
+          mission_state:{farm_id:String(farm.id), territory_id:activeTerritory?.id||null},
+          completed_at:new Date().toISOString(), updated_at:new Date().toISOString()
+        },{onConflict:'player_id,mission_id'});
+        await db.from('ag_career_events').insert({
+          player_id:u.id,event_type:'territory_mission_completed',
+          payload:{mission_id:mission.id,title:mission.title,farm_id:String(farm.id),territory_id:activeTerritory?.id||null,xp:mission.xp}
+        });
+        await db.from('ag_contributions').insert({
+          player_id:u.id,contribution_type:'farm_conversion',mission_id:mission.id,
+          territory_id:activeTerritory?.id||null,farm_id:String(farm.id),title:mission.title,xp:mission.xp,
+          payload:{event:'our_drone_added',farm_name:farm.name}
+        });
+      }
+      window.dispatchEvent(new CustomEvent('agworld:territory-mission-completed',{detail:{mission,farm}}));
+    } catch (err) {
+      console.error('Shared mission write failed',err);
+      if (typeof toast === 'function') toast('Mission changed locally, but the shared database could not confirm the contribution.');
+      return;
+    }
 
     if (typeof toast === 'function') toast(`MISSION COMPLETE · ${farm.name} is now controlled by The Company · +${mission.xp} XP`);
   }
