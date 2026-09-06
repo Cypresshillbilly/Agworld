@@ -1,7 +1,13 @@
 /* GAME CHANGER authentication — Master and Ag World sessions are separate. */
 (() => {
-  const USERS = {
-    Admin: { passwordSha256: '3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121', role: 'administrator' },
+  // Credentials are scoped by authentication domain. Master credentials cannot
+  // authenticate into Ag World, and Ag World credentials cannot authenticate
+  // into the Master Console.
+  const MASTER_USERS = {
+    Admin: { passwordSha256: '3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121', role: 'administrator' }
+  };
+  const AGWORLD_USERS = {
+    Agadmin: { passwordSha256: 'c7f3148a5d925a582b257c7660c9847d4114862d34f6335f76a4d2697ff55b79', role: 'agriculture_administrator' },
     Salesman: { passwordSha256: '75b2324a77561a1b03e3be652b212d9aff91834466726080e138cbdc6466dae4', role: 'agriculture_sales' }
   };
   const page = () => (location.pathname.split('/').pop() || 'index.html').toLowerCase();
@@ -59,7 +65,7 @@
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
     gate.querySelector('form').addEventListener('submit',async e=>{
       e.preventDefault();
-      const account=USERS[username.value.trim()];
+      const account=(master ? MASTER_USERS : AGWORLD_USERS)[username.value.trim()];
       const error=gate.querySelector('.ag-login-error');
       error.textContent='';
       if(!account || await sha256(password.value)!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}
