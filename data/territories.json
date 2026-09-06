@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "note": "Initial Ag World territory structure. Territory boundaries are broad game-management zones and can later be replaced by approved operational GIS territories.",
+  "territories": [
+    {
+      "id": "ag-territory-01-limpopo",
+      "code": "01",
+      "name": "Limpopo Agricultural Territory",
+      "regionLabel": "Limpopo",
+      "regions": ["Limpopo"],
+      "status": "Active",
+      "control": 58,
+      "owner": "Unassigned",
+      "description": "Northern agriculture territory focused on opportunity development and precision agriculture adoption.",
+      "center": {"lat": -24.4, "lng": 29.2},
+      "boundary": [{"lat":-22.2,"lng":26.0},{"lat":-22.2,"lng":31.4},{"lat":-25.8,"lng":31.4},{"lat":-25.8,"lng":26.0}]
+    },
+    {
+      "id": "ag-territory-02-free-state",
+      "code": "02",
+      "name": "Free State Agricultural Territory",
+      "regionLabel": "Free State",
+      "regions": ["Free State"],
+      "status": "Active",
+      "control": 72,
+      "owner": "Ag World",
+      "description": "Central agricultural territory with strong commercial farming potential.",
+      "center": {"lat": -28.4, "lng": 26.7},
+      "boundary": [{"lat":-26.4,"lng":24.0},{"lat":-26.4,"lng":30.0},{"lat":-30.2,"lng":30.0},{"lat":-30.2,"lng":24.0}]
+    },
+    {
+      "id": "ag-territory-03-kzn",
+      "code": "03",
+      "name": "KwaZulu-Natal Agricultural Territory",
+      "regionLabel": "KwaZulu-Natal",
+      "regions": ["KwaZulu-Natal"],
+      "status": "Active",
+      "control": 74,
+      "owner": "Nico van Rooyen",
+      "description": "Assigned sales territory for the Agriculture Sales Representative.",
+      "center": {"lat": -29.4, "lng": 30.6},
+      "boundary": [{"lat":-27.0,"lng":28.2},{"lat":-27.0,"lng":33.2},{"lat":-31.8,"lng":33.2},{"lat":-31.8,"lng":28.2}]
+    }
+  ]
+}
