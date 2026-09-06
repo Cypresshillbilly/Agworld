@@ -188,16 +188,17 @@ async function loadFarms() {
       municipalities.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Municipality overlay skipped', error); } });
       towns.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Town overlay skipped', error); } });
       updateZoomStage();
+      $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded · loading municipal and town GIS…`;
     }
 
     // Remote GIS layers load independently of both the map and local datasets.
     loadSpatialLayersInBackground();
   } catch (error) {
     console.error('AG World farm/territory data load failed:', error);
-    // Keep the base map running even when local agricultural data is unavailable.
-    if (!map && !window.google?.maps?.Map) {
-      $('mapStatus').textContent = 'Google satellite map is loading; agricultural records are temporarily unavailable.';
-    }
+    const detail = error?.name === 'AbortError'
+      ? 'request timed out'
+      : (error?.message || 'unknown error');
+    $('mapStatus').textContent = `Satellite map active · farm records failed to load (${detail})`;
   }
 }
 
@@ -304,7 +305,9 @@ function renderGoogleMap() {
     map.addListener('zoom_changed', updateZoomStage);
     farms.forEach(addFarm);
     updateZoomStage();
-    $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded`;
+    $('mapStatus').textContent = farms.length
+      ? `Satellite map active · ${farms.length} farm records loaded`
+      : 'Satellite map active · loading farm records and territory data…';
   } catch (error) {
     console.error('AG World Google Maps initialisation failed:', error);
     $('mapStatus').textContent = `Google Maps initialisation failed: ${error.message}`;
