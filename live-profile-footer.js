@@ -1,6 +1,6 @@
 /* AG WORLD — live profile footer. Single-owner layout: Progress / Badges / Leaderboard. Skill Profile is independently rendered above Missions. */
 (()=>{
-const USER_ID='user-nico-van-rooyen';
+const USER_ID='user-nico-van-rooyen'; // legacy API fallback only; live authenticated player state overrides this immediately.
 const API=(window.AG_WORLD_CONFIG&&window.AG_WORLD_CONFIG.API_BASE_URL)||(window.AG_WORLD_API&&window.AG_WORLD_API.baseUrl)||'https://ag-world-api.onrender.com';
 let profileData=null,leaderboardData=null,loading=false;
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -53,6 +53,36 @@ function render(){
 const fallbackProfile={id:USER_ID,name:'Nico van Rooyen',territory:'Territory 03',level:7,xp:6820,xpToNextLevel:10000,regionalPosition:2,achievements:[{achievementName:'First Meeting'},{achievementName:'Opportunity Finder'},{achievementName:'Presentation Pro'},{achievementName:'Proposal Pro'}],skillTotals:{technical:8,operational:6,product:11,management:9,people:13}};
 async function init(){loadCssLast();if(loading)return;const f=document.querySelector('.bottom');if(!f)return;loading=true;try{const p=await json(`${API}/api/users/${USER_ID}/profile`);profileData=p;window.AG_WORLD_SKILL_TOTALS=p.skillTotals||window.AG_WORLD_SKILL_TOTALS||{};try{leaderboardData=await json(`${API}/api/users/${USER_ID}/leaderboard`)}catch(e){leaderboardData={territory:p.territory,leaders:[]}}render()}catch(e){console.warn('AG World profile API unavailable; using local profile fallback:',e);profileData=fallbackProfile;leaderboardData={territory:fallbackProfile.territory,leaders:[{id:USER_ID,name:'Nico van Rooyen',xp:fallbackProfile.xp},{id:'user-2',name:'Sarah K.',xp:6400},{id:'user-3',name:'David L.',xp:5980}]};window.AG_WORLD_SKILL_TOTALS=fallbackProfile.skillTotals;render()}finally{loading=false}}
 function protect(){const f=document.querySelector('.bottom');if(!f||!profileData)return;cleanFooter(f);if(!f.querySelector('.live-progress')||!f.querySelector('.live-badges')||!f.querySelector('.live-leaderboard'))render();else if(!document.querySelector('.missions .missions-skill-profile'))placeSkillProfile()}
+
+// Supabase player progression is the authoritative identity for every logged-in
+// employee. Never leave this footer bound to the legacy Nico API profile.
+function applyAuthenticatedPlayer(detail){
+  const p=detail?.player||detail||{};
+  const name=String(p.name||p.playerName||'').trim();
+  if(!name) return;
+  const level=Math.max(1,Number(p.level)||1);
+  const xp=Math.max(0,Number(p.xp)||0);
+  const next=(window.AGWorldProgression?.getState?.().level===level
+    ? Math.max(xp+1,(level<10?level*250:2250+(level-9)*400))
+    : Math.max(xp+1,(level<10?level*250:2250+(level-9)*400)));
+  profileData={
+    id:detail?.user?.id||p.id||'authenticated-player',
+    name,
+    territory:'My Region',
+    level,
+    xp,
+    xpToNextLevel:next,
+    regionalPosition:'—',
+    achievements:Array.isArray(p.achievements)?p.achievements:[],
+    skillTotals:p.skillTotals||{}
+  };
+  leaderboardData={territory:profileData.territory,leaders:[{id:profileData.id,name,xp}]};
+  window.AG_WORLD_SKILL_TOTALS=profileData.skillTotals;
+  render();
+}
+window.addEventListener('agworld:player-ready',e=>applyAuthenticatedPlayer(e.detail));
+window.addEventListener('agworld:player-state',e=>applyAuthenticatedPlayer(e.detail));
+
 window.agWorldRefreshProfileFooter=init;
 document.addEventListener('DOMContentLoaded',()=>{loadCssLast();init();const f=document.querySelector('.bottom');if(f)new MutationObserver(protect).observe(f,{childList:true,subtree:true})});
 setTimeout(init,800);setTimeout(init,2000);
