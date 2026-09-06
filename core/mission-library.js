@@ -166,7 +166,16 @@
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
-      if (render() || tries > 80) clearInterval(timer);
+      if (render() || tries > 80) {
+        clearInterval(timer);
+        if (tries <= 80) {
+          requestAnimationFrame(()=>requestAnimationFrame(()=>{
+            window.dispatchEvent(new CustomEvent('gamechanger:admin-ready'));
+          }));
+        } else {
+          window.dispatchEvent(new CustomEvent('gamechanger:admin-ready'));
+        }
+      }
     }, 100);
     document.addEventListener('click', event => {
       if (event.target.closest('#gcExpandAll')) setAll(true);
