@@ -4,9 +4,11 @@
   if (/\/admin\.html$/i.test(window.location.pathname)) return;
 
   const KEY = 'gamechanger.missions';
+  const STATUS_KEY = 'gamechanger.mission-status';
   const PROFILE = '.missions';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const read = () => { try { const x=JSON.parse(localStorage.getItem(KEY)||'[]'); return Array.isArray(x)?x:[]; } catch(_){ return []; } };
+  const readStatuses = () => { try { const x=JSON.parse(localStorage.getItem(STATUS_KEY)||'{}'); return x&&typeof x==='object'?x:{}; } catch(_){ return {}; } };
 
   function buildFolder(m){
     const raw=String(m?.build ?? m?.industryBuild ?? m?.buildName ?? '').trim().toLowerCase();
@@ -27,6 +29,8 @@
   function idOf(m){ return String(m?.id ?? m?.missionId ?? m?.key ?? '').trim(); }
 
   function cardFor(m){
+    const status=readStatuses()[idOf(m)]||{};
+    const completed=status.status==='completed';
     const card=document.createElement('article');
     card.className='mission gc-library-mission';
     card.dataset.adminMissionId=idOf(m);
@@ -50,7 +54,7 @@
       .missions .gc-library-mission strong{display:block;font-size:12px;line-height:1.25;color:#172d35;margin-bottom:5px}
       .missions .gc-library-mission p{font-size:8px;line-height:1.4;color:#718087;margin:0 0 8px}
       .missions .gc-library-mission .reward{font-size:7px;font-weight:900;color:#6d8e17;letter-spacing:.3px}
-      .missions .gc-library-empty{cursor:default;background:#fafcfb}
+      .missions .gc-library-mission.gc-mission-completed{opacity:.72;background:#f6faf2;border-color:#cfe0c1}.missions .gc-library-mission.gc-mission-completed strong{text-decoration:line-through;text-decoration-color:#a7b69d}.missions .gc-library-empty{cursor:default;background:#fafcfb}
       .missions .gc-library-empty:hover{box-shadow:0 2px 8px rgba(19,39,46,.07);border-color:#dfe7e5}
     `; document.head.appendChild(s);
   }
@@ -83,8 +87,9 @@
     const refresh=()=>{ if(busy) return; busy=true; render(); busy=false; };
     const boot=setInterval(()=>{ if(render()){ clearInterval(boot); } },100);
     refresh();
-    window.addEventListener('storage',e=>{if(e.key===KEY) refresh();});
+    window.addEventListener('storage',e=>{if(e.key===KEY||e.key===STATUS_KEY) refresh();});
     window.addEventListener('gamechanger:missions-changed',refresh);
+    window.addEventListener('gamechanger:mission-completed',refresh);
     const watch=setInterval(refresh,1000);
     window.addEventListener('beforeunload',()=>clearInterval(watch));
   }
