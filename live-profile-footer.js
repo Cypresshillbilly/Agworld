@@ -2,7 +2,7 @@
 (()=>{
 const USER_ID='user-nico-van-rooyen'; // legacy API fallback only; live authenticated player state overrides this immediately.
 const API=(window.AG_WORLD_CONFIG&&window.AG_WORLD_CONFIG.API_BASE_URL)||(window.AG_WORLD_API&&window.AG_WORLD_API.baseUrl)||'https://ag-world-api.onrender.com';
-let profileData=null,leaderboardData=null,loading=false;
+let profileData=null,leaderboardData=null,loading=false,authenticatedPlayer=false;
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
 const pct=(a,b)=>b?Math.max(0,Math.min(100,Number(a)/Number(b)*100)):0;
 async function json(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(`${r.status}`);return r.json()}
@@ -51,12 +51,13 @@ function render(){
  placeSkillProfile();
 }
 const fallbackProfile={id:USER_ID,name:'Nico van Rooyen',territory:'Territory 03',level:7,xp:6820,xpToNextLevel:10000,regionalPosition:2,achievements:[{achievementName:'First Meeting'},{achievementName:'Opportunity Finder'},{achievementName:'Presentation Pro'},{achievementName:'Proposal Pro'}],skillTotals:{technical:8,operational:6,product:11,management:9,people:13}};
-async function init(){loadCssLast();if(loading)return;const f=document.querySelector('.bottom');if(!f)return;loading=true;try{const p=await json(`${API}/api/users/${USER_ID}/profile`);profileData=p;window.AG_WORLD_SKILL_TOTALS=p.skillTotals||window.AG_WORLD_SKILL_TOTALS||{};try{leaderboardData=await json(`${API}/api/users/${USER_ID}/leaderboard`)}catch(e){leaderboardData={territory:p.territory,leaders:[]}}render()}catch(e){console.warn('AG World profile API unavailable; using local profile fallback:',e);profileData=fallbackProfile;leaderboardData={territory:fallbackProfile.territory,leaders:[{id:USER_ID,name:'Nico van Rooyen',xp:fallbackProfile.xp},{id:'user-2',name:'Sarah K.',xp:6400},{id:'user-3',name:'David L.',xp:5980}]};window.AG_WORLD_SKILL_TOTALS=fallbackProfile.skillTotals;render()}finally{loading=false}}
+async function init(){loadCssLast();if(authenticatedPlayer||loading)return;const f=document.querySelector('.bottom');if(!f)return;loading=true;try{const p=await json(`${API}/api/users/${USER_ID}/profile`);if(authenticatedPlayer)return;profileData=p;window.AG_WORLD_SKILL_TOTALS=p.skillTotals||window.AG_WORLD_SKILL_TOTALS||{};try{leaderboardData=await json(`${API}/api/users/${USER_ID}/leaderboard`)}catch(e){leaderboardData={territory:p.territory,leaders:[]}}render()}catch(e){if(authenticatedPlayer)return;console.warn('AG World profile API unavailable; using local profile fallback:',e);profileData=fallbackProfile;leaderboardData={territory:fallbackProfile.territory,leaders:[{id:USER_ID,name:'Nico van Rooyen',xp:fallbackProfile.xp},{id:'user-2',name:'Sarah K.',xp:6400},{id:'user-3',name:'David L.',xp:5980}]};window.AG_WORLD_SKILL_TOTALS=fallbackProfile.skillTotals;render()}finally{loading=false}}
 function protect(){const f=document.querySelector('.bottom');if(!f||!profileData)return;cleanFooter(f);if(!f.querySelector('.live-progress')||!f.querySelector('.live-badges')||!f.querySelector('.live-leaderboard'))render();else if(!document.querySelector('.missions .missions-skill-profile'))placeSkillProfile()}
 
 // Supabase player progression is the authoritative identity for every logged-in
 // employee. Never leave this footer bound to the legacy Nico API profile.
 function applyAuthenticatedPlayer(detail){
+  authenticatedPlayer=true;
   const p=detail?.player||detail||{};
   const name=String(p.name||p.playerName||'').trim();
   if(!name) return;
