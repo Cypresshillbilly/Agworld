@@ -1,18 +1,25 @@
-/* GAME CHANGER core role registry — industry-neutral role routing. */
+/* GAME CHANGER core role registry and deterministic page module loader. */
 window.GAME_CHANGER_ROLES = {
   administrator: { id:'administrator', label:'ADMINISTRATOR', landing:'admin.html', profilePage:'admin.html', environment:'platform' },
   agriculture_sales: { id:'agriculture_sales', label:'AGRICULTURE SALES REPRESENTATIVE', landing:'index.html', profilePage:'index.html', environment:'agriculture' }
 };
 (function(){
   const path=window.location.pathname;
-  const context=document.createElement('script'); context.src='core/agri-build-context.js?v=20260903-build-context-v1'; context.defer=true; document.head.appendChild(context);
-  if(/\/admin\.html$/i.test(path)){
-    const mission=document.createElement('script'); mission.src='core/mission-engine.js?v=20260903-role-build-scope-v2'; mission.defer=true; document.head.appendChild(mission);
-    const library=document.createElement('script'); library.src='core/mission-library.js?v=20260903-mission-delete-v2'; library.defer=true; document.head.appendChild(library);
-    const polish=document.createElement('script'); polish.src='core/admin-ui-polish.js?v=20260903-admin-v5'; polish.defer=true; document.head.appendChild(polish);
-    return;
-  }
-  if(/\/index\.html$/i.test(path)||path==='/'||path===''){
-    const sync=document.createElement('script'); sync.src='core/agri-mission-sync.js?v=20260903-library-cards-v5'; sync.defer=true; document.head.appendChild(sync);
-  }
+  const load=src=>{
+    const s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s);return s;
+  };
+  load('core/bootstrap.js?v=architecture-v1');
+  const start=()=>{
+    if(/\/admin\.html$/i.test(path)){
+      load('core/mission-engine.js?v=architecture-v1');
+      load('core/mission-library.js?v=architecture-v1');
+      load('core/admin-ui-polish.js?v=architecture-v1');
+      return;
+    }
+    if(/\/index\.html$/i.test(path)||path==='/'||path===''){
+      load('core/agri-mission-sync.js?v=architecture-v1');
+      load('core/agri-mission-detail.js?v=architecture-v1');
+    }
+  };
+  if(window.GAME_CHANGER_READY) window.GAME_CHANGER_READY.then(start); else window.addEventListener('gamechanger:core-ready',start,{once:true});
 })();
