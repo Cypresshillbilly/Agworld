@@ -1,60 +1,83 @@
-/* GAME CHANGER role-based authentication gate — V2 */
+/* GAME CHANGER authentication — Master and Ag World sessions are separate. */
 (() => {
   const USERS = {
     Admin: { passwordSha256: '3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121', role: 'administrator' },
     Salesman: { passwordSha256: '75b2324a77561a1b03e3be652b212d9aff91834466726080e138cbdc6466dae4', role: 'agriculture_sales' }
   };
-  const MASTER_CONTEXT = currentPage()==='master-admin.html';
-  const REMEMBER_KEY = MASTER_CONTEXT ? 'gamechanger.master.rememberedLogin' : 'gamechanger.rememberedLogin';
-  const SESSION_KEY = MASTER_CONTEXT ? 'gamechanger.master.authenticated' : 'gamechanger.authenticated';
-  const ROLE_KEY = MASTER_CONTEXT ? 'gamechanger.master.role' : 'gamechanger.role';
-  const USERNAME_KEY = MASTER_CONTEXT ? 'gamechanger.master.username' : 'gamechanger.username';
-  async function sha256(text){const data=new TextEncoder().encode(text);const digest=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
-  function activeBuild(){return window.GAME_CHANGER_BUILD?.get?.()||localStorage.getItem('gamechanger.activeBuild')||'agriculture';}
-  function loginImage(){const build=window.GAME_CHANGER_BUILD?.current?.();return build?.loginBackground||window.GAME_CHANGER_AGRICULTURE_BUILD?.login?.background||'assets/ag_world_login_v2.jpg';}
-  function ensureRoleBuild(role){if(role==='agriculture_sales'&&activeBuild()!=='agriculture'){if(window.GAME_CHANGER_BUILD?.set)window.GAME_CHANGER_BUILD.set('agriculture');else localStorage.setItem('gamechanger.activeBuild','agriculture');}}
-  function landingFor(role){const registry=window.GAME_CHANGER_ROLES||{};return registry[role]?.landing||(role==='administrator'?'admin.html':'index.html');}
-  function currentPage(){return(location.pathname.split('/').pop()||'index.html').toLowerCase();}
-  function routeExistingSession(role){if(!role)return false;const page=currentPage();
-    if(role==='administrator'&&(page==='index.html'||page==='')){location.replace(landingFor(role));return true;}
-    if(role==='agriculture_administrator'&&(page==='master-admin.html'||page==='index.html'||page==='')){location.replace(landingFor(role));return true;}
-    if(role==='agriculture_sales'&&(page==='admin.html'||page==='master-admin.html')){location.replace(landingFor(role));return true;}
-    return false;}
-  function getRemembered(){try{const value=JSON.parse(localStorage.getItem(REMEMBER_KEY)||'null');return value&&USERS[value.username]&&typeof value.password==='string'?value:null;}catch{return null;}}
-  function install(){
-    if(document.getElementById('ag-login-gate'))return;
-    const authenticated=sessionStorage.getItem(SESSION_KEY)==='1';const role=sessionStorage.getItem(ROLE_KEY);
-    if(authenticated&&role){
-      if(routeExistingSession(role))return;
-      const reveal=()=>{
-        document.documentElement.style.visibility='visible';
-        document.body.style.visibility='visible';
-      };
-      const detail={username:sessionStorage.getItem(USERNAME_KEY)||'',role,restored:true};
-      /* Administrator modules are injected asynchronously. Keep the page hidden until
-         the final administrator composition is complete so no intermediate layer flashes. */
-      if((role==='administrator'||role==='agriculture_administrator')&&currentPage()==='admin.html'){
-        let done=false;
-        const finish=()=>{if(done)return;done=true;reveal();window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail}));};
-        window.addEventListener('gamechanger:admin-ready',finish,{once:true});
-        setTimeout(finish,4000);
-        return;
-      }
-      reveal();
-      window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail}));
-      return;
-    }
-    const remembered=getRemembered();const gate=document.createElement('div');gate.id='ag-login-gate';const masterLogin=currentPage()==='master-admin.html';
-    const LOGIN_IMAGE=masterLogin?'':loginImage();
-    const loginSmall=masterLogin?'MASTER PLATFORM ACCESS':'DOMINATE THE TERRITORY';
-    const loginLine=masterLogin?'Authorised access to the GAME CHANGER platform.':'Build relationships. Drive sales. <b>WIN THE FUTURE.</b>';
-    gate.classList.toggle('gc-master-login',masterLogin);
-    gate.innerHTML=`${masterLogin?'':'<img class="ag-login-art" src="'+LOGIN_IMAGE+'" alt="" aria-hidden="true">'}<div class="ag-login-panel" role="dialog" aria-label="Enter GAME CHANGER"><div class="gc-login-brand"><strong>GAME <span>CHANGER</span></strong><small>${loginSmall}</small><em>${loginLine}</em></div><form class="ag-login-form" autocomplete="off"><label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="username" type="text" autocomplete="off" aria-label="Username" value="${remembered?remembered.username:''}" required></label><label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="password" type="password" autocomplete="new-password" aria-label="Password" value="${remembered?remembered.password:''}" required><button type="button" class="ag-eye" aria-label="Show password">◉</button></div></label><label class="ag-remember"><input id="agRemember" type="checkbox" ${remembered?'checked':''}><span></span> REMEMBER ME</label><button class="ag-login-button" type="submit">ENTER GAME CHANGER</button><div class="ag-login-error" id="agLoginError" role="alert"></div></form></div>`;
-    const style=document.createElement('style');style.id='ag-login-style';style.textContent=`#ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;font-family:Arial,Helvetica,sans-serif}#ag-login-gate.gc-master-login{background:radial-gradient(circle at 78% 12%,rgba(123,161,29,.16),transparent 32%),linear-gradient(145deg,#070b08,#111812)}#ag-login-gate.gc-master-login .ag-login-panel{top:50%;background:linear-gradient(145deg,rgba(15,23,17,.97),rgba(8,13,10,.95));border-color:rgba(168,213,31,.45)}#ag-login-gate .ag-login-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center center;display:block;user-select:none}#ag-login-gate .ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);box-sizing:border-box;width:min(442px,calc(100vw - 36px));padding:21px 31px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78));box-shadow:0 18px 55px rgba(0,0,0,.6),0 0 26px rgba(180,210,60,.09),inset 0 1px 0 rgba(255,255,255,.07);backdrop-filter:blur(6px);color:#f4f3eb}#ag-login-gate .gc-login-brand{text-align:center;margin:0 0 18px;text-transform:uppercase}#ag-login-gate .gc-login-brand strong{display:block;font-size:26px;font-weight:950;letter-spacing:2.5px;line-height:1;color:#f4f3eb;text-shadow:0 2px 8px #000}#ag-login-gate .gc-login-brand strong span{color:#cfe85b}#ag-login-gate .gc-login-brand small{display:block;margin-top:8px;font-size:8px;font-weight:900;letter-spacing:2.4px;color:#f0f2ea}#ag-login-gate .gc-login-brand em{display:block;margin-top:7px;font-size:8px;font-style:normal;color:#c8cdc3}#ag-login-gate .gc-login-brand em b{color:#cfe85b}#ag-login-gate .ag-login-form{margin:0;padding:0;border:0}#ag-login-gate .ag-input-wrap{display:block;margin:0 0 13px;color:#bfc2b9;font-size:9px;font-weight:800;letter-spacing:1.3px}#ag-login-gate .ag-input-wrap>span{display:block;margin:0 0 5px}#ag-login-gate .ag-input-wrap input{width:100%;height:49px;box-sizing:border-box;border:1px solid rgba(190,198,180,.34);border-radius:8px;background:rgba(0,0,0,.38);color:#fff;outline:none;padding:0 13px;font:500 15px Arial,sans-serif}.ag-password-row{position:relative}.ag-password-row input{padding-right:44px!important}.ag-eye{position:absolute;right:4px;top:4px;width:36px;height:41px;border:0;background:transparent;color:#cfe05c;cursor:pointer;font-size:17px}.ag-remember{display:flex;align-items:center;gap:8px;margin:2px 0 15px;color:#c8cbc2;font-size:9px;font-weight:700;cursor:pointer}.ag-remember input{position:absolute;opacity:0}.ag-remember span{width:16px;height:16px;border:1px solid rgba(207,224,92,.65);border-radius:3px;background:rgba(0,0,0,.3);display:inline-block}.ag-remember input:checked+span{background:#cfe05c;box-shadow:inset 0 0 0 3px #151a13}.ag-login-button{width:100%;height:50px;border:0;border-radius:8px;background:linear-gradient(180deg,#cfe85b,#8cad21);color:#11160b;font:900 13px Arial,sans-serif;letter-spacing:1.35px;cursor:pointer}.ag-login-error{min-height:13px;margin-top:7px;text-align:center;color:#f0a08c;font:700 9px Arial,sans-serif}`;document.head.appendChild(style);document.body.appendChild(gate);document.documentElement.style.visibility='visible';document.body.style.visibility='visible';
-    const usernameInput=gate.querySelector('#agUsername'),passwordInput=gate.querySelector('#agPassword'),rememberInput=gate.querySelector('#agRemember');
-    if(!remembered){usernameInput.value='';passwordInput.value='';rememberInput.checked=false;requestAnimationFrame(()=>{usernameInput.value='';passwordInput.value='';});}
-    rememberInput.addEventListener('change',()=>{if(!rememberInput.checked)localStorage.removeItem(REMEMBER_KEY);});gate.querySelector('.ag-eye').addEventListener('click',()=>{passwordInput.type=passwordInput.type==='password'?'text':'password';});
-    gate.querySelector('form').addEventListener('submit',async event=>{event.preventDefault();const username=usernameInput.value.trim(),password=passwordInput.value,error=gate.querySelector('#agLoginError');error.textContent='';const account=USERS[username],hash=await sha256(password);if(!account||hash!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);sessionStorage.setItem(SESSION_KEY,'1');sessionStorage.setItem(ROLE_KEY,account.role);sessionStorage.setItem(USERNAME_KEY,username);ensureRoleBuild(account.role);const landing=landingFor(account.role);if(landing!==currentPage()){location.replace(landing);return;}gate.remove();window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role:account.role}}));});
+  const page = () => (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+  const master = page()==='master-admin.html';
+  const SESSION = master ? 'gamechanger.master.authenticated' : 'gamechanger.authenticated';
+  const ROLE = master ? 'gamechanger.master.role' : 'gamechanger.role';
+  const USER = master ? 'gamechanger.master.username' : 'gamechanger.username';
+
+  async function sha256(text){
+    const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+    return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('');
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
+  function landing(role){
+    const roles=window.GAME_CHANGER_ROLES||{};
+    return roles[role]?.landing || (role==='administrator'?'master-admin.html':'index.html');
+  }
+  function loginImage(){
+    return window.GAME_CHANGER_BUILD?.current?.()?.loginBackground ||
+      window.GAME_CHANGER_AGRICULTURE_BUILD?.login?.background ||
+      'assets/ag_world_login_v2.jpg';
+  }
+  function reveal(){
+    document.documentElement.style.visibility='visible';
+    document.body.style.visibility='visible';
+  }
+  function showGate(){
+    if(document.getElementById('ag-login-gate')) return;
+    const gate=document.createElement('div');
+    gate.id='ag-login-gate';
+    gate.className=master?'gc-master-login':'gc-ag-login';
+
+    const title=master?'MASTER PLATFORM ACCESS':'DOMINATE THE TERRITORY';
+    const line=master?'Authorised access to the GAME CHANGER platform.':'Build relationships. Drive sales. WIN THE FUTURE.';
+    gate.innerHTML=(master?'':'<img class="ag-login-art" src="'+loginImage()+'" alt="" aria-hidden="true">')+
+      '<div class="ag-login-panel"><div class="gc-login-brand"><strong>GAME <span>CHANGER</span></strong><small>'+title+'</small><em>'+line+'</em></div>'+
+      '<form class="ag-login-form" autocomplete="off">'+
+      '<label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" type="text" autocomplete="off" required value=""></label>'+
+      '<label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" type="password" autocomplete="new-password" required value=""><button type="button" class="ag-eye">◉</button></div></label>'+
+      '<label class="ag-remember"><input id="agRemember" type="checkbox"><span></span> REMEMBER ME</label>'+
+      '<button class="ag-login-button" type="submit">ENTER GAME CHANGER</button><div class="ag-login-error"></div></form></div>';
+
+    const style=document.createElement('style');
+    style.textContent='#ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;font-family:Arial,Helvetica,sans-serif;color:#f4f3eb}#ag-login-gate.gc-master-login{background:radial-gradient(circle at 78% 12%,rgba(123,161,29,.16),transparent 32%),linear-gradient(145deg,#070b08,#111812)}.ag-login-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);width:min(442px,calc(100vw - 36px));box-sizing:border-box;padding:21px 31px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78));box-shadow:0 18px 55px rgba(0,0,0,.6);backdrop-filter:blur(6px)}.gc-master-login .ag-login-panel{top:50%;background:linear-gradient(145deg,rgba(15,23,17,.97),rgba(8,13,10,.95))}.gc-login-brand{text-align:center;margin-bottom:18px;text-transform:uppercase}.gc-login-brand strong{display:block;font-size:26px;font-weight:950;letter-spacing:2.5px}.gc-login-brand strong span{color:#cfe85b}.gc-login-brand small{display:block;margin-top:8px;font-size:8px;font-weight:900;letter-spacing:2.4px}.gc-login-brand em{display:block;margin-top:7px;font-size:8px;font-style:normal;color:#c8cdc3}.ag-input-wrap{display:block;margin-bottom:13px;font-size:9px;font-weight:800;letter-spacing:1.3px;color:#bfc2b9}.ag-input-wrap>span{display:block;margin-bottom:5px}.ag-input-wrap input{width:100%;height:49px;box-sizing:border-box;border:1px solid rgba(190,198,180,.34);border-radius:8px;background:rgba(0,0,0,.38);color:#fff;padding:0 13px}.ag-password-row{position:relative}.ag-password-row input{padding-right:44px}.ag-eye{position:absolute;right:4px;top:4px;width:36px;height:41px;border:0;background:transparent;color:#cfe05c;cursor:pointer}.ag-remember{display:flex;align-items:center;gap:8px;margin:2px 0 15px;font-size:9px;font-weight:700}.ag-remember input{position:absolute;opacity:0}.ag-remember span{width:16px;height:16px;border:1px solid rgba(207,224,92,.65);border-radius:3px}.ag-remember input:checked+span{background:#cfe05c;box-shadow:inset 0 0 0 3px #151a13}.ag-login-button{width:100%;height:50px;border:0;border-radius:8px;background:linear-gradient(180deg,#cfe85b,#8cad21);color:#11160b;font-weight:900;letter-spacing:1.35px;cursor:pointer}.ag-login-error{min-height:13px;margin-top:7px;text-align:center;color:#f0a08c;font-size:9px;font-weight:700}';
+    document.head.appendChild(style); document.body.appendChild(gate); reveal();
+
+    const username=gate.querySelector('#agUsername');
+    const password=gate.querySelector('#agPassword');
+    const remember=gate.querySelector('#agRemember');
+    username.value=''; password.value=''; remember.checked=false;
+    requestAnimationFrame(()=>{username.value='';password.value='';});
+
+    gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
+    gate.querySelector('form').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const account=USERS[username.value.trim()];
+      const error=gate.querySelector('.ag-login-error');
+      error.textContent='';
+      if(!account || await sha256(password.value)!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}
+      sessionStorage.setItem(SESSION,'1'); sessionStorage.setItem(ROLE,account.role); sessionStorage.setItem(USER,username.value.trim());
+      if(!master && account.role==='agriculture_sales' && window.GAME_CHANGER_BUILD?.set) window.GAME_CHANGER_BUILD.set('agriculture');
+      const dest=landing(account.role);
+      if(dest!==page()){location.replace(dest);return;}
+      gate.remove(); window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:username.value.trim(),role:account.role}}));
+    });
+  }
+
+  function install(){
+    const ok=sessionStorage.getItem(SESSION)==='1';
+    const role=sessionStorage.getItem(ROLE);
+    if(ok&&role){
+      if(master){reveal();return;}
+      if(role==='agriculture_sales' && page()==='index.html'){reveal();return;}
+      if(role==='agriculture_administrator' && page()==='admin.html'){reveal();return;}
+      sessionStorage.removeItem(SESSION);sessionStorage.removeItem(ROLE);sessionStorage.removeItem(USER);
+    }
+    showGate();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
 })();
