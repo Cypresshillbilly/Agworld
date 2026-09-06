@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "note": "Farms support the Ag World hierarchy Country → Province → Municipality → Town → Farm. Existing farms are province-linked; municipal and town links will be populated when those authoritative layers are added.",
+  "note": "Every farm carries a complete geographic connection path: Country → Province → Municipality → Town → Farm. Municipal and town IDs remain null until their actual map records are populated, while names preserve the intended parent chain.",
   "farms": [
     {
       "id": "demo-limpopo-001",
@@ -43,7 +43,25 @@
       "territoryId": "ag-territory-01-limpopo",
       "countryId": "ag-country-south-africa",
       "municipalityId": null,
-      "townId": null
+      "townId": null,
+      "geography": {
+        "country": {
+          "id": "ag-country-south-africa",
+          "name": "South Africa"
+        },
+        "province": {
+          "id": "ag-territory-01-limpopo",
+          "name": "Limpopo"
+        },
+        "municipality": {
+          "id": null,
+          "name": "Polokwane Local Municipality"
+        },
+        "town": {
+          "id": null,
+          "name": "Polokwane"
+        }
+      }
     },
     {
       "id": "demo-free-state-001",
@@ -86,7 +104,25 @@
       "territoryId": "ag-territory-02-free-state",
       "countryId": "ag-country-south-africa",
       "municipalityId": null,
-      "townId": null
+      "townId": null,
+      "geography": {
+        "country": {
+          "id": "ag-country-south-africa",
+          "name": "South Africa"
+        },
+        "province": {
+          "id": "ag-territory-02-free-state",
+          "name": "Free State"
+        },
+        "municipality": {
+          "id": null,
+          "name": "Mangaung Metropolitan Municipality"
+        },
+        "town": {
+          "id": null,
+          "name": "Bloemfontein"
+        }
+      }
     },
     {
       "id": "demo-kwazulu-001",
@@ -129,7 +165,25 @@
       "territoryId": "ag-territory-03-kzn",
       "countryId": "ag-country-south-africa",
       "municipalityId": null,
-      "townId": null
+      "townId": null,
+      "geography": {
+        "country": {
+          "id": "ag-country-south-africa",
+          "name": "South Africa"
+        },
+        "province": {
+          "id": "ag-territory-03-kzn",
+          "name": "KwaZulu-Natal"
+        },
+        "municipality": {
+          "id": null,
+          "name": "eThekwini Metropolitan Municipality"
+        },
+        "town": {
+          "id": null,
+          "name": "Durban"
+        }
+      }
     }
   ]
 }
