@@ -1,25 +1,32 @@
-/* GAME CHANGER core role registry and deterministic page module loader. */
+/* GAME CHANGER core role registry and deterministic build-aware page loader. */
 window.GAME_CHANGER_ROLES = {
   administrator: { id:'administrator', label:'ADMINISTRATOR', landing:'admin.html', profilePage:'admin.html', environment:'platform' },
   agriculture_sales: { id:'agriculture_sales', label:'AGRICULTURE SALES REPRESENTATIVE', landing:'index.html', profilePage:'index.html', environment:'agriculture' }
 };
 (function(){
-  const path=window.location.pathname;
-  const load=src=>{
-    const s=document.createElement('script');s.src=src;s.defer=true;document.head.appendChild(s);return s;
-  };
-  load('core/bootstrap.js?v=architecture-v1');
+  const path=(window.location.pathname.split('/').pop()||'index.html').toLowerCase();
+  const load=src=>new Promise(resolve=>{
+    if(document.querySelector('script[data-gc-module="'+src+'"]')) return resolve();
+    const s=document.createElement('script');s.src=src;s.defer=true;s.dataset.gcModule=src;s.onload=resolve;s.onerror=resolve;document.head.appendChild(s);
+  });
+  load('core/bootstrap.js?v=phase2-live-chain');
   const start=()=>{
-    if(/\/admin\.html$/i.test(path)){
+    if(path==='admin.html'){
       load('core/mission-engine.js?v=architecture-v1');
       load('core/mission-library.js?v=architecture-v1');
       load('core/admin-ui-polish.js?v=architecture-v1');
       return;
     }
-    if(/\/index\.html$/i.test(path)||path==='/'||path===''){
-      load('core/agri-mission-sync.js?v=architecture-v1');
-      load('core/agri-mission-detail.js?v=architecture-v1');
+    if(path==='index.html' || path===''){
+      const build=window.GAME_CHANGER_BUILD?.current();
+      if(build?.id==='agriculture'){
+        const manifest=window.GAME_CHANGER_AGRICULTURE_BUILD;
+        load(manifest?.login?.module||'builds/agriculture/login/login.module.js');
+        load(manifest?.modules?.missions||'builds/agriculture/missions/missions.module.js');
+        load(manifest?.modules?.profile||'builds/agriculture/profile/profile.module.js');
+      }
     }
   };
+  window.addEventListener('gamechanger:build-changed',()=>location.reload());
   if(window.GAME_CHANGER_READY) window.GAME_CHANGER_READY.then(start); else window.addEventListener('gamechanger:core-ready',start,{once:true});
 })();
