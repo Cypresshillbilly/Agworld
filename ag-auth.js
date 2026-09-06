@@ -40,8 +40,8 @@
       '<form class="ag-login-form" autocomplete="off" data-lpignore="true" data-1p-ignore="true">'+
       '<input type="text" name="ag-world-decoy-user" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0">'+
       '<input type="password" name="ag-world-decoy-pass" autocomplete="current-password" tabindex="-1" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0">'+
-      '<label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="ag-world-user" type="text" autocomplete="one-time-code" required value="" readonly data-lpignore="true" data-1p-ignore="true"></label>'+
-      '<label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="ag-world-pass" type="password" autocomplete="new-password" required value="" readonly data-lpignore="true" data-1p-ignore="true"><button type="button" class="ag-eye">◉</button></div></label>'+
+      '<label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="ag-world-user" type="text" autocomplete="off" required value="" data-lpignore="true" data-1p-ignore="true"></label>'+
+      '<label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="ag-world-pass" type="password" autocomplete="new-password" required value="" data-lpignore="true" data-1p-ignore="true"><button type="button" class="ag-eye">◉</button></div></label>'+
       '<label class="ag-remember"><input id="agRemember" type="checkbox"><span></span> REMEMBER ME</label>'+
       '<button class="ag-login-button" type="submit">ENTER GAME CHANGER</button><div class="ag-login-error"></div></form></div>';
 
@@ -64,15 +64,8 @@
     hardClear();
     requestAnimationFrame(hardClear);
 
-    // Prevent browser autofill while untouched, then unlock the exact field
-    // the user chooses to edit. There are deliberately no delayed timers or
-    // repeating guards that can erase user input.
-    const unlock=(field)=>{
-      field.removeAttribute('readonly');
-      field.focus();
-    };
-    username.addEventListener('focus',()=>unlock(username),{once:true});
-    password.addEventListener('focus',()=>unlock(password),{once:true});
+    // Do not lock the fields. Master Admin and Ag World are separate sessions,
+    // and users must be able to type immediately after the login page opens.
 
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
     gate.querySelector('form').addEventListener('submit',async e=>{
