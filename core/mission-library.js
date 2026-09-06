@@ -75,7 +75,8 @@
     const tree = document.getElementById('gcMissionTree');
     const count = document.getElementById('gcMissionCount');
     if (!tree) return false;
-    const missions = read();
+    const activeBuild = window.GAME_CHANGER_BUILD?.current?.()?.label || 'Agriculture';
+    const missions = read().filter(mission => String(mission.build || '').toLowerCase() === String(activeBuild).toLowerCase());
     if (count) count.textContent = `${missions.length} ${missions.length === 1 ? 'MISSION' : 'MISSIONS'}`;
 
     const groups = {};
@@ -138,7 +139,7 @@
       const mission = read().find(item => String(item.id) === id);
       if (!mission) return;
       if (!window.confirm(`Delete mission "${mission.name || 'Unnamed mission'}"?\n\nThis will remove it from the Mission Library.`)) return;
-      write(read().filter(item => String(item.id) !== id));
+      if(window.GAME_CHANGER_MISSIONS?.remove) window.GAME_CHANGER_MISSIONS.remove(id); else write(read().filter(item => String(item.id) !== id));
       render();
     }));
 
