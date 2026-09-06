@@ -136,18 +136,7 @@ async function loadFarms() {
     municipalities = territoryData.municipalities || [];
     towns = territoryData.towns || [];
 
-    // Load real municipal and town boundary layers from the published GIS services.
-    // If a remote service is temporarily unavailable, the application still opens
-    // using the hierarchy manifest and retries on the next page load.
-    const [municipalLayer, townLayer] = await Promise.allSettled([
-      fetch(AGWORLD_SPATIAL_SOURCES.municipalities).then(r => { if (!r.ok) throw new Error('municipal layer'); return r.json(); }),
-      fetch(AGWORLD_SPATIAL_SOURCES.towns).then(r => { if (!r.ok) throw new Error('town layer'); return r.json(); })
-    ]);
-    if (municipalLayer.status === 'fulfilled') municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
-    if (townLayer.status === 'fulfilled') towns = normaliseSpatialFeatures(townLayer.value, 'town');
-    linkHierarchySpatialParents();
-
-    // Backfill territory links for existing farm records.
+    // Backfill territory links for existing farm records before the map starts.
     farms.forEach(farm => {
       if (!farm.territoryId) {
         const match = territories.find(t => (t.regions || []).includes(farm.region));
@@ -155,20 +144,69 @@ async function loadFarms() {
       }
     });
     linkHierarchySpatialParents();
+
+    // Start the Google map immediately. Remote GIS layers must never block the
+    // dashboard from rendering its base satellite map.
     initMap();
+    loadSpatialLayersInBackground();
   } catch (error) {
     $('mapStatus').textContent = 'Agriculture world data could not be loaded.';
   }
 }
+
+async function fetchSpatialLayer(url, label) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(label);
+    return await response.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function loadSpatialLayersInBackground() {
+  if (!window.AGWORLD_SPATIAL_SOURCES) return;
+  const [municipalLayer, townLayer] = await Promise.allSettled([
+    fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.municipalities, 'municipal layer'),
+    fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.towns, 'town layer')
+  ]);
+
+  if (municipalLayer.status === 'fulfilled') municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
+  if (townLayer.status === 'fulfilled') towns = normaliseSpatialFeatures(townLayer.value, 'town');
+  linkHierarchySpatialParents();
+
+  // If the base map is already ready, add only the freshly loaded layers now.
+  // If it is still loading, agWorldMapReady will use the updated arrays.
+  if (map) {
+    if (municipalLayer.status === 'fulfilled') municipalities.forEach(addTerritory);
+    if (townLayer.status === 'fulfilled') towns.forEach(addTerritory);
+    updateZoomStage();
+    $('mapStatus').textContent = `Live GIS hierarchy · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
+  }
+}
+
 function initMap() {
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
     $('mapStatus').textContent = 'Google satellite mapping is configured but inactive: add the API key in config.js.';
     return;
   }
+  if (window.google?.maps || document.getElementById('agworld-google-maps-script')) return;
+
+  $('mapStatus').textContent = 'Loading Google satellite map…';
+  window.gm_authFailure = () => {
+    $('mapStatus').textContent = 'Google Maps authorization failed. Check the API key, Maps JavaScript API and allowed website domains.';
+  };
+
   const script = document.createElement('script');
+  script.id = 'agworld-google-maps-script';
   script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&libraries=drawing&callback=agWorldMapReady`;
   script.async = true;
   script.defer = true;
+  script.onerror = () => {
+    $('mapStatus').textContent = 'Google Maps could not be downloaded. Check the internet connection or browser blocking settings.';
+  };
   document.head.appendChild(script);
 }
 
