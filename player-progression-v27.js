@@ -150,11 +150,18 @@
       ` : c.id === 3 ? `
         <div class="ag-current-mission"><div class="ag-current-label">ONGOING CAREER</div><strong>Territory Expansion Unlocked</strong><p>You are now ready for real-world missions that increase The Company's territorial control.</p></div>
       ` : '<div class="ag-current-mission">Chapter complete.</div>'}
-      <div class="ag-up-next">${c.missions.filter(m => !state.completed[m.id]).slice(1,4).map(m => '<span>🔒 ' + m.title + '</span>').join('')}</div>
+      <div class="ag-chapter-mission-list">
+        <div class="ag-mission-list-label">CHAPTER undefined MISSIONS</div>
+        ${c.missions.map((m,i) => '<div class="ag-mission-list-row ' + (state.completed[m.id] ? 'done' : (mission?.id === m.id ? 'active' : 'locked')) + '"><b>' + (state.completed[m.id] ? '✓' : (i+1)) + '</b><span><strong>' + m.title + '</strong><small>' + m.type + ' · +' + m.xp + ' XP</small></span></div>').join('')}
+      </div>
+      <button class="ag-reset-player" data-reset-player>RESET PLAYER TO LEVEL 1</button>
     `;
 
     panel.querySelectorAll('[data-progression-complete]').forEach(button => {
       button.onclick = () => completeMission(button.dataset.progressionComplete);
+    });
+    panel.querySelector('[data-reset-player]')?.addEventListener('click', () => {
+      if (confirm('Reset your player to Level 1 and restart Chapter 1? Your completed missions and progression XP will be cleared.')) reset();
     });
   }
 
@@ -180,6 +187,11 @@
     });
   }
 
+  function reset() {
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
+
   function createPanel() {
     const side = document.querySelector('.missions');
     if (!side) return;
@@ -197,7 +209,7 @@
     .ag-progression-story{font-size:10px;line-height:1.45;color:#aeb9b0;margin:9px 0 11px}.ag-progression-xp>div,.ag-progression-progress{display:flex;justify-content:space-between;font-size:9px;color:#9eaca2;margin:7px 0}.ag-progression-xp b,.ag-progression-progress b{color:#dbe5dd}
     .ag-progression-xp i{display:block;height:7px;border-radius:99px;background:#263038;overflow:hidden}.ag-progression-xp em{display:block;height:100%;background:#65d875;border-radius:99px}
     .ag-current-mission{margin-top:12px;padding:11px;border-radius:9px;background:rgba(0,0,0,.2);border-left:3px solid #65d875}.ag-current-mission strong{display:block;font-size:13px;margin:5px 0;color:#fff}.ag-current-mission p{font-size:10px;line-height:1.45;color:#b2bdb4;margin:0 0 9px}.ag-current-mission>div:last-child{display:flex;align-items:center;justify-content:space-between;color:#65d875;font-size:9px;font-weight:800}.ag-current-mission button{border:1px solid rgba(101,216,117,.5);background:rgba(101,216,117,.1);color:#dff4e3;border-radius:6px;padding:6px 8px;font-size:8px;font-weight:900;cursor:pointer}
-    .ag-up-next{margin-top:9px}.ag-up-next span{display:block;color:#738078;font-size:9px;margin:4px 0}
+    .ag-chapter-mission-list{margin-top:12px;border-top:1px solid rgba(255,255,255,.07);padding-top:9px}.ag-mission-list-label{font-size:8px;letter-spacing:1.1px;color:#91a095;font-weight:900;margin-bottom:6px}.ag-mission-list-row{display:flex;gap:7px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);opacity:.62}.ag-mission-list-row.active{opacity:1}.ag-mission-list-row.done{opacity:.85}.ag-mission-list-row b{width:17px;height:17px;border-radius:50%;display:grid;place-items:center;background:#263038;color:#aeb9b0;font-size:8px}.ag-mission-list-row.active b{background:#65d875;color:#0b1610}.ag-mission-list-row.done b{background:rgba(101,216,117,.18);color:#7bea89}.ag-mission-list-row strong,.ag-mission-list-row small{display:block}.ag-mission-list-row strong{font-size:9px;color:#dfe8e1}.ag-mission-list-row small{font-size:7px;color:#7e8b82;margin-top:2px}.ag-reset-player{width:100%;margin-top:12px;padding:7px;border-radius:6px;border:1px solid rgba(255,120,120,.28);background:rgba(255,90,90,.06);color:#ffb0b0;font-size:8px;font-weight:900;cursor:pointer}
   `;
   document.head.appendChild(style);
 
@@ -212,6 +224,6 @@
     getState: () => JSON.parse(JSON.stringify(state)),
     getChapters: () => JSON.parse(JSON.stringify(CHAPTERS)),
     completeMission,
-    reset: () => { localStorage.removeItem(KEY); location.reload(); }
+    reset
   };
 })();
