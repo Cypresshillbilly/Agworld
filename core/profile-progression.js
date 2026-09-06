@@ -1,6 +1,9 @@
 /* GAME CHANGER Profile Progression — mission completion is the authoritative progression input. */
 (function(){
   'use strict';
+  // AG World live player profiles are owned by player-progression-v27.js.
+  // Do not let the old localStorage progression system overwrite Supabase data.
+  if (window.__AGWORLD_USE_PLAYER_PROGRESSION === true) return;
   const STATUS_KEY='gamechanger.mission-status';
   const BASE_KEY='gamechanger.profile-base-xp';
   const DEFAULT_BASE_XP=6820;
