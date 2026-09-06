@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 2,
-  "note": "Initial Ag World farm dataset. Each farm is linked to a territory and can be expanded into live GIS/database records.",
+  "schemaVersion": 3,
+  "note": "Farms support the Ag World hierarchy Country → Province → Municipality → Town → Farm. Existing farms are province-linked; municipal and town links will be populated when those authoritative layers are added.",
   "farms": [
     {
       "id": "demo-limpopo-001",
@@ -40,7 +40,10 @@
       "annualHarvest": "Demo record",
       "lastService": "—",
       "opportunityScore": 91,
-      "territoryId": "ag-territory-01-limpopo"
+      "territoryId": "ag-territory-01-limpopo",
+      "countryId": "ag-country-south-africa",
+      "municipalityId": null,
+      "townId": null
     },
     {
       "id": "demo-free-state-001",
@@ -80,7 +83,10 @@
       "annualHarvest": "Demo record",
       "lastService": "2026-08-12",
       "opportunityScore": 38,
-      "territoryId": "ag-territory-02-free-state"
+      "territoryId": "ag-territory-02-free-state",
+      "countryId": "ag-country-south-africa",
+      "municipalityId": null,
+      "townId": null
     },
     {
       "id": "demo-kwazulu-001",
@@ -120,7 +126,10 @@
       "annualHarvest": "Demo record",
       "lastService": "2026-07-28",
       "opportunityScore": 64,
-      "territoryId": "ag-territory-03-kzn"
+      "territoryId": "ag-territory-03-kzn",
+      "countryId": "ag-country-south-africa",
+      "municipalityId": null,
+      "townId": null
     }
   ]
 }
