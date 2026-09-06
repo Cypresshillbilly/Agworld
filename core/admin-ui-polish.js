@@ -58,6 +58,27 @@
   `;
   document.head.appendChild(css);
 
+  const light=document.createElement('style');
+  light.id='gc-admin-light-theme';
+  light.textContent=`
+    html,body{background:#fff!important;color:#20261f!important}
+    .admin-shell,.admin-main{background:#fff!important;color:#20261f!important}
+    .admin-main .topbar{border-bottom-color:#dfe4dc!important}
+    .admin-main .topbar h1,.admin-main .panel h2,.admin-main .territory h2{color:#20261f!important}
+    .admin-main .topbar p,.admin-main .panel-head span,.admin-main .metric span,.admin-main .territory-stat span,.admin-main .territory-head p,.admin-main .territory-stat em,.admin-main .admin-action span,.admin-main .u-info small{color:#6f786f!important}
+    .admin-main .metric,.admin-main .panel,.admin-main .territory,.gc-mission-library{background:#fff!important;border-color:#dfe4dc!important;box-shadow:0 7px 24px rgba(31,43,30,.08)!important}
+    .admin-main .metric b,.admin-main .territory-stat b{color:#20261f!important}
+    .admin-main .buildbar{background:#fff!important;border-color:#dfe4dc!important;color:#20261f!important}
+    .admin-main .buildbar span{color:#6f786f!important}
+    .admin-main .build-switch button{background:#fff!important;color:#3f493f!important;border-color:#ccd5c8!important}
+    .admin-main .build-switch button.active{background:#eef6df!important;color:#4d681b!important;border-color:#a8d51f!important}
+    .admin-main .territory-stat,.admin-main .user-row,.admin-main .admin-action{background:#fafbfa!important;border-color:#e4e8e2!important}
+    .admin-main .progress{background:#e7ebe5!important}.admin-main .notice{background:#f3f8ea!important;color:#536052!important}
+    .mission-modal{background:#fff!important;border-color:#d8e2d0!important;color:#20261f!important}
+    #gc-logout{margin-top:10px!important;border-top:1px solid rgba(190,214,139,.18)!important;color:#d8a8a8!important}
+  `;
+  document.head.appendChild(light);
+
   function image(src, alt, className){
     const img=document.createElement('img');
     img.src=src; img.alt=alt; img.className=className; img.decoding='async';
@@ -86,6 +107,37 @@
     }
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true});
-  else install();
+
+  function installBuildSwitch(){
+    const buttons=[...document.querySelectorAll('#buildSwitch [data-build]')];
+    if(!buttons.length)return;
+    const paint=()=>{
+      const active=window.GAME_CHANGER_BUILD?.get?.()||localStorage.getItem('gamechanger.activeBuild')||'agriculture';
+      buttons.forEach(button=>button.classList.toggle('active',button.dataset.build===active));
+    };
+    buttons.forEach(button=>button.addEventListener('click',()=>{
+      const build=button.dataset.build;
+      if(window.GAME_CHANGER_BUILD?.set)window.GAME_CHANGER_BUILD.set(build);
+      else localStorage.setItem('gamechanger.activeBuild',build);
+      paint();
+    }));
+    window.addEventListener('gamechanger:build-changed',paint);
+    paint();
+  }
+
+  function installLogout(){
+    const nav=document.querySelector('.admin-nav');
+    if(!nav||document.getElementById('gc-logout'))return;
+    const button=document.createElement('button');
+    button.id='gc-logout';button.type='button';button.textContent='↪ LOG OUT';
+    button.addEventListener('click',()=>{
+      sessionStorage.removeItem('gamechanger.authenticated');
+      sessionStorage.removeItem('gamechanger.role');
+      sessionStorage.removeItem('gamechanger.username');
+      location.replace('index.html');
+    });
+    nav.appendChild(button);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{install();installBuildSwitch();installLogout();},{once:true});
+  else {install();installBuildSwitch();installLogout();}
 })();
