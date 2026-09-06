@@ -50,9 +50,7 @@
       const xpInput=[...document.querySelectorAll('.mission-modal .field input')].find(i=>i.closest('.field')?.querySelector('label')?.textContent.trim()==='PROFILE XP REWARD');
       const role=document.getElementById('missionRole')?.value || '*';
       const build=buildSelect.value || 'Agriculture';
-      missions.push({id:'mission_'+Date.now(),name,build,role,type,priority,objective,success,xp:Number(xpInput?.value || 0),createdAt:new Date().toISOString()});
-      localStorage.setItem('gamechanger.missions',JSON.stringify(missions));
-      window.dispatchEvent(new CustomEvent('gamechanger:missions-changed'));
+      const workflow=[...document.querySelectorAll('#steps input')].map(i=>i.value.trim()).filter(Boolean);\n      missionStore.create({name,build,role,type,priority,objective,success,xp:Number(xpInput?.value || 0),workflow});
     },true);
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
