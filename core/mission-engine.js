@@ -36,6 +36,12 @@
   function install(){
     const buildSelect=[...document.querySelectorAll('.mission-modal .field select')].find(s=>s.closest('.field')?.querySelector('label')?.textContent.trim()==='INDUSTRY BUILD');
     if(!buildSelect) return;
+    const activeBuild=window.GAME_CHANGER_BUILD?.current?.();
+    if(activeBuild?.id){
+      buildSelect.innerHTML='<option value="'+activeBuild.label+'">'+activeBuild.label+'</option>';
+      buildSelect.value=activeBuild.label;
+      buildSelect.disabled=true;
+    }
     addRoleField(buildSelect); addOrganisationNote();
     const save=document.getElementById('missionSave');
     if(!save || save.dataset.scopeEnhanced) return;
