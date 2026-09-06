@@ -37,9 +37,11 @@
     const line=master?'Authorised access to the GAME CHANGER platform.':'Build relationships. Drive sales. WIN THE FUTURE.';
     gate.innerHTML=(master?'':'<img class="ag-login-art" src="'+loginImage()+'" alt="" aria-hidden="true">')+
       '<div class="ag-login-panel"><div class="gc-login-brand"><strong>GAME <span>CHANGER</span></strong><small>'+title+'</small><em>'+line+'</em></div>'+
-      '<form class="ag-login-form" autocomplete="off">'+
-      '<label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" type="text" autocomplete="off" required value=""></label>'+
-      '<label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" type="password" autocomplete="new-password" required value=""><button type="button" class="ag-eye">◉</button></div></label>'+
+      '<form class="ag-login-form" autocomplete="off" data-lpignore="true" data-1p-ignore="true">'+
+      '<input type="text" name="ag-world-decoy-user" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0">'+
+      '<input type="password" name="ag-world-decoy-pass" autocomplete="current-password" tabindex="-1" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0">'+
+      '<label class="ag-input-wrap"><span>USERNAME</span><input id="agUsername" name="ag-world-user" type="text" autocomplete="one-time-code" required value="" readonly data-lpignore="true" data-1p-ignore="true"></label>'+
+      '<label class="ag-input-wrap"><span>PASSWORD</span><div class="ag-password-row"><input id="agPassword" name="ag-world-pass" type="password" autocomplete="new-password" required value="" readonly data-lpignore="true" data-1p-ignore="true"><button type="button" class="ag-eye">◉</button></div></label>'+
       '<label class="ag-remember"><input id="agRemember" type="checkbox"><span></span> REMEMBER ME</label>'+
       '<button class="ag-login-button" type="submit">ENTER GAME CHANGER</button><div class="ag-login-error"></div></form></div>';
 
@@ -50,8 +52,33 @@
     const username=gate.querySelector('#agUsername');
     const password=gate.querySelector('#agPassword');
     const remember=gate.querySelector('#agRemember');
-    username.value=''; password.value=''; remember.checked=false;
-    requestAnimationFrame(()=>{username.value='';password.value='';});
+    // The Ag World gate must never inherit Master Admin credentials from browser autofill.
+    // Keep the real fields readonly until the user actively interacts with them.
+    const hardClear=()=>{
+      username.value='';
+      password.value='';
+      username.setAttribute('value','');
+      password.setAttribute('value','');
+      remember.checked=false;
+    };
+    hardClear();
+    requestAnimationFrame(hardClear);
+    setTimeout(hardClear,0);
+    setTimeout(hardClear,100);
+    setTimeout(hardClear,500);
+    const unlock=(field)=>{
+      hardClear();
+      field.removeAttribute('readonly');
+    };
+    username.addEventListener('pointerdown',()=>unlock(username),{once:true});
+    password.addEventListener('pointerdown',()=>unlock(password),{once:true});
+    username.addEventListener('keydown',()=>unlock(username),{once:true});
+    password.addEventListener('keydown',()=>unlock(password),{once:true});
+    // If a password manager injects values after the page is shown, clear them while locked.
+    const autofillGuard=setInterval(()=>{
+      if(username.hasAttribute('readonly') || password.hasAttribute('readonly')) hardClear();
+      else clearInterval(autofillGuard);
+    },50);
 
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
     gate.querySelector('form').addEventListener('submit',async e=>{
