@@ -1,29 +1,55 @@
-/* GAME CHANGER Master Admin Console */
+/* GAME CHANGER Master Platform — build switcher only */
 (function(){
- 'use strict';
- const ready=window.GAME_CHANGER_READY||Promise.resolve();
- ready.then(()=>{
-   const registry=window.GAME_CHANGER_BUILDS||{};
-   const cards=document.getElementById('buildCards');
-   if(!cards)return;
-   const active=Object.values(registry).filter(b=>b.status!=='planned').length;
-   document.getElementById('activeBuildCount').textContent=String(active);
-   document.getElementById('registeredBuildCount').textContent=String(Object.keys(registry).length);
-   cards.innerHTML=Object.values(registry).map(build=>{
-     const live=build.status!=='planned' && !!build.admin;
-     return '<article class="build-card '+(live?'active':'')+'">'+
-       '<div class="build-kicker">'+(live?'ACTIVE BUILD':'REGISTERED · NOT CONFIGURED')+'</div>'+
-       '<h3>'+build.label+'</h3><p>'+build.description+'</p>'+
-       '<div class="build-meta"><div><span>STATUS</span><b>'+build.statusLabel+'</b></div><div><span>ROLES</span><b>'+build.roleCount+'</b></div><div><span>ADMIN</span><b>'+ (live?'READY':'PENDING') +'</b></div></div>'+
-       '<button class="build-action '+(!live?'disabled':'')+'" '+(!live?'disabled':'')+' data-build="'+build.id+'">'+(live?'ENTER '+build.label.toUpperCase()+' ADMIN':'BUILD NOT CONFIGURED')+'</button></article>';
-   }).join('');
-   cards.querySelectorAll('[data-build]:not(.disabled)').forEach(btn=>btn.addEventListener('click',()=>{
-     const build=registry[btn.dataset.build]; if(!build)return;
-     window.GAME_CHANGER_BUILD.set(build.id);
-     location.href=build.admin;
-   }));
- });
- document.getElementById('masterLogout')?.addEventListener('click',()=>{
-   sessionStorage.removeItem('gamechanger.authenticated');sessionStorage.removeItem('gamechanger.role');sessionStorage.removeItem('gamechanger.username');location.reload();
- });
+  'use strict';
+  const ready=window.GAME_CHANGER_READY||Promise.resolve();
+  ready.then(()=>{
+    const registry=window.GAME_CHANGER_BUILDS||{};
+    const switcher=document.getElementById('buildSwitch');
+    const enter=document.getElementById('enterBuild');
+    const note=document.getElementById('selectionNote');
+    if(!switcher||!enter)return;
+    let selected=window.GAME_CHANGER_BUILD?.get?.()||'agriculture';
+
+    const render=()=>{
+      switcher.innerHTML=Object.values(registry).map(build=>{
+        const isSelected=build.id===selected;
+        const icon=build.id==='agriculture'?'🌾':'💼';
+        const state=build.id==='agriculture'?'PRIMARY REFERENCE BUILD':'NEXT INDUSTRY BUILD';
+        return '<button type="button" class="build-option '+(isSelected?'selected':'')+'" data-build="'+build.id+'">'+
+          '<div class="build-icon">'+icon+'</div><h3>'+build.label+'</h3><p>'+build.description+'</p>'+
+          '<span class="build-state">'+state+'</span></button>';
+      }).join('');
+      const build=registry[selected];
+      note.textContent=build?'Selected: '+build.label+'.':''; 
+      enter.textContent=selected==='agriculture'?'ENTER AG WORLD':'SELECT NETWORK COLLECTIONS';
+    };
+
+    switcher.addEventListener('click',event=>{
+      const button=event.target.closest('[data-build]');
+      if(!button)return;
+      selected=button.dataset.build;
+      window.GAME_CHANGER_BUILD.set(selected);
+      render();
+    });
+
+    enter.addEventListener('click',()=>{
+      const build=registry[selected];
+      if(!build)return;
+      window.GAME_CHANGER_BUILD.set(build.id);
+      if(build.id==='agriculture'){
+        location.href=build.admin||'admin.html';
+        return;
+      }
+      note.textContent='Network Collections is now the active build. Its dedicated game environment will be created after Ag World is proven as the reference build.';
+    });
+
+    render();
+  });
+
+  document.getElementById('masterLogout')?.addEventListener('click',()=>{
+    sessionStorage.removeItem('gamechanger.authenticated');
+    sessionStorage.removeItem('gamechanger.role');
+    sessionStorage.removeItem('gamechanger.username');
+    location.reload();
+  });
 })();
