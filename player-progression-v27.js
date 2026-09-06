@@ -30,10 +30,17 @@ function createPanel(){const side=document.querySelector('.missions');if(!side||
 function syncHud(){const next=nextLevelXp(state.level),floor=xpForLevel(state.level),pct=Math.min(100,Math.round((state.xp-floor)/Math.max(1,next-floor)*100));
 const sideProfile=document.querySelector('.sidebar .profile');const sideStrong=sideProfile?.querySelector('strong');const initial=(state.playerName||'?').trim().charAt(0).toUpperCase();
 if(sideProfile){
+  const playerName=(state.playerName||'PLAYER').toUpperCase();
+  const playerDetails='SALES REPRESENTATIVE\\A LEVEL '+state.level+' · '+state.xp.toLocaleString()+' XP';
   sideProfile.dataset.playerInitial=initial;
-  sideProfile.dataset.playerName=(state.playerName||'PLAYER').toUpperCase();
-  sideProfile.dataset.playerDetails='SALES REPRESENTATIVE\\A LEVEL '+state.level+' · '+state.xp.toLocaleString()+' XP';
-  sideProfile.innerHTML='<strong>'+esc(state.playerName||'PLAYER')+'</strong>SALES REPRESENTATIVE<br>Level '+state.level+' · '+state.xp.toLocaleString()+' XP<br><span style="color:#7e969f">Connected</span>';
+  sideProfile.dataset.playerName=playerName;
+  sideProfile.dataset.playerDetails=playerDetails;
+  sideProfile.innerHTML='<strong class="ag-live-player-name">'+esc(state.playerName||'PLAYER')+'</strong>SALES REPRESENTATIVE<br>Level '+state.level+' · '+state.xp.toLocaleString()+' XP<br><span style="color:#7e969f">Connected</span>';
+  const profileName=sideProfile.querySelector('strong');
+  if(profileName){
+    profileName.dataset.playerName=playerName;
+    profileName.dataset.playerDetails=playerDetails;
+  }
 }
 document.querySelectorAll('.menu-user-name').forEach(e=>e.textContent=state.playerName.toUpperCase());document.querySelectorAll('.user-identity strong').forEach(e=>e.textContent=state.playerName.toUpperCase());document.querySelectorAll('.menu-user-avatar span,.user-avatar').forEach(e=>e.textContent=(state.playerName||'?').trim().charAt(0).toUpperCase());document.querySelectorAll('.menu-user-level').forEach(e=>e.textContent='LEVEL '+state.level);document.querySelectorAll('.level').forEach(e=>e.textContent='Level '+state.level+' · '+state.xp.toLocaleString()+' / '+next.toLocaleString()+' XP');document.querySelectorAll('.menu-user-xptext span').forEach(e=>e.textContent=state.xp.toLocaleString()+' / '+next.toLocaleString()+' XP');document.querySelectorAll('.menu-user-xptext b,.xptext span:last-child').forEach(e=>e.textContent=pct+'%');document.querySelectorAll('.user-level strong').forEach(e=>e.textContent='LEVEL '+state.level);document.querySelectorAll('.menu-user-xp > span,.xpbar > span,.profile-xpbar > span').forEach(e=>e.style.width=pct+'%');document.querySelectorAll('.profile-xptext span').forEach((e,i)=>e.textContent=i===0?state.xp.toLocaleString()+' / '+next.toLocaleString()+' XP':pct+'%')
 window.dispatchEvent(new CustomEvent('agworld:player-state',{detail:{name:state.playerName,level:state.level,xp:state.xp,currentChapter:state.currentChapter,completed:state.completed}}));}
