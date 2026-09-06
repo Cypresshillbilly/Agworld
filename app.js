@@ -340,16 +340,33 @@ function selectTerritory(territory, zoom = true) {
 }
 
 function addFarm(farm) {
-  if (!map) return;
-  const polygon = new google.maps.Polygon({
-    paths: farm.boundary || [], strokeOpacity: .9, strokeWeight: 2,
-    fillOpacity: .16, clickable: true, map
-  });
-  polygon.addListener('click', () => { if (!creatingFarm) selectFarm(farm, true); });
+  if (!map || !farm?.center) return;
+
+  // Replace stale overlays instead of stacking duplicate farm objects.
+  if (farm._polygon) farm._polygon.setMap(null);
+  if (farm._marker) farm._marker.setMap(null);
+
+  const hasBoundary = Array.isArray(farm.boundary) && farm.boundary.length >= 3;
+  const polygon = hasBoundary ? new google.maps.Polygon({
+    paths: farm.boundary,
+    strokeColor: '#d7e66b',
+    strokeOpacity: 0.98,
+    strokeWeight: 3,
+    fillColor: '#8fb339',
+    fillOpacity: 0.22,
+    clickable: true,
+    zIndex: 20,
+    map
+  }) : null;
+
+  if (polygon) polygon.addListener('click', () => { if (!creatingFarm) selectFarm(farm, true); });
 
   const marker = new google.maps.Marker({
-    position: farm.center, map, title: farm.name,
-    label: { text: 'AG', color: '#fff', fontSize: '9px', fontWeight: '700' }
+    position: farm.center,
+    map,
+    title: farm.name,
+    zIndex: 30,
+    label: { text: 'AG', color: '#fff', fontSize: '10px', fontWeight: '800' }
   });
   marker.addListener('click', () => { if (!creatingFarm) selectFarm(farm, true); });
 
@@ -408,8 +425,9 @@ function refreshMapVisibility() {
     if (town._marker) town._marker.setMap(zoom >= 11 && zoom < 13 ? map : null);
   });
   farms.forEach(farm => {
-    if (farm._polygon) farm._polygon.setMap(showBoundaries ? map : null);
-    if (farm._marker) farm._marker.setMap(zoom >= 7 ? map : null);
+    // Farms must remain visible once the user reaches the territory level.
+    if (farm._polygon) farm._polygon.setMap(zoom >= 7 ? map : null);
+    if (farm._marker) farm._marker.setMap(zoom >= 6 ? map : null);
   });
   objectMarkers.forEach(marker => marker.setMap(showObjects ? map : null));
 }
@@ -444,7 +462,15 @@ function selectFarm(farm, zoom = true) {
     ? `${farm.name} has no company drone recorded and scores ${farm.opportunityScore ?? '—'}/100. Qualify this opportunity and move the territory forward.`
     : `${farm.name} is an active relationship. Protect the account through service quality and customer satisfaction.`;
   ensureEditButton();
-  if (map && zoom) { map.panTo(farm.center); map.setZoom(12); }
+  if (map && zoom) {
+    map.panTo(farm.center);
+    map.setZoom(12);
+    if (farm._marker) farm._marker.setMap(map);
+    if (farm._polygon) {
+      farm._polygon.setMap(map);
+      farm._polygon.setOptions({ strokeWeight: 4, fillOpacity: 0.30, zIndex: 100 });
+    }
+  }
   showFarmDetail(farm);
 }
 
