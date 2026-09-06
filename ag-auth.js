@@ -4,9 +4,11 @@
     Admin: { passwordSha256: '3eb3fe66b31e3b4d10fa70b5cad49c7112294af6ae4e476a1c405155d45aa121', role: 'administrator' },
     Salesman: { passwordSha256: '75b2324a77561a1b03e3be652b212d9aff91834466726080e138cbdc6466dae4', role: 'agriculture_sales' }
   };
-  const REMEMBER_KEY = 'gamechanger.rememberedLogin';
-  const SESSION_KEY = 'gamechanger.authenticated';
-  const ROLE_KEY = 'gamechanger.role';
+  const MASTER_CONTEXT = currentPage()==='master-admin.html';
+  const REMEMBER_KEY = MASTER_CONTEXT ? 'gamechanger.master.rememberedLogin' : 'gamechanger.rememberedLogin';
+  const SESSION_KEY = MASTER_CONTEXT ? 'gamechanger.master.authenticated' : 'gamechanger.authenticated';
+  const ROLE_KEY = MASTER_CONTEXT ? 'gamechanger.master.role' : 'gamechanger.role';
+  const USERNAME_KEY = MASTER_CONTEXT ? 'gamechanger.master.username' : 'gamechanger.username';
   async function sha256(text){const data=new TextEncoder().encode(text);const digest=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');}
   function activeBuild(){return window.GAME_CHANGER_BUILD?.get?.()||localStorage.getItem('gamechanger.activeBuild')||'agriculture';}
   function loginImage(){const build=window.GAME_CHANGER_BUILD?.current?.();return build?.loginBackground||window.GAME_CHANGER_AGRICULTURE_BUILD?.login?.background||'assets/ag_world_login_v2.jpg';}
@@ -28,7 +30,7 @@
         document.documentElement.style.visibility='visible';
         document.body.style.visibility='visible';
       };
-      const detail={username:sessionStorage.getItem('gamechanger.username')||'',role,restored:true};
+      const detail={username:sessionStorage.getItem(USERNAME_KEY)||'',role,restored:true};
       /* Administrator modules are injected asynchronously. Keep the page hidden until
          the final administrator composition is complete so no intermediate layer flashes. */
       if((role==='administrator'||role==='agriculture_administrator')&&currentPage()==='admin.html'){
@@ -52,7 +54,7 @@
     const usernameInput=gate.querySelector('#agUsername'),passwordInput=gate.querySelector('#agPassword'),rememberInput=gate.querySelector('#agRemember');
     if(!remembered){usernameInput.value='';passwordInput.value='';rememberInput.checked=false;requestAnimationFrame(()=>{usernameInput.value='';passwordInput.value='';});}
     rememberInput.addEventListener('change',()=>{if(!rememberInput.checked)localStorage.removeItem(REMEMBER_KEY);});gate.querySelector('.ag-eye').addEventListener('click',()=>{passwordInput.type=passwordInput.type==='password'?'text':'password';});
-    gate.querySelector('form').addEventListener('submit',async event=>{event.preventDefault();const username=usernameInput.value.trim(),password=passwordInput.value,error=gate.querySelector('#agLoginError');error.textContent='';const account=USERS[username],hash=await sha256(password);if(!account||hash!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);sessionStorage.setItem(SESSION_KEY,'1');sessionStorage.setItem(ROLE_KEY,account.role);sessionStorage.setItem('gamechanger.username',username);ensureRoleBuild(account.role);const landing=landingFor(account.role);if(landing!==currentPage()){location.replace(landing);return;}gate.remove();window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role:account.role}}));});
+    gate.querySelector('form').addEventListener('submit',async event=>{event.preventDefault();const username=usernameInput.value.trim(),password=passwordInput.value,error=gate.querySelector('#agLoginError');error.textContent='';const account=USERS[username],hash=await sha256(password);if(!account||hash!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}if(rememberInput.checked)localStorage.setItem(REMEMBER_KEY,JSON.stringify({username,password}));else localStorage.removeItem(REMEMBER_KEY);sessionStorage.setItem(SESSION_KEY,'1');sessionStorage.setItem(ROLE_KEY,account.role);sessionStorage.setItem(USERNAME_KEY,username);ensureRoleBuild(account.role);const landing=landingFor(account.role);if(landing!==currentPage()){location.replace(landing);return;}gate.remove();window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role:account.role}}));});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install);else install();
 })();
