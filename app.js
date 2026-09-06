@@ -214,56 +214,68 @@ async function fetchWithTimeout(url, timeoutMs) {
 
 async function fetchSpatialLayer(url, label) {
   const controller = new AbortController();
-  // National GIS polygon services can take longer than the old 8-second limit.
-  const timeout = setTimeout(() => controller.abort(), 45000);
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`${label}: timed out after 20 seconds`));
+    }, 20000);
+  });
   try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      cache: 'no-store',
-      headers: { Accept: 'application/geo+json, application/json' }
-    });
+    const response = await Promise.race([
+      fetch(url, { signal: controller.signal, cache: 'no-store', headers: { Accept: 'application/geo+json, application/json' } }),
+      timeout
+    ]);
     if (!response.ok) throw new Error(`${label}: HTTP ${response.status}`);
-    const data = await response.json();
+    const data = await Promise.race([
+      response.json(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`${label}: response parsing timed out`)), 20000))
+    ]);
     if (data?.error) throw new Error(`${label}: ${data.error.message || 'GIS service error'}`);
     if (!Array.isArray(data?.features)) throw new Error(`${label}: no GeoJSON features returned`);
     return data;
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
   }
 }
 
 async function loadSpatialLayersInBackground() {
-  if (typeof AGWORLD_SPATIAL_SOURCES === 'undefined') return;
-
-  $('mapStatus').textContent = 'Loading municipal and town boundaries in the background…';
-
-  const [municipalLayer, townLayer] = await Promise.allSettled([
-    fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.municipalities, 'municipal layer'),
-    fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.towns, 'town layer')
-  ]);
-
-  const errors = [];
-  if (municipalLayer.status === 'fulfilled') {
-    municipalities.forEach(item => {
-      if (item._polygon) item._polygon.setMap(null);
-      if (item._marker) item._marker.setMap(null);
-    });
-    municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
-  } else {
-    console.error('Municipal GIS load failed:', municipalLayer.reason);
-    errors.push('municipal boundaries');
+  if (typeof AGWORLD_SPATIAL_SOURCES === 'undefined') {
+    $('mapStatus').textContent = 'GIS configuration is unavailable.';
+    return;
   }
+
+  $('mapStatus').textContent = 'GIS loading · Municipalities: connecting… · Towns: connecting…';
+
+  const municipalPromise = fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.municipalities, 'municipal boundaries');
+  const townPromise = fetchSpatialLayer(AGWORLD_SPATIAL_SOURCES.towns, 'town boundaries');
+
+  municipalPromise.then(() => {
+    $('mapStatus').textContent = 'GIS loading · Municipalities: downloaded · Towns: still loading…';
+  }).catch(error => {
+    console.error('Municipal GIS load failed:', error);
+    $('mapStatus').textContent = 'GIS loading · Municipalities: failed · Towns: still loading…';
+  });
+
+  townPromise.then(() => {
+    $('mapStatus').textContent = 'GIS loading · Towns: downloaded · Municipalities: still loading…';
+  }).catch(error => {
+    console.error('Town GIS load failed:', error);
+    $('mapStatus').textContent = 'GIS loading · Towns: failed · Municipalities: still loading…';
+  });
+
+  const [municipalLayer, townLayer] = await Promise.allSettled([municipalPromise, townPromise]);
+  const errors = [];
+
+  if (municipalLayer.status === 'fulfilled') {
+    municipalities.forEach(item => { if (item._polygon) item._polygon.setMap(null); if (item._marker) item._marker.setMap(null); });
+    municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
+  } else errors.push('municipal boundaries');
 
   if (townLayer.status === 'fulfilled') {
-    towns.forEach(item => {
-      if (item._polygon) item._polygon.setMap(null);
-      if (item._marker) item._marker.setMap(null);
-    });
+    towns.forEach(item => { if (item._polygon) item._polygon.setMap(null); if (item._marker) item._marker.setMap(null); });
     towns = normaliseSpatialFeatures(townLayer.value, 'town');
-  } else {
-    console.error('Town GIS load failed:', townLayer.reason);
-    errors.push('town boundaries');
-  }
+  } else errors.push('town boundaries');
 
   linkHierarchySpatialParents();
 
@@ -271,13 +283,11 @@ async function loadSpatialLayersInBackground() {
     municipalities.forEach(addTerritory);
     towns.forEach(addTerritory);
     updateZoomStage();
-
-    if (errors.length) {
-      $('mapStatus').textContent = `GIS hierarchy partially loaded · ${municipalities.length} Municipalities · ${towns.length} Towns · failed: ${errors.join(', ')}`;
-    } else {
-      $('mapStatus').textContent = `Live GIS hierarchy · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
-    }
   }
+
+  $('mapStatus').textContent = errors.length
+    ? `GIS finished · ${municipalities.length} Municipalities · ${towns.length} Towns · failed: ${errors.join(' + ')}`
+    : `GIS loaded · ${municipalities.length} Municipalities · ${towns.length} Towns`;
 }
 
 function renderGoogleMap() {
