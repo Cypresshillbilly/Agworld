@@ -156,6 +156,15 @@ async function loadFarms() {
     });
     linkHierarchySpatialParents();
 
+    if (map) {
+      farms.forEach(farm => { if (!farm._marker) addFarm(farm); });
+      countries.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Country overlay skipped', error); } });
+      territories.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Territory overlay skipped', error); } });
+      municipalities.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Municipality overlay skipped', error); } });
+      towns.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Town overlay skipped', error); } });
+      updateZoomStage();
+    }
+
     // Remote GIS layers load independently of both the map and local datasets.
     loadSpatialLayersInBackground();
   } catch (error) {
@@ -216,6 +225,8 @@ function renderGoogleMap() {
       throw new Error('Google Maps API loaded without the Map library');
     }
 
+    // Use the proven V1 base-map initialisation first. Territory and GIS overlays
+    // are deliberately kept out of this critical path.
     map = new google.maps.Map($('map'), {
       center: { lat: -29, lng: 24 },
       zoom: 5,
@@ -229,13 +240,10 @@ function renderGoogleMap() {
     });
 
     map.addListener('zoom_changed', updateZoomStage);
-    countries.forEach(addTerritory);
-    territories.forEach(addTerritory);
-    municipalities.forEach(addTerritory);
-    towns.forEach(addTerritory);
     farms.forEach(addFarm);
     updateZoomStage();
-    $('mapStatus').textContent = `Live Google satellite map · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
+
+    $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded`;
   } catch (error) {
     console.error('AG World Google Maps initialisation failed:', error);
     $('mapStatus').textContent = `Google Maps loaded but could not initialise: ${error.message}`;
