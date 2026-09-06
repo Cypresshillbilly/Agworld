@@ -13,7 +13,11 @@
   function ensureRoleBuild(role){if(role==='agriculture_sales'&&activeBuild()!=='agriculture'){if(window.GAME_CHANGER_BUILD?.set)window.GAME_CHANGER_BUILD.set('agriculture');else localStorage.setItem('gamechanger.activeBuild','agriculture');}}
   function landingFor(role){const registry=window.GAME_CHANGER_ROLES||{};return registry[role]?.landing||(role==='administrator'?'admin.html':'index.html');}
   function currentPage(){return(location.pathname.split('/').pop()||'index.html').toLowerCase();}
-  function routeExistingSession(role){if(!role)return false;const page=currentPage();if(role==='administrator'&&page!=='admin.html'){location.replace(landingFor(role));return true;}if(role==='agriculture_sales'&&page==='admin.html'){location.replace(landingFor(role));return true;}return false;}
+  function routeExistingSession(role){if(!role)return false;const page=currentPage();
+    if(role==='administrator'&&(page==='index.html'||page==='')){location.replace(landingFor(role));return true;}
+    if(role==='agriculture_administrator'&&(page==='master-admin.html'||page==='index.html'||page==='')){location.replace(landingFor(role));return true;}
+    if(role==='agriculture_sales'&&(page==='admin.html'||page==='master-admin.html')){location.replace(landingFor(role));return true;}
+    return false;}
   function getRemembered(){try{const value=JSON.parse(localStorage.getItem(REMEMBER_KEY)||'null');return value&&USERS[value.username]&&typeof value.password==='string'?value:null;}catch{return null;}}
   function install(){
     if(document.getElementById('ag-login-gate'))return;
@@ -27,7 +31,7 @@
       const detail={username:sessionStorage.getItem('gamechanger.username')||'',role,restored:true};
       /* Administrator modules are injected asynchronously. Keep the page hidden until
          the final administrator composition is complete so no intermediate layer flashes. */
-      if(role==='administrator'&&currentPage()==='admin.html'){
+      if((role==='administrator'||role==='agriculture_administrator')&&currentPage()==='admin.html'){
         let done=false;
         const finish=()=>{if(done)return;done=true;reveal();window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail}));};
         window.addEventListener('gamechanger:admin-ready',finish,{once:true});
