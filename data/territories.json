@@ -1,6 +1,58 @@
 {
-  "schemaVersion": 2,
-  "note": "All nine South African provinces are initial Ag World territories. Current boundaries are broad game-management placeholders centred on each province and should later be replaced with authoritative provincial GIS boundaries.",
+  "schemaVersion": 3,
+  "note": "Ag World territorial hierarchy: Country → Provincial → Municipal → Town. Provinces are populated first; municipality and town records are separate child layers ready for authoritative boundary datasets.",
+  "hierarchy": [
+    "country",
+    "province",
+    "municipality",
+    "town"
+  ],
+  "countries": [
+    {
+      "id": "ag-country-south-africa",
+      "code": "ZA",
+      "name": "South Africa",
+      "level": "country",
+      "parentId": null,
+      "status": "Active",
+      "control": 100,
+      "owner": "Ag World",
+      "description": "National Ag World territory containing all provincial territories.",
+      "center": {
+        "lat": -30.5595,
+        "lng": 22.9375
+      },
+      "boundary": [
+        {
+          "lat": -22,
+          "lng": 16
+        },
+        {
+          "lat": -22,
+          "lng": 33
+        },
+        {
+          "lat": -35,
+          "lng": 33
+        },
+        {
+          "lat": -35,
+          "lng": 16
+        }
+      ],
+      "provinceIds": [
+        "ag-territory-01-eastern-cape",
+        "ag-territory-02-free-state",
+        "ag-territory-03-gauteng",
+        "ag-territory-04-kwazulu-natal",
+        "ag-territory-05-limpopo",
+        "ag-territory-06-mpumalanga",
+        "ag-territory-07-northern-cape",
+        "ag-territory-08-north-west",
+        "ag-territory-09-western-cape"
+      ]
+    }
+  ],
   "territories": [
     {
       "id": "ag-territory-01-eastern-cape",
@@ -35,7 +87,11 @@
           "lat": -34.8,
           "lng": 21.8
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-02-free-state",
@@ -70,7 +126,11 @@
           "lat": -30.4,
           "lng": 23.8
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-03-gauteng",
@@ -105,7 +165,11 @@
           "lat": -26.900000000000002,
           "lng": 26.700000000000003
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-04-kwazulu-natal",
@@ -140,7 +204,11 @@
           "lat": -30.9,
           "lng": 28.599999999999998
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-05-limpopo",
@@ -175,7 +243,11 @@
           "lat": -25.8,
           "lng": 26.7
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-06-mpumalanga",
@@ -210,7 +282,11 @@
           "lat": -27.099999999999998,
           "lng": 28.9
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-07-northern-cape",
@@ -245,7 +321,11 @@
           "lat": -34.2,
           "lng": 15.8
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-08-north-west",
@@ -280,7 +360,11 @@
           "lat": -28.7,
           "lng": 22.8
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     },
     {
       "id": "ag-territory-09-western-cape",
@@ -315,7 +399,13 @@
           "lat": -35.8,
           "lng": 16
         }
-      ]
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
     }
-  ]
+  ],
+  "municipalities": [],
+  "towns": []
 }
