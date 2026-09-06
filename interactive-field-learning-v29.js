@@ -60,6 +60,7 @@
 
   // Mission interception before progression engine direct completion.
   document.addEventListener('click',e=>{
+    if (window.AGWorldChapter2Precise) return;
     const b=e.target.closest('[data-progression-complete]'); if(!b||!data[b.dataset.progressionComplete])return;
     e.preventDefault();e.stopImmediatePropagation();open(b.dataset.progressionComplete);
   },true);
