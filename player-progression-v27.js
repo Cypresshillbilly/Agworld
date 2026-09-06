@@ -17,7 +17,7 @@ const CHAPTERS=[
 {id:'c2-assets',title:'Understand Farm Assets',type:'TUTORIAL',xp:300,objective:'Identify how Our Drone and Competitor Drone affect Company control.'},
 {id:'c2-intelligence',title:'Review Territory Intelligence',type:'TUTORIAL',xp:350,objective:'Open a territory and review its Company Control information.'}]},
 {id:3,title:'TERRITORY EXPANSION',subtitle:'Turn real-world activity into Company growth.',targetLevel:null,missions:[]}];
-let db,user,ready=false,state={level:1,xp:0,currentChapter:1,completed:{},skills:{},playerName:''};
+let db,user,ready=false,loading=false,state={level:1,xp:0,currentChapter:1,completed:{},skills:{},playerName:''};
 const chapter=id=>CHAPTERS.find(x=>x.id===id);
 const xpForLevel=l=>l<=10?(l-1)*250:2250+(l-10)*400;
 const nextLevelXp=l=>xpForLevel(l+1);
