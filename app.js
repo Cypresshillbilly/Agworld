@@ -115,16 +115,27 @@ function linkHierarchySpatialParents() {
 }
 
 async function loadFarms() {
+  // The base map must never wait for farm or territory JSON.
+  // On slow GitHub Pages responses the old Promise.all kept the UI permanently
+  // on the initial "Loading Agricultural maps" message before initMap() ran.
+  initMap();
+
   try {
-    const [farmResponse, territoryResponse] = await Promise.all([
-      fetch('data/farms.json'),
-      fetch('data/territories.json')
+    const [farmResult, territoryResult] = await Promise.allSettled([
+      fetchWithTimeout('data/farms.json', 10000),
+      fetchWithTimeout('data/territories.json', 10000)
     ]);
-    if (!farmResponse.ok) throw new Error('farm data');
-    const farmData = await farmResponse.json();
+
+    if (farmResult.status !== 'fulfilled' || !farmResult.value.ok) {
+      throw new Error('farm data');
+    }
+
+    const farmData = await farmResult.value.json();
     const base = farmData.farms || [];
     let territoryData = { territories: [] };
-    if (territoryResponse.ok) territoryData = await territoryResponse.json();
+    if (territoryResult.status === 'fulfilled' && territoryResult.value.ok) {
+      territoryData = await territoryResult.value.json();
+    }
 
     let stored = [];
     try { stored = JSON.parse(localStorage.getItem('agworld-farms-v2') || '[]'); } catch (_) {}
@@ -145,12 +156,24 @@ async function loadFarms() {
     });
     linkHierarchySpatialParents();
 
-    // Start the Google map immediately. Remote GIS layers must never block the
-    // dashboard from rendering its base satellite map.
-    initMap();
+    // Remote GIS layers load independently of both the map and local datasets.
     loadSpatialLayersInBackground();
   } catch (error) {
-    $('mapStatus').textContent = 'Agriculture world data could not be loaded.';
+    console.error('AG World farm/territory data load failed:', error);
+    // Keep the base map running even when local agricultural data is unavailable.
+    if (!map && !window.google?.maps?.Map) {
+      $('mapStatus').textContent = 'Google satellite map is loading; agricultural records are temporarily unavailable.';
+    }
+  }
+}
+
+async function fetchWithTimeout(url, timeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal, cache: 'no-store' });
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
