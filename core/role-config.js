@@ -9,12 +9,12 @@ window.GAME_CHANGER_ROLES = {
     if(document.querySelector('script[data-gc-module="'+src+'"]')) return resolve();
     const s=document.createElement('script');s.src=src;s.defer=true;s.dataset.gcModule=src;s.onload=resolve;s.onerror=resolve;document.head.appendChild(s);
   });
-  load('core/bootstrap.js?v=phase2-live-chain');
+  load('core/bootstrap.js?v=admin-stable-v2');
   const start=()=>{
     if(path==='admin.html'){
-      load('core/mission-engine.js?v=architecture-v1');
-      load('core/mission-library.js?v=architecture-v1');
-      load('core/admin-ui-polish.js?v=architecture-v1');
+      load('core/mission-engine.js?v=admin-stable-v2');
+      load('core/mission-library.js?v=admin-stable-v2');
+      load('core/admin-ui-polish.js?v=admin-stable-v2');
       return;
     }
     if(path==='index.html' || path===''){
