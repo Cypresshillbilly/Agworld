@@ -52,33 +52,27 @@
     const username=gate.querySelector('#agUsername');
     const password=gate.querySelector('#agPassword');
     const remember=gate.querySelector('#agRemember');
-    // The Ag World gate must never inherit Master Admin credentials from browser autofill.
-    // Keep the real fields readonly until the user actively interacts with them.
+    // Start every Ag World login with genuinely blank credentials.
+    // Clear only during initial startup; never clear while the user is typing.
     const hardClear=()=>{
       username.value='';
       password.value='';
-      username.setAttribute('value','');
-      password.setAttribute('value','');
+      username.defaultValue='';
+      password.defaultValue='';
       remember.checked=false;
     };
     hardClear();
     requestAnimationFrame(hardClear);
-    setTimeout(hardClear,0);
-    setTimeout(hardClear,100);
-    setTimeout(hardClear,500);
+
+    // Prevent browser autofill while untouched, then unlock the exact field
+    // the user chooses to edit. There are deliberately no delayed timers or
+    // repeating guards that can erase user input.
     const unlock=(field)=>{
-      hardClear();
       field.removeAttribute('readonly');
+      field.focus();
     };
-    username.addEventListener('pointerdown',()=>unlock(username),{once:true});
-    password.addEventListener('pointerdown',()=>unlock(password),{once:true});
-    username.addEventListener('keydown',()=>unlock(username),{once:true});
-    password.addEventListener('keydown',()=>unlock(password),{once:true});
-    // If a password manager injects values after the page is shown, clear them while locked.
-    const autofillGuard=setInterval(()=>{
-      if(username.hasAttribute('readonly') || password.hasAttribute('readonly')) hardClear();
-      else clearInterval(autofillGuard);
-    },50);
+    username.addEventListener('focus',()=>unlock(username),{once:true});
+    password.addEventListener('focus',()=>unlock(password),{once:true});
 
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
     gate.querySelector('form').addEventListener('submit',async e=>{
