@@ -9,7 +9,7 @@
       loginBackground:'assets/ag_world_login_v2.jpg',
       landing:'index.html',
       assetsRoot:'builds/agriculture/assets/',
-      dataNamespace:'agriculture'
+      dataNamespace:'agriculture',\n      manifest:'builds/agriculture/build.manifest.js'
     },
     financial_services:{
       id:'financial_services',
