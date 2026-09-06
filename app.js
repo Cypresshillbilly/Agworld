@@ -187,44 +187,91 @@ async function loadSpatialLayersInBackground() {
   }
 }
 
+function renderGoogleMap() {
+  try {
+    if (!window.google || !google.maps || !google.maps.Map) {
+      throw new Error('Google Maps API loaded without the Map library');
+    }
+
+    map = new google.maps.Map($('map'), {
+      center: { lat: -29, lng: 24 },
+      zoom: 5,
+      mapTypeId: 'satellite',
+      fullscreenControl: false,
+      streetViewControl: false,
+      mapTypeControl: false,
+      gestureHandling: 'greedy',
+      tilt: 0,
+      rotateControl: false
+    });
+
+    map.addListener('zoom_changed', updateZoomStage);
+    countries.forEach(addTerritory);
+    territories.forEach(addTerritory);
+    municipalities.forEach(addTerritory);
+    towns.forEach(addTerritory);
+    farms.forEach(addFarm);
+    updateZoomStage();
+    $('mapStatus').textContent = `Live Google satellite map · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
+  } catch (error) {
+    console.error('AG World Google Maps initialisation failed:', error);
+    $('mapStatus').textContent = `Google Maps loaded but could not initialise: ${error.message}`;
+  }
+}
+
 function initMap() {
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
-    $('mapStatus').textContent = 'Google satellite mapping is configured but inactive: add the API key in config.js.';
+    $('mapStatus').textContent = 'Google satellite mapping is inactive: no API key is configured.';
     return;
   }
-  if (window.google?.maps || document.getElementById('agworld-google-maps-script')) return;
+
+  if (window.google?.maps?.Map) {
+    renderGoogleMap();
+    return;
+  }
+
+  if (document.getElementById('agworld-google-maps-script')) return;
 
   $('mapStatus').textContent = 'Loading Google satellite map…';
+
+  let settled = false;
+  const finishWithError = message => {
+    if (settled) return;
+    settled = true;
+    $('mapStatus').textContent = message;
+  };
+
   window.gm_authFailure = () => {
-    $('mapStatus').textContent = 'Google Maps authorization failed. Check the API key, Maps JavaScript API and allowed website domains.';
+    finishWithError('Google Maps authorisation failed. The API key must allow the Maps JavaScript API and this GitHub Pages domain.');
   };
 
   const script = document.createElement('script');
   script.id = 'agworld-google-maps-script';
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&libraries=drawing&callback=agWorldMapReady`;
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&libraries=drawing`;
   script.async = true;
   script.defer = true;
-  script.onerror = () => {
-    $('mapStatus').textContent = 'Google Maps could not be downloaded. Check the internet connection or browser blocking settings.';
+
+  script.onload = () => {
+    if (settled) return;
+    settled = true;
+    renderGoogleMap();
   };
+
+  script.onerror = () => {
+    finishWithError('Google Maps could not be downloaded. Check the browser connection or whether a security extension is blocking maps.googleapis.com.');
+  };
+
   document.head.appendChild(script);
+
+  setTimeout(() => {
+    if (!settled) {
+      finishWithError('Google Maps is taking too long to load. Check the API key billing, Maps JavaScript API activation, and HTTP referrer restrictions.');
+    }
+  }, 15000);
 }
 
-window.agWorldMapReady = () => {
-  map = new google.maps.Map($('map'), {
-    center: { lat: -29, lng: 24 }, zoom: 5, mapTypeId: 'satellite',
-    fullscreenControl: false, streetViewControl: false, mapTypeControl: false,
-    gestureHandling: 'greedy', tilt: 0, rotateControl: false
-  });
-  map.addListener('zoom_changed', updateZoomStage);
-  countries.forEach(addTerritory);
-  territories.forEach(addTerritory);
-  municipalities.forEach(addTerritory);
-  towns.forEach(addTerritory);
-  farms.forEach(addFarm);
-  updateZoomStage();
-  $('mapStatus').textContent = `Live GIS hierarchy · South Africa → ${territories.length} Provinces → ${municipalities.length} Municipalities → ${towns.length} Towns → ${farms.length} Farms`;
-};
+// Kept globally available for compatibility with older cached Google Maps URLs.
+window.agWorldMapReady = renderGoogleMap;
 
 function addTerritory(territory) {
   if (!map || !territory.boundary?.length) return;
