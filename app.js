@@ -232,46 +232,50 @@ function initMap() {
 
   if (document.getElementById('agworld-google-maps-script')) return;
 
-  $('mapStatus').textContent = 'Loading Google satellite map…';
+  $('mapStatus').textContent = 'Connecting to Google Maps…';
 
   let settled = false;
-  const finishWithError = message => {
+  const fail = message => {
     if (settled) return;
     settled = true;
+    console.error('AG World map:', message);
     $('mapStatus').textContent = message;
   };
 
+  // Google calls this only when the Maps API itself has finished initialising.
+  window.agWorldMapReady = () => {
+    if (settled) return;
+    settled = true;
+    $('mapStatus').textContent = 'Google Maps ready · rendering satellite imagery…';
+    requestAnimationFrame(() => requestAnimationFrame(renderGoogleMap));
+  };
+
   window.gm_authFailure = () => {
-    finishWithError('Google Maps authorisation failed. The API key must allow the Maps JavaScript API and this GitHub Pages domain.');
+    fail('Google Maps authorisation failed. Enable Maps JavaScript API, billing and the GitHub Pages website referrer for this key.');
   };
 
   const script = document.createElement('script');
   script.id = 'agworld-google-maps-script';
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&libraries=drawing`;
   script.async = true;
-  script.defer = true;
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.GOOGLE_MAPS_API_KEY)}&libraries=drawing&loading=async&callback=agWorldMapReady`;
 
   script.onload = () => {
-    if (settled) return;
-    settled = true;
-    renderGoogleMap();
+    // The API may complete after this event; the callback above is authoritative.
+    if (!settled) $('mapStatus').textContent = 'Google Maps script downloaded · waiting for API initialisation…';
   };
 
   script.onerror = () => {
-    finishWithError('Google Maps could not be downloaded. Check the browser connection or whether a security extension is blocking maps.googleapis.com.');
+    fail('Google Maps could not be downloaded. Check the connection, browser blocking, API key restrictions or Google Cloud billing.');
   };
 
   document.head.appendChild(script);
 
   setTimeout(() => {
     if (!settled) {
-      finishWithError('Google Maps is taking too long to load. Check the API key billing, Maps JavaScript API activation, and HTTP referrer restrictions.');
+      fail('Google Maps did not initialise within 20 seconds. This usually means the API key is restricted incorrectly, the Maps JavaScript API is disabled, or billing is not active.');
     }
-  }, 15000);
+  }, 20000);
 }
-
-// Kept globally available for compatibility with older cached Google Maps URLs.
-window.agWorldMapReady = renderGoogleMap;
 
 function addTerritory(territory) {
   if (!map || !territory.boundary?.length) return;
