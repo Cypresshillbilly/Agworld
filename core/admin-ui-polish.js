@@ -58,26 +58,8 @@
   `;
   document.head.appendChild(css);
 
-  const light=document.createElement('style');
-  light.id='gc-admin-light-theme';
-  light.textContent=`
-    html,body{background:#fff!important;color:#20261f!important}
-    .admin-shell,.admin-main{background:#fff!important;color:#20261f!important}
-    .admin-main .topbar{border-bottom-color:#dfe4dc!important}
-    .admin-main .topbar h1,.admin-main .panel h2,.admin-main .territory h2{color:#20261f!important}
-    .admin-main .topbar p,.admin-main .panel-head span,.admin-main .metric span,.admin-main .territory-stat span,.admin-main .territory-head p,.admin-main .territory-stat em,.admin-main .admin-action span,.admin-main .u-info small{color:#6f786f!important}
-    .admin-main .metric,.admin-main .panel,.admin-main .territory,.gc-mission-library{background:#fff!important;border-color:#dfe4dc!important;box-shadow:0 7px 24px rgba(31,43,30,.08)!important}
-    .admin-main .metric b,.admin-main .territory-stat b{color:#20261f!important}
-    .admin-main .buildbar{background:#fff!important;border-color:#dfe4dc!important;color:#20261f!important}
-    .admin-main .buildbar span{color:#6f786f!important}
-    .admin-main .build-switch button{background:#fff!important;color:#3f493f!important;border-color:#ccd5c8!important}
-    .admin-main .build-switch button.active{background:#eef6df!important;color:#4d681b!important;border-color:#a8d51f!important}
-    .admin-main .territory-stat,.admin-main .user-row,.admin-main .admin-action{background:#fafbfa!important;border-color:#e4e8e2!important}
-    .admin-main .progress{background:#e7ebe5!important}.admin-main .notice{background:#f3f8ea!important;color:#536052!important}
-    .mission-modal{background:#fff!important;border-color:#d8e2d0!important;color:#20261f!important}
-    #gc-logout{margin-top:10px!important;border-top:1px solid rgba(190,214,139,.18)!important;color:#d8a8a8!important}
-  `;
-  document.head.appendChild(light);
+  /* Dark administrator theme is defined in admin.html before first paint.
+     Do not inject a second light presentation layer after load. */
 
   function image(src, alt, className){
     const img=document.createElement('img');
