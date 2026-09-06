@@ -20,7 +20,7 @@
         objective: 'Replace the competitor relationship with an Our Drone opportunity.',
         xp: 500 + Math.min(250, score * 2),
         farmId: farm.id,
-        action: 'CAPTURE ACCOUNT'
+        action: 'COMPLETE CAPTURE'
       };
     }
     if (type === 'neutral') {
@@ -32,7 +32,7 @@
         objective: 'Qualify this neutral farm and place an Our Drone in its asset list.',
         xp: 350 + Math.min(200, score * 2),
         farmId: farm.id,
-        action: 'OPEN FARM'
+        action: 'COMPLETE EXPANSION'
       };
     }
     return {
@@ -43,7 +43,7 @@
       objective: 'Maintain the Company relationship and defend the existing account.',
       xp: 150,
       farmId: farm.id,
-      action: 'OPEN FARM'
+      action: 'COMPLETE DEFENCE'
     };
   }
 
@@ -83,8 +83,153 @@
       <div class="ag-mission-top"><span class="ag-mission-type">${mission.type}</span><span class="ag-mission-priority">${done ? 'COMPLETED' : mission.priority}</span></div>
       <strong>${mission.title}</strong>
       ${compact ? '' : `<p>${mission.objective}</p>`}
-      <div class="ag-mission-bottom"><span>+${mission.xp} XP</span><button data-mission-action="${mission.id}">${done ? 'REVIEW' : mission.action}</button></div>
+      <div class="ag-mission-bottom"><span>+${mission.xp} XP</span><button data-mission-action="${mission.id}">${done ? 'COMPLETED' : mission.action}</button></div>
     </div>`;
+  }
+
+  function farmCollection() {
+    return typeof farms !== 'undefined' && Array.isArray(farms) ? farms : [];
+  }
+
+  function clone(value) {
+    return value == null ? value : JSON.parse(JSON.stringify(value));
+  }
+
+  function hasCompetitor(value) {
+    return /competitor\s*drone/i.test(String(typeof value === 'object' ? (value?.name || value?.label || value?.asset || value?.type || '') : value));
+  }
+
+  function isOurDrone(value) {
+    return /our\s*drone/i.test(String(typeof value === 'object' ? (value?.name || value?.label || value?.asset || value?.type || '') : value));
+  }
+
+  function convertAssetList(list) {
+    const source = Array.isArray(list) ? list : [];
+    const firstObject = source.find(item => item && typeof item === 'object');
+    const filtered = source.filter(item => !hasCompetitor(item));
+    if (!filtered.some(isOurDrone)) {
+      filtered.push(firstObject ? { ...clone(firstObject), name: 'Our Drone', label: 'Our Drone', asset: 'Our Drone', type: 'Our Drone' } : 'Our Drone');
+    }
+    return filtered;
+  }
+
+  function applyCompanyControl(farm) {
+    if (!farm) return false;
+    const arrayKeys = ['assets', 'assetList', 'farmAssets', 'equipment', 'drones'];
+    let updatedAny = false;
+
+    arrayKeys.forEach(key => {
+      if (Array.isArray(farm[key])) {
+        farm[key] = convertAssetList(farm[key]);
+        updatedAny = true;
+      }
+    });
+
+    // Always expose a canonical asset list so downstream game systems can
+    // determine Company control even when an imported record had no list.
+    if (!updatedAny) farm.assets = ['Our Drone'];
+    else if (!Array.isArray(farm.assets)) farm.assets = ['Our Drone'];
+
+    farm.control = 'company';
+    farm.controlledBy = 'company';
+    farm.owner = 'The Company';
+    farm.companyControlled = true;
+    farm.competitorControlled = false;
+    return true;
+  }
+
+  function assetStateKey() { return 'agworld-farm-control-overrides-v1'; }
+
+  function saveFarmOverride(farm) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(assetStateKey()) || '{}');
+      saved[String(farm.id)] = {
+        assets: clone(farm.assets),
+        assetList: clone(farm.assetList),
+        farmAssets: clone(farm.farmAssets),
+        equipment: clone(farm.equipment),
+        drones: clone(farm.drones),
+        control: farm.control,
+        controlledBy: farm.controlledBy,
+        owner: farm.owner,
+        companyControlled: farm.companyControlled,
+        competitorControlled: farm.competitorControlled
+      };
+      localStorage.setItem(assetStateKey(), JSON.stringify(saved));
+    } catch (_) {}
+  }
+
+  function restoreFarmOverrides() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(assetStateKey()) || '{}');
+      farmCollection().forEach(farm => {
+        const override = saved[String(farm.id)];
+        if (!override) return;
+        Object.entries(override).forEach(([key, value]) => {
+          if (value !== undefined) farm[key] = clone(value);
+        });
+      });
+    } catch (_) {}
+  }
+
+  function markMissionCompleted(mission) {
+    const states = savedStates();
+    states[mission.id] = { completed: true, completedAt: new Date().toISOString() };
+    try { localStorage.setItem(missionStoreKey, JSON.stringify(states)); } catch (_) {}
+  }
+
+  function refreshTerritoryControl() {
+    if (typeof initialiseGameTerritories === 'function') initialiseGameTerritories();
+
+    const pools = [
+      typeof countryTerritories !== 'undefined' ? countryTerritories : null,
+      typeof provinces !== 'undefined' ? provinces : null,
+      typeof municipalities !== 'undefined' ? municipalities : null,
+      typeof towns !== 'undefined' ? towns : null,
+      typeof territories !== 'undefined' ? territories : null
+    ];
+
+    pools.forEach(pool => {
+      const list = Array.isArray(pool) ? pool : (pool ? [pool] : []);
+      list.forEach(territory => {
+        if (territory?._polygon && typeof applyTerritoryControlStyle === 'function') {
+          applyTerritoryControlStyle(territory);
+        }
+      });
+    });
+
+    if (activeTerritory) {
+      if (typeof territoryGameSummary === 'function' && typeof renderTerritoryInformationPanel === 'function') {
+        renderTerritoryInformationPanel(activeTerritory, territoryGameSummary(activeTerritory));
+      }
+      activeMissions = buildTerritoryMissions(activeTerritory);
+      window.__AG_WORLD_ACTIVE_MISSIONS = activeMissions;
+      renderMissionSidebar();
+      renderPanelMissions();
+
+      const status = document.getElementById('mapStatus');
+      if (status && typeof territoryGameSummary === 'function') {
+        const summary = territoryGameSummary(activeTerritory);
+        status.textContent = `${(typeof MASTER_PLAYER !== 'undefined' && MASTER_PLAYER?.name) || 'The Company'} control updated · ${String(activeTerritory.name)} · ${summary.control}% control · ${summary.company}/${summary.total} farms`;
+      }
+    }
+  }
+
+  function completeMission(mission) {
+    if (!mission || isCompleted(mission)) return;
+    const farm = farmCollection().find(f => String(f.id) === String(mission.farmId));
+    if (!farm) {
+      if (typeof toast === 'function') toast('Mission farm could not be found.');
+      return;
+    }
+
+    applyCompanyControl(farm);
+    saveFarmOverride(farm);
+    markMissionCompleted(mission);
+    refreshTerritoryControl();
+
+    if (typeof selectFarm === 'function') selectFarm(farm, false);
+    if (typeof toast === 'function') toast(`MISSION COMPLETE · ${farm.name} is now controlled by The Company · +${mission.xp} XP`);
   }
 
   function bindMissionActions(root) {
@@ -94,11 +239,7 @@
         event.stopPropagation();
         const mission = activeMissions.find(m => m.id === button.dataset.missionAction);
         if (!mission) return;
-        const farm = (typeof farms !== 'undefined' ? farms : []).find(f => f.id === mission.farmId);
-        if (farm && typeof selectFarm === 'function') {
-          selectFarm(farm, true);
-          if (typeof toast === 'function') toast(`${mission.type} mission selected · ${mission.title}`);
-        }
+        completeMission(mission);
       };
     });
   }
@@ -178,5 +319,6 @@
   `;
   document.head.appendChild(style);
 
+  restoreFarmOverrides();
   renderMissionSidebar();
 })();
