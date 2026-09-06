@@ -3,7 +3,7 @@ async function init(){render();try{await load();db=window.supabase.createClient(
 function render(){let e=document.getElementById('agAuth');if(!e){e=document.createElement('div');e.id='agAuth';document.body.appendChild(e)}e.innerHTML=user?'<button data-open>👤 '+(user.user_metadata?.display_name||user.email)+'</button>':'<button data-open>JOIN / SIGN IN</button>';e.querySelector('[data-open]').onclick=()=>user?menu():login()}
 function login(){if(!db){const e=document.getElementById('agAuthModal')||Object.assign(document.createElement('div'),{id:'agAuthModal'});if(!e.parentNode)document.body.appendChild(e);e.innerHTML='<div><h2>Join The Company</h2><p>Connecting to the Company account service…</p><small data-msg>Please wait a moment, then try again.</small></div>';e.classList.add('show');return;}
 const e=document.getElementById('agAuthModal')||Object.assign(document.createElement('div'),{id:'agAuthModal'});if(!e.parentNode)document.body.appendChild(e);
-e.innerHTML='<div><button class="ag-auth-close" type="button">×</button><h2>Join The Company</h2><p>Create your AG World employee account or sign in.</p><input data-name placeholder="Your name" autocomplete="name"><input data-email placeholder="Email" type="email" autocomplete="email"><input data-pass placeholder="Password (minimum 6 characters)" type="password" autocomplete="new-password"><button data-signup>CREATE ACCOUNT</button><button data-login>SIGN IN</button><small data-msg></small></div>';e.classList.add('show');e.style.zIndex='200000';
+e.innerHTML='<div><button class="ag-auth-close" type="button">×</button><h2>Join The Company</h2><p>Create your AG World employee account or sign in.</p><input data-name placeholder="Your name" autocomplete="name"><input data-email placeholder="Email" type="email" autocomplete="email"><input data-pass placeholder="Password (minimum 6 characters)" type="password" autocomplete="new-password"><button data-signup>CREATE ACCOUNT</button><button data-login>SIGN IN</button><button data-resend type="button">RESEND CONFIRMATION EMAIL</button><small data-msg></small></div>';e.classList.add('show');e.style.zIndex='200000';
 const msg=(x)=>e.querySelector('[data-msg]').textContent=x;
 e.querySelector('.ag-auth-close').onclick=()=>e.classList.remove('show');
 e.querySelector('[data-signup]').onclick=async()=>{
@@ -23,6 +23,13 @@ e.querySelector('[data-signup]').onclick=async()=>{
    msg('Account created. Please check your email to confirm it, then return and click SIGN IN.');
  }catch(err){console.error(err);msg(err&&err.message||'Unable to create the account. Please try again.');}
  finally{btn.disabled=false;btn.textContent='CREATE ACCOUNT';}
+};
+e.querySelector('[data-resend]').onclick=async()=>{
+ const email=e.querySelector('[data-email]').value.trim();if(!email)return msg('Enter your email address first.');
+ const btn=e.querySelector('[data-resend]');btn.disabled=true;btn.textContent='SENDING…';msg('Requesting a new confirmation email…');
+ try{const{error}=await db.auth.resend({type:'signup',email});msg(error?error.message:'Confirmation email requested. Check your inbox and spam/junk folder.');}
+ catch(err){console.error(err);msg(err&&err.message||'Unable to resend the confirmation email.');}
+ finally{btn.disabled=false;btn.textContent='RESEND CONFIRMATION EMAIL';}
 };
 e.querySelector('[data-login]').onclick=async()=>{
  const email=e.querySelector('[data-email]').value.trim(),password=e.querySelector('[data-pass]').value;if(!email||!password)return msg('Enter your email and password.');
