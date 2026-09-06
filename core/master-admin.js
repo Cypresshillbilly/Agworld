@@ -37,7 +37,12 @@
       if(!build)return;
       window.GAME_CHANGER_BUILD.set(build.id);
       if(build.id==='agriculture'){
-        location.href=build.admin||'admin.html';
+        // Entering Ag World always begins a fresh, separate Ag World login flow.
+        sessionStorage.removeItem('gamechanger.authenticated');
+        sessionStorage.removeItem('gamechanger.role');
+        sessionStorage.removeItem('gamechanger.username');
+        localStorage.removeItem('gamechanger.rememberedLogin');
+        location.href=build.landing||'index.html';
         return;
       }
       note.textContent='Network Collections is now the active build. Its dedicated game environment will be created after Ag World is proven as the reference build.';
@@ -47,9 +52,9 @@
   });
 
   document.getElementById('masterLogout')?.addEventListener('click',()=>{
-    sessionStorage.removeItem('gamechanger.authenticated');
-    sessionStorage.removeItem('gamechanger.role');
-    sessionStorage.removeItem('gamechanger.username');
+    sessionStorage.removeItem('gamechanger.master.authenticated');
+    sessionStorage.removeItem('gamechanger.master.role');
+    sessionStorage.removeItem('gamechanger.master.username');
     location.reload();
   });
 })();
