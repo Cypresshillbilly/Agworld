@@ -52,20 +52,9 @@
     const username=gate.querySelector('#agUsername');
     const password=gate.querySelector('#agPassword');
     const remember=gate.querySelector('#agRemember');
-    // Start every Ag World login with genuinely blank credentials.
-    // Clear only during initial startup; never clear while the user is typing.
-    const hardClear=()=>{
-      username.value='';
-      password.value='';
-      username.defaultValue='';
-      password.defaultValue='';
-      remember.checked=false;
-    };
-    hardClear();
-    requestAnimationFrame(hardClear);
-
-    // Do not lock the fields. Master Admin and Ag World are separate sessions,
-    // and users must be able to type immediately after the login page opens.
+    // Login fields are ordinary inputs. Do not clear, lock, reset or mutate them
+    // after the form is rendered; this same authentication component serves both
+    // Master Admin and Ag World login screens.
 
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
     gate.querySelector('form').addEventListener('submit',async e=>{
