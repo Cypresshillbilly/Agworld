@@ -94,7 +94,7 @@
         event.stopPropagation();
         const mission = activeMissions.find(m => m.id === button.dataset.missionAction);
         if (!mission) return;
-        const farm = (window.farms || []).find(f => f.id === mission.farmId);
+        const farm = (typeof farms !== 'undefined' ? farms : []).find(f => f.id === mission.farmId);
         if (farm && typeof selectFarm === 'function') {
           selectFarm(farm, true);
           if (typeof toast === 'function') toast(`${mission.type} mission selected · ${mission.title}`);
