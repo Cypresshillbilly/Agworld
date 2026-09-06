@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "note": "Demonstration data only. Replace with approved agricultural GIS/database records before production use.",
+  "schemaVersion": 2,
+  "note": "Initial Ag World farm dataset. Each farm is linked to a territory and can be expanded into live GIS/database records.",
   "farms": [
     {
       "id": "demo-limpopo-001",
@@ -8,20 +8,39 @@
       "region": "Limpopo",
       "status": "Opportunity",
       "owner": "Demo Farmer",
-      "center": { "lat": -24.78, "lng": 28.32 },
+      "center": {
+        "lat": -24.78,
+        "lng": 28.32
+      },
       "boundary": [
-        { "lat": -24.775, "lng": 28.305 },
-        { "lat": -24.775, "lng": 28.345 },
-        { "lat": -24.795, "lng": 28.350 },
-        { "lat": -24.802, "lng": 28.315 }
+        {
+          "lat": -24.775,
+          "lng": 28.305
+        },
+        {
+          "lat": -24.775,
+          "lng": 28.345
+        },
+        {
+          "lat": -24.795,
+          "lng": 28.35
+        },
+        {
+          "lat": -24.802,
+          "lng": 28.315
+        }
       ],
-      "crops": ["Maize", "Sunflower"],
+      "crops": [
+        "Maize",
+        "Sunflower"
+      ],
       "drones": 0,
       "tractors": 3,
       "livestock": 180,
       "annualHarvest": "Demo record",
       "lastService": "—",
-      "opportunityScore": 91
+      "opportunityScore": 91,
+      "territoryId": "ag-territory-01-limpopo"
     },
     {
       "id": "demo-free-state-001",
@@ -29,20 +48,39 @@
       "region": "Free State",
       "status": "Customer",
       "owner": "Demo Farmer",
-      "center": { "lat": -28.35, "lng": 26.92 },
+      "center": {
+        "lat": -28.35,
+        "lng": 26.92
+      },
       "boundary": [
-        { "lat": -28.340, "lng": 26.900 },
-        { "lat": -28.340, "lng": 26.945 },
-        { "lat": -28.365, "lng": 26.950 },
-        { "lat": -28.372, "lng": 26.910 }
+        {
+          "lat": -28.34,
+          "lng": 26.9
+        },
+        {
+          "lat": -28.34,
+          "lng": 26.945
+        },
+        {
+          "lat": -28.365,
+          "lng": 26.95
+        },
+        {
+          "lat": -28.372,
+          "lng": 26.91
+        }
       ],
-      "crops": ["Maize", "Wheat"],
+      "crops": [
+        "Maize",
+        "Wheat"
+      ],
       "drones": 2,
       "tractors": 5,
       "livestock": 420,
       "annualHarvest": "Demo record",
       "lastService": "2026-08-12",
-      "opportunityScore": 38
+      "opportunityScore": 38,
+      "territoryId": "ag-territory-02-free-state"
     },
     {
       "id": "demo-kwazulu-001",
@@ -50,20 +88,39 @@
       "region": "KwaZulu-Natal",
       "status": "Engaged",
       "owner": "Demo Farmer",
-      "center": { "lat": -29.62, "lng": 30.42 },
+      "center": {
+        "lat": -29.62,
+        "lng": 30.42
+      },
       "boundary": [
-        { "lat": -29.610, "lng": 30.400 },
-        { "lat": -29.610, "lng": 30.440 },
-        { "lat": -29.635, "lng": 30.445 },
-        { "lat": -29.642, "lng": 30.410 }
+        {
+          "lat": -29.61,
+          "lng": 30.4
+        },
+        {
+          "lat": -29.61,
+          "lng": 30.44
+        },
+        {
+          "lat": -29.635,
+          "lng": 30.445
+        },
+        {
+          "lat": -29.642,
+          "lng": 30.41
+        }
       ],
-      "crops": ["Sugarcane", "Maize"],
+      "crops": [
+        "Sugarcane",
+        "Maize"
+      ],
       "drones": 1,
       "tractors": 4,
       "livestock": 95,
       "annualHarvest": "Demo record",
       "lastService": "2026-07-28",
-      "opportunityScore": 64
+      "opportunityScore": 64,
+      "territoryId": "ag-territory-03-kzn"
     }
   ]
 }
