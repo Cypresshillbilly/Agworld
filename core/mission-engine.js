@@ -55,7 +55,8 @@
       const success=[...document.querySelectorAll('.mission-modal .field input')].find(i=>i.closest('.field')?.querySelector('label')?.textContent.trim()==='SUCCESS CRITERIA')?.value.trim() || '';
       const xpInput=[...document.querySelectorAll('.mission-modal .field input')].find(i=>i.closest('.field')?.querySelector('label')?.textContent.trim()==='PROFILE XP REWARD');
       const role=document.getElementById('missionRole')?.value || '*';
-      const build=buildSelect.value || 'Agriculture';
+      const active=window.GAME_CHANGER_BUILD?.current?.();
+      const build=active?.id==='agriculture' ? 'Agriculture' : (buildSelect.value || 'Agriculture');
       const workflow=[...document.querySelectorAll('#steps input')].map(i=>i.value.trim()).filter(Boolean);
       window.GAME_CHANGER_MISSIONS?.create({name,build,role,type,priority,objective,success,xp:Number(xpInput?.value || 0),workflow});
     },true);
