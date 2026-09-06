@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "note": "Ag World territorial hierarchy: Country → Provincial → Municipal → Town. Provinces are populated first; municipality and town records are separate child layers ready for authoritative boundary datasets.",
+  "note": "Country → Province → Municipality → Town → Farm hierarchy. Municipal and town geometry is loaded live from published GIS feature layers and parent relationships are resolved spatially.",
   "hierarchy": [
     "country",
     "province",
@@ -407,5 +407,19 @@
     }
   ],
   "municipalities": [],
-  "towns": []
+  "towns": [],
+  "spatialSources": {
+    "municipalities": {
+      "provider": "Municipal Demarcation Board / DLRRD National Spatial Data",
+      "format": "GeoJSON from published feature service",
+      "url": "https://nspdr.dlrrd.gov.za/server/rest/services/NationalDatasets/MunicipalDemarcationBoard/MapServer/3",
+      "level": "municipality"
+    },
+    "towns": {
+      "provider": "AfriGIS / Surveyor General via Western Cape GIS",
+      "format": "GeoJSON from published feature service",
+      "url": "https://gis.westerncape.gov.za/server2/rest/services/SpatialDataWarehouse/AfriGIS_Boundaries/MapServer/9",
+      "level": "town"
+    }
+  }
 }
