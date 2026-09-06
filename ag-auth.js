@@ -66,9 +66,36 @@
     gate.querySelector('form').addEventListener('submit',async e=>{
       e.preventDefault();
       if(!master){
-        e.preventDefault();
         const error=gate.querySelector('.ag-login-error');
-        error.textContent='PLEASE USE JOIN THE COMPANY / SIGN IN';
+        error.textContent='SIGNING IN…';
+        try{
+          if(!window.supabase?.createClient){
+            await new Promise((resolve,reject)=>{
+              const existing=document.querySelector('script[data-agworld-supabase]');
+              if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}
+              const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.dataset.agworldSupabase='1';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);
+            });
+          }
+          const db=window.supabase.createClient('https://vcnkspaljmsjvonftfcw.supabase.co','sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o');
+          const email=username.value.trim();
+          const pass=password.value;
+          if(!email||!pass){error.textContent='ENTER YOUR EMAIL AND PASSWORD';return;}
+          const {data,error:authError}=await db.auth.signInWithPassword({email,password:pass});
+          if(authError){error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';return;}
+          if(!data?.user){error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';return;}
+          const displayName=data.user.user_metadata?.display_name||email;
+          sessionStorage.setItem('gamechanger.authenticated','1');
+          sessionStorage.setItem('gamechanger.role','agriculture_sales');
+          sessionStorage.setItem('gamechanger.username',displayName);
+          if(remember.checked)localStorage.setItem('agworld.remembered.email',email);
+          gate.remove();
+          reveal();
+          window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
+          window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user:data.user}}));
+        }catch(err){
+          console.error('AG World sign-in failed',err);
+          error.textContent='UNABLE TO CONNECT TO THE COMPANY ACCOUNT SERVICE';
+        }
         return;
       }
       const account=(master ? MASTER_USERS : AGWORLD_USERS)[username.value.trim()];
