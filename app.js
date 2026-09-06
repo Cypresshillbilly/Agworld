@@ -1,6 +1,8 @@
 const CONFIG = window.AG_WORLD_CONFIG || {};
 
 let farms = [];
+let territories = [];
+let territoryMarkers = [];
 let map = null;
 let selected = null;
 let editingFarmId = null;
@@ -46,20 +48,35 @@ function saveLocal() {
 
 async function loadFarms() {
   try {
-    const response = await fetch('data/farms.json');
-    if (!response.ok) throw new Error('farm data');
-    const base = (await response.json()).farms || [];
+    const [farmResponse, territoryResponse] = await Promise.all([
+      fetch('data/farms.json'),
+      fetch('data/territories.json')
+    ]);
+    if (!farmResponse.ok) throw new Error('farm data');
+    const farmData = await farmResponse.json();
+    const base = farmData.farms || [];
+    let territoryData = { territories: [] };
+    if (territoryResponse.ok) territoryData = await territoryResponse.json();
+
     let stored = [];
     try { stored = JSON.parse(localStorage.getItem('agworld-farms-v2') || '[]'); } catch (_) {}
     const byId = new Map(base.map(f => [f.id, f]));
     stored.forEach(f => byId.set(f.id, f));
     farms = [...byId.values()];
+    territories = territoryData.territories || [];
+
+    // Backfill territory links for existing farm records.
+    farms.forEach(farm => {
+      if (!farm.territoryId) {
+        const match = territories.find(t => (t.regions || []).includes(farm.region));
+        if (match) farm.territoryId = match.id;
+      }
+    });
     initMap();
   } catch (error) {
-    $('mapStatus').textContent = 'Farm data could not be loaded.';
+    $('mapStatus').textContent = 'Agriculture world data could not be loaded.';
   }
 }
-
 function initMap() {
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
     $('mapStatus').textContent = 'Google satellite mapping is configured but inactive: add the API key in config.js.';
@@ -79,10 +96,58 @@ window.agWorldMapReady = () => {
     gestureHandling: 'greedy', tilt: 0, rotateControl: false
   });
   map.addListener('zoom_changed', updateZoomStage);
+  territories.forEach(addTerritory);
   farms.forEach(addFarm);
   updateZoomStage();
-  $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded`;
+  $('mapStatus').textContent = `Satellite map active · ${territories.length} territories · ${farms.length} farm records loaded`;
 };
+
+function addTerritory(territory) {
+  if (!map || !territory.boundary?.length) return;
+  const polygon = new google.maps.Polygon({
+    paths: territory.boundary,
+    strokeOpacity: .9,
+    strokeWeight: 2,
+    fillOpacity: .045,
+    clickable: true,
+    map
+  });
+  polygon.addListener('click', () => selectTerritory(territory, true));
+
+  const marker = new google.maps.Marker({
+    position: territory.center || centroid(territory.boundary),
+    map,
+    title: territory.name,
+    label: { text: String(territory.code || 'T'), color: '#fff', fontSize: '10px', fontWeight: '700' }
+  });
+  marker.addListener('click', () => selectTerritory(territory, true));
+  territory._polygon = polygon;
+  territory._marker = marker;
+  territoryMarkers.push(marker);
+}
+
+function selectTerritory(territory, zoom = true) {
+  const territoryFarms = farms.filter(f => f.territoryId === territory.id);
+  const opportunity = territoryFarms.reduce((sum, f) => sum + (Number(f.opportunityScore) || 0), 0);
+  $('farmCard').classList.add('show');
+  $('farmName').textContent = territory.name;
+  $('farmMeta').textContent = `TERRITORY ${territory.code || ''} · ${territory.regionLabel || 'AG WORLD'} · ${territory.status || 'Active'}`;
+  $('farmDrones').textContent = territoryFarms.reduce((n, f) => n + (Number(f.drones) || 0), 0);
+  $('farmTractors').textContent = territoryFarms.reduce((n, f) => n + (Number(f.tractors) || 0), 0);
+  $('farmCrops').textContent = territoryFarms.length;
+  $('farmScore').textContent = territoryFarms.length ? Math.round(opportunity / territoryFarms.length) : '—';
+  $('farmLivestock').textContent = territoryFarms.reduce((n, f) => n + (Number(f.livestock) || 0), 0) || '—';
+  $('farmHarvest').textContent = territory.owner || 'UNASSIGNED';
+  $('farmService').textContent = `${territoryFarms.length} FARMS`;
+  $('farmDetailText').textContent = territory.description || `${territoryFarms.length} farms linked to this territory. Select a farm by zooming in or clicking its marker.`;
+  $('aiText').textContent = `${territoryFarms.length} mapped farms · Territory score ${territory.control ?? 0}% · ${territoryFarms.filter(f => f.status !== 'Customer').length} active opportunities.`;
+  selected = null;
+  if (map && zoom) {
+    map.panTo(territory.center || centroid(territory.boundary));
+    map.setZoom(7);
+  }
+  $('mapStatus').textContent = `Territory selected · ${territory.name} · ${territoryFarms.length} linked farms`;
+}
 
 function addFarm(farm) {
   if (!map) return;
@@ -134,9 +199,13 @@ function refreshMapVisibility() {
   const zoom = map.getZoom();
   const showBoundaries = zoom >= 8;
   const showObjects = zoom >= 12;
+  territories.forEach(territory => {
+    if (territory._polygon) territory._polygon.setMap(zoom < 9 ? map : null);
+    if (territory._marker) territory._marker.setMap(zoom < 8 ? map : null);
+  });
   farms.forEach(farm => {
     if (farm._polygon) farm._polygon.setMap(showBoundaries ? map : null);
-    if (farm._marker) farm._marker.setMap(map);
+    if (farm._marker) farm._marker.setMap(zoom >= 7 ? map : null);
   });
   objectMarkers.forEach(marker => marker.setMap(showObjects ? map : null));
 }
@@ -155,7 +224,8 @@ function selectFarm(farm, zoom = true) {
   selected = farm;
   $('farmCard').classList.add('show');
   $('farmName').textContent = farm.name;
-  $('farmMeta').textContent = `${farm.region} · ${farm.status} · ${farm.owner}`;
+  const territory = territories.find(t => t.id === farm.territoryId);
+  $('farmMeta').textContent = `${territory ? territory.name + ' · ' : ''}${farm.region} · ${farm.status} · ${farm.owner}`;
   $('farmDrones').textContent = farm.drones || 0;
   $('farmTractors').textContent = farm.tractors || 0;
   $('farmCrops').textContent = (farm.crops || []).length;
@@ -421,9 +491,11 @@ function saveFarm() {
   const tractorCount = objects.filter(o => o.type === 'tractor').length;
   const livestockCount = objects.filter(o => o.type === 'livestock-area').reduce((sum, o) => sum + (Number(o.properties?.['Estimated head']) || 0), 0);
   const id = editingFarmId || `farm-user-${Date.now()}`;
+  const territoryMatch = territories.find(t => (t.regions || []).includes($('newFarmRegion').value.trim()));
   const existing = farms.find(f => f.id === id);
   const farm = {
     ...(existing || {}), id,
+    territoryId: existing?.territoryId || territoryMatch?.id || null,
     name,
     owner: $('newFarmOwner').value.trim() || 'Unknown',
     region: $('newFarmRegion').value.trim() || 'Unassigned',
@@ -483,7 +555,7 @@ function resetCreateForm() {
 }
 
 function exportData() {
-  const blob = new Blob([JSON.stringify({ farms: farms.map(cleanFarm) }, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ territories, farms: farms.map(cleanFarm) }, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url; anchor.download = 'ag-world-farms.json'; anchor.click();
@@ -640,3 +712,4 @@ document.querySelectorAll('.mission').forEach(mission => mission.onclick = () =>
 document.querySelectorAll('.nav button').forEach(button => button.onclick = () => { document.querySelectorAll('.nav button').forEach(x => x.classList.remove('active')); button.classList.add('active'); toast(`${button.textContent.trim()} selected`); });
 window.addEventListener('resize', () => { const host = $('farmScene'); if (renderer && host.clientWidth) { camera.aspect = host.clientWidth / host.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(host.clientWidth, host.clientHeight); } });
 loadFarms();
+window.AG_WORLD_WORLD = { get territories(){ return territories; }, get farms(){ return farms; }, selectTerritory, selectFarm };
