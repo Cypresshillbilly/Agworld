@@ -1254,6 +1254,10 @@ function wizardBaseFarm() {
     ...(existing || {}),
     id: editingFarmId || farmWizardDraftId || `farm-user-${Date.now()}`,
     boundary: newBoundary.map(p => ({ lat:Number(p.lat), lng:Number(p.lng) })),
+    // Every persisted farm has a map location derived from its saved boundary.
+    // This makes a newly captured farm immediately render with the same icon
+    // treatment as all other farms.
+    center: existing?.center || centroid(newBoundary),
     objects: draftObjects.map(o => ({ ...o, properties:{...(o.properties||{})} })),
     name: $('newFarmName').value.trim() || existing?.name || '',
     owner: $('newFarmOwner').value.trim() || existing?.owner || '',
@@ -1324,10 +1328,22 @@ async function saveFarmWizardStep(step) {
     return false;
   }
 
+  // As soon as Step 2 is saved, make the farm a live part of the map.
+  // Do not wait for a page refresh or for Step 3. This is important for the
+  // multiplayer test because the saved record and its location are now visible
+  // as a normal farm immediately.
+  if (step >= 2 && map && farm.center) {
+    addFarm(farm);
+    refreshMapVisibility();
+    window.dispatchEvent(new CustomEvent('agworld:farm-created-or-updated', {
+      detail: { farmId: farm.id, action: existingIndex >= 0 ? 'updated' : 'created' }
+    }));
+  }
+
   toast(step === 1
     ? 'Boundary saved to the shared farm database'
     : step === 2
-      ? 'Farm information saved to the shared farm database'
+      ? 'Farm information saved · farm added to the map'
       : 'Farm assets saved to the shared farm database');
   return true;
 }
@@ -1980,8 +1996,20 @@ $('saveInfoStep').onclick = async event => {
 $('nextInfoStep').onclick = async event => {
   event?.preventDefault?.();
   event?.stopPropagation?.();
-  try { if (await saveFarmWizardStep(2)) showFarmWizardStep(3); }
-  catch (error) { console.error('SAVE & NEXT information failed', error); toast('Could not save farm information: ' + (error?.message || 'Unknown error')); }
+  const button = $('nextInfoStep');
+  if (button) { button.disabled = true; button.textContent = 'SAVING FARM…'; }
+  try {
+    if (await saveFarmWizardStep(2)) {
+      showFarmWizardStep(3);
+      toast('Farm saved and placed on the map · continue with farm assets');
+    }
+  }
+  catch (error) {
+    console.error('SAVE & CONTINUE information failed', error);
+    toast('Could not save farm information: ' + (error?.message || 'Unknown error'));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'SAVE & CONTINUE →'; }
+  }
 };
 $('saveAssetsStep').onclick = async event => {
   event?.preventDefault?.();
