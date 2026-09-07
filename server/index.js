@@ -53,6 +53,79 @@ app.get('/api/farms/:id',async(req,res)=>{try{const {rows}=await pool.query(`SEL
 app.post('/api/farms',async(req,res)=>{const f=farmPayload(req.body);const client=await pool.connect();try{await client.query('BEGIN');await client.query(`INSERT INTO farms(id,name,owner,region,status,boundary,center,annual_harvest,last_service,opportunity_score,source,notes) VALUES($1,$2,$3,$4,$5,ST_GeomFromText($6,4326),ST_GeomFromText($7,4326),$8,$9,$10,$11,$12)`,[f.id,f.name,f.owner||null,f.region||null,f.status||'Prospect',polygon(f.boundary),point(f.center),f.annualHarvest||null,f.lastService||null,Number(f.opportunityScore||0),f.source||'manual',f.notes||null]);for(const o of(f.objects||[])){if(!allowedTypes.has(o.type))throw new Error(`unsupported object type: ${o.type}`);if(!o.position)throw new Error('object position required');await client.query(`INSERT INTO farm_objects(id,farm_id,object_type,name,position,source,properties) VALUES($1,$2,$3,$4,ST_GeomFromText($5,4326),$6,$7)`,[o.id,f.id,o.type,o.name||null,point(o.position),o.source||'manual',o.properties||{}]);}await client.query(`INSERT INTO farm_audit(farm_id,action,actor_id,source,after_state) VALUES($1,'created',$2,$3,$4)`,[f.id,req.get('x-actor-id')||null,'api',f]);await client.query('COMMIT');res.status(201).json({id:f.id});}catch(e){await client.query('ROLLBACK');console.error(e);res.status(400).json({error:e.message});}finally{client.release();}});
 app.patch('/api/farms/:id',async(req,res)=>{const f=farmPayload({...req.body,id:req.params.id});const client=await pool.connect();try{await client.query('BEGIN');const old=await client.query('SELECT row_to_json(farms) state FROM farms WHERE id=$1',[req.params.id]);if(!old.rows[0])return res.status(404).json({error:'farm not found'});await client.query(`UPDATE farms SET name=$2,owner=$3,region=$4,status=$5,boundary=ST_GeomFromText($6,4326),center=ST_GeomFromText($7,4326),annual_harvest=$8,last_service=$9,opportunity_score=$10,notes=$11,updated_at=now() WHERE id=$1`,[req.params.id,f.name,f.owner||null,f.region||null,f.status||'Prospect',polygon(f.boundary),point(f.center),f.annualHarvest||null,f.lastService||null,Number(f.opportunityScore||0),f.notes||null]);await client.query(`INSERT INTO farm_audit(farm_id,action,actor_id,source,before_state,after_state) VALUES($1,'updated',$2,'api',$3,$4)`,[req.params.id,req.get('x-actor-id')||null,old.rows[0].state,f]);await client.query('COMMIT');res.json({id:req.params.id});}catch(e){await client.query('ROLLBACK');res.status(400).json({error:e.message});}finally{client.release();}});
 app.post('/api/farms/:id/objects',async(req,res)=>{const o=req.body;if(!allowedTypes.has(o.type)||!o.id||!o.position)return res.status(400).json({error:'valid id, type and position required'});try{await pool.query(`INSERT INTO farm_objects(id,farm_id,object_type,name,position,source,properties) VALUES($1,$2,$3,$4,ST_GeomFromText($5,4326),$6,$7)`,[o.id,req.params.id,o.type,o.name||null,point(o.position),o.source||'manual',o.properties||{}]);await pool.query(`INSERT INTO farm_audit(farm_id,action,actor_id,source,after_state) VALUES($1,'object_created',$2,'api',$3)`,[req.params.id,req.get('x-actor-id')||null,o]);res.status(201).json(o);}catch(e){res.status(400).json({error:e.message});}});
+
+// V2.6 authenticated acceptance endpoint. This keeps database access private
+// while allowing an end-to-end relationship lifecycle test through the API.
+app.post('/api/v2/relationships/acceptance-test', async (req, res) => {
+  const token = req.get('x-agworld-admin-token');
+  if (!process.env.AGWORLD_ADMIN_TOKEN || token !== process.env.AGWORLD_ADMIN_TOKEN) {
+    return res.status(403).json({ error: 'forbidden' });
+  }
+
+  const client = await pool.connect();
+  try {
+    const farms = (await client.query('SELECT id,name FROM farms ORDER BY id LIMIT 2')).rows;
+    if (farms.length < 2) return res.status(409).json({ error: 'at least two farms are required' });
+
+    const [a,b] = farms;
+    await client.query('BEGIN');
+
+    const created = (await client.query(
+      `INSERT INTO entity_relationships
+       (source_entity_id,source_entity_type,relationship_type,target_entity_id,target_entity_type,status,metadata)
+       VALUES($1,'farm','associated_with',$2,'farm','active',$3)
+       RETURNING id,status,created_at`,
+      [a.id,b.id,{ source:'v2.6 acceptance test', temporary:true }]
+    )).rows[0];
+
+    const retrieved = (await client.query(
+      `SELECT id FROM entity_relationships
+       WHERE id=$1 AND status='active'
+         AND (source_entity_id=$2 OR target_entity_id=$2)`,
+      [created.id,a.id]
+    )).rows[0];
+
+    const deactivated = (await client.query(
+      `UPDATE entity_relationships
+       SET status='inactive',updated_at=now()
+       WHERE id=$1 AND status='active'
+       RETURNING id,status`,
+      [created.id]
+    )).rows[0];
+
+    const activeAfterDeactivate = (await client.query(
+      `SELECT id FROM entity_relationships WHERE id=$1 AND status='active'`,
+      [created.id]
+    )).rows.length;
+
+    const retainedInactive = (await client.query(
+      `SELECT id,status FROM entity_relationships WHERE id=$1 AND status='inactive'`,
+      [created.id]
+    )).rows[0];
+
+    await client.query('COMMIT');
+
+    const passed = Boolean(retrieved && deactivated && activeAfterDeactivate === 0 && retainedInactive);
+    res.json({
+      passed,
+      farms: { source:a, target:b },
+      lifecycle: {
+        created: Boolean(created),
+        retrieved: Boolean(retrieved),
+        deactivated: Boolean(deactivated),
+        confirmedInactive: activeAfterDeactivate === 0,
+        retainedInactive: Boolean(retainedInactive)
+      }
+    });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('V2.6 acceptance test failed', error);
+    res.status(500).json({ error: 'acceptance test failed', detail: error.message });
+  } finally {
+    client.release();
+  }
+});
+
 ensureV2RelationshipSchema().then(() => {
   app.listen(PORT,()=>console.log(`AG World API listening on ${PORT}`));
 }).catch(error => {
