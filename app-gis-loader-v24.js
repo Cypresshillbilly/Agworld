@@ -1307,18 +1307,32 @@ function startBoundary() {
   creatingFarm = true;
   placingObjectType = null;
   $('farmCreateModal').classList.remove('show');
-  $('mapStatus').textContent = 'DRAWING MODE · click the farm boundary points on the satellite map';
-  map.setOptions({ draggableCursor: 'crosshair' });
+
+  // Drawing mode must work at every zoom level. While drawing, temporarily
+  // disable all interactive territory/farm overlays so their click handlers
+  // cannot consume the map click before the boundary listener receives it.
+  farms.forEach(f => {
+    if (f._polygon) f._polygon.setOptions({ clickable: false });
+    if (f._marker) f._marker.setClickable(false);
+  });
+  [...countries, ...territories, ...municipalities, ...towns].forEach(t => {
+    if (t._polygon) t._polygon.setOptions({ clickable: false });
+    if (t._marker) t._marker.setClickable(false);
+  });
+
+  $('mapStatus').textContent = 'DRAWING MODE · zoom and click farm boundary points on the satellite map';
+  map.setOptions({ draggableCursor: 'crosshair', gestureHandling: 'greedy', clickableIcons: false });
   newBoundary = [];
   if (boundaryPolygon) boundaryPolygon.setMap(null);
   boundaryPolygon = null;
   if (drawListener) google.maps.event.removeListener(drawListener);
   drawListener = map.addListener('click', event => {
-    if (!creatingFarm || placingObjectType) return;
+    if (!creatingFarm || placingObjectType || !event?.latLng) return;
     newBoundary.push({ lat: event.latLng.lat(), lng: event.latLng.lng() });
     renderDraftBoundary();
+    $('mapStatus').textContent = `DRAWING MODE · ${newBoundary.length} boundary points · zoom freely and continue clicking`;
   });
-  toast('Click each boundary corner');
+  toast('Boundary mode active · zoom freely and click each farm corner');
 }
 
 function renderDraftBoundary() {
@@ -1336,7 +1350,8 @@ function finishBoundary() {
   drawListener = null;
   creatingFarm = false;
   placingObjectType = null;
-  map.setOptions({ draggableCursor: null });
+  map.setOptions({ draggableCursor: null, clickableIcons: true });
+  refreshMapVisibility();
   $('farmCreateModal').classList.add('show');
   $('boundaryStatus').textContent = `Boundary captured · ${newBoundary.length} points`;
   $('objectStatus').textContent = 'Choose an object type, then click its position on the map.';
@@ -1352,7 +1367,7 @@ function clearBoundary() {
   boundaryPolygon = null;
   if (drawListener) google.maps.event.removeListener(drawListener);
   drawListener = null;
-  if (map) { map.setOptions({ draggableCursor: null }); refreshMapVisibility(); }
+  if (map) { map.setOptions({ draggableCursor: null, clickableIcons: true }); refreshMapVisibility(); }
   $('boundaryStatus').textContent = 'No boundary created.';
   $('objectStatus').textContent = 'No object selected.';
   renderObjectEditor();
