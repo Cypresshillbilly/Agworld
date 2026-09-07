@@ -40,6 +40,7 @@
       return [
         ['overview', 'Overview'],
         ['details', 'Details'],
+        ['intelligence', 'Intelligence'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
@@ -77,6 +78,109 @@
       this.renderContent();
     }
 
+    managementKey() {
+      return 'agworld.entity-intelligence.' + String(this.entity?.type || 'entity') + '.' + String(this.entity?.id || 'unknown');
+    }
+
+    managementData() {
+      let stored = {};
+      try { stored = JSON.parse(localStorage.getItem(this.managementKey()) || '{}') || {}; } catch (_) {}
+      const metadata = this.entity?.metadata || {};
+      return {
+        activity: Array.isArray(stored.activity) ? stored.activity : (Array.isArray(metadata.activity) ? metadata.activity : []),
+        documents: Array.isArray(stored.documents) ? stored.documents : (Array.isArray(metadata.documents) ? metadata.documents : []),
+        media: Array.isArray(stored.media) ? stored.media : (Array.isArray(metadata.media) ? metadata.media : []),
+        notes: Array.isArray(stored.notes) ? stored.notes : (Array.isArray(metadata.notes) ? metadata.notes : []),
+        metrics: stored.metrics || metadata.metrics || {}
+      };
+    }
+
+    saveManagementData(data) {
+      localStorage.setItem(this.managementKey(), JSON.stringify(data));
+      global.dispatchEvent(new CustomEvent('agworld:entity-intelligence-updated', {
+        detail: { entity: this.entity, data }
+      }));
+    }
+
+    metricValues() {
+      const data = this.managementData();
+      const custom = data.metrics || {};
+      const relationships = Number(custom.relationship ?? 0);
+      const activity = Number(custom.activity ?? Math.min(100, data.activity.length * 15));
+      const intelligence = Number(custom.intelligence ?? Math.min(100, (data.notes.length + data.documents.length + data.media.length) * 12));
+      const opportunity = Number(custom.opportunity ?? 50);
+      const risk = Number(custom.risk ?? 20);
+      return {
+        relationship: Math.max(0, Math.min(100, relationships)),
+        activity: Math.max(0, Math.min(100, activity)),
+        intelligence: Math.max(0, Math.min(100, intelligence)),
+        opportunity: Math.max(0, Math.min(100, opportunity)),
+        risk: Math.max(0, Math.min(100, risk))
+      };
+    }
+
+    renderMetrics(target) {
+      const metrics = this.metricValues();
+      const labels = [['relationship','Relationship'],['activity','Activity'],['intelligence','Intelligence'],['opportunity','Opportunity'],['risk','Risk']];
+      target.innerHTML = '<div class="agworld-intelligence-metrics">' +
+        labels.map(([key,label]) => '<div class="agworld-metric-row"><div class="agworld-metric-head"><span>' + esc(label) + '</span><strong>' + metrics[key] + '%</strong></div><div class="agworld-metric-bar"><i style="width:' + metrics[key] + '%"></i></div></div>').join('') +
+        '<button type="button" data-intel-action="edit-metrics">Edit metrics</button></div>';
+      target.querySelector('[data-intel-action="edit-metrics"]')?.addEventListener('click', () => {
+        target.innerHTML = '<form class="agworld-intelligence-form">' + labels.map(([key,label]) =>
+          '<label>' + label + ' <input name="' + key + '" type="number" min="0" max="100" value="' + metrics[key] + '"></label>'
+        ).join('') + '<div><button type="submit">Save metrics</button> <button type="button" data-intel-action="cancel">Cancel</button></div></form>';
+        target.querySelector('[data-intel-action="cancel"]')?.addEventListener('click', () => this.renderMetrics(target));
+        target.querySelector('form')?.addEventListener('submit', event => {
+          event.preventDefault();
+          const data = this.managementData();
+          const form = new FormData(event.currentTarget);
+          data.metrics = {};
+          labels.forEach(([key]) => data.metrics[key] = Math.max(0, Math.min(100, Number(form.get(key) || 0))));
+          this.saveManagementData(data);
+          this.renderMetrics(target);
+        });
+      });
+    }
+
+    renderManagedCollection(target, key, emptyMessage, title) {
+      const data = this.managementData();
+      const items = Array.isArray(data[key]) ? data[key] : [];
+      const label = title || key;
+      target.innerHTML =
+        '<div class="agworld-intelligence-toolbar"><strong>' + esc(label.toUpperCase()) + '</strong><button type="button" data-intel-action="add">+ Add</button></div>' +
+        (items.length
+          ? '<div class="agworld-intelligence-list">' + items.map((item, index) => {
+              const text = typeof item === 'string' ? item : (item.text || item.title || item.name || JSON.stringify(item));
+              const when = typeof item === 'object' && item.createdAt ? new Date(item.createdAt).toLocaleString() : '';
+              return '<article class="agworld-intelligence-item"><div>' + esc(text) + '</div>' + (when ? '<small>' + esc(when) + '</small>' : '') + '<button type="button" data-intel-remove="' + index + '">Remove</button></article>';
+            }).join('') + '</div>'
+          : '<p>' + esc(emptyMessage) + '</p>');
+
+      target.querySelector('[data-intel-action="add"]')?.addEventListener('click', () => {
+        const placeholder = key === 'activity' ? 'Describe the activity…' : key === 'notes' ? 'Add an intelligence note…' : 'Enter title or description…';
+        const existing = target.innerHTML;
+        target.innerHTML = existing + '<form class="agworld-intelligence-add"><textarea name="text" rows="3" placeholder="' + esc(placeholder) + '" required></textarea><div><button type="submit">Save</button> <button type="button" data-intel-action="cancel-add">Cancel</button></div></form>';
+        target.querySelector('[data-intel-action="cancel-add"]')?.addEventListener('click', () => this.renderManagedCollection(target, key, emptyMessage, title));
+        target.querySelector('.agworld-intelligence-add')?.addEventListener('submit', event => {
+          event.preventDefault();
+          const text = String(new FormData(event.currentTarget).get('text') || '').trim();
+          if (!text) return;
+          const next = this.managementData();
+          next[key] = [...(next[key] || []), { text, createdAt: new Date().toISOString() }];
+          this.saveManagementData(next);
+          this.renderManagedCollection(target, key, emptyMessage, title);
+        });
+      });
+
+      target.querySelectorAll('[data-intel-remove]').forEach(button => button.addEventListener('click', () => {
+        const index = Number(button.dataset.intelRemove);
+        const next = this.managementData();
+        next[key] = (next[key] || []).filter((_, i) => i !== index);
+        this.saveManagementData(next);
+        this.renderManagedCollection(target, key, emptyMessage, title);
+      }));
+    }
+
     renderContent() {
       const target = this.container.querySelector('.agworld-v2-detail-content');
       if (!target) return;
@@ -99,14 +203,16 @@
       } else if (this.activeTab === 'relationships') {
         target.innerHTML = '<p>Loading relationships…</p>';
         this.loadRelationships(target);
+      } else if (this.activeTab === 'intelligence') {
+        this.renderMetrics(target);
       } else if (this.activeTab === 'activity') {
-        this.renderCollection(target, metadata.activity, 'No activity recorded yet.');
+        this.renderManagedCollection(target, 'activity', 'No activity recorded yet.', 'Activity timeline');
       } else if (this.activeTab === 'documents') {
-        this.renderCollection(target, metadata.documents, 'No documents attached yet.');
+        this.renderManagedCollection(target, 'documents', 'No documents attached yet.', 'Documents');
       } else if (this.activeTab === 'media') {
-        this.renderCollection(target, metadata.media, 'No media attached yet.');
+        this.renderManagedCollection(target, 'media', 'No media attached yet.', 'Media');
       } else if (this.activeTab === 'notes') {
-        this.renderCollection(target, metadata.notes, 'No notes added yet.');
+        this.renderManagedCollection(target, 'notes', 'No notes added yet.', 'Intelligence notes');
       }
     }
 
