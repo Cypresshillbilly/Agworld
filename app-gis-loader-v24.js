@@ -1213,6 +1213,55 @@ function national() {
   selected = null;
 }
 
+let farmWizardStep = 1;
+let farmWizardDraftId = null;
+function showFarmWizardStep(step) {
+  farmWizardStep = step;
+  document.querySelectorAll('.farm-wizard-step').forEach(el => el.hidden = Number(el.dataset.step) !== step);
+  const progress = $('farmWizardProgress'), title = $('farmWizardTitle');
+  if (progress) progress.textContent = `STEP ${step} OF 3`;
+  if (title) title.textContent = step === 1 ? 'SELECT FARM BOUNDARY' : step === 2 ? 'CAPTURE FARM INFORMATION' : 'SELECT FARM ASSETS';
+}
+function wizardBaseFarm() {
+  const existing = editingFarmId ? farms.find(f => String(f.id) === String(editingFarmId)) : null;
+  return {
+    ...(existing || {}),
+    id: editingFarmId || farmWizardDraftId || `farm-user-${Date.now()}`,
+    boundary: newBoundary.map(p => ({ lat:Number(p.lat), lng:Number(p.lng) })),
+    objects: draftObjects.map(o => ({ ...o, properties:{...(o.properties||{})} })),
+    name: $('newFarmName').value.trim() || existing?.name || '',
+    owner: $('newFarmOwner').value.trim() || existing?.owner || '',
+    region: $('newFarmRegion').value.trim() || existing?.region || '',
+    status: $('newFarmStatus').value || existing?.status || 'Prospect',
+    annualHarvest: $('newFarmHarvest').value.trim() || existing?.annualHarvest || '',
+    lastService: $('newFarmService').value.trim() || existing?.lastService || '',
+    notes: $('newFarmNotes').value.trim() || existing?.notes || '',
+    source: 'manual',
+    updatedAt: new Date().toISOString()
+  };
+}
+async function saveFarmWizardStep(step) {
+  if (step === 1 && newBoundary.length < 3) { toast('Select and finish a boundary with at least 3 points.'); return false; }
+  if (step === 2 && !$('newFarmName').value.trim()) { toast('Enter a farm name before saving farm information.'); return false; }
+  const farm = wizardBaseFarm();
+  farmWizardDraftId = farm.id;
+  const existingIndex = farms.findIndex(f => String(f.id) === String(farm.id));
+  if (existingIndex >= 0) farms[existingIndex] = { ...farms[existingIndex], ...farm };
+  else farms.push(farm);
+  window.__AG_WORLD_FARMS = farms;
+  saveLocal();
+  // Save each completed step to the database immediately.
+  try {
+    await saveFarmToDatabase(farm, existingIndex >= 0 ? cleanFarm(farms[existingIndex]) : null);
+  } catch (error) {
+    console.error('Wizard step database save failed', error);
+    toast('Step saved locally, but database save failed.');
+    return false;
+  }
+  toast(step === 1 ? 'Boundary saved' : step === 2 ? 'Farm information saved' : 'Farm assets saved');
+  return true;
+}
+
 function openCreateFarm() {
   if (!map) { toast('Add the Google Maps API key first.'); return; }
   editingFarmId = null;
@@ -1221,6 +1270,8 @@ function openCreateFarm() {
   draftObjects = [];
   placingObjectType = null;
   resetCreateForm();
+  farmWizardDraftId = null;
+  showFarmWizardStep(1);
   $('farmCreateModal').classList.add('show');
   $('boundaryStatus').textContent = 'No boundary created.';
   $('objectStatus').textContent = 'Draw a boundary first, then choose an object type.';
@@ -1247,6 +1298,7 @@ function openEditFarm(farm) {
   $('boundaryStatus').textContent = `Existing boundary loaded · ${newBoundary.length} points`;
   $('objectStatus').textContent = 'Edit the record or place additional objects.';
   $('farmCreateModal').querySelector('.farm3d-head strong').textContent = 'EDIT FARM RECORD';
+  showFarmWizardStep(1);
   $('farmCreateModal').classList.add('show');
 }
 
@@ -1468,7 +1520,7 @@ async function saveFarm() {
   const droneCount = objects.filter(o => o.type === 'drone').length;
   const tractorCount = objects.filter(o => o.type === 'tractor').length;
   const livestockCount = objects.filter(o => o.type === 'livestock-area').reduce((sum, o) => sum + (Number(o.properties?.['Estimated head']) || 0), 0);
-  const id = editingFarmId || `farm-user-${Date.now()}`;
+  const id = editingFarmId || farmWizardDraftId || `farm-user-${Date.now()}`;
   const territoryMatch = territories.find(t => (t.regions || []).includes($('newFarmRegion').value.trim()));
   const existing = farms.find(f => f.id === id);
   const beforeState = existing ? cleanFarm(existing) : null;
@@ -1695,6 +1747,12 @@ $('closeCreateFarm').onclick = closeCreateFarm;
 $('startBoundary').onclick = startBoundary;
 $('finishBoundary').onclick = finishBoundary;
 $('clearBoundary').onclick = clearBoundary;
+$('saveBoundaryStep').onclick = async () => { await saveFarmWizardStep(1); };
+$('nextBoundaryStep').onclick = async () => { if (await saveFarmWizardStep(1)) showFarmWizardStep(2); };
+$('saveInfoStep').onclick = async () => { await saveFarmWizardStep(2); };
+$('nextInfoStep').onclick = async () => { if (await saveFarmWizardStep(2)) showFarmWizardStep(3); };
+$('saveAssetsStep').onclick = async () => { await saveFarmWizardStep(3); };
+
 // Explicit async wrapper: prevents any browser form/default behaviour from
 // swallowing the SAVE FARM RECORD click and surfaces unexpected errors.
 $('saveFarm').type = 'button';
