@@ -8,7 +8,7 @@
     return /ZOOM\s+[34]/i.test(stage) || /INTERACTIVE\s+FARM/i.test(stage);
   }
   function tryOpen() {
-    if (opening || !atFarmStage()) return;
+    // Farm selection should open only the single farm information panel.\n    // The interactive 3D/visual modal must be opened deliberately via its button.\n    return;\n    if (opening || !atFarmStage()) return;
     const stage = document.getElementById('zoomStage')?.textContent?.trim() || '';
     const farmName = document.getElementById('farmName')?.textContent?.trim() || '';
     const button = document.getElementById('farm3d');
