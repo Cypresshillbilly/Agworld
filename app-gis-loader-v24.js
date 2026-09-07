@@ -1107,6 +1107,7 @@ function startFarmMove(farm) {
   stopSpatialEdit(true);
   if (!farm?._marker) { toast('This farm has no map marker to move'); return; }
   spatialEditState = { entity: farm, action: 'move', before: cleanFarm(farm) };
+  const before = spatialEditState.before;
   farm._marker.setDraggable(true);
   farm._marker.setAnimation(google.maps.Animation.BOUNCE);
   farm._marker.addListener('dragend', async event => {
@@ -1115,7 +1116,7 @@ function startFarmMove(farm) {
     farm._marker.setAnimation(null);
     farm._marker.setDraggable(false);
     spatialEditState = null;
-    await persistSpatialFarm(farm, spatialEditState?.before || null, 'position-updated');
+    await persistSpatialFarm(farm, before, 'position-updated');
   });
   toast('Drag the farm marker to its new location');
 }
