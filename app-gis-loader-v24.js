@@ -2336,6 +2336,8 @@ $('exportBtn').onclick = exportData;
 $('datasetFile').onchange = handleImport;
 document.querySelectorAll('.object-palette button').forEach(button => button.onclick = () => chooseObject(button.dataset.object));
 $('farm3d').onclick = () => openEditFarm(selected);
+const farmHistoryButton = $('farmHistoryBtn');
+if (farmHistoryButton) farmHistoryButton.onclick = () => openFarmHistory(selected);
 
 // Remove any legacy second action injected by older hooks/modules.
 new MutationObserver(() => {
