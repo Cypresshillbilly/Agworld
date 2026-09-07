@@ -1248,17 +1248,72 @@ function showFarmWizardStep(step) {
   if (progress) progress.textContent = `STEP ${step} OF 3`;
   if (title) title.textContent = step === 1 ? 'SELECT FARM BOUNDARY' : step === 2 ? 'CAPTURE FARM INFORMATION' : 'SELECT FARM ASSETS';
 }
+function selectedFarmChecklist(name) {
+  return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(input => input.value);
+}
+
+function checklistAssetRecords(equipment) {
+  const definitions = {
+    'our-drone': { type: 'drone', name: 'Our Drone', assetType: 'our-drone' },
+    'competitor-drone': { type: 'competitor-drone', name: 'Competitor Drone', assetType: 'competitor-drone' },
+    'tractor-sprayer': { type: 'tractor', name: 'Tractor / Sprayer', assetType: 'tractor-sprayer' },
+    'aerial-services': { type: 'aerial-services', name: 'Aerial Services', assetType: 'aerial-services' }
+  };
+  return equipment.map(value => {
+    const definition = definitions[value];
+    return definition ? {
+      id: `asset-${value}`,
+      ...definition,
+      source: 'farm_checklist'
+    } : null;
+  }).filter(Boolean);
+}
+
+function syncFarmChecklistUI(farm) {
+  const equipment = new Set(
+    Array.isArray(farm?.equipmentSelections) ? farm.equipmentSelections :
+    (farm?.assets || farm?.objects || []).map(asset => {
+      const raw = String(asset?.assetType || asset?.type || asset?.name || '').toLowerCase();
+      if (raw.includes('competitor')) return 'competitor-drone';
+      if (raw.includes('company drone') || raw === 'drone' || raw.includes('our drone')) return 'our-drone';
+      if (raw.includes('tractor')) return 'tractor-sprayer';
+      if (raw.includes('aerial')) return 'aerial-services';
+      return '';
+    }).filter(Boolean)
+  );
+  document.querySelectorAll('input[name="farmEquipment"]').forEach(input => {
+    input.checked = equipment.has(input.value);
+  });
+  const crops = new Set(Array.isArray(farm?.crops) ? farm.crops : []);
+  document.querySelectorAll('input[name="farmCropType"]').forEach(input => {
+    input.checked = crops.has(input.value);
+  });
+}
+
 function wizardBaseFarm() {
   const existing = editingFarmId ? farms.find(f => String(f.id) === String(editingFarmId)) : null;
+  const equipmentSelections = selectedFarmChecklist('farmEquipment');
+  const cropSelections = selectedFarmChecklist('farmCropType');
+  const checklistAssets = checklistAssetRecords(equipmentSelections);
+  const checklistTypes = new Set(['drone','competitor-drone','tractor','aerial-services']);
+  const retainedObjects = draftObjects
+    .filter(object => !checklistTypes.has(String(object?.type || '')))
+    .map(object => ({ ...object, properties:{...(object.properties||{})} }));
+  const objects = [...retainedObjects, ...checklistAssets];
+  const hasOurDrone = equipmentSelections.includes('our-drone');
+  const hasTractor = equipmentSelections.includes('tractor-sprayer');
+
   return {
     ...(existing || {}),
     id: editingFarmId || farmWizardDraftId || `farm-user-${Date.now()}`,
     boundary: newBoundary.map(p => ({ lat:Number(p.lat), lng:Number(p.lng) })),
-    // Every persisted farm has a map location derived from its saved boundary.
-    // This makes a newly captured farm immediately render with the same icon
-    // treatment as all other farms.
     center: existing?.center || centroid(newBoundary),
-    objects: draftObjects.map(o => ({ ...o, properties:{...(o.properties||{})} })),
+    objects,
+    assets: checklistAssets.map(asset => ({ ...asset })),
+    equipmentSelections,
+    crops: cropSelections,
+    drones: hasOurDrone ? 1 : 0,
+    tractors: hasTractor ? 1 : 0,
     name: $('newFarmName').value.trim() || existing?.name || '',
     owner: $('newFarmOwner').value.trim() || existing?.owner || '',
     region: $('newFarmRegion').value.trim() || existing?.region || '',
@@ -1272,8 +1327,8 @@ function wizardBaseFarm() {
     accountsManager: $('newFarmAccountsManager')?.value.trim() || existing?.accountsManager || '',
     accountsManagerCell: $('newFarmAccountsManagerCell')?.value.trim() || existing?.accountsManagerCell || '',
     accountsManagerEmail: $('newFarmAccountsManagerEmail')?.value.trim() || existing?.accountsManagerEmail || '',
-    cropsOnFarm: $('newFarmCropsOnFarm')?.value.trim() || existing?.cropsOnFarm || '',
-    equipmentOnFarm: $('newFarmEquipmentOnFarm')?.value.trim() || existing?.equipmentOnFarm || '',
+    cropsOnFarm: $('newFarmCropsOnFarm')?.value.trim() || cropSelections.join(', ') || existing?.cropsOnFarm || '',
+    equipmentOnFarm: $('newFarmEquipmentOnFarm')?.value.trim() || checklistAssets.map(asset => asset.name).join(', ') || existing?.equipmentOnFarm || '',
     equipmentStatus: $('newFarmEquipmentStatus')?.value.trim() || existing?.equipmentStatus || '',
     status: $('newFarmStatus').value || existing?.status || 'Prospect',
     annualHarvest: $('newFarmHarvest').value.trim() || existing?.annualHarvest || '',
@@ -1369,6 +1424,7 @@ function openEditFarm(farm) {
   creatingFarm = false;
   newBoundary = (farm.boundary || []).map(p => ({ lat: Number(p.lat), lng: Number(p.lng) }));
   draftObjects = JSON.parse(JSON.stringify(farm.objects || []));
+  syncFarmChecklistUI(farm);
   $('newFarmCountry').value = farm.country || '';
   $('newFarmProvince').value = farm.province || '';
   $('newFarmMunicipality').value = farm.municipality || '';
@@ -1812,6 +1868,7 @@ async function saveFarm() {
 function resetCreateForm() {
   ['newFarmCountry','newFarmProvince','newFarmMunicipality','newFarmDjiRegion','newFarmNearestTown','newFarmName','newFarmOwner','newFarmOwnerCell','newFarmOwnerEmail','newFarmAccountsManager','newFarmAccountsManagerCell','newFarmAccountsManagerEmail','newFarmCropsOnFarm','newFarmEquipmentOnFarm','newFarmEquipmentStatus','newFarmRegion','newFarmHarvest','newFarmService','newFarmNotes'].forEach(id => { if ($(id)) $(id).value = ''; });
   if ($('newFarmStatus')) $('newFarmStatus').value = 'Prospect';
+  document.querySelectorAll('input[name="farmEquipment"], input[name="farmCropType"]').forEach(input => { input.checked = false; });
   draftObjects = [];
   renderObjectEditor();
 }
@@ -2011,26 +2068,86 @@ $('nextInfoStep').onclick = async event => {
     if (button) { button.disabled = false; button.textContent = 'SAVE & CONTINUE →'; }
   }
 };
-$('saveAssetsStep').onclick = async event => {
+const saveAssetsButton = $('saveAssetsStep');
+if (saveAssetsButton) saveAssetsButton.onclick = async event => {
   event?.preventDefault?.();
   event?.stopPropagation?.();
   try { await saveFarmWizardStep(3); }
   catch (error) { console.error('SAVE FARM ASSETS failed', error); toast('Farm assets save failed: ' + (error?.message || 'Unknown error')); }
 };
 
-// Explicit async wrapper: prevents any browser form/default behaviour from
-// swallowing the SAVE FARM RECORD click and surfaces unexpected errors.
-$('saveFarm').type = 'button';
-$('saveFarm').onclick = async event => {
-  event?.preventDefault?.();
-  event?.stopPropagation?.();
+// Step 3 is a checklist-driven finish action. The final click saves the
+// selected equipment and crops to the canonical shared farm record, refreshes
+// the live map, then closes the wizard.
+async function finishFarmWizard() {
+  const button = $('saveFarm');
+  if (button) { button.disabled = true; button.textContent = 'SAVING FARM…'; }
   try {
-    await saveFarm();
+    const saved = await saveFarmWizardStep(3);
+    if (!saved) return false;
+
+    const id = editingFarmId || farmWizardDraftId;
+    const farm = farms.find(item => String(item.id) === String(id));
+    if (!farm) throw new Error('Saved farm record could not be found after Step 3.');
+
+    window.__AG_WORLD_FARMS = farms;
+    try { saveLocal(); } catch (error) { console.warn('Farm local save failed', error); }
+    try { addFarm(farm); } catch (error) { console.warn('Farm redraw failed', error); }
+    try { refreshMapVisibility(); } catch (error) { console.warn('Farm visibility refresh failed', error); }
+
+    const patch = {
+      id:farm.id,
+      name:farm.name,
+      owner:farm.owner,
+      region:farm.region,
+      status:farm.status,
+      drones:farm.drones,
+      tractors:farm.tractors,
+      crops:farm.crops,
+      assets:farm.assets,
+      objects:farm.objects,
+      equipmentSelections:farm.equipmentSelections,
+      updatedAt:farm.updatedAt
+    };
+    window.AGWorldSharedFarms?.updateDetails?.(farm, patch)
+      ?.catch(error => console.warn('Shared final farm sync failed', error));
+
+    selected = farm;
+    if ($('farmCreateModal')) $('farmCreateModal').classList.remove('show');
+    if (boundaryPolygon) { try { boundaryPolygon.setMap(null); } catch (_) {} }
+    boundaryPolygon = null;
+    newBoundary = [];
+    draftObjects = [];
+    creatingFarm = false;
+    placingObjectType = null;
+    editingFarmId = null;
+    farmWizardDraftId = null;
+    resetCreateForm();
+    try { selectFarm(farm, false); } catch (error) { console.warn('Farm panel refresh failed', error); }
+
+    $('mapStatus').textContent = `Farm completed · ${farm.name} · shared Farms database updated`;
+    toast('Farm saved and finished · live map updated');
+    return true;
   } catch (error) {
-    console.error('Unexpected SAVE FARM RECORD error', error);
-    toast('Save failed. Check the browser console for details.');
+    console.error('Unexpected SAVE & FINISH FARM error', error);
+    toast('Could not finish farm: ' + (error?.message || 'Unknown error'));
+    return false;
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'SAVE & FINISH FARM'; }
   }
-};
+}
+
+// Explicit button action: prevents browser/default behaviour from swallowing
+// the final shared-database save.
+const finishFarmButton = $('saveFarm');
+if (finishFarmButton) {
+  finishFarmButton.type = 'button';
+  finishFarmButton.onclick = async event => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    await finishFarmWizard();
+  };
+}
 $('importBtn').onclick = importData;
 $('exportBtn').onclick = exportData;
 $('datasetFile').onchange = handleImport;
