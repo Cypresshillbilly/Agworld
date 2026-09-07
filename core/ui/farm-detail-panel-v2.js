@@ -1,9 +1,48 @@
 (function (global) {
   'use strict';
 
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
   class FarmDetailPanelV2 extends global.AGWorldV2.EntityDetailPanelV2 {
     constructor(options) {
       super(options);
+    }
+
+    // The existing Farm Card is now the primary V2 entity panel.
+    // The legacy card owns the summary; this V2 section adds the shared
+    // entity-engine capabilities without opening a second competing card.
+    tabs() {
+      return [
+        ['details', 'Entity Details'],
+        ['relationships', 'Relationships'],
+        ['activity', 'Activity'],
+        ['documents', 'Documents'],
+        ['media', 'Media'],
+        ['notes', 'Notes']
+      ];
+    }
+
+    open(entity) {
+      this.entity = entity;
+      this.activeTab = 'relationships';
+      this.render();
+    }
+
+    render() {
+      super.render();
+      const header = this.container?.querySelector('.agworld-v2-detail-header');
+      if (header) {
+        const close = header.querySelector('[data-action="close"]');
+        if (close) close.remove();
+        const type = header.querySelector('.agworld-v2-entity-type');
+        if (type) type.textContent = 'AG WORLD V2 ENTITY ENGINE';
+        const title = header.querySelector('h2');
+        if (title) title.textContent = 'CONNECTED ENTITY DATA';
+        const status = header.querySelector('.agworld-v2-status');
+        if (status) status.textContent = 'LIVE';
+      }
     }
 
     renderContent() {
@@ -28,57 +67,122 @@
     }
   }
 
-  function esc(value) {
-    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function installEmbeddedStyles() {
+    if (document.getElementById('agworldV2FarmDetailStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'agworldV2FarmDetailStyles';
+    style.textContent = `
+      #agworldV2FarmDetailHost{margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8}
+      #agworldV2FarmDetailHost .agworld-v2-detail-panel{font-family:inherit;color:#25343d}
+      #agworldV2FarmDetailHost .agworld-v2-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+      #agworldV2FarmDetailHost .agworld-v2-entity-type{font-size:8px;letter-spacing:1px;color:#168aa0;font-weight:800}
+      #agworldV2FarmDetailHost h2{font-size:11px;margin:2px 0}
+      #agworldV2FarmDetailHost .agworld-v2-status{font-size:8px;color:#5f727b}
+      #agworldV2FarmDetailHost .agworld-v2-detail-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+      #agworldV2FarmDetailHost .agworld-v2-detail-tabs button{width:auto;margin:0;padding:5px 7px;background:#eef4f5;color:#53666e;border:1px solid #d6e1e4;border-radius:4px;font-size:8px}
+      #agworldV2FarmDetailHost .agworld-v2-detail-tabs button.is-active{background:#168aa0;color:#fff;border-color:#168aa0}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content{background:#f7fafb;border:1px solid #e0e8ea;border-radius:5px;padding:8px;font-size:9px;line-height:1.4}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content p{margin:0;color:#667780}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content ul{margin:0;padding-left:16px}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content li{margin:3px 0}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content dl{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content dt{font-weight:700;color:#63747c}
+      #agworldV2FarmDetailHost .agworld-v2-detail-content dd{margin:0;text-align:right;color:#26343d}
+    `;
+    document.head.appendChild(style);
   }
 
-
   function installLiveBridge() {
-    if (global.AGWorldV2.LiveFarmDetailBridge) return;
-    const panel = document.createElement('div');
-    panel.id = 'agworldV2FarmDetailHost';
-    panel.style.cssText = 'position:fixed;right:22px;top:92px;width:min(420px,calc(100vw - 44px));max-height:calc(100vh - 120px);overflow:auto;z-index:99999;display:none;background:rgba(10,18,22,.98);border:2px solid #00b8d9;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.75);color:#f4f7f1;';
-    document.body.appendChild(panel);
+    if (global.AGWorldV2?.LiveFarmDetailBridge) return true;
+
+    const card = document.getElementById('farmCard');
+    if (!card) return false;
+
+    installEmbeddedStyles();
+
+    let host = document.getElementById('agworldV2FarmDetailHost');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'agworldV2FarmDetailHost';
+      host.style.display = 'none';
+      const actions = document.getElementById('farmActions');
+      if (actions) card.insertBefore(host, actions);
+      else card.appendChild(host);
+    }
+
     const apiBase = global.AG_WORLD_API?.baseUrl || global.AGWORLD_API_BASE_URL || 'https://ag-world-api.onrender.com';
-    const relationshipRepository = new global.AGWorldV2.RelationshipRepository({ baseUrl: apiBase.replace(/\/$/, '') + '/api/v2/relationships' });
-    const detailPanel = new FarmDetailPanelV2({ container: panel, relationshipRepository });
+    const relationshipRepository = new global.AGWorldV2.RelationshipRepository({
+      baseUrl: apiBase.replace(/\/$/, '') + '/api/v2/relationships'
+    });
+
+    const detailPanel = new FarmDetailPanelV2({ container: host, relationshipRepository });
     const originalClose = detailPanel.close.bind(detailPanel);
-    detailPanel.close = () => { originalClose(); panel.style.display = 'none'; };
+    detailPanel.close = () => {
+      originalClose();
+      host.style.display = 'none';
+    };
+
     global.AGWorldV2.LiveFarmDetailBridge = {
       open(farm) {
         if (!farm?.id) return;
         const entity = global.AGWorldV2.FarmEntity.create({
-          id: String(farm.id), name: farm.name || 'Unnamed farm', description: farm.description || '', status: farm.status || 'active',
+          id: String(farm.id),
+          name: farm.name || 'Unnamed farm',
+          description: farm.description || '',
+          status: farm.status || 'active',
           territoryIds: farm.territoryId ? [String(farm.territoryId)] : [],
           geometry: farm.boundary ? { type:'Polygon', coordinates: farm.boundary } : null,
-          metadata: { owner:farm.owner, farmSize:farm.farmSize, crops:farm.crops || [], livestock:farm.livestock, annualHarvest:farm.annualHarvest, lastService:farm.lastService, opportunityScore:farm.opportunityScore }
+          metadata: {
+            owner:farm.owner,
+            farmSize:farm.farmSize,
+            crops:farm.crops || [],
+            livestock:farm.livestock,
+            annualHarvest:farm.annualHarvest,
+            lastService:farm.lastService,
+            opportunityScore:farm.opportunityScore
+          }
         });
-        panel.style.display = 'block'; detailPanel.open(entity);
+        host.style.display = 'block';
+        detailPanel.open(entity);
       },
       close() { detailPanel.close(); }
     };
+    return true;
   }
 
   global.openV2FarmDetail = function (farm) {
     try {
-      installLiveBridge();
-      const bridge = global.AGWorldV2 && global.AGWorldV2.LiveFarmDetailBridge;
+      if (!installLiveBridge()) {
+        global.addEventListener('DOMContentLoaded', () => global.openV2FarmDetail(farm), { once:true });
+        return;
+      }
+      const bridge = global.AGWorldV2?.LiveFarmDetailBridge;
       if (!bridge) throw new Error('V2 Farm Detail Bridge was not installed');
       bridge.open(farm);
     } catch (error) {
-      console.error('[AG World V2] Unable to open Farm Detail Panel', error);
-      const existing = document.getElementById('agworldV2DetailError');
-      const errorBox = existing || document.createElement('div');
-      errorBox.id = 'agworldV2DetailError';
-      errorBox.style.cssText = 'position:fixed;right:22px;top:92px;z-index:100000;width:min(420px,calc(100vw - 44px));padding:18px;background:#2b1010;color:#fff;border:2px solid #ff6b6b;border-radius:12px;font:13px Arial;';
-      errorBox.textContent = 'AG World V2 Detail Panel error: ' + (error && error.message ? error.message : String(error));
-      if (!existing) document.body.appendChild(errorBox);
+      console.error('[AG World V2] Unable to integrate Farm Detail Panel', error);
+      const host = document.getElementById('farmCard');
+      if (host) {
+        let errorBox = document.getElementById('agworldV2DetailError');
+        if (!errorBox) {
+          errorBox = document.createElement('div');
+          errorBox.id = 'agworldV2DetailError';
+          errorBox.style.cssText = 'margin-top:10px;padding:8px;background:#fff1f1;color:#8a2d2d;border:1px solid #f0b6b6;border-radius:5px;font-size:9px;';
+          const actions = document.getElementById('farmActions');
+          if (actions) host.insertBefore(errorBox, actions); else host.appendChild(errorBox);
+        }
+        errorBox.textContent = 'AG World V2 Entity Engine error: ' + (error?.message || String(error));
+      }
     }
   };
 
   global.addEventListener('agworld:v2-open-live-farm', e => global.openV2FarmDetail(e.detail));
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installLiveBridge);
-  else installLiveBridge();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installLiveBridge);
+  } else {
+    installLiveBridge();
+  }
 
   global.AGWorldV2 = global.AGWorldV2 || {};
   global.AGWorldV2.FarmDetailPanelV2 = FarmDetailPanelV2;
