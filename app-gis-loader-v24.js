@@ -1045,13 +1045,15 @@ function selectFarm(farm, zoom = true) {
 }
 
 function ensureEditButton() {
-  if ($('editFarmBtn')) return;
-  const button = document.createElement('button');
-  button.id = 'editFarmBtn';
-  button.textContent = 'EDIT FARM RECORD';
-  button.style.marginTop = '6px';
-  $('farm3d').insertAdjacentElement('afterend', button);
-  button.onclick = () => openEditFarm(selected);
+  // Legacy helper retained only for compatibility with older map hooks.
+  // The Farm Information panel now has ONE action: UPDATE FARM DETAILS.
+  const legacy = $('editFarmBtn');
+  if (legacy) legacy.remove();
+  const updateButton = $('farm3d');
+  if (updateButton) {
+    updateButton.textContent = 'UPDATE FARM DETAILS';
+    updateButton.onclick = () => openEditFarm(selected);
+  }
 }
 
 function showFarmDetail(farm) {
@@ -1063,6 +1065,7 @@ function showFarmDetail(farm) {
 function showObject(object, farm) {
   const type = OBJECT_TYPES[object.type] || { label: object.type, icon: '•' };
   $('farmCard').classList.add('show');
+  ensureEditButton();
   $('farmName').textContent = object.name || type.label;
   $('farmMeta').textContent = `${farm.name} · ${type.label} · ${object.source || 'manual'}`;
   const details = Object.entries(object.properties || {}).filter(([, value]) => value !== '').map(([key, value]) => `${key}: ${value}`).join(' · ');
@@ -1552,6 +1555,12 @@ $('exportBtn').onclick = exportData;
 $('datasetFile').onchange = handleImport;
 document.querySelectorAll('.object-palette button').forEach(button => button.onclick = () => chooseObject(button.dataset.object));
 $('farm3d').onclick = () => openEditFarm(selected);
+
+// Remove any legacy second action injected by older hooks/modules.
+new MutationObserver(() => {
+  const legacy = $('editFarmBtn');
+  if (legacy) legacy.remove();
+}).observe(document.body, { childList: true, subtree: true });
 $('close3d').onclick = close3D;
 $('close3dBottom').onclick = close3D;
 $('farm3dModal').onclick = event => { if (event.target.id === 'farm3dModal') close3D(); };
