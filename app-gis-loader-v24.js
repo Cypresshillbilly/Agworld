@@ -2743,6 +2743,33 @@ function hydrateDynamicEntity(row, type) {
   };
 }
 
+// Direct marker-click diagnostic. This instruments the source click path itself.
+function directMarkerDiagnostic(stage, detail = '', error = null) {
+  const active = window.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
+  if (!active) return;
+  const entry = { stage, detail: detail == null ? '' : String(detail), error: error ? String(error?.message || error) : '', timestamp: Date.now() };
+  active.steps.push(entry); active.lastStage = stage; active.updatedAt = entry.timestamp;
+  let box = document.getElementById('agworldDirectMarkerDiagnostic');
+  if (!box) {
+    box = document.createElement('div'); box.id = 'agworldDirectMarkerDiagnostic';
+    box.style.cssText = 'position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:50000;width:min(760px,calc(100vw - 28px));max-height:80vh;overflow:auto;background:#102126;color:#f2f6f4;border:2px solid #9dcc38;border-radius:12px;box-shadow:0 20px 70px rgba(0,0,0,.55);padding:16px;font:13px/1.5 Arial,sans-serif';
+    document.body.appendChild(box);
+  }
+  const failed = active.steps.find(step => step.error);
+  const esc = value => String(value || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const rows = active.steps.map((step, index) => '<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08)"><b style="color:' + (step.error ? '#ff7b72' : '#9dcc38') + '">' + (index + 1) + '. ' + esc(step.stage) + '</b>' + (step.detail ? '<div style="color:#c5d0d5;padding-left:8px">' + esc(step.detail) + '</div>' : '') + (step.error ? '<div style="color:#ff7b72;padding-left:8px">ERROR: ' + esc(step.error) + '</div>' : '') + '</div>').join('');
+  box.innerHTML = '<button id="agworldDirectMarkerDiagClose" style="float:right;background:#20373e;color:#fff;border:1px solid #55747c;border-radius:6px;padding:4px 9px;cursor:pointer">CLOSE</button><div style="font-size:16px;color:#9dcc38;font-weight:800">DIRECT MARKER CLICK DIAGNOSTIC</div><div style="margin:7px 0 10px;color:#c5d0d5"><b>' + esc(active.entityType).toUpperCase() + '</b> · ' + esc(active.name) + ' · ID: ' + esc(active.entityId) + '</div><div style="margin:8px 0;padding:9px;background:' + (failed ? '#4a2020' : '#172e35') + ';border-radius:7px"><b>LAST SUCCESSFUL STAGE:</b> ' + esc(active.lastStage) + '</div>' + rows;
+  box.querySelector('#agworldDirectMarkerDiagClose')?.addEventListener('click', () => box.remove());
+}
+
+function beginDirectMarkerDiagnostic(entity) {
+  window.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__ = {
+    token: Date.now() + ':' + Math.random().toString(36).slice(2), entityId: String(entity?.id || ''), entityType: String(entity?.type || ''), name: String(entity?.name || ''),
+    steps: [], startedAt: Date.now(), lastStage: 'STARTED'
+  };
+  directMarkerDiagnostic('MARKER CLICK RECEIVED');
+}
+
 function renderDynamicEntity(entity) {
   if (map) window.__AGWORLD_GOOGLE_MAP__ = map;
   if (!map || !entity?.name || !Number.isFinite(entity.lat) || !Number.isFinite(entity.lng)) return;
@@ -2766,12 +2793,23 @@ function renderDynamicEntity(entity) {
   // entity selection. Read the live marker position first because hydration can
   // replace the backing entity object while the marker remains on the map.
   entity._marker.addListener('click', () => {
-    const livePosition = entity._marker?.getPosition?.();
-    if (livePosition) {
-      entity.lat = Number(livePosition.lat());
-      entity.lng = Number(livePosition.lng());
+    beginDirectMarkerDiagnostic(entity);
+    try {
+      const livePosition = entity._marker?.getPosition?.();
+      if (livePosition) {
+        entity.lat = Number(livePosition.lat());
+        entity.lng = Number(livePosition.lng());
+        directMarkerDiagnostic('LIVE MARKER POSITION RESOLVED', 'lat=' + entity.lat + ', lng=' + entity.lng);
+      } else {
+        directMarkerDiagnostic('LIVE MARKER POSITION UNAVAILABLE', 'Marker returned no live position');
+      }
+      directMarkerDiagnostic('ENTERING selectDynamicEntity');
+      selectDynamicEntity(entity, true);
+      directMarkerDiagnostic('selectDynamicEntity RETURNED');
+    } catch (error) {
+      directMarkerDiagnostic('DIRECT MARKER PATH THREW', '', error);
+      console.error('[AG World] Direct marker selection failed', error);
     }
-    selectDynamicEntity(entity, true);
   });
 
   // Keep a marker-backed runtime position registry. Relationship rendering must
@@ -2788,9 +2826,13 @@ function renderDynamicEntity(entity) {
 }
 
 function selectDynamicEntity(entity, zoom = true) {
-  if (!entity?.id) return;
+  const directDiag = window.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
+  const isDirectDiagnosticSelection = directDiag && String(directDiag.entityId) === String(entity?.id || '') && String(directDiag.entityType) === String(entity?.type || '');
+  if (isDirectDiagnosticSelection) directMarkerDiagnostic('selectDynamicEntity ENTERED');
+  if (!entity?.id) { if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY VALIDATION FAILED', 'Missing entity.id'); return; }
   const cfg = DYNAMIC_LAYER_CONFIG[entity.type];
-  if (!cfg) return;
+  if (!cfg) { if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY VALIDATION FAILED', 'Unknown type: ' + String(entity.type)); return; }
+  if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY VALIDATED', 'type=' + entity.type + ', id=' + entity.id + ', lat=' + entity.lat + ', lng=' + entity.lng);
 
   // Keep the runtime record, but do not create a second selection protocol.
   // The working Farm-card relationship click dispatches exactly one event:
@@ -2803,7 +2845,9 @@ function selectDynamicEntity(entity, zoom = true) {
     name: entity.name || '',
     timestamp: Date.now()
   };
+  if (isDirectDiagnosticSelection) directMarkerDiagnostic('RUNTIME SELECTION STATE WRITTEN');
 
+  if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY CARD UPDATE START');
   $('farmCard').classList.add('show');
   $('farmName').textContent = entity.name || cfg.label;
   $('farmMeta').textContent = `${cfg.label.toUpperCase()} · ${entity.status || 'Active'} · ${entity.details?.nearestTown || entity.details?.municipality || 'Mapped location'}`;
@@ -2818,14 +2862,22 @@ function selectDynamicEntity(entity, zoom = true) {
   $('farmDetailText').textContent = entity.details?.notes || capabilities || `${cfg.label} location and intelligence record.`;
   $('aiText').textContent = `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`;
 
+  if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY CARD UPDATE COMPLETED');
+
   // This helper is intentionally the ONE direct-selection handoff. It is the
   // exact event used by EntityDetailPanelV2.openRelatedEntity when the user
   // clicks Contractor/Competitor/Company Facility inside the Farm relationship
   // card. Do not add V2 compatibility events or direct bridge calls here.
   const enterWorkingRelationshipPath = () => {
-    window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', {
-      detail: { entity }
-    }));
+    if (isDirectDiagnosticSelection) directMarkerDiagnostic('ABOUT TO DISPATCH agworld:dynamic-entity-selected');
+    try {
+      const dispatched = window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+      if (isDirectDiagnosticSelection) directMarkerDiagnostic('EVENT DISPATCH COMPLETED', 'dispatchEvent returned ' + dispatched);
+      return dispatched;
+    } catch (error) {
+      if (isDirectDiagnosticSelection) directMarkerDiagnostic('EVENT DISPATCH THREW', '', error);
+      throw error;
+    }
   };
 
   const updateButton = $('farm3d');
@@ -2835,9 +2887,13 @@ function selectDynamicEntity(entity, zoom = true) {
   }
 
   if (map && zoom) {
+    if (isDirectDiagnosticSelection) directMarkerDiagnostic('MAP PAN START');
     map.panTo({ lat: entity.lat, lng: entity.lng });
     map.setZoom(Math.max(map.getZoom() || 0, 12));
     if (entity._marker) entity._marker.setMap(map);
+    if (isDirectDiagnosticSelection) directMarkerDiagnostic('MAP PAN COMMAND COMPLETED');
+  } else if (isDirectDiagnosticSelection) {
+    directMarkerDiagnostic('MAP PAN SKIPPED', 'map=' + Boolean(map) + ', zoom=' + Boolean(zoom));
   }
 
   // Direct icon click now enters the same canonical path as clicking the
@@ -2845,6 +2901,7 @@ function selectDynamicEntity(entity, zoom = true) {
   // in selection, after the base card and map state are stable.
   enterWorkingRelationshipPath();
 
+  if (isDirectDiagnosticSelection) directMarkerDiagnostic('SELECTION PATH COMPLETED');
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
 
