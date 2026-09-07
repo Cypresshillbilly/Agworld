@@ -85,8 +85,9 @@ const getFarmDb = () => farmDbClient || (farmDbClient = window.supabase?.createC
 
 async function loadFarmDatabaseOverrides() {
   const db = getFarmDb();
-  const user = window.AGWorldBackend?.getUser?.();
-  if (!db || !user) return false;
+  // Shared farms are world data. Reading them must not depend on a particular
+  // player's profile initialising first.
+  if (!db) return false;
 
   const { data, error } = await db.from('farms')
     .select('id,name,owner,region,status,annual_harvest,last_service,opportunity_score,source,notes,details,updated_at')
@@ -2239,6 +2240,14 @@ function refreshMapAfterAuthentication() {
   } catch (error) {
     console.warn('AG World map post-login refresh failed', error);
   }
+  // Reload the canonical shared Farms layer immediately after authentication.
+  // A second player has no creator localStorage cache, so farms must hydrate
+  // directly from the shared database into that player's live world.
+  setTimeout(() => {
+    loadFarmDatabaseOverrides()
+      .catch(error => console.warn('Shared farm database load failed', error));
+  }, 0);
+
   // If a session reached the map before GIS completed, make one controlled
   // retry. This is particularly important for a second player/incognito window.
   if ((!municipalities.length || !towns.length) && !window.__AG_WORLD_GIS_RETRYING) {
@@ -2268,8 +2277,7 @@ window.AG_WORLD_WORLD = {
 window.addEventListener('agworld:farms-reset', () => {
   setTimeout(() => loadFarmDatabaseOverrides().catch(error => console.warn('Farm database override failed', error)), 0);
 });
+// Keep every browser session synchronised with the canonical shared Farms database.
 setInterval(() => {
-  if (window.AGWorldBackend?.getUser?.() && farms.length) {
-    loadFarmDatabaseOverrides().catch(() => {});
-  }
+  if (farms.length) loadFarmDatabaseOverrides().catch(() => {});
 }, 5000);
