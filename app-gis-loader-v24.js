@@ -1414,6 +1414,11 @@ async function saveFarmWizardStep(step) {
     farms.push(farm);
   }
 
+  // Keep the exact canonical in-memory record selected by the map and editor.
+  // Do not leave selected pointing at a stale pre-save object.
+  const activeFarm = farms.find(item => String(item.id) === String(farm.id)) || farm;
+  if (selected && String(selected.id) === String(farm.id)) selected = activeFarm;
+
   window.__AG_WORLD_FARMS = farms;
   saveLocal();
 
@@ -2138,6 +2143,7 @@ async function finishFarmWizard() {
     const farm = farms.find(item => String(item.id) === String(id));
     if (!farm) throw new Error('Saved farm record could not be found after Step 3.');
 
+    if (selected && String(selected.id) === String(farm.id)) selected = farm;
     window.__AG_WORLD_FARMS = farms;
     try { saveLocal(); } catch (error) { console.warn('Farm local save failed', error); }
     try { addFarm(farm); } catch (error) { console.warn('Farm redraw failed', error); }
@@ -2171,7 +2177,13 @@ async function finishFarmWizard() {
     editingFarmId = null;
     farmWizardDraftId = null;
     resetCreateForm();
-    try { selectFarm(farm, false); } catch (error) { console.warn('Farm panel refresh failed', error); }
+    // Re-render the Farm Information panel from the canonical saved record.
+    // selected is temporarily cleared so selectFarm cannot interpret this as a
+    // second click and toggle the panel closed.
+    try {
+      selected = null;
+      selectFarm(farm, false);
+    } catch (error) { console.warn('Farm panel refresh failed', error); }
 
     $('mapStatus').textContent = `Farm completed · ${farm.name} · shared Farms database updated`;
     toast('Farm saved and finished · live map updated');
