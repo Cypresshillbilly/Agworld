@@ -783,7 +783,7 @@ function addTerritory(territory) {
     strokeOpacity: .92,
     strokeWeight: style.strokeWeight,
     fillOpacity: style.fillOpacity,
-    clickable: true,
+    clickable: !creatingFarm,
     // Province borders must always sit above municipality borders where they overlap.
     zIndex: level === 'country' ? 1 : level === 'town' ? 4 : level === 'municipality' ? 6 : level === 'province' ? 10 : 1,
     map
@@ -796,7 +796,7 @@ function addTerritory(territory) {
     fillOpacity: style.fillOpacity,
     zIndex: level === 'country' ? 1 : level === 'town' ? 4 : level === 'municipality' ? 6 : level === 'province' ? 10 : 1
   };
-  polygon.addListener('click', () => selectTerritory(territory, true));
+  polygon.addListener('click', () => { if (!creatingFarm) selectTerritory(territory, true); });
 
   // Municipal territories use floating names rather than map-pin icons.
   // The marker itself is fully transparent; only the municipality name is drawn.
@@ -810,7 +810,7 @@ function addTerritory(territory) {
       position: municipalityCenter,
       map,
       title: territory.name,
-      clickable: true,
+      clickable: !creatingFarm,
       zIndex: 7,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
@@ -825,13 +825,14 @@ function addTerritory(territory) {
         fontWeight: '700'
       }
     });
-    marker.addListener('click', () => selectTerritory(territory, true));
+    marker.addListener('click', () => { if (!creatingFarm) selectTerritory(territory, true); });
     territoryMarkers.push(marker);
   } else if (level !== 'town') {
     marker = new google.maps.Marker({
       position: territory.center || (level === 'province' ? territoryVisualCenter(territory.boundary) : centroid(territory.boundary)),
       map,
       title: territory.name,
+      clickable: !creatingFarm,
       label: { text: String(territory.code || (level === 'country' ? 'ZA' : 'P')), color: '#fff', fontSize: '10px', fontWeight: '700' }
     });
     marker.addListener('click', () => selectTerritory(territory, true));
@@ -986,7 +987,7 @@ function addFarm(farm) {
     strokeWeight: 3,
     fillColor: '#8fb339',
     fillOpacity: 0.22,
-    clickable: true,
+    clickable: !creatingFarm,
     zIndex: 20,
     map
   }) : null;
@@ -1007,6 +1008,7 @@ function addFarm(farm) {
     map,
     title: farm.name,
     zIndex: 30,
+    clickable: !creatingFarm,
     label: { text: 'AG', color: '#fff', fontSize: '10px', fontWeight: '800' }
   });
   marker.addListener('click', () => { if (!creatingFarm) selectFarm(farm, true); });
@@ -1332,17 +1334,6 @@ function startBoundary() {
     renderDraftBoundary();
     $('mapStatus').textContent = `DRAWING MODE · ${newBoundary.length} boundary points · zoom freely and continue clicking`;
   });
-  // Capture clicks at the map container as an additional safeguard. Territory
-  // overlays may sit above the base map at high zoom, so their selection must
-  // be suppressed while Step 1 is actively collecting boundary points.
-  const mapDiv = map.getDiv?.();
-  if (mapDiv && !mapDiv.__agworldBoundaryGuard) {
-    mapDiv.__agworldBoundaryGuard = event => {
-      if (!creatingFarm || placingObjectType) return;
-      event.stopPropagation();
-    };
-    mapDiv.addEventListener('click', mapDiv.__agworldBoundaryGuard, true);
-  }
   toast('Boundary mode active · zoom freely and click each farm corner');
 }
 
@@ -1372,11 +1363,6 @@ function finishBoundary() {
   });
   map.setOptions({ draggableCursor: null, clickableIcons: true });
   refreshMapVisibility();
-  const mapDiv = map?.getDiv?.();
-  if (mapDiv?.__agworldBoundaryGuard) {
-    mapDiv.removeEventListener('click', mapDiv.__agworldBoundaryGuard, true);
-    mapDiv.__agworldBoundaryGuard = null;
-  }
   $('farmCreateModal').classList.add('show');
   $('boundaryStatus').textContent = `Boundary captured · ${newBoundary.length} points`;
   $('objectStatus').textContent = 'Choose an object type, then click its position on the map.';
@@ -1392,11 +1378,6 @@ function clearBoundary() {
   boundaryPolygon = null;
   if (drawListener) google.maps.event.removeListener(drawListener);
   drawListener = null;
-  const mapDiv = map?.getDiv?.();
-  if (mapDiv?.__agworldBoundaryGuard) {
-    mapDiv.removeEventListener('click', mapDiv.__agworldBoundaryGuard, true);
-    mapDiv.__agworldBoundaryGuard = null;
-  }
   if (map) { map.setOptions({ draggableCursor: null, clickableIcons: true }); refreshMapVisibility(); }
   $('boundaryStatus').textContent = 'No boundary created.';
   $('objectStatus').textContent = 'No object selected.';
