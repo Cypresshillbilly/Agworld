@@ -1072,6 +1072,139 @@ function selectTerritory(territory, zoom = true) {
   $('mapStatus').textContent = `${MASTER_PLAYER.name} territory control · ${levelLabel} · ${territory.name} · ${summary.control}% · ${summary.company}/${summary.total} farms`;
 }
 
+
+// ---------------------------------------------------------------------------
+// Territory Assignment & Geographic Relationships
+// Canonical spatial context is derived from the same territory geometry used
+// by the map. Entity records retain the resolved hierarchy so relationships can
+// be recalculated after movement and survive a reload.
+// ---------------------------------------------------------------------------
+function agPointInPolygon(point, boundary) {
+  if (!point || !Array.isArray(boundary) || boundary.length < 3) return false;
+  const x = Number(point.lng), y = Number(point.lat);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return false;
+  let inside = false;
+  for (let i = 0, j = boundary.length - 1; i < boundary.length; j = i++) {
+    const xi = Number(boundary[i].lng), yi = Number(boundary[i].lat);
+    const xj = Number(boundary[j].lng), yj = Number(boundary[j].lat);
+    if (![xi, yi, xj, yj].every(Number.isFinite)) continue;
+    const hit = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || Number.EPSILON) + xi);
+    if (hit) inside = !inside;
+  }
+  return inside;
+}
+
+function agContainingTerritory(point, list) {
+  return (Array.isArray(list) ? list : []).find(item => agPointInPolygon(point, item?.boundary)) || null;
+}
+
+function agResolveGeography(point) {
+  const town = agContainingTerritory(point, towns);
+  const municipality = agContainingTerritory(point, municipalities);
+  const territory = agContainingTerritory(point, territories);
+  const country = agContainingTerritory(point, countries);
+  const ids = [country?.id, territory?.id, municipality?.id, town?.id].filter(Boolean).map(String);
+  return {
+    countryId: country?.id || 'ag-country-south-africa',
+    countryName: country?.name || 'South Africa',
+    territoryId: territory?.id || null,
+    territoryName: territory?.name || null,
+    province: territory?.regionLabel || territory?.name || null,
+    municipalityId: municipality?.id || null,
+    municipalityName: municipality?.name || null,
+    townId: town?.id || null,
+    townName: town?.name || null,
+    territoryIds: ids
+  };
+}
+
+function agDistanceKm(a, b) {
+  const p1 = a?.lat, q1 = a?.lng, p2 = b?.lat, q2 = b?.lng;
+  if (![p1,q1,p2,q2].every(v => Number.isFinite(Number(v)))) return Infinity;
+  const R = 6371, dLat = (p2-p1)*Math.PI/180, dLng = (q2-q1)*Math.PI/180;
+  const h = Math.sin(dLat/2)**2 + Math.cos(p1*Math.PI/180)*Math.cos(p2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+function agAllSpatialEntities() {
+  return [
+    ...farms.map(f => ({ id:String(f.id), type:'farm', name:f.name, lat:Number(f.center?.lat ?? f.lat), lng:Number(f.center?.lng ?? f.lng), territoryId:f.territoryId })),
+    ...contractors.map(e => ({ id:String(e.id), type:'contractor', name:e.name, lat:Number(e.lat), lng:Number(e.lng), territoryId:e.details?.territoryId })),
+    ...competitors.map(e => ({ id:String(e.id), type:'competitor', name:e.name, lat:Number(e.lat), lng:Number(e.lng), territoryId:e.details?.territoryId })),
+    ...companyFacilities.map(e => ({ id:String(e.id), type:'companyFacility', name:e.name, lat:Number(e.lat), lng:Number(e.lng), territoryId:e.details?.territoryId }))
+  ].filter(e => Number.isFinite(e.lat) && Number.isFinite(e.lng));
+}
+
+function agRefreshGeographicRelationships(entity) {
+  const point = entity?.center || { lat:Number(entity?.lat), lng:Number(entity?.lng) };
+  const context = agResolveGeography(point);
+  const keyType = entity?.type || 'farm';
+  const nearby = agAllSpatialEntities()
+    .filter(other => !(String(other.id) === String(entity?.id) && other.type === keyType))
+    .map(other => ({ ...other, distanceKm: agDistanceKm(point, other) }))
+    .filter(other => other.distanceKm <= 50)
+    .sort((a,b) => a.distanceKm - b.distanceKm)
+    .slice(0,12)
+    .map(other => ({ id:other.id, type:other.type, name:other.name, distanceKm:Math.round(other.distanceKm*10)/10, relationship:'geographic-proximity' }));
+  const detail = { context, nearby, updatedAt:new Date().toISOString() };
+  if (keyType === 'farm') {
+    entity.territoryId = context.territoryId || entity.territoryId || null;
+    entity.territoryIds = context.territoryIds;
+    entity.geographicRelationships = detail;
+  } else {
+    entity.details ||= {};
+    entity.details.territoryId = context.territoryId || entity.details.territoryId || null;
+    entity.details.territoryIds = context.territoryIds;
+    entity.details.geographicRelationships = detail;
+    entity.details.country = context.countryName;
+    entity.details.province = context.province || entity.details.province || '';
+    entity.details.municipality = context.municipalityName || entity.details.municipality || '';
+    entity.details.nearestTown = context.townName || entity.details.nearestTown || '';
+  }
+  window.dispatchEvent(new CustomEvent('agworld:geographic-relationships-updated', { detail:{ entity, geography:context, relationships:nearby } }));
+  return detail;
+}
+
+let agTerritoryAssignmentHooked = false;
+function agInstallTerritoryAssignmentHook() {
+  if (agTerritoryAssignmentHooked || typeof window.selectTerritory !== 'function') return false;
+  const original = window.selectTerritory;
+  window.selectTerritory = function(territory, zoom) {
+    if (spatialEditState?.action === 'territory' && spatialEditState.entity && territory?.id) {
+      const state = spatialEditState;
+      const entity = state.entity;
+      spatialEditState = null;
+      const point = entity.center || { lat:Number(entity.lat), lng:Number(entity.lng) };
+      const context = agResolveGeography(point);
+      context.territoryId = String(territory.id);
+      context.territoryName = territory.name || context.territoryName;
+      context.province = territory.regionLabel || territory.name || context.province;
+      context.territoryIds = [context.countryId, context.territoryId, context.municipalityId, context.townId].filter(Boolean).map(String);
+      if (entity.type === 'farm') {
+        entity.territoryId = context.territoryId;
+        entity.territoryIds = context.territoryIds;
+        entity.geographicRelationships ||= {};
+        entity.geographicRelationships.context = context;
+        entity.geographicRelationships.updatedAt = new Date().toISOString();
+        persistSpatialFarm(entity, state.before, 'territory-assigned').catch(error => { console.warn('Territory save failed', error); toast('Territory assigned locally, but shared save failed'); });
+      } else {
+        entity.details ||= {};
+        entity.details.territoryId = context.territoryId;
+        entity.details.territoryIds = context.territoryIds;
+        entity.details.province = context.province || entity.details.province || '';
+        entity.details.geographicRelationships = agRefreshGeographicRelationships(entity);
+        saveDynamicSpatialEntity(entity, state.before, 'territory-assigned').then(() => toast('Territory assigned and saved')).catch(error => { console.warn('Territory save failed', error); toast('Territory assigned locally, but shared save failed'); });
+      }
+      window.dispatchEvent(new CustomEvent('agworld:territory-assigned', { detail:{ entity, territory, context } }));
+      return original.call(this, territory, zoom);
+    }
+    return original.call(this, territory, zoom);
+  };
+  agTerritoryAssignmentHooked = true;
+  return true;
+}
+setInterval(agInstallTerritoryAssignmentHook, 500);
+
 let spatialEditState = null;
 
 function spatialPoint(value) {
@@ -1116,6 +1249,7 @@ function startFarmMove(farm) {
     farm._marker.setAnimation(null);
     farm._marker.setDraggable(false);
     spatialEditState = null;
+    agRefreshGeographicRelationships(farm);
     await persistSpatialFarm(farm, before, 'position-updated');
   });
   toast('Drag the farm marker to its new location');
@@ -1135,6 +1269,7 @@ function startFarmBoundaryEdit(farm) {
     farm._marker?.setPosition(farm.center);
     const state = spatialEditState; spatialEditState = null;
     farm._polygon.setEditable(false);
+    agRefreshGeographicRelationships(farm);
     await persistSpatialFarm(farm, state.before, 'boundary-updated');
   };
   google.maps.event.addListener(path, 'set_at', () => { clearTimeout(farm.__spatialSaveTimer); farm.__spatialSaveTimer = setTimeout(save, 900); });
@@ -1217,6 +1352,7 @@ function startDynamicSpatialMove(entity) {
     const point = spatialPoint(event.latLng);
     if (!point) return;
     live.lat = point.lat; live.lng = point.lng;
+    agRefreshGeographicRelationships(live);
     live._marker.setAnimation(null);
     live._marker.setDraggable(false);
     google.maps.event.removeListener(dragListener);
@@ -1242,6 +1378,7 @@ window.addEventListener('agworld:spatial-edit-request', event => {
     else if (action === 'territory') {
       toast('Territory assignment is selected from the existing territory map layer; click a territory to assign it.');
       spatialEditState = { entity, action: 'territory', before: cleanFarm(entity) };
+      agInstallTerritoryAssignmentHook();
     }
     return;
   }
