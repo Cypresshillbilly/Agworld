@@ -3101,9 +3101,14 @@ function selectDynamicEntity(entity, zoom = true) {
       // Dynamic entities now mirror the Farm card action. The button enters the
       // canonical Entity Engine first, then opens its shared edit form.
       enterWorkingRelationshipPath();
+      let editorAttempts = 0;
       const openEditor = () => {
         const host = document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
-        if (!host) { setTimeout(openEditor, 60); return; }
+        if (!host) {
+          if (++editorAttempts < 20) setTimeout(openEditor, 60);
+          else toast('Entity details panel did not open. Please select Entity Details and use Edit entity.');
+          return;
+        }
         const detailsTab = host.querySelector('[data-tab="details"]');
         if (detailsTab && !detailsTab.classList.contains('is-active')) detailsTab.click();
         requestAnimationFrame(() => {
