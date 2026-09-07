@@ -454,6 +454,22 @@
     }
   });
 
+  // The V2 detail panels are opened from this canonical selection event. Listen
+  // to it directly as well so Contractors, Competitors and Company Facilities
+  // enter the exact same relationship render scheduler as Farms.
+  global.addEventListener('agworld:v2-entity-selected', event => {
+    const entity = event?.detail?.entity;
+    if (entity) {
+      schedule({
+        id: entity.id,
+        type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
+        lat: Number(entity.lat),
+        lng: Number(entity.lng),
+        entity
+      });
+    }
+  });
+
   global.addEventListener('agworld:farm-selection-cleared', () => {
     ++state.request;
     clear();
