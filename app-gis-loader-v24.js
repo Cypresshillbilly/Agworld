@@ -1143,6 +1143,95 @@ function startFarmBoundaryEdit(farm) {
   toast('Drag boundary points or add points directly on the farm boundary');
 }
 
+
+function resolveDynamicSpatialEntity(entity) {
+  const rawType = String(entity?.type || '');
+  const type = rawType === 'company_facility' ? 'companyFacility' : rawType;
+  const array = dynamicArray(type);
+  return array.find(item => String(item?.id) === String(entity?.id)) || null;
+}
+
+async function saveDynamicSpatialEntity(entity, beforeState, action) {
+  const cfg = DYNAMIC_LAYER_CONFIG[entity.type];
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!cfg || !db || !user) throw new Error('You must be signed in to save map changes.');
+
+  const row = {
+    id: String(entity.id),
+    name: entity.name || null,
+    contact_name: entity.contactName || null,
+    contact_cell: entity.contactCell || null,
+    contact_email: entity.contactEmail || null,
+    status: entity.status || 'Active',
+    location_lat: Number(entity.lat),
+    location_lng: Number(entity.lng),
+    details: { ...(entity.details || {}), updatedAt: new Date().toISOString() },
+    updated_at: new Date().toISOString(),
+    updated_by: user.id
+  };
+  const { error } = await db.from(cfg.table).update(row).eq('id', row.id);
+  if (error) throw error;
+
+  const changedFields = {
+    lat: { before: beforeState?.lat ?? null, after: entity.lat },
+    lng: { before: beforeState?.lng ?? null, after: entity.lng }
+  };
+  const { error: auditError } = await db.from(cfg.audit).insert({
+    [cfg.auditForeignKey || (entity.type + '_id')]: entity.id,
+    action: action || 'position-updated',
+    actor_id: user.id,
+    source: 'entity_spatial_editor',
+    before_state: beforeState || null,
+    after_state: { ...entity, changed_fields: changedFields, changed_at: row.updated_at }
+  });
+  if (auditError) console.warn('Dynamic spatial audit failed', auditError);
+
+  window.dispatchEvent(new CustomEvent('agworld:entity-updated', {
+    detail: {
+      entity: {
+        id: entity.id,
+        type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
+        name: entity.name,
+        status: entity.status,
+        lat: entity.lat,
+        lng: entity.lng,
+        geometry: { type: 'Point', coordinates: [entity.lng, entity.lat] }
+      },
+      action: action || 'position-updated',
+      patch: { lat: entity.lat, lng: entity.lng }
+    }
+  }));
+}
+
+function startDynamicSpatialMove(entity) {
+  const live = resolveDynamicSpatialEntity(entity);
+  if (!live?._marker) { toast('This entity is not currently mapped.'); return; }
+  stopSpatialEdit(true);
+  const before = { ...live, details: { ...(live.details || {}) } };
+  spatialEditState = { entity: live, action: 'dynamic-move', before };
+  live._marker.setDraggable(true);
+  live._marker.setAnimation(google.maps.Animation.BOUNCE);
+  const dragListener = live._marker.addListener('dragend', async event => {
+    if (!spatialEditState || spatialEditState.entity !== live) return;
+    const point = spatialPoint(event.latLng);
+    if (!point) return;
+    live.lat = point.lat; live.lng = point.lng;
+    live._marker.setAnimation(null);
+    live._marker.setDraggable(false);
+    google.maps.event.removeListener(dragListener);
+    spatialEditState = null;
+    try {
+      await saveDynamicSpatialEntity(live, before, 'position-updated');
+      toast('Entity location saved');
+    } catch (error) {
+      console.warn('Dynamic spatial save failed', error);
+      toast('Location moved locally, but shared save failed');
+    }
+  });
+  toast('Drag the entity marker to its new location');
+}
+
 window.addEventListener('agworld:spatial-edit-request', event => {
   const { entity, action } = event.detail || {};
   if (!entity) return;
@@ -1156,8 +1245,14 @@ window.addEventListener('agworld:spatial-edit-request', event => {
     }
     return;
   }
+  if (action === 'move') {
+    startDynamicSpatialMove(entity);
+    return;
+  }
   window.dispatchEvent(new CustomEvent('agworld:dynamic-spatial-edit-request', { detail: { entity, action } }));
-  toast('Spatial edit mode sent to the entity map layer');
+  toast(action === 'territory'
+    ? 'Territory editing is ready for the geographic assignment workflow.'
+    : 'Spatial edit mode sent to the entity map layer');
 });
 
 function addFarm(farm) {
