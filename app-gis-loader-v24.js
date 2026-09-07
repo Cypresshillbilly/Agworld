@@ -2812,7 +2812,10 @@ function selectDynamicEntity(entity, zoom = true) {
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
   scheduleRelationshipNetwork({
     id: entity.id,
-    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type
+    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
+    lat: Number(entity.lat),
+    lng: Number(entity.lng),
+    entity
   });
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
@@ -2861,8 +2864,25 @@ function normaliseRelationshipRecord(r) {
   };
 }
 
-function entityPositionForNetwork(type, id) {
+function entityPositionForNetwork(type, id, selectedSelection = null) {
   const wantedId = String(id);
+
+  // The currently selected marker is already the authoritative runtime entity.
+  // Use its live coordinates directly instead of depending on a second array
+  // lookup. This is essential for Contractors, Competitors and Company
+  // Facilities whose selection can occur before any later layer refresh.
+  if (
+    selectedSelection &&
+    String(selectedSelection.id) === wantedId &&
+    Number.isFinite(Number(selectedSelection.lat)) &&
+    Number.isFinite(Number(selectedSelection.lng))
+  ) {
+    return {
+      lat: Number(selectedSelection.lat),
+      lng: Number(selectedSelection.lng),
+      entity: selectedSelection.entity || null
+    };
+  }
   const canonicalType = canonicalEntityType(type);
   const normalType = canonicalType === 'company_facility' ? 'companyFacility' : canonicalType;
 
@@ -2955,8 +2975,8 @@ async function renderRelationshipNetwork(selection) {
   }
 
   relationships.forEach(rel => {
-    const source = entityPositionForNetwork(rel.sourceType, rel.sourceId);
-    const target = entityPositionForNetwork(rel.targetType, rel.targetId);
+    const source = entityPositionForNetwork(rel.sourceType, rel.sourceId, selection);
+    const target = entityPositionForNetwork(rel.targetType, rel.targetId, selection);
     if (!source || !target) return;
 
     const style = relationshipNetworkStyle(rel.relationshipType);
@@ -3104,7 +3124,10 @@ window.addEventListener('agworld:dynamic-entity-selected', event => {
   const entity = event?.detail?.entity;
   if (entity) scheduleRelationshipNetwork({
     id: entity.id,
-    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type
+    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
+    lat: Number(entity.lat),
+    lng: Number(entity.lng),
+    entity
   });
 });
 window.addEventListener('agworld:farm-selection-cleared', clearRelationshipNetwork);
