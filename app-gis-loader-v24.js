@@ -2130,15 +2130,27 @@ $('nextInfoStep').onclick = async event => {
   event?.stopPropagation?.();
   const button = $('nextInfoStep');
   if (button) { button.disabled = true; button.textContent = 'SAVING FARM…'; }
+
   try {
-    if (await saveFarmWizardStep(2)) {
+    // Persist Step 2 first. Editing is allowed for every authenticated player,
+    // but a database permission/audit issue must never trap the player in Step 2.
+    const saved = await saveFarmWizardStep(2);
+    if (!saved) {
+      // The latest canonical record is already loaded in this session. Keep the
+      // user moving through the editor while the save error remains visible.
       showFarmWizardStep(3);
-      toast('Farm saved and placed on the map · continue with farm assets');
+      toast('Continuing to Step 3 · the Step 2 save needs to be checked');
+      return;
     }
+    showFarmWizardStep(3);
+    toast('Farm saved and placed on the map · continue with farm assets');
   }
   catch (error) {
     console.error('SAVE & CONTINUE information failed', error);
-    toast('Could not save farm information: ' + (error?.message || 'Unknown error'));
+    // Do not leave a player stuck in the wizard because the backend rejected
+    // a save. Step 3 is still useful for editing the existing selections.
+    showFarmWizardStep(3);
+    toast('Continuing to Step 3 · farm information save failed: ' + (error?.message || 'Unknown error'));
   } finally {
     if (button) { button.disabled = false; button.textContent = 'SAVE & CONTINUE →'; }
   }
