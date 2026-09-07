@@ -2577,6 +2577,7 @@ async function saveDynamicEntity(step) {
   const user = window.AGWorldBackend?.getUser?.();
   if (!cfg || !db || !user) throw new Error('You must be signed in to save this shared game-layer record.');
   if (!dynamicEntityLocation) throw new Error('Select a location on the map first.');
+  if (step >= 2 && !$('dynamicName').value.trim()) throw new Error(`${cfg.label} name is required before saving Step 2.`);
 
   const array = dynamicArray(dynamicEntityType);
   const existing = array.find(item => String(item.id) === String(dynamicEntityId));
@@ -2767,6 +2768,9 @@ window.addEventListener('agworld:supabase-authenticated', () => setTimeout(loadD
 window.addEventListener('agworld:player-ready', () => setTimeout(loadDynamicLayers, 0));
 window.addEventListener('gamechanger:authenticated', () => setTimeout(loadDynamicLayers, 0));
 window.addEventListener('pageshow', () => setTimeout(loadDynamicLayers, 300));
+// Initial hydration covers an already-authenticated player who opened the game
+// without triggering a fresh auth event in this page lifecycle.
+setTimeout(() => loadDynamicLayers().catch(() => {}), 1200);
 setInterval(() => { if (map) loadDynamicLayers().catch(() => {}); }, 5000);
 
 window.AG_WORLD_WORLD.getContractors = () => contractors;
