@@ -2792,8 +2792,10 @@ function selectDynamicEntity(entity, zoom = true) {
   const cfg = DYNAMIC_LAYER_CONFIG[entity.type];
   if (!cfg) return;
 
-  // Dynamic entities use the same visible Farm Card host as Farms, but keep
-  // their own canonical selection signal and V2 entity type.
+  // Keep the runtime record, but do not create a second selection protocol.
+  // The working Farm-card relationship click dispatches exactly one event:
+  // agworld:dynamic-entity-selected. A direct marker click must now do the
+  // identical thing with the identical entity object.
   selected = null;
   window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__ = {
     entityId: String(entity.id),
@@ -2816,17 +2818,20 @@ function selectDynamicEntity(entity, zoom = true) {
   $('farmDetailText').textContent = entity.details?.notes || capabilities || `${cfg.label} location and intelligence record.`;
   $('aiText').textContent = `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`;
 
+  // This helper is intentionally the ONE direct-selection handoff. It is the
+  // exact event used by EntityDetailPanelV2.openRelatedEntity when the user
+  // clicks Contractor/Competitor/Company Facility inside the Farm relationship
+  // card. Do not add V2 compatibility events or direct bridge calls here.
+  const enterWorkingRelationshipPath = () => {
+    window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', {
+      detail: { entity }
+    }));
+  };
+
   const updateButton = $('farm3d');
   if (updateButton) {
     updateButton.textContent = 'VIEW ENTITY DETAILS';
-    updateButton.onclick = () => {
-      // Publish both the V2 canonical selection event and the legacy-compatible
-  // dynamic event. The canonical relationship renderer subscribes directly to
-  // these selection signals, so clicking the map icon follows the same route
-  // as selecting the entity through the card or detail workflow.
-  window.dispatchEvent(new CustomEvent('agworld:v2-entity-selected', { detail: { entity } }));
-  window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
-    };
+    updateButton.onclick = enterWorkingRelationshipPath;
   }
 
   if (map && zoom) {
@@ -2835,40 +2840,13 @@ function selectDynamicEntity(entity, zoom = true) {
     if (entity._marker) entity._marker.setMap(map);
   }
 
-  // IMPORTANT: the working relationship-card navigation reaches the renderer
-  // through the V2 detail selection lifecycle. Direct map-icon selection must
-  // enter that same lifecycle, not merely emit a map-level compatibility event.
-  const openV2Dynamic = () => {
-    try {
-      if (typeof window.openV2EntityDetail === 'function') {
-        window.openV2EntityDetail(entity);
-        return true;
-      }
-      if (typeof window.openV2DynamicEntityDetail === 'function') {
-        window.openV2DynamicEntityDetail(entity);
-        return true;
-      }
-      window.dispatchEvent(new CustomEvent('agworld:v2-open-live-entity', { detail: { entity } }));
-      return false;
-    } catch (error) {
-      console.error('[AG World V2] Dynamic entity bridge attempt failed', error);
-      return false;
-    }
-  };
-
-  // Enter the canonical V2 detail lifecycle first. This preserves the existing
-  // Farm-card relationship navigation behaviour and makes a direct marker click
-  // arrive at the same selection/render route.
-  openV2Dynamic();
-
-  // Keep compatibility events for existing listeners, but publish them after
-  // the canonical detail bridge has had the opportunity to establish selection.
-  window.dispatchEvent(new CustomEvent('agworld:v2-entity-selected', { detail: { entity } }));
-  window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+  // Direct icon click now enters the same canonical path as clicking the
+  // relationship inside the Farm card. This is deliberately the final action
+  // in selection, after the base card and map state are stable.
+  enterWorkingRelationshipPath();
 
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
-
 
 // V2 Relationship Network Layer. The network is derived only from active
 // relationship records; it is never hard-coded into the map.
