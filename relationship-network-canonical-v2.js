@@ -426,6 +426,13 @@
     global.dispatchEvent(new CustomEvent('agworld:relationship-network-rendered', {
       detail: trace
     }));
+
+    const direct = global.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
+    if (direct && String(direct.entityId) === String(selection?.id || '') &&
+        canonicalType(direct.entityType) === canonicalType(selection?.type)) {
+      global.directMarkerDiagnostic?.('CANONICAL RELATIONSHIP RENDER COMPLETED',
+        'relationships=' + trace.relationshipCount + ', resolved=' + trace.resolvedCount + ', overlays=' + trace.overlayCount + ', reason=' + trace.reason);
+    }
   }
 
   function schedule(selection) {
@@ -448,6 +455,14 @@
 
   global.addEventListener('agworld:dynamic-entity-selected', event => {
     const entity = event?.detail?.entity;
+    const direct = global.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
+    const isInstrumentedDirectClick = direct &&
+      String(direct.entityId) === String(entity?.id || '') &&
+      String(direct.entityType) === String(entity?.type || '');
+    if (isInstrumentedDirectClick) {
+      global.directMarkerDiagnostic?.('CANONICAL RELATIONSHIP LISTENER RECEIVED EVENT',
+        'id=' + entity.id + ', type=' + entity.type + ', lat=' + entity.lat + ', lng=' + entity.lng);
+    }
     if (entity) {
       schedule({
         id: entity.id,
@@ -456,6 +471,9 @@
         lng: Number(entity.lng),
         entity
       });
+      if (isInstrumentedDirectClick) {
+        global.directMarkerDiagnostic?.('CANONICAL RELATIONSHIP RENDER SCHEDULED');
+      }
     }
   });
 
