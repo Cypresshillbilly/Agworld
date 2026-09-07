@@ -1278,30 +1278,44 @@ function selectFarm(farm, zoom = true) {
   if (!v2Host) {
     v2Host = document.createElement('div');
     v2Host.id = 'agworldV2FarmDetailHost';
-    v2Host.style.cssText = 'margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8;display:block;font-size:9px;color:#60717a;';
     const actions = $('farmActions');
     if (actions) $('farmCard').insertBefore(v2Host, actions);
     else $('farmCard').appendChild(v2Host);
   }
-  v2Host.innerHTML = '<div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#168aa0;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div>Loading connected entity data…</div>';
+
+  // V2.7: the host is part of the canonical Farm Card selection lifecycle.
+  // Never leave it hidden simply because the enhancement script is still
+  // initialising. A visible fallback makes the integration state deterministic.
+  v2Host.hidden = false;
+  v2Host.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8;font-size:9px;color:#60717a;';
+  v2Host.innerHTML = '<section class="agworld-v2-live-fallback" style="display:block;background:#f7fafb;border:1px solid #dce5e8;border-radius:6px;padding:8px;"><div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#168aa0;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div style="font-size:8px;color:#60717a;">Connecting entity and relationship data…</div></section>';
 
   const openV2 = () => {
-    if (typeof window.openV2FarmDetail === 'function') {
-      window.openV2FarmDetail(farm);
-      return true;
+    try {
+      if (typeof window.openV2FarmDetail === 'function') {
+        window.openV2FarmDetail(farm);
+        return true;
+      }
+      window.dispatchEvent(new CustomEvent('agworld:v2-open-live-farm', { detail: farm }));
+      return !!window.AGWorldV2?.LiveFarmDetailBridge;
+    } catch (error) {
+      console.error('[AG World V2] Farm Card bridge attempt failed', error);
+      return false;
     }
-    window.dispatchEvent(new CustomEvent('agworld:v2-open-live-farm', { detail: farm }));
-    return false;
   };
 
   if (!openV2()) {
-    // The V2 script can be cache-busted independently from this GIS loader.
-    // Retry briefly rather than leaving the card silently incomplete.
-    setTimeout(() => {
-      if (!openV2()) {
-        v2Host.innerHTML = '<div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#9b5d22;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div>V2 Entity Engine is still loading. Please select this Farm again.</div>';
-      }
-    }, 300);
+    // Do not ask the user to reselect the farm. Retry against the same canonical
+    // selection while keeping the V2 host visibly present.
+    const retryDelays = [100, 300, 800, 1500];
+    retryDelays.forEach(delay => {
+      setTimeout(() => {
+        if (!v2Host.isConnected || openV2()) return;
+        v2Host.hidden = false;
+        v2Host.style.display = 'block';
+        v2Host.innerHTML = '<section class="agworld-v2-live-fallback" style="display:block;background:#fff8ef;border:1px solid #efd8b5;border-radius:6px;padding:8px;"><div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#9b5d22;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div style="font-size:8px;color:#7a6044;">V2 is still initialising. This Farm remains selected and the panel will connect automatically.</div></section>';
+      }, delay);
+    });
   }
 }
 
