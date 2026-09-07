@@ -3094,8 +3094,25 @@ function selectDynamicEntity(entity, zoom = true) {
 
   const updateButton = $('farm3d');
   if (updateButton) {
-    updateButton.textContent = 'VIEW ENTITY DETAILS';
-    updateButton.onclick = enterWorkingRelationshipPath;
+    const updateLabel = 'UPDATE ' + String(cfg.label || 'ENTITY').toUpperCase() + ' DETAILS';
+    updateButton.textContent = updateLabel;
+    updateButton.type = 'button';
+    updateButton.onclick = () => {
+      // Dynamic entities now mirror the Farm card action. The button enters the
+      // canonical Entity Engine first, then opens its shared edit form.
+      enterWorkingRelationshipPath();
+      const openEditor = () => {
+        const host = document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
+        if (!host) { setTimeout(openEditor, 60); return; }
+        const detailsTab = host.querySelector('[data-tab="details"]');
+        if (detailsTab && !detailsTab.classList.contains('is-active')) detailsTab.click();
+        requestAnimationFrame(() => {
+          const editButton = host.querySelector('[data-entity-action="edit-details"]');
+          if (editButton) editButton.click();
+        });
+      };
+      requestAnimationFrame(openEditor);
+    };
   }
 
   if (map && zoom) {
