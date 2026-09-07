@@ -40,7 +40,6 @@
       return [
         ['overview', 'Overview'],
         ['details', 'Details'],
-        ['intelligence', 'Intelligence'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
@@ -216,8 +215,6 @@
       } else if (this.activeTab === 'relationships') {
         target.innerHTML = '<p>Loading relationships…</p>';
         this.loadRelationships(target);
-      } else if (this.activeTab === 'intelligence') {
-        this.renderMetrics(target);
       } else if (this.activeTab === 'activity') {
         this.renderManagedCollection(target, 'activity', 'No activity recorded yet.', 'Activity timeline');
       } else if (this.activeTab === 'documents') {
