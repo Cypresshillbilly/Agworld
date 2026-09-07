@@ -441,8 +441,16 @@
         submit.disabled = true;
         submit.textContent = editing ? 'Saving…' : 'Creating…';
         try {
-          if (editing?.id) await this.relationshipRepository.replace(editing.id, input);
-          else await this.relationshipRepository.create(input);
+          const saved = editing?.id
+            ? await this.relationshipRepository.replace(editing.id, input)
+            : await this.relationshipRepository.create(input);
+          global.dispatchEvent(new CustomEvent(editing ? 'agworld:relationship-updated' : 'agworld:relationship-created', {
+            detail: {
+              sourceEntity: this.entity,
+              relatedEntity: selected.raw || selected,
+              relationship: saved || { ...input, id: editing?.id || null }
+            }
+          }));
           await this.loadRelationships(target);
         } catch (error) {
           submit.disabled = false;
@@ -488,6 +496,17 @@
           button.disabled = true;
           try {
             await this.relationshipRepository.remove(relationship.id);
+            const info = this.relatedInfo(relationship);
+            const related = this.collectEntityOptions().find(option =>
+              String(option.id) === String(info.id) && String(option.type) === String(info.type)
+            );
+            global.dispatchEvent(new CustomEvent('agworld:relationship-removed', {
+              detail: {
+                sourceEntity: this.entity,
+                relatedEntity: related?.raw || { id: info.id, type: info.type, name: info.name },
+                relationship
+              }
+            }));
             await this.loadRelationships(target);
           } catch (error) {
             button.disabled = false;
