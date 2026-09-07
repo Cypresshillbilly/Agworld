@@ -302,21 +302,72 @@
     return true;
   }
 
-  global.openV2DynamicEntityDetail = function (entity) {
+  // Dynamic entity cards are rendered by the legacy GIS runtime immediately
+  // after selection. Opening V2 synchronously can therefore be overwritten by
+  // that legacy render, leaving the "Preparing connected entity data…" placeholder
+  // visible forever. Use the same post-selection handoff pattern that made the
+  // Farm card deterministic: defer, verify the live host, and retry briefly.
+  let dynamicSelectionToken = 0;
+
+  function showDynamicV2Error(error) {
+    const host = document.getElementById('agworldV2FarmDetailHost');
+    if (!host) return;
+    host.hidden = false;
+    host.style.display = 'block';
+    host.style.visibility = 'visible';
+    host.style.opacity = '1';
+    host.innerHTML = '<div style="padding:8px;background:#fff1f1;color:#8a2d2d;border:1px solid #f0b6b6;border-radius:5px;font-size:9px;">AG World V2 Entity Engine error: ' +
+      esc(error?.message || String(error)) + '</div>';
+  }
+
+  global.openV2DynamicEntityDetail = function (entity, attempt, token) {
+    const currentAttempt = Number(attempt || 0);
+    const currentToken = token == null ? dynamicSelectionToken : token;
+    if (currentToken !== dynamicSelectionToken || !entity?.id) return;
+
     try {
       if (!installDynamicLiveBridge()) {
-        global.addEventListener('DOMContentLoaded', () => global.openV2DynamicEntityDetail(entity), { once:true });
+        if (currentAttempt < 12) {
+          setTimeout(() => global.openV2DynamicEntityDetail(entity, currentAttempt + 1, currentToken), 80);
+        }
         return;
       }
+
+      // Always re-query the host after the GIS runtime has completed its own
+      // card render. The dynamic bridge and the Farm bridge intentionally use
+      // the exact same canonical host.
+      const host = document.getElementById('agworldV2FarmDetailHost');
+      if (!host) {
+        if (currentAttempt < 12) {
+          setTimeout(() => global.openV2DynamicEntityDetail(entity, currentAttempt + 1, currentToken), 80);
+        }
+        return;
+      }
+
       global.AGWorldV2.LiveDynamicEntityDetailBridge.open(entity);
     } catch (error) {
       console.error('[AG World V2] Unable to open dynamic entity detail', error);
+      if (currentAttempt < 3) {
+        setTimeout(() => global.openV2DynamicEntityDetail(entity, currentAttempt + 1, currentToken), 100);
+      } else {
+        showDynamicV2Error(error);
+      }
     }
   };
 
+  function openDynamicFromCanonicalSelection(entity) {
+    const token = ++dynamicSelectionToken;
+    // Allow the actual GIS selection function to finish rendering the base
+    // Contractor/Competitor/Company Facility card before V2 replaces the
+    // placeholder. This mirrors the fixed Farm selection handoff.
+    setTimeout(() => {
+      global.openV2DynamicEntityDetail(entity, 0, token);
+    }, 120);
+  }
+
   global.addEventListener('agworld:dynamic-entity-selected', e => {
     const entity = e?.detail?.entity;
-    if (entity) global.openV2DynamicEntityDetail(entity);
+    if (entity) openDynamicFromCanonicalSelection(entity);
   });
 
   global.AGWorldV2 = global.AGWorldV2 || {};
