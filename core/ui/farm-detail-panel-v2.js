@@ -17,6 +17,8 @@
       return [
         ['details', 'Entity Details'],
         ['intelligence', 'Intelligence'],
+        ['lifecycle', 'Lifecycle'],
+        ['spatial', 'Map & Location'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
@@ -218,6 +220,8 @@
     tabs() {
       return [
         ['details', 'Entity Details'],
+        ['lifecycle', 'Lifecycle'],
+        ['spatial', 'Map & Location'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
