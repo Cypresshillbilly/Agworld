@@ -59,7 +59,18 @@
     };
   }
 
-  global.addEventListener('agworld:v2-open-live-farm', e => global.AGWorldV2.LiveFarmDetailBridge?.open(e.detail));
+  global.openV2FarmDetail = function (farm) {
+    try {
+      installLiveBridge();
+      const bridge = global.AGWorldV2 && global.AGWorldV2.LiveFarmDetailBridge;
+      if (!bridge) throw new Error('V2 Farm Detail Bridge was not installed');
+      bridge.open(farm);
+    } catch (error) {
+      console.error('[AG World V2] Unable to open Farm Detail Panel', error);
+    }
+  };
+
+  global.addEventListener('agworld:v2-open-live-farm', e => global.openV2FarmDetail(e.detail));
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installLiveBridge);
   else installLiveBridge();
 
