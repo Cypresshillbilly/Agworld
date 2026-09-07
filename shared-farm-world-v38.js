@@ -1,8 +1,8 @@
 // AG World Shared Farm World v38
 (()=>{const U='https://vcnkspaljmsjvonftfcw.supabase.co',K='sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o';let db,sub,last={};
 const client=()=>db||(db=window.supabase?.createClient?.(U,K));
-const farmId=f=>String(f?.id||f?.farmId||f?.name||'').trim();
-const apply=(ev)=>{const fs=window.__AG_WORLD_FARMS||[];const f=fs.find(x=>farmId(x)===String(ev.farm_id));if(!f)return;f.assets=f.assets||[];if(ev.event_type==='add_our_drone'&&!f.assets.some(a=>String(a?.name||a).toLowerCase().includes('our drone')))f.assets.push({name:'Our Drone',source:'shared'});
+const farmId=f=>String(f?.id||f?.farmId||f?.name||'').trim();\nconst cacheShared=(ev)=>{if(ev?.event_type!=='update_details'||!ev?.farm_id||!ev?.payload||typeof ev.payload!=='object')return;try{const key='agworld-shared-farm-patches-v1';const all=JSON.parse(localStorage.getItem(key)||'{}')||{};all[String(ev.farm_id)]={...(all[String(ev.farm_id)]||{}),...ev.payload};localStorage.setItem(key,JSON.stringify(all));}catch(_){}};
+const apply=(ev)=>{cacheShared(ev);const fs=window.__AG_WORLD_FARMS||[];const f=fs.find(x=>farmId(x)===String(ev.farm_id));if(!f)return;f.assets=f.assets||[];if(ev.event_type==='add_our_drone'&&!f.assets.some(a=>String(a?.name||a).toLowerCase().includes('our drone')))f.assets.push({name:'Our Drone',source:'shared'});
 if(ev.event_type==='add_competitor'&&!f.assets.some(a=>String(a?.name||a).toLowerCase().includes('competitor')))f.assets.push({name:ev.payload?.name||'Competitor Drone',source:'shared'});
 if(ev.event_type==='remove_competitor')f.assets=f.assets.filter(a=>!String(a?.name||a).toLowerCase().includes('competitor'));if(ev.event_type==='update_details'&&ev.payload&&typeof ev.payload==='object'){Object.assign(f,ev.payload);f.assets=f.assets||f.objects||[];f.objects=f.objects||f.assets;try{localStorage.setItem('agworld-farms-v2',JSON.stringify(fs.map(x=>{const y={...x};delete y._polygon;delete y._marker;return y})));}catch(_){}}
 window.AGWorldControlDashboard?.render?.();window.AGWorldCompany?.render?.();window.dispatchEvent(new CustomEvent('agworld:farm-sync',{detail:ev}));};
