@@ -1350,6 +1350,9 @@ function ensureEditButton() {
 }
 
 function showFarmDetail(farm) {
+  // The information panel is the canonical place for both farm actions.
+  // Ensure both buttons are attached every time a farm is selected.
+  ensureEditButton();
   if (map && map.getZoom() >= 9) {
     $('mapStatus').textContent = `Farm selected · ${farm.name} · boundary and ${(farm.objects || []).length} mapped objects linked to record ${farm.id}`;
   }
