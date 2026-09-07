@@ -1380,22 +1380,25 @@ function saveFarm() {
     farms.push(farm);
   }
 
-  saveLocal();
-  if (boundaryPolygon) boundaryPolygon.setMap(null);
+  window.__AG_WORLD_FARMS = farms;
+  const modal = $('farmCreateModal');
+  if (modal) modal.classList.remove('show');
+  if (boundaryPolygon) { try { boundaryPolygon.setMap(null); } catch (_) {} }
   boundaryPolygon = null;
-  addFarm(farm);
   selected = farm;
   newBoundary = [];
   draftObjects = [];
   creatingFarm = false;
   placingObjectType = null;
   editingFarmId = null;
-  $('farmCreateModal').classList.remove('show');
-  $('farmCard').classList.remove('show');
   resetCreateForm();
-  selectFarm(farm, true);
-  refreshMapVisibility();
-  $('mapStatus').textContent = `Farm saved · ${farm.name} · ${farm.objects.length} mapped objects · local dataset updated`;
+  try { saveLocal(); } catch (error) { console.warn('Farm local save failed', error); }
+  try { addFarm(farm); } catch (error) { console.warn('Farm redraw failed', error); }
+  try { selectFarm(farm, true); } catch (error) { console.warn('Farm selection refresh failed', error); }
+  try { refreshMapVisibility(); } catch (error) { console.warn('Farm visibility refresh failed', error); }
+  const patch = {id:farm.id,name:farm.name,owner:farm.owner,region:farm.region,status:farm.status,drones:farm.drones,tractors:farm.tractors,livestock:farm.livestock,annualHarvest:farm.annualHarvest,lastService:farm.lastService,crops:farm.crops,objects:farm.objects,opportunityScore:farm.opportunityScore,notes:farm.notes,updatedAt:farm.updatedAt};
+  window.AGWorldSharedFarms?.updateDetails?.(farm, patch)?.catch(error => console.warn('Shared farm detail sync failed', error));
+  $('mapStatus').textContent = `Farm saved · ${farm.name} · ${farm.objects.length} mapped objects`;
   toast(existing ? 'Farm record updated' : 'Farm record created');
 }
 
