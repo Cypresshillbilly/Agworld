@@ -999,6 +999,17 @@ function updateZoomStage() {
 
 function selectFarm(farm, zoom = true) {
   if (creatingFarm) return;
+
+  // Clicking the currently selected farm is a toggle: close the Farm
+  // Information panel and clear selection instead of leaving it open.
+  if (selected && String(selected.id) === String(farm.id) && $('farmCard').classList.contains('show')) {
+    $('farmCard').classList.remove('show');
+    if (selected._polygon) selected._polygon.setOptions({ strokeWeight: 2, fillOpacity: 0.18, zIndex: 20 });
+    selected = null;
+    $('mapStatus').textContent = 'Farm information panel closed';
+    return;
+  }
+
   selected = farm;
   $('farmCard').classList.add('show');
   $('farmName').textContent = farm.name;
