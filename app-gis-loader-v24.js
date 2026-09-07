@@ -100,9 +100,16 @@ async function saveFarmToDatabase(farm, beforeState) {
   const db = getFarmDb();
   const user = window.AGWorldBackend?.getUser?.();
   if (!db || !user) throw new Error('You must be signed in to save a farm record.');
+
   const details = cleanFarm(farm);
+  const id = String(farm.id);
+  const now = new Date().toISOString();
+
+  // Only send columns that actually belong to the existing farms table.
+  // The full editable record lives in details, making details the authoritative
+  // field-by-field source for the Farm Information panel.
   const row = {
-    id: String(farm.id),
+    id,
     name: farm.name,
     owner: farm.owner || null,
     region: farm.region || null,
@@ -113,25 +120,45 @@ async function saveFarmToDatabase(farm, beforeState) {
     source: farm.source || 'manual',
     notes: farm.notes || null,
     details,
-    updated_at: new Date().toISOString(),
+    updated_at: now,
     updated_by: user.id
   };
-  const { error } = await db.from('farms').upsert(row, { onConflict: 'id' });
-  if (error) throw error;
 
-  // Audit logging must never make a successfully saved farm look like it failed.
+  // Upsert can fail when the database uses a generated primary key rather than
+  // a unique id constraint. Select first, then update or insert deterministically.
+  const { data: existingRows, error: lookupError } = await db
+    .from('farms').select('id').eq('id', id).limit(1);
+  if (lookupError) throw lookupError;
+
+  let saveError;
+  if (existingRows && existingRows.length) {
+    ({ error: saveError } = await db.from('farms').update(row).eq('id', id));
+  } else {
+    ({ error: saveError } = await db.from('farms').insert(row));
+  }
+  if (saveError) throw saveError;
+
+  // Keep an immutable, attributed history of every successful farm change.
+  const changedFields = {};
+  const before = beforeState || {};
+  Object.keys(details).forEach(key => {
+    const a = JSON.stringify(before[key] ?? null);
+    const b = JSON.stringify(details[key] ?? null);
+    if (a !== b) changedFields[key] = { before: before[key] ?? null, after: details[key] ?? null };
+  });
+
   const { error: auditError } = await db.from('farm_audit').insert({
-    farm_id: String(farm.id),
+    farm_id: id,
     action: beforeState ? 'updated' : 'created',
-    actor_id: String(user.id || ''),
+    actor_id: user.id,
     source: 'farm_editor',
     before_state: beforeState || null,
-    after_state: details
+    after_state: { ...details, changed_fields: changedFields, changed_at: now }
   });
   if (auditError) console.warn('Farm audit logging failed', auditError);
+
   return row;
 }
-
 function geometryToBoundary(geometry) {
   if (!geometry?.coordinates) return [];
 
