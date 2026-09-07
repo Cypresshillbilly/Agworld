@@ -41,10 +41,34 @@ const toast = message => {
 };
 
 function cleanFarm(farm) {
-  const copy = JSON.parse(JSON.stringify(farm));
-  delete copy._polygon;
-  delete copy._marker;
-  return copy;
+  // Google Maps overlay objects contain circular references. Remove runtime-only
+  // map objects BEFORE serialising the farm, not afterwards.
+  const seen = new WeakSet();
+  const sanitize = value => {
+    if (value === null || value === undefined) return value ?? null;
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value;
+    if (typeof value === 'function') return undefined;
+    if (value instanceof Date) return value.toISOString();
+    if (typeof value !== 'object') return undefined;
+    if (seen.has(value)) return undefined;
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      return value.map(sanitize).filter(v => v !== undefined);
+    }
+
+    const output = {};
+    Object.entries(value).forEach(([key, child]) => {
+      // Runtime map overlays/listeners and other private implementation fields
+      // must never enter localStorage or the Supabase JSON payload.
+      if (key === '_polygon' || key === '_marker' || key === '_gm' ||
+          key === '__gm' || key === 'map' || key === 'listener') return;
+      const cleaned = sanitize(child);
+      if (cleaned !== undefined) output[key] = cleaned;
+    });
+    return output;
+  };
+  return sanitize(farm) || {};
 }
 
 function saveLocal() {
