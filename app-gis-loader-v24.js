@@ -2833,8 +2833,18 @@ function clearRelationshipNetwork() {
   relationshipNetworkState.overlays = [];
 }
 
+function canonicalEntityType(type) {
+  const raw = String(type || 'farm').trim();
+  const key = raw.toLowerCase().replace(/[\\s_-]+/g, '');
+  if (key === 'companyfacility') return 'company_facility';
+  if (key === 'farm') return 'farm';
+  if (key === 'contractor') return 'contractor';
+  if (key === 'competitor') return 'competitor';
+  return raw.toLowerCase().replace(/[\\s-]+/g, '_');
+}
+
 function networkEntityKey(type, id) {
-  return String(type || 'farm') + ':' + String(id || '');
+  return canonicalEntityType(type) + ':' + String(id || '');
 }
 
 function normaliseRelationshipRecord(r) {
@@ -2853,7 +2863,8 @@ function normaliseRelationshipRecord(r) {
 
 function entityPositionForNetwork(type, id) {
   const wantedId = String(id);
-  const normalType = type === 'company_facility' ? 'companyFacility' : type;
+  const canonicalType = canonicalEntityType(type);
+  const normalType = canonicalType === 'company_facility' ? 'companyFacility' : canonicalType;
 
   if (normalType === 'farm') {
     const farm = farms.find(item => String(item.id) === wantedId);
@@ -2896,7 +2907,7 @@ async function renderRelationshipNetwork(selection) {
   if (!db) return;
 
   const entityId = String(selection.id);
-  const selectedType = String(selection.type === 'companyFacility' ? 'company_facility' : selection.type || 'farm');
+  const selectedType = canonicalEntityType(selection.type || 'farm');
 
   // First use the narrow server-side query. Some PostgREST clients have been
   // observed to return an empty result for a compound .or() filter during a
@@ -2928,17 +2939,16 @@ async function renderRelationshipNetwork(selection) {
     return;
   }
 
+  // Entity IDs are the canonical relationship identity in AG World and are
+  // globally unique across the game layer. Match by endpoint ID here rather
+  // than allowing presentation/runtime type aliases to suppress a valid link.
+  // Types are still canonicalised when resolving the endpoint positions.
   const relationships = (result.data || [])
     .map(normaliseRelationshipRecord)
-    .filter(rel => {
-      const sourceMatches =
-        String(rel.sourceId) === entityId &&
-        String(rel.sourceType === 'companyFacility' ? 'company_facility' : rel.sourceType) === selectedType;
-      const targetMatches =
-        String(rel.targetId) === entityId &&
-        String(rel.targetType === 'companyFacility' ? 'company_facility' : rel.targetType) === selectedType;
-      return sourceMatches || targetMatches;
-    });
+    .filter(rel =>
+      String(rel.sourceId) === entityId ||
+      String(rel.targetId) === entityId
+    );
 
   if (!relationships.length) {
     $('mapStatus').textContent = 'RELATIONSHIP NETWORK · no active connections';
