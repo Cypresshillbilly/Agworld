@@ -183,12 +183,34 @@
     }
   };
 
+  // Primary integration: the GIS loader emits this from inside its actual
+  // local selectFarm function. Do not depend on window.selectFarm, which is not
+  // the public runtime function in this application.
+  const openFromCanonicalSelection = e => {
+    const farm = e?.detail?.farm;
+    if (farm) global.openV2FarmDetail(farm);
+  };
+  global.addEventListener('agworld:farm-selected', openFromCanonicalSelection);
+
+  // Backwards-compatible bridge for older callers.
   global.addEventListener('agworld:v2-open-live-farm', e => global.openV2FarmDetail(e.detail));
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', installLiveBridge);
-  } else {
+  const initialiseLiveBridge = () => {
     installLiveBridge();
+
+    // If the GIS selection happened before this module finished loading, replay
+    // the current canonical selection exactly once.
+    const runtimeSelection = global.__AGWORLD_RUNTIME_FARM_SELECTION_V2__;
+    if (runtimeSelection?.farmId && global.AG_WORLD_WORLD?.farms) {
+      const farm = global.AG_WORLD_WORLD.farms.find(f => String(f.id) === String(runtimeSelection.farmId));
+      if (farm) global.openV2FarmDetail(farm);
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialiseLiveBridge);
+  } else {
+    initialiseLiveBridge();
   }
 
   global.AGWorldV2 = global.AGWorldV2 || {};
