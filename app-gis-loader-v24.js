@@ -2807,7 +2807,13 @@ function selectDynamicEntity(entity, zoom = true) {
     if (entity._marker) entity._marker.setMap(map);
   }
 
+  // Emit the canonical V2 selection event and explicitly redraw the
+  // relationship network around every non-Farm entity.
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+  scheduleRelationshipNetwork({
+    id: entity.id,
+    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type
+  });
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
 
