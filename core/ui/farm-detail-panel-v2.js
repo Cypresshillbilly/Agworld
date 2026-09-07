@@ -164,7 +164,7 @@
           name: farm.name || 'Unnamed farm',
           description: farm.description || '',
           status: farm.status || 'active',
-          territoryIds: farm.territoryId ? [String(farm.territoryId)] : [],
+          territoryIds: Array.isArray(farm.territoryIds) && farm.territoryIds.length ? farm.territoryIds.map(String) : (farm.territoryId ? [String(farm.territoryId)] : []),
           geometry: farm.boundary ? { type:'Polygon', coordinates: farm.boundary } : null,
           metadata: {
             owner:farm.owner,
@@ -300,7 +300,9 @@
           name: dynamicEntity.name || 'Unnamed entity',
           description: dynamicEntity.details?.notes || '',
           status: dynamicEntity.status || 'active',
-          territoryIds: [dynamicEntity.details?.province, dynamicEntity.details?.municipality].filter(Boolean),
+          territoryIds: Array.isArray(dynamicEntity.details?.territoryIds) && dynamicEntity.details.territoryIds.length
+            ? dynamicEntity.details.territoryIds.map(String)
+            : [dynamicEntity.details?.territoryId, dynamicEntity.details?.province, dynamicEntity.details?.municipality].filter(Boolean).map(String),
           geometry: Number.isFinite(Number(dynamicEntity.lat)) && Number.isFinite(Number(dynamicEntity.lng))
             ? { type: 'Point', coordinates: [Number(dynamicEntity.lng), Number(dynamicEntity.lat)] }
             : null,
