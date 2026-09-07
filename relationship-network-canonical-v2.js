@@ -315,10 +315,12 @@
       return;
     }
 
+    // Load the canonical graph first, then apply the application's compatibility
+    // rule locally. Legacy rows with a NULL status are treated as active by the
+    // relationship model, but PostgREST .eq('status','active') excludes them.
     const { data, error } = await db
       .from('entity_relationships')
-      .select('*')
-      .eq('status', 'active');
+      .select('*');
 
     if (request !== state.request) return;
 
@@ -330,10 +332,13 @@
       return;
     }
 
-    const relationships = (data || []).map(normalise).filter(rel =>
-      (String(rel.sourceId) === entityId && canonicalType(rel.sourceType) === entityType) ||
-      (String(rel.targetId) === entityId && canonicalType(rel.targetType) === entityType)
-    );
+    const relationships = (data || [])
+      .map(normalise)
+      .filter(rel => !['inactive', 'disabled', 'archived'].includes(String(rel.status || 'active').toLowerCase()))
+      .filter(rel =>
+        (String(rel.sourceId) === entityId && canonicalType(rel.sourceType) === entityType) ||
+        (String(rel.targetId) === entityId && canonicalType(rel.targetType) === entityType)
+      );
 
     const candidates = relationships.map(rel => ({
       rel,
