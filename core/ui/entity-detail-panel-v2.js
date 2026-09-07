@@ -125,7 +125,7 @@
       try {
         const relationships = await this.relationshipRepository.list(this.entity.id);
         target.innerHTML = relationships.length
-          ? '<ul>' + relationships.map(r => '<li>' + esc(r.relationshipType) + ': ' + esc(r.targetEntityName || r.targetEntityId) + '</li>').join('') + '</ul>'
+          ? '<ul>' + relationships.map(r => { const relatedId = String(r.sourceEntityId) === String(this.entity.id) ? r.targetEntityId : r.sourceEntityId; const relatedName = String(r.sourceEntityId) === String(this.entity.id) ? (r.targetEntityName || r.metadata?.targetEntityName) : (r.sourceEntityName || r.metadata?.sourceEntityName); return '<li>' + esc(r.relationshipType) + ': ' + esc(relatedName || relatedId) + '</li>'; }).join('') + '</ul>'
           : '<p>No relationships recorded yet.</p>';
       } catch (error) {
         target.innerHTML = '<p>Relationships could not be loaded.</p>';
