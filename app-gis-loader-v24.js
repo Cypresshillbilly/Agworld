@@ -2761,10 +2761,54 @@ function renderDynamicEntity(entity) {
       scale: 11
     }
   });
-  entity._marker.addListener('click', () => {
-    const capabilities = entity.details?.capabilities?.join(', ') || 'No services/activity recorded';
-    toast(`${cfg.label}: ${entity.name} · ${entity.status} · ${capabilities}`);
-  });
+  entity._marker.addListener('click', () => selectDynamicEntity(entity, true));
+}
+
+function selectDynamicEntity(entity, zoom = true) {
+  if (!entity?.id) return;
+  const cfg = DYNAMIC_LAYER_CONFIG[entity.type];
+  if (!cfg) return;
+
+  // Dynamic entities use the same visible Farm Card host as Farms, but keep
+  // their own canonical selection signal and V2 entity type.
+  selected = null;
+  window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__ = {
+    entityId: String(entity.id),
+    entityType: entity.type,
+    name: entity.name || '',
+    timestamp: Date.now()
+  };
+
+  $('farmCard').classList.add('show');
+  $('farmName').textContent = entity.name || cfg.label;
+  $('farmMeta').textContent = `${cfg.label.toUpperCase()} · ${entity.status || 'Active'} · ${entity.details?.nearestTown || entity.details?.municipality || 'Mapped location'}`;
+  $('farmDrones').textContent = entity.type === 'contractor' ? (entity.details?.capabilities?.filter?.(x => /drone/i.test(x)).length || 0) : '—';
+  $('farmTractors').textContent = entity.type === 'competitor' ? (entity.details?.capabilities?.length || 0) : '—';
+  $('farmCrops').textContent = entity.type === 'companyFacility' ? (entity.details?.capabilities?.length || 0) : '—';
+  $('farmScore').textContent = entity.status || 'Active';
+  $('farmLivestock').textContent = entity.contactName || '—';
+  $('farmHarvest').textContent = entity.contactCell || '—';
+  $('farmService').textContent = entity.contactEmail || '—';
+  const capabilities = Array.isArray(entity.details?.capabilities) ? entity.details.capabilities.join(', ') : '';
+  $('farmDetailText').textContent = entity.details?.notes || capabilities || `${cfg.label} location and intelligence record.`;
+  $('aiText').textContent = `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`;
+
+  const updateButton = $('farm3d');
+  if (updateButton) {
+    updateButton.textContent = 'VIEW ENTITY DETAILS';
+    updateButton.onclick = () => {
+      window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+    };
+  }
+
+  if (map && zoom) {
+    map.panTo({ lat: entity.lat, lng: entity.lng });
+    map.setZoom(Math.max(map.getZoom() || 0, 12));
+    if (entity._marker) entity._marker.setMap(map);
+  }
+
+  window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+  $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
 
 async function loadDynamicLayer(type) {
