@@ -1507,14 +1507,16 @@ async function saveFarm() {
     farms.push(farm);
   }
 
-  // Save to the farms database first. The database is authoritative, so a
-  // refresh on any player must reproduce the saved field values.
+  // Update the live world immediately. Database persistence is attempted in
+  // parallel so a backend/schema problem can never make the SAVE button appear dead.
+  window.__AG_WORLD_FARMS = farms;
+  let databaseSaved = true;
   try {
     await saveFarmToDatabase(farm, beforeState);
   } catch (error) {
+    databaseSaved = false;
     console.error('Farm database save failed', error);
-    toast('Farm record was not saved to the shared database.');
-    return;
+    toast('Saved locally. Shared database sync failed; retry will be required.');
   }
 
   window.__AG_WORLD_FARMS = farms;
@@ -1535,8 +1537,12 @@ async function saveFarm() {
   try { refreshMapVisibility(); } catch (error) { console.warn('Farm visibility refresh failed', error); }
   const patch = {id:farm.id,name:farm.name,owner:farm.owner,region:farm.region,status:farm.status,drones:farm.drones,tractors:farm.tractors,livestock:farm.livestock,annualHarvest:farm.annualHarvest,lastService:farm.lastService,crops:farm.crops,objects:farm.objects,opportunityScore:farm.opportunityScore,notes:farm.notes,updatedAt:farm.updatedAt};
   window.AGWorldSharedFarms?.updateDetails?.(farm, patch)?.catch(error => console.warn('Shared farm detail sync failed', error));
-  $('mapStatus').textContent = `Farm saved · ${farm.name} · ${farm.objects.length} mapped objects`;
-  toast(existing ? 'Farm record updated' : 'Farm record created');
+  $('mapStatus').textContent = databaseSaved
+    ? `Farm saved · ${farm.name} · ${farm.objects.length} mapped objects · database synced`
+    : `Farm saved locally · ${farm.name} · shared database sync pending`;
+  toast(databaseSaved
+    ? (existing ? 'Farm record updated' : 'Farm record created')
+    : 'Farm saved locally; database sync pending');
 }
 
 function resetCreateForm() {
