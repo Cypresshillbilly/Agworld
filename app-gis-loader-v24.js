@@ -2421,3 +2421,353 @@ window.addEventListener('agworld:farms-reset', () => {
 setInterval(() => {
   if (farms.length) loadFarmDatabaseOverrides().catch(() => {});
 }, 5000);
+
+
+// ---------------------------------------------------------------------------
+// SHARED DYNAMIC GAME LAYERS
+// Contractors and Competitors use the same canonical multiplayer pattern as
+// Farms: shared database -> live map -> identical view for every player.
+// Static territory boundaries are never edited by these workflows.
+// ---------------------------------------------------------------------------
+const contractors = [];
+const competitors = [];
+let dynamicEntityType = null;
+let dynamicEntityId = null;
+let dynamicEntityLocation = null;
+let dynamicEntityLocationListener = null;
+
+const DYNAMIC_LAYER_CONFIG = {
+  contractor: {
+    table: 'contractors',
+    audit: 'contractor_audit',
+    plural: 'Contractors',
+    title: 'CREATE CONTRACTOR',
+    label: 'Contractor',
+    markerLabel: 'C',
+    color: '#31b6c7',
+    step3Eyebrow: 'STEP 3 · SERVICES & CAPABILITY',
+    options: [
+      ['Drone Services', 'Commercial drone services'],
+      ['Aerial Spraying', 'Agricultural aerial application'],
+      ['Mapping & Surveying', 'Mapping, GIS and survey capability'],
+      ['Training', 'Operational and pilot training'],
+      ['Maintenance', 'Equipment maintenance capability'],
+      ['Other Agricultural Services', 'Other agricultural services']
+    ]
+  },
+  competitor: {
+    table: 'competitors',
+    audit: 'competitor_audit',
+    plural: 'Competitors',
+    title: 'CREATE COMPETITOR',
+    label: 'Competitor',
+    markerLabel: 'X',
+    color: '#d59a3b',
+    step3Eyebrow: 'STEP 3 · MARKET INTELLIGENCE',
+    options: [
+      ['Drone Services', 'Competing drone activity'],
+      ['Aerial Spraying', 'Competing aerial application'],
+      ['Mapping & Surveying', 'Competing mapping or GIS services'],
+      ['Sales & Distribution', 'Sales or distribution activity'],
+      ['Training', 'Competing training capability'],
+      ['Other Activity', 'Other competitive agricultural activity']
+    ]
+  }
+};
+
+function dynamicConfig() { return DYNAMIC_LAYER_CONFIG[dynamicEntityType]; }
+function dynamicArray(type) { return type === 'contractor' ? contractors : competitors; }
+
+function dynamicDetailsFromForm() {
+  const capabilities = [...document.querySelectorAll('#dynamicChecklist input[type="checkbox"]:checked')].map(input => input.value);
+  return {
+    country: $('dynamicCountry').value.trim(),
+    province: $('dynamicProvince').value.trim(),
+    municipality: $('dynamicMunicipality').value.trim(),
+    nearestTown: $('dynamicNearestTown').value.trim(),
+    website: $('dynamicWebsite').value.trim(),
+    notes: $('dynamicNotes').value.trim(),
+    capabilities
+  };
+}
+
+function renderDynamicChecklist(type, selected = []) {
+  const cfg = DYNAMIC_LAYER_CONFIG[type];
+  const values = new Set(selected || []);
+  $('dynamicChecklist').innerHTML = `
+    <section class="farm-checklist-card">
+      <div class="farm-checklist-heading"><span>01 · ${cfg.plural.toUpperCase()}</span><strong>Select all that apply</strong></div>
+      ${cfg.options.map(([name, description]) => `<label class="farm-check-option"><input type="checkbox" value="${name}" ${values.has(name) ? 'checked' : ''}><span class="check-icon">✦</span><span><b>${name}</b><small>${description}</small></span></label>`).join('')}
+    </section>
+  `;
+}
+
+function showDynamicStep(step) {
+  document.querySelectorAll('.dynamic-entity-step').forEach(section => {
+    section.hidden = Number(section.dataset.dynamicStep) !== Number(step);
+  });
+  const cfg = dynamicConfig();
+  const titles = ['SELECT LOCATION', `${cfg.label.toUpperCase()} INFORMATION`, 'COMPLETE RECORD'];
+  $('dynamicEntityProgress').textContent = `STEP ${step} OF 3`;
+  $('dynamicEntityStepTitle').textContent = titles[step - 1];
+}
+
+function resetDynamicEntityForm() {
+  ['dynamicCountry','dynamicProvince','dynamicMunicipality','dynamicNearestTown','dynamicName','dynamicContactName','dynamicContactCell','dynamicContactEmail','dynamicWebsite','dynamicNotes']
+    .forEach(id => { const input = $(id); if (input) input.value = ''; });
+  $('dynamicStatus').value = 'Active';
+}
+
+function configureDynamicEntityForm(type) {
+  const cfg = DYNAMIC_LAYER_CONFIG[type];
+  $('dynamicEntityModalTitle').textContent = cfg.title;
+  $('dynamicEntityModalSubtitle').textContent = `Shared ${cfg.label.toLowerCase()} game-layer record`;
+  $('dynamicLocationHeading').textContent = `Place the ${cfg.label}`;
+  $('dynamicInfoEyebrow').textContent = `STEP 2 · ${cfg.label.toUpperCase()} INTELLIGENCE`;
+  $('dynamicInfoHeading').textContent = `Capture ${cfg.label} Information`;
+  $('dynamicInfoDescription').textContent = `Create the shared ${cfg.label.toLowerCase()} record used by the live map and future gameplay systems.`;
+  $('dynamicNameLabel').firstChild.textContent = `${cfg.label} Name`;
+  $('dynamicContactLabel').firstChild.textContent = type === 'contractor' ? 'Primary Contact' : 'Primary Contact / Intelligence Source';
+  $('dynamicStep3Eyebrow').textContent = cfg.step3Eyebrow;
+  $('dynamicStep3Heading').textContent = `Complete the ${cfg.label} Record`;
+  $('dynamicStep3Description').textContent = `Select every service or activity that applies to this ${cfg.label.toLowerCase()}. These selections become part of the shared game layer.`;
+  renderDynamicChecklist(type);
+}
+
+function openDynamicEntity(type) {
+  if (!map) { toast('Map is still loading.'); return; }
+  dynamicEntityType = type;
+  dynamicEntityId = 'dyn-' + type + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+  dynamicEntityLocation = null;
+  resetDynamicEntityForm();
+  configureDynamicEntityForm(type);
+  $('dynamicLocationStatus').textContent = 'No location selected.';
+  showDynamicStep(1);
+  $('dynamicEntityModal').classList.add('show');
+}
+
+function stopDynamicLocationMode() {
+  if (dynamicEntityLocationListener) {
+    try { google.maps.event.removeListener(dynamicEntityLocationListener); } catch (_) {}
+    dynamicEntityLocationListener = null;
+  }
+  try { map?.setOptions({ draggableCursor: null, crosshairCursor: null }); } catch (_) {}
+}
+
+function startDynamicLocationMode() {
+  if (!map) return;
+  stopDynamicLocationMode();
+  $('dynamicEntityModal').classList.remove('show');
+  map.setOptions({ draggableCursor: 'crosshair', crosshairCursor: 'crosshair' });
+  $('mapStatus').textContent = `LOCATION MODE · click the map to place the ${dynamicConfig().label.toLowerCase()}`;
+  toast(`Click the map to place the ${dynamicConfig().label.toLowerCase()}`);
+  dynamicEntityLocationListener = google.maps.event.addListener(map, 'click', event => {
+    if (!event?.latLng) return;
+    dynamicEntityLocation = { lat: event.latLng.lat(), lng: event.latLng.lng() };
+    stopDynamicLocationMode();
+    $('dynamicLocationStatus').textContent = `Location selected · ${dynamicEntityLocation.lat.toFixed(6)}, ${dynamicEntityLocation.lng.toFixed(6)}`;
+    $('dynamicEntityModal').classList.add('show');
+    $('mapStatus').textContent = `${dynamicConfig().label} location selected · continue with the workflow`;
+  });
+}
+
+async function saveDynamicEntity(step) {
+  const cfg = dynamicConfig();
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!cfg || !db || !user) throw new Error('You must be signed in to save this shared game-layer record.');
+  if (!dynamicEntityLocation) throw new Error('Select a location on the map first.');
+
+  const array = dynamicArray(dynamicEntityType);
+  const existing = array.find(item => String(item.id) === String(dynamicEntityId));
+  const before = existing ? JSON.parse(JSON.stringify(existing)) : null;
+  const details = {
+    ...(existing?.details || {}),
+    ...dynamicDetailsFromForm(),
+    updatedAt: new Date().toISOString(),
+    workflowStep: step
+  };
+
+  const row = {
+    id: String(dynamicEntityId),
+    name: $('dynamicName').value.trim() || null,
+    contact_name: $('dynamicContactName').value.trim() || null,
+    contact_cell: $('dynamicContactCell').value.trim() || null,
+    contact_email: $('dynamicContactEmail').value.trim() || null,
+    status: $('dynamicStatus').value || 'Active',
+    location_lat: Number(dynamicEntityLocation.lat),
+    location_lng: Number(dynamicEntityLocation.lng),
+    details,
+    updated_at: new Date().toISOString(),
+    updated_by: user.id
+  };
+
+  let error;
+  if (existing) ({ error } = await db.from(cfg.table).update(row).eq('id', row.id));
+  else ({ error } = await db.from(cfg.table).insert(row));
+  if (error) throw error;
+
+  const entity = hydrateDynamicEntity(row, dynamicEntityType);
+  const index = array.findIndex(item => String(item.id) === entity.id);
+  if (index >= 0) array[index] = { ...array[index], ...entity };
+  else array.push(entity);
+
+  const changedFields = {};
+  const beforeState = before || {};
+  Object.keys({ ...beforeState, ...entity }).forEach(key => {
+    if (key === '_marker') return;
+    const a = JSON.stringify(beforeState[key] ?? null);
+    const b = JSON.stringify(entity[key] ?? null);
+    if (a !== b) changedFields[key] = { before: beforeState[key] ?? null, after: entity[key] ?? null };
+  });
+
+  const { error: auditError } = await db.from(cfg.audit).insert({
+    [dynamicEntityType + '_id']: entity.id,
+    action: before ? 'updated' : 'created',
+    actor_id: user.id,
+    source: dynamicEntityType + '_editor',
+    before_state: before,
+    after_state: { ...entity, changed_fields: changedFields, changed_at: row.updated_at }
+  });
+  if (auditError) throw new Error(`Record saved, but history could not be recorded: ${auditError.message || auditError.code}`);
+
+  if (step >= 2 && entity.name) {
+    renderDynamicEntity(entity);
+    refreshMapVisibility();
+    window.dispatchEvent(new CustomEvent('agworld:dynamic-layer-updated', { detail: { type: dynamicEntityType, id: entity.id } }));
+  }
+  return entity;
+}
+
+function hydrateDynamicEntity(row, type) {
+  const details = row.details && typeof row.details === 'object' ? row.details : {};
+  return {
+    id: String(row.id),
+    type,
+    name: row.name || '',
+    contactName: row.contact_name || '',
+    contactCell: row.contact_cell || '',
+    contactEmail: row.contact_email || '',
+    status: row.status || 'Active',
+    lat: Number(row.location_lat),
+    lng: Number(row.location_lng),
+    details,
+    updatedAt: row.updated_at
+  };
+}
+
+function renderDynamicEntity(entity) {
+  if (!map || !entity?.name || !Number.isFinite(entity.lat) || !Number.isFinite(entity.lng)) return;
+  const cfg = DYNAMIC_LAYER_CONFIG[entity.type];
+  if (entity._marker) entity._marker.setMap(null);
+  entity._marker = new google.maps.Marker({
+    position: { lat: entity.lat, lng: entity.lng },
+    map,
+    title: `${cfg.label}: ${entity.name}`,
+    label: { text: cfg.markerLabel, color: '#ffffff', fontWeight: '800' },
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: cfg.color,
+      fillOpacity: 1,
+      strokeColor: '#0c1519',
+      strokeWeight: 2,
+      scale: 11
+    }
+  });
+  entity._marker.addListener('click', () => {
+    const capabilities = entity.details?.capabilities?.join(', ') || 'No services/activity recorded';
+    toast(`${cfg.label}: ${entity.name} · ${entity.status} · ${capabilities}`);
+  });
+}
+
+async function loadDynamicLayer(type) {
+  const cfg = DYNAMIC_LAYER_CONFIG[type];
+  const db = getFarmDb();
+  if (!db) return;
+  const { data, error } = await db.from(cfg.table).select('*').order('updated_at', { ascending: true });
+  if (error) { console.warn(cfg.label + ' layer load failed', error); return; }
+  const array = dynamicArray(type);
+  const byId = new Map(array.map(item => [String(item.id), item]));
+  const seen = new Set();
+  (data || []).forEach(row => {
+    const fresh = hydrateDynamicEntity(row, type);
+    seen.add(fresh.id);
+    const current = byId.get(fresh.id);
+    if (current?._marker) fresh._marker = current._marker;
+    const index = array.findIndex(item => item.id === fresh.id);
+    if (index >= 0) array[index] = fresh; else array.push(fresh);
+    if (fresh.name) renderDynamicEntity(fresh);
+  });
+  for (let i = array.length - 1; i >= 0; i--) {
+    if (!seen.has(String(array[i].id))) {
+      try { array[i]._marker?.setMap(null); } catch (_) {}
+      array.splice(i, 1);
+    }
+  }
+  refreshMapVisibility();
+}
+
+async function loadDynamicLayers() {
+  await Promise.allSettled([loadDynamicLayer('contractor'), loadDynamicLayer('competitor')]);
+  window.dispatchEvent(new CustomEvent('agworld:dynamic-layers-loaded', {
+    detail: { contractors, competitors }
+  }));
+}
+
+$('createContractorBtn').onclick = () => openDynamicEntity('contractor');
+$('createCompetitorBtn').onclick = () => openDynamicEntity('competitor');
+$('closeDynamicEntity').onclick = () => {
+  stopDynamicLocationMode();
+  $('dynamicEntityModal').classList.remove('show');
+};
+$('dynamicEntityModal').onclick = event => {
+  if (event.target.id === 'dynamicEntityModal') {
+    event.preventDefault();
+    toast('Creation is still open · use the close button if you want to cancel.');
+  }
+};
+$('dynamicSelectLocation').onclick = startDynamicLocationMode;
+$('dynamicSaveLocation').onclick = async () => {
+  try {
+    await saveDynamicEntity(1);
+    showDynamicStep(2);
+    toast('Location saved to the shared database');
+  } catch (error) { toast('Could not save location: ' + (error.message || error)); }
+};
+$('dynamicSaveInfo').onclick = async () => {
+  try { await saveDynamicEntity(2); toast(`${dynamicConfig().label} information saved · live map updated`); }
+  catch (error) { toast('Could not save record: ' + (error.message || error)); }
+};
+$('dynamicNextInfo').onclick = async () => {
+  const button = $('dynamicNextInfo');
+  button.disabled = true;
+  try {
+    const entity = await saveDynamicEntity(2);
+    if (!entity.name) throw new Error(`${dynamicConfig().label} name is required.`);
+    renderDynamicChecklist(dynamicEntityType, entity.details?.capabilities || []);
+    showDynamicStep(3);
+  } catch (error) { toast('Could not continue: ' + (error.message || error)); }
+  finally { button.disabled = false; }
+};
+$('dynamicFinish').onclick = async () => {
+  const button = $('dynamicFinish');
+  button.disabled = true;
+  try {
+    const entity = await saveDynamicEntity(3);
+    $('dynamicEntityModal').classList.remove('show');
+    dynamicEntityId = null;
+    dynamicEntityLocation = null;
+    toast(`${dynamicConfig().label} saved and finished · shared live map updated`);
+    renderDynamicEntity(entity);
+  } catch (error) { toast('Could not finish: ' + (error.message || error)); }
+  finally { button.disabled = false; }
+};
+
+window.addEventListener('agworld:supabase-authenticated', () => setTimeout(loadDynamicLayers, 0));
+window.addEventListener('agworld:player-ready', () => setTimeout(loadDynamicLayers, 0));
+window.addEventListener('gamechanger:authenticated', () => setTimeout(loadDynamicLayers, 0));
+window.addEventListener('pageshow', () => setTimeout(loadDynamicLayers, 300));
+setInterval(() => { if (map) loadDynamicLayers().catch(() => {}); }, 5000);
+
+window.AG_WORLD_WORLD.getContractors = () => contractors;
+window.AG_WORLD_WORLD.getCompetitors = () => competitors;
