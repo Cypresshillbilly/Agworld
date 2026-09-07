@@ -218,7 +218,6 @@
     tabs() {
       return [
         ['details', 'Entity Details'],
-        ['intelligence', 'Intelligence'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
