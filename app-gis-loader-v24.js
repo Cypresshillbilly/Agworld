@@ -1472,6 +1472,22 @@ function showBoundaryContinueControl() {
   // Catch a second control inserted after this function has returned.
   requestAnimationFrame(enforceSingleBoundaryContinueControl);
   setTimeout(enforceSingleBoundaryContinueControl, 0);
+
+  if (!window.__AG_WORLD_BOUNDARY_CONTROL_OBSERVER) {
+    window.__AG_WORLD_BOUNDARY_CONTROL_OBSERVER = new MutationObserver(() => {
+      if (!creatingFarm) return;
+      enforceSingleBoundaryContinueControl();
+      // Remove delayed legacy overlays that use the same visible action text
+      // but were not created by this canonical control.
+      document.querySelectorAll('button').forEach(button => {
+        if (button.id === 'saveBoundaryContinueMap') return;
+        if (button.textContent.trim() === 'SAVE BOUNDARY & CONTINUE') {
+          button.closest('.farm-boundary-continue-control, [data-ag-boundary-control], div')?.remove();
+        }
+      });
+    });
+    window.__AG_WORLD_BOUNDARY_CONTROL_OBSERVER.observe(document.body, { childList: true, subtree: true });
+  }
 }
 
 async function finishBoundary() {
