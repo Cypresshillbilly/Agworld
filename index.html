@@ -163,6 +163,31 @@
 </style>
 <div id="territoryInfoPanel" aria-live="polite"></div>
 
+<script src="core/entities/entity.schema.js"></script>
+<script src="core/entities/entity-types.js"></script>
+<script src="core/entities/farm.entity.js"></script>
+<script src="core/relationships/relationship.schema.js"></script>
+<script src="core/relationships/relationship.repository.js"></script>
+<script src="core/ui/entity-detail-panel-v2.js"></script>
+<script src="core/ui/farm-detail-panel-v2.js"></script>
+<script>
+(() => {
+  const attach = () => {
+    const existing = window.selectFarm;
+    if (typeof existing !== 'function' || existing.__agworldV2Wrapped) return false;
+    function wrappedSelectFarm(farm, zoom) {
+      const result = existing.call(this, farm, zoom);
+      setTimeout(() => window.dispatchEvent(new CustomEvent('agworld:v2-open-live-farm', { detail: farm })), 0);
+      return result;
+    }
+    wrappedSelectFarm.__agworldV2Wrapped = true;
+    window.selectFarm = wrappedSelectFarm;
+    return true;
+  };
+  const timer = setInterval(() => { if (attach()) clearInterval(timer); }, 100);
+  setTimeout(() => clearInterval(timer), 10000);
+})();
+</script>
 <script src="shared-backend-v37.js?v=20260906-shared-backend-v4"></script>
 <script src="shared-farm-world-v38.js?v=shared-cache-v4-20260907"></script>
 <script src="login-gate-bridge-v39.js?v=supabase-only-v41"></script>
