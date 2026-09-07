@@ -76,6 +76,19 @@
         });
       });
       this.renderContent();
+
+      // Runtime verification: make the active panel state observable without
+      // showing a diagnostic window.
+      global.__AGWORLD_ENTITY_PANEL_RUNTIME__ = {
+        entityId: String(entity.id || ''),
+        entityType: String(entity.type || ''),
+        tabs: this.tabs().map(([key]) => key),
+        activeTab: this.activeTab,
+        renderedAt: Date.now()
+      };
+      global.dispatchEvent(new CustomEvent('agworld:entity-panel-rendered', {
+        detail: global.__AGWORLD_ENTITY_PANEL_RUNTIME__
+      }));
     }
 
     managementKey() {
