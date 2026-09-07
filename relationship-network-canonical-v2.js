@@ -186,6 +186,13 @@
   }
 
   function renderRuntimeDiagnostic(comparison) {
+    // Keep comparison data in memory, but do not show the debugging UI during
+    // normal gameplay. It can be explicitly re-enabled for future debugging.
+    if (global.__AGWORLD_SHOW_RELATIONSHIP_DIAGNOSTICS__ !== true) {
+      document.getElementById('agworldRelationshipRuntimeDiagnostic')?.remove();
+      return;
+    }
+
     let box = document.getElementById('agworldRelationshipRuntimeDiagnostic');
     if (!box) {
       box = document.createElement('div');
@@ -537,6 +544,14 @@
       diagnosis = 'RENDERER REPORTS SUCCESS. IF NO LINE IS VISIBLE, ANOTHER LATER SELECTION/CLEAR OPERATION IS REMOVING OR HIDING THE OVERLAYS.';
     }
 
+    // Preserve the diagnostic result for troubleshooting, but hide the
+    // on-screen relationship diagnostic during normal operation.
+    global.__AGWORLD_DIRECT_RELATIONSHIP_DIAGNOSTIC__ = { diagnosis, trace, selectedMatches, attached, checkedAt: Date.now() };
+    if (global.__AGWORLD_SHOW_RELATIONSHIP_DIAGNOSTICS__ !== true) {
+      document.getElementById('agworldDirectRelationshipDiagnostic')?.remove();
+      return;
+    }
+
     let box = document.getElementById('agworldDirectRelationshipDiagnostic');
     if (!box) {
       box = document.createElement('div');
@@ -578,7 +593,6 @@
       (trace?.candidates?.length ? '<div style="margin-top:10px;color:#9eb1b8">Candidate endpoint details are available in window.__AGWORLD_RELATIONSHIP_DEBUG__.</div>' : '');
     box.querySelector('#agworldDiagClose')?.addEventListener('click', () => box.remove());
 
-    global.__AGWORLD_DIRECT_RELATIONSHIP_DIAGNOSTIC__ = { diagnosis, trace, selectedMatches, attached, checkedAt: Date.now() };
   }
 
   global.addEventListener('agworld:dynamic-entity-selected', event => {
