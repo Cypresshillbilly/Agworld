@@ -1258,6 +1258,7 @@ function selectFarm(farm, zoom = true) {
   if (updateButton) {
     updateButton.textContent = 'UPDATE FARM DETAILS';
     updateButton.onclick = () => openEditFarm(selected);
+    ensureFarmHistoryButton();
   }
   if (map && zoom) {
     map.panTo(farm.center);
@@ -1271,6 +1272,70 @@ function selectFarm(farm, zoom = true) {
   showFarmDetail(farm);
 }
 
+async function openFarmHistory(farm = selected) {
+  if (!farm?.id) { toast('Select a farm first.'); return; }
+  const db = getFarmDb();
+  if (!db) { toast('Farm history database is not available.'); return; }
+
+  let modal = $('farmHistoryModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'farmHistoryModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(4,10,14,.78);padding:24px;';
+    modal.innerHTML = '<div style="width:min(900px,96vw);max-height:88vh;overflow:auto;background:#101a20;border:1px solid rgba(215,230,107,.55);border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.65);padding:24px;color:#eaf2f3;"><div style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px;"><div><div style="color:#d7e66b;font-size:12px;letter-spacing:2px;">CANONICAL FARM AUDIT TRAIL</div><h2 id="farmHistoryTitle" style="margin:4px 0 0;">FARM HISTORY</h2></div><button id="closeFarmHistory" style="background:transparent;border:1px solid #d7e66b;color:#d7e66b;border-radius:8px;padding:8px 12px;cursor:pointer;">CLOSE</button></div><div id="farmHistoryBody">Loading history…</div></div>';
+    document.body.appendChild(modal);
+    $('closeFarmHistory').onclick = () => modal.remove();
+  }
+
+  $('farmHistoryTitle').textContent = 'FARM HISTORY · ' + (farm.name || farm.id);
+  $('farmHistoryBody').textContent = 'Loading shared audit trail…';
+  modal.style.display = 'flex';
+
+  const { data, error } = await db.from('farm_audit_readable')
+    .select('farm_id,actor_name,action,before_state,after_state,created_at')
+    .eq('farm_id', String(farm.id))
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Farm history load failed', error);
+    $('farmHistoryBody').textContent = 'Could not load farm history: ' + (error.message || error.code || 'Unknown error');
+    return;
+  }
+  if (!data?.length) {
+    $('farmHistoryBody').textContent = 'No recorded changes yet.';
+    return;
+  }
+
+  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const rows = [];
+  data.forEach(record => {
+    const changes = record.after_state?.changed_fields || {};
+    const entries = Object.entries(changes);
+    if (!entries.length) {
+      rows.push('<tr><td>' + escapeHtml(record.actor_name) + '</td><td>Farm record</td><td>—</td><td>—</td><td>' + new Date(record.created_at).toLocaleString() + '</td></tr>');
+    } else {
+      entries.forEach(([field, change]) => rows.push('<tr><td>' + escapeHtml(record.actor_name) + '</td><td>' + escapeHtml(field) + '</td><td>' + escapeHtml(JSON.stringify(change?.before ?? '—')) + '</td><td>' + escapeHtml(JSON.stringify(change?.after ?? '—')) + '</td><td>' + new Date(record.created_at).toLocaleString() + '</td></tr>'));
+    }
+  });
+  $('farmHistoryBody').innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="text-align:left;color:#d7e66b;"><th style="padding:9px;">CHANGED BY</th><th style="padding:9px;">FIELD</th><th style="padding:9px;">PREVIOUS</th><th style="padding:9px;">NEW</th><th style="padding:9px;">DATE & TIME</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>';
+}
+
+function ensureFarmHistoryButton() {
+  const card = $('farmCard');
+  const updateButton = $('farm3d');
+  if (!card || !updateButton) return;
+  let button = $('farmHistoryBtn');
+  if (!button) {
+    button = updateButton.cloneNode(false);
+    button.id = 'farmHistoryBtn';
+    button.type = 'button';
+    button.textContent = 'FARM HISTORY';
+    button.style.marginTop = '8px';
+    updateButton.insertAdjacentElement('afterend', button);
+  }
+  button.onclick = () => openFarmHistory(selected);
+}
+
 function ensureEditButton() {
   // Legacy helper retained only for compatibility with older map hooks.
   // The Farm Information panel now has ONE action: UPDATE FARM DETAILS.
@@ -1280,6 +1345,7 @@ function ensureEditButton() {
   if (updateButton) {
     updateButton.textContent = 'UPDATE FARM DETAILS';
     updateButton.onclick = () => openEditFarm(selected);
+    ensureFarmHistoryButton();
   }
 }
 
