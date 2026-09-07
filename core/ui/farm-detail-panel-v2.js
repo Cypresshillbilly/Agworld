@@ -72,7 +72,7 @@
     const style = document.createElement('style');
     style.id = 'agworldV2FarmDetailStyles';
     style.textContent = `
-      #agworldV2FarmDetailHost{margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8}
+      #agworldV2FarmDetailHost{display:block!important;visibility:visible!important;opacity:1!important;margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8}
       #agworldV2FarmDetailHost .agworld-v2-detail-panel{font-family:inherit;color:#25343d}
       #agworldV2FarmDetailHost .agworld-v2-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
       #agworldV2FarmDetailHost .agworld-v2-entity-type{font-size:8px;letter-spacing:1px;color:#168aa0;font-weight:800}
@@ -93,7 +93,8 @@
   }
 
   function installLiveBridge() {
-    if (global.AGWorldV2?.LiveFarmDetailBridge) return true;
+    const existingBridge = global.AGWorldV2?.LiveFarmDetailBridge;
+    if (existingBridge) return true;
 
     const card = document.getElementById('farmCard');
     if (!card) return false;
@@ -142,7 +143,13 @@
             opportunityScore:farm.opportunityScore
           }
         });
+        // The Farm Card is the canonical V2 host. Force visibility here as a
+        // final guard against earlier bootstrap code leaving the placeholder
+        // inline-hidden.
+        host.hidden = false;
         host.style.display = 'block';
+        host.style.visibility = 'visible';
+        host.style.opacity = '1';
         detailPanel.open(entity);
       },
       close() { detailPanel.close(); }
