@@ -2910,16 +2910,50 @@ async function renderRelationshipNetwork(selection) {
     if (!source || !target) return;
 
     const style = relationshipNetworkStyle(rel.relationshipType);
-    const line = new google.maps.Polyline({
-      path: [{ lat: source.lat, lng: source.lng }, { lat: target.lat, lng: target.lng }],
+    const path = [{ lat: source.lat, lng: source.lng }, { lat: target.lat, lng: target.lng }];
+
+    // Relationship links must remain visually dominant over satellite imagery,
+    // territory fills and entity boundaries. Render a wide translucent halo
+    // beneath a bright core rather than relying on a single thin polyline.
+    const glow = new google.maps.Polyline({
+      path,
       geodesic: true,
       strokeColor: style.strokeColor,
-      strokeOpacity: .9,
-      strokeWeight: 3,
-      zIndex: 85,
+      strokeOpacity: .46,
+      strokeWeight: 12,
+      zIndex: 980,
       map
     });
-    relationshipNetworkState.overlays.push(line);
+    const line = new google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: '#ffffff',
+      strokeOpacity: .98,
+      strokeWeight: 4,
+      zIndex: 990,
+      icons: [{
+        icon: {
+          path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+          scale: 4,
+          strokeColor: style.strokeColor,
+          strokeWeight: 2,
+          fillColor: style.strokeColor,
+          fillOpacity: 1
+        },
+        offset: '62%'
+      }],
+      map
+    });
+    const core = new google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: style.strokeColor,
+      strokeOpacity: 1,
+      strokeWeight: 2,
+      zIndex: 995,
+      map
+    });
+    relationshipNetworkState.overlays.push(glow, line, core);
 
     const selectedIsSource = String(rel.sourceId) === entityId;
     const otherType = selectedIsSource ? rel.targetType : rel.sourceType;
@@ -2928,25 +2962,60 @@ async function renderRelationshipNetwork(selection) {
     if (!other) return;
 
     const label = String(rel.relationshipType || '').replaceAll('_', ' ').toUpperCase();
-    const node = new google.maps.Marker({
-      position: { lat: other.lat, lng: other.lng },
+    const midpoint = {
+      lat: (source.lat + target.lat) / 2,
+      lng: (source.lng + target.lng) / 2
+    };
+
+    // A visible midpoint badge makes each relationship unmistakable even when
+    // its endpoints are close together or lie inside an entity boundary.
+    const badge = new google.maps.Marker({
+      position: midpoint,
       map,
-      zIndex: 90,
+      zIndex: 1010,
       title: label,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 7,
+        scale: 10,
         fillColor: style.strokeColor,
         fillOpacity: 1,
         strokeColor: '#ffffff',
-        strokeWeight: 2
+        strokeWeight: 3
+      },
+      label: {
+        text: '↔',
+        color: '#ffffff',
+        fontSize: '13px',
+        fontWeight: '800'
+      }
+    });
+
+    const node = new google.maps.Marker({
+      position: { lat: other.lat, lng: other.lng },
+      map,
+      zIndex: 1020,
+      title: label,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 11,
+        fillColor: style.strokeColor,
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 3
       },
       label: {
         text: label.length > 12 ? label.slice(0, 12) : label,
         color: '#ffffff',
         fontSize: '8px',
-        fontWeight: '700'
+        fontWeight: '800'
       }
+    });
+
+    badge.addListener('click', () => {
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend({ lat: source.lat, lng: source.lng });
+      bounds.extend({ lat: target.lat, lng: target.lng });
+      map.fitBounds(bounds, 80);
     });
     node.addListener('click', () => {
       if (otherType === 'farm') {
@@ -2958,7 +3027,7 @@ async function renderRelationshipNetwork(selection) {
         if (item) selectDynamicEntity(item, true);
       }
     });
-    relationshipNetworkState.overlays.push(node);
+    relationshipNetworkState.overlays.push(badge, node);
   });
 
   window.dispatchEvent(new CustomEvent('agworld:relationship-network-rendered', {
