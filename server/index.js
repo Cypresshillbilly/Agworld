@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import { registerV2RelationshipRoutes } from './v2-relationship-routes.js';
 
 const { Pool } = pg;
 const app = express();
@@ -8,6 +9,34 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: '2mb' }));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false } });
 const PORT = Number(process.env.PORT || 8080);
+
+// V2.6 Relationship Engine: register before feature routes so relationships are available to all entity types.
+registerV2RelationshipRoutes(app, pool);
+
+async function ensureV2RelationshipSchema() {
+  await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+  await pool.query(`CREATE TABLE IF NOT EXISTS entity_relationships (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    source_entity_id text NOT NULL,
+    source_entity_type text,
+    relationship_type text NOT NULL,
+    target_entity_id text NOT NULL,
+    target_entity_type text,
+    status text NOT NULL DEFAULT 'active',
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_by text,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CHECK (source_entity_id <> target_entity_id)
+  )`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_entity_relationships_source ON entity_relationships(source_entity_id)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_entity_relationships_target ON entity_relationships(target_entity_id)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_entity_relationships_type ON entity_relationships(relationship_type)');
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS uq_entity_relationship_active ON entity_relationships(source_entity_id, relationship_type, target_entity_id) WHERE status = 'active'`);
+  console.log('V2 relationship schema ready');
+}
+
+
 const allowedTypes = new Set(['crop-field','dam','building','tractor','drone','competitor-drone','livestock-area','irrigation']);
 const point = p => `SRID=4326;POINT(${Number(p.lng)} ${Number(p.lat)})`;
 const polygon = ring => { const coords=ring.map(p=>`${Number(p.lng)} ${Number(p.lat)}`).join(','); const first=ring[0],last=ring[ring.length-1]; const closed=first.lat===last.lat&&first.lng===last.lng; return `SRID=4326;POLYGON((${coords}${closed?'':`,${Number(first.lng)} ${Number(first.lat)}`}))`; };
@@ -24,4 +53,9 @@ app.get('/api/farms/:id',async(req,res)=>{try{const {rows}=await pool.query(`SEL
 app.post('/api/farms',async(req,res)=>{const f=farmPayload(req.body);const client=await pool.connect();try{await client.query('BEGIN');await client.query(`INSERT INTO farms(id,name,owner,region,status,boundary,center,annual_harvest,last_service,opportunity_score,source,notes) VALUES($1,$2,$3,$4,$5,ST_GeomFromText($6,4326),ST_GeomFromText($7,4326),$8,$9,$10,$11,$12)`,[f.id,f.name,f.owner||null,f.region||null,f.status||'Prospect',polygon(f.boundary),point(f.center),f.annualHarvest||null,f.lastService||null,Number(f.opportunityScore||0),f.source||'manual',f.notes||null]);for(const o of(f.objects||[])){if(!allowedTypes.has(o.type))throw new Error(`unsupported object type: ${o.type}`);if(!o.position)throw new Error('object position required');await client.query(`INSERT INTO farm_objects(id,farm_id,object_type,name,position,source,properties) VALUES($1,$2,$3,$4,ST_GeomFromText($5,4326),$6,$7)`,[o.id,f.id,o.type,o.name||null,point(o.position),o.source||'manual',o.properties||{}]);}await client.query(`INSERT INTO farm_audit(farm_id,action,actor_id,source,after_state) VALUES($1,'created',$2,$3,$4)`,[f.id,req.get('x-actor-id')||null,'api',f]);await client.query('COMMIT');res.status(201).json({id:f.id});}catch(e){await client.query('ROLLBACK');console.error(e);res.status(400).json({error:e.message});}finally{client.release();}});
 app.patch('/api/farms/:id',async(req,res)=>{const f=farmPayload({...req.body,id:req.params.id});const client=await pool.connect();try{await client.query('BEGIN');const old=await client.query('SELECT row_to_json(farms) state FROM farms WHERE id=$1',[req.params.id]);if(!old.rows[0])return res.status(404).json({error:'farm not found'});await client.query(`UPDATE farms SET name=$2,owner=$3,region=$4,status=$5,boundary=ST_GeomFromText($6,4326),center=ST_GeomFromText($7,4326),annual_harvest=$8,last_service=$9,opportunity_score=$10,notes=$11,updated_at=now() WHERE id=$1`,[req.params.id,f.name,f.owner||null,f.region||null,f.status||'Prospect',polygon(f.boundary),point(f.center),f.annualHarvest||null,f.lastService||null,Number(f.opportunityScore||0),f.notes||null]);await client.query(`INSERT INTO farm_audit(farm_id,action,actor_id,source,before_state,after_state) VALUES($1,'updated',$2,'api',$3,$4)`,[req.params.id,req.get('x-actor-id')||null,old.rows[0].state,f]);await client.query('COMMIT');res.json({id:req.params.id});}catch(e){await client.query('ROLLBACK');res.status(400).json({error:e.message});}finally{client.release();}});
 app.post('/api/farms/:id/objects',async(req,res)=>{const o=req.body;if(!allowedTypes.has(o.type)||!o.id||!o.position)return res.status(400).json({error:'valid id, type and position required'});try{await pool.query(`INSERT INTO farm_objects(id,farm_id,object_type,name,position,source,properties) VALUES($1,$2,$3,$4,ST_GeomFromText($5,4326),$6,$7)`,[o.id,req.params.id,o.type,o.name||null,point(o.position),o.source||'manual',o.properties||{}]);await pool.query(`INSERT INTO farm_audit(farm_id,action,actor_id,source,after_state) VALUES($1,'object_created',$2,'api',$3)`,[req.params.id,req.get('x-actor-id')||null,o]);res.status(201).json(o);}catch(e){res.status(400).json({error:e.message});}});
-app.listen(PORT,()=>console.log(`AG World API listening on ${PORT}`));
+ensureV2RelationshipSchema().then(() => {
+  app.listen(PORT,()=>console.log(`AG World API listening on ${PORT}`));
+}).catch(error => {
+  console.error('Failed to initialise V2 relationship schema', error);
+  process.exit(1);
+});
