@@ -239,18 +239,23 @@
   }
 
   function connect() {
+    // Farm Information panel action is owned by app-gis-loader-v24.js.
+    // Do NOT overwrite its label or click handler here. This module only keeps
+    // track of the selected farm for backwards-compatible visual functionality.
     const button=get('farm3d'); if(!button) return;
-    button.onclick=openVisualFarm;
-    button.textContent='OPEN INTERACTIVE FARM';
-    // app.js does not expose its selected farm; capture it whenever the farm card opens by observing its title.
     const card=get('farmCard');
+    if (!card || card.__agVisualObserverBound) return;
+    card.__agVisualObserverBound = true;
     const observer=new MutationObserver(()=>{
       const title=get('farmName')?.textContent;
       const farms=window.__AG_WORLD_FARMS||[];
       const found=farms.find(f=>f.name===title);
-      if(found) button.__agFarm=found;
+      if(found) {
+        button.__agFarm=found;
+        window.__AG_WORLD_SELECTED_FARM=found;
+      }
     });
-    if(card) observer.observe(card,{subtree:true,childList:true,characterData:true});
+    observer.observe(card,{subtree:true,childList:true,characterData:true});
   }
 
   window.addEventListener('resize',()=>{
