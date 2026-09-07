@@ -221,14 +221,16 @@
 
     if (!farm || !contractor) return;
 
+    // Compare renderer health, not raw relationship totals. Farm and Contractor
+    // can legitimately have different numbers of connections.
     const checks = [
       ['map.exists', farm.map.exists, contractor.map.exists],
       ['map.isCanonicalMap', farm.map.isCanonicalMap, contractor.map.isCanonicalMap],
-      ['relationshipCount', farm.relationshipCount, contractor.relationshipCount],
-      ['resolvedCount', farm.resolvedCount, contractor.resolvedCount],
-      ['candidateResolution', JSON.stringify(farm.candidates.map(x => [x.sourceResolved, x.targetResolved])), JSON.stringify(contractor.candidates.map(x => [x.sourceResolved, x.targetResolved]))],
-      ['overlayCount', farm.overlayCount, contractor.overlayCount],
-      ['allOverlaysAttached', farm.allOverlaysAttached, contractor.allOverlaysAttached]
+      ['selectedCoordinatesPresent', !!farm.selectedCoordinates, !!contractor.selectedCoordinates],
+      ['allCandidatesResolved', farm.candidates.every(x => x.sourceResolved && x.targetResolved), contractor.candidates.every(x => x.sourceResolved && x.targetResolved)],
+      ['overlaysPerResolvedRelationship', farm.resolvedCount ? farm.overlayCount / farm.resolvedCount : 0, contractor.resolvedCount ? contractor.overlayCount / contractor.resolvedCount : 0],
+      ['allOverlaysAttached', farm.allOverlaysAttached, contractor.allOverlaysAttached],
+      ['selectionMarkerOnResolvedMap', farm.map.isSelectionMarkerMap, contractor.map.isSelectionMarkerMap]
     ];
 
     const firstDifference = checks.find(item => item[1] !== item[2]) || null;
