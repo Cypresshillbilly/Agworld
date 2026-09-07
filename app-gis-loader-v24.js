@@ -1258,6 +1258,19 @@ function wizardBaseFarm() {
     name: $('newFarmName').value.trim() || existing?.name || '',
     owner: $('newFarmOwner').value.trim() || existing?.owner || '',
     region: $('newFarmRegion').value.trim() || existing?.region || '',
+    country: $('newFarmCountry')?.value.trim() || existing?.country || '',
+    province: $('newFarmProvince')?.value.trim() || existing?.province || '',
+    municipality: $('newFarmMunicipality')?.value.trim() || existing?.municipality || '',
+    djiRegion: $('newFarmDjiRegion')?.value.trim() || existing?.djiRegion || '',
+    nearestTown: $('newFarmNearestTown')?.value.trim() || existing?.nearestTown || '',
+    ownerCell: $('newFarmOwnerCell')?.value.trim() || existing?.ownerCell || '',
+    ownerEmail: $('newFarmOwnerEmail')?.value.trim() || existing?.ownerEmail || '',
+    accountsManager: $('newFarmAccountsManager')?.value.trim() || existing?.accountsManager || '',
+    accountsManagerCell: $('newFarmAccountsManagerCell')?.value.trim() || existing?.accountsManagerCell || '',
+    accountsManagerEmail: $('newFarmAccountsManagerEmail')?.value.trim() || existing?.accountsManagerEmail || '',
+    cropsOnFarm: $('newFarmCropsOnFarm')?.value.trim() || existing?.cropsOnFarm || '',
+    equipmentOnFarm: $('newFarmEquipmentOnFarm')?.value.trim() || existing?.equipmentOnFarm || '',
+    equipmentStatus: $('newFarmEquipmentStatus')?.value.trim() || existing?.equipmentStatus || '',
     status: $('newFarmStatus').value || existing?.status || 'Prospect',
     annualHarvest: $('newFarmHarvest').value.trim() || existing?.annualHarvest || '',
     lastService: $('newFarmService').value.trim() || existing?.lastService || '',
@@ -1328,12 +1341,10 @@ function openCreateFarm() {
   placingObjectType = null;
   resetCreateForm();
   farmWizardDraftId = null;
-  showFarmWizardStep(1);
-  $('farmCreateModal').classList.add('show');
-  $('boundaryStatus').textContent = 'No boundary created.';
-  $('objectStatus').textContent = 'Draw a boundary first, then choose an object type.';
-  $('farmCreateModal').querySelector('.farm3d-head strong').textContent = 'CREATE FARM';
-  toast('Create Farm mode ready');
+  $('farmCreateModal').classList.remove('show');
+
+  // Step 1 is now map-first: CREATE FARM immediately enters boundary mode.
+  startBoundary();
 }
 
 function openEditFarm(farm) {
@@ -1342,8 +1353,21 @@ function openEditFarm(farm) {
   creatingFarm = false;
   newBoundary = (farm.boundary || []).map(p => ({ lat: Number(p.lat), lng: Number(p.lng) }));
   draftObjects = JSON.parse(JSON.stringify(farm.objects || []));
+  $('newFarmCountry').value = farm.country || '';
+  $('newFarmProvince').value = farm.province || '';
+  $('newFarmMunicipality').value = farm.municipality || '';
+  $('newFarmDjiRegion').value = farm.djiRegion || '';
+  $('newFarmNearestTown').value = farm.nearestTown || '';
   $('newFarmName').value = farm.name || '';
   $('newFarmOwner').value = farm.owner || '';
+  $('newFarmOwnerCell').value = farm.ownerCell || '';
+  $('newFarmOwnerEmail').value = farm.ownerEmail || '';
+  $('newFarmAccountsManager').value = farm.accountsManager || '';
+  $('newFarmAccountsManagerCell').value = farm.accountsManagerCell || '';
+  $('newFarmAccountsManagerEmail').value = farm.accountsManagerEmail || '';
+  $('newFarmCropsOnFarm').value = farm.cropsOnFarm || '';
+  $('newFarmEquipmentOnFarm').value = farm.equipmentOnFarm || '';
+  $('newFarmEquipmentStatus').value = farm.equipmentStatus || '';
   $('newFarmRegion').value = farm.region || '';
   $('newFarmStatus').value = farm.status || 'Prospect';
   $('newFarmHarvest').value = farm.annualHarvest || '';
@@ -1389,6 +1413,7 @@ function startBoundary() {
     renderDraftBoundary();
     $('mapStatus').textContent = `DRAWING MODE · ${newBoundary.length} boundary points · zoom freely and continue clicking`;
   });
+  showBoundaryContinueControl();
   toast('Boundary mode active · zoom freely and click each farm corner');
 }
 
@@ -1401,13 +1426,51 @@ function renderDraftBoundary() {
   $('mapStatus').textContent = `DRAWING MODE · ${newBoundary.length} boundary points`;
 }
 
-function finishBoundary() {
-  if (newBoundary.length < 3) { toast('A farm boundary needs at least 3 points.'); return; }
+function removeBoundaryContinueControl() {
+  document.getElementById('farmBoundaryContinueControl')?.remove();
+}
+
+function showBoundaryContinueControl() {
+  removeBoundaryContinueControl();
+  const control = document.createElement('div');
+  control.id = 'farmBoundaryContinueControl';
+  control.style.cssText = 'position:absolute;top:72px;left:50%;transform:translateX(-50%);z-index:1400;display:flex;gap:8px;padding:8px;background:rgba(8,18,22,.92);border:1px solid rgba(151,204,76,.55);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.35)';
+  control.innerHTML = '<button type="button" id="saveBoundaryContinueMap" style="background:#9dcc38;color:#10200d;border:0;border-radius:5px;padding:10px 16px;font-weight:900;letter-spacing:.6px;cursor:pointer">SAVE BOUNDARY & CONTINUE</button><button type="button" id="clearBoundaryMap" style="background:#18242a;color:#fff;border:1px solid #52626a;border-radius:5px;padding:10px 12px;font-weight:700;cursor:pointer">CLEAR</button>';
+  const host = $('map')?.parentElement || document.body;
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  host.appendChild(control);
+  $('saveBoundaryContinueMap').onclick = finishBoundary;
+  $('clearBoundaryMap').onclick = () => { clearBoundary(); startBoundary(); };
+}
+
+async function finishBoundary() {
+  if (newBoundary.length < 3) { toast('A farm boundary needs at least 3 points.'); return false; }
   if (drawListener) google.maps.event.removeListener(drawListener);
   drawListener = null;
   creatingFarm = false;
   placingObjectType = null;
-  // Re-enable territory/farm interaction only after boundary capture is finished.
+
+  const controlButton = $('saveBoundaryContinueMap');
+  if (controlButton) { controlButton.disabled = true; controlButton.textContent = 'SAVING BOUNDARY…'; }
+
+  try {
+    const saved = await saveFarmWizardStep(1);
+    if (!saved) {
+      creatingFarm = true;
+      startBoundary();
+      return false;
+    }
+  } catch (error) {
+    console.error('Boundary continue save failed', error);
+    toast('Could not save boundary: ' + (error?.message || 'Unknown error'));
+    creatingFarm = true;
+    startBoundary();
+    return false;
+  } finally {
+    if (controlButton) { controlButton.disabled = false; controlButton.textContent = 'SAVE BOUNDARY & CONTINUE'; }
+  }
+
+  // Re-enable territory/farm interaction only after the shared database confirms Step 1.
   farms.forEach(f => {
     if (f._polygon) f._polygon.setOptions({ clickable: true });
     if (f._marker) f._marker.setClickable(true);
@@ -1418,14 +1481,19 @@ function finishBoundary() {
   });
   map.setOptions({ draggableCursor: null, clickableIcons: true });
   refreshMapVisibility();
+  removeBoundaryContinueControl();
+
+  $('boundaryStatus').textContent = `Boundary saved · ${newBoundary.length} points`;
+  $('objectStatus').textContent = 'Select farm assets in Step 3 after capturing the farm information.';
+  showFarmWizardStep(2);
+  $('farmCreateModal').querySelector('.farm3d-head strong').textContent = 'CAPTURE FARM INFORMATION';
   $('farmCreateModal').classList.add('show');
-  $('boundaryStatus').textContent = `Boundary captured · ${newBoundary.length} points`;
-  $('objectStatus').textContent = 'Choose an object type, then click its position on the map.';
-  renderObjectEditor();
-  toast('Boundary captured');
+  toast('Boundary saved · continue with Step 2');
+  return true;
 }
 
 function clearBoundary() {
+  removeBoundaryContinueControl();
   newBoundary = [];
   draftObjects = [];
   placingObjectType = null;
@@ -1679,7 +1747,7 @@ async function saveFarm() {
 }
 
 function resetCreateForm() {
-  ['newFarmName', 'newFarmOwner', 'newFarmRegion', 'newFarmHarvest', 'newFarmService', 'newFarmNotes'].forEach(id => { if ($(id)) $(id).value = ''; });
+  ['newFarmCountry','newFarmProvince','newFarmMunicipality','newFarmDjiRegion','newFarmNearestTown','newFarmName','newFarmOwner','newFarmOwnerCell','newFarmOwnerEmail','newFarmAccountsManager','newFarmAccountsManagerCell','newFarmAccountsManagerEmail','newFarmCropsOnFarm','newFarmEquipmentOnFarm','newFarmEquipmentStatus','newFarmRegion','newFarmHarvest','newFarmService','newFarmNotes'].forEach(id => { if ($(id)) $(id).value = ''; });
   if ($('newFarmStatus')) $('newFarmStatus').value = 'Prospect';
   draftObjects = [];
   renderObjectEditor();
