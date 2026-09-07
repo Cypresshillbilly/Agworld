@@ -39,7 +39,8 @@
     panel.id = 'agworldV2FarmDetailHost';
     panel.style.cssText = 'position:absolute;right:22px;top:92px;width:min(420px,calc(100vw - 44px));max-height:calc(100vh - 120px);overflow:auto;z-index:1500;display:none;background:rgba(10,18,22,.98);border:1px solid rgba(0,184,217,.65);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);color:#f4f7f1;';
     document.body.appendChild(panel);
-    const relationshipRepository = new global.AGWorldV2.RelationshipRepository({ baseUrl: (global.AG_WORLD_API?.baseUrl || '') + '/api/v2/relationships' });
+    const apiBase = global.AG_WORLD_API?.baseUrl || global.AGWORLD_API_BASE_URL || 'https://ag-world-api.onrender.com';
+    const relationshipRepository = new global.AGWorldV2.RelationshipRepository({ baseUrl: apiBase.replace(/\\/$/, '') + '/api/v2/relationships' });
     const detailPanel = new FarmDetailPanelV2({ container: panel, relationshipRepository });
     const originalClose = detailPanel.close.bind(detailPanel);
     detailPanel.close = () => { originalClose(); panel.style.display = 'none'; };
