@@ -16,6 +16,7 @@
     tabs() {
       return [
         ['details', 'Entity Details'],
+        ['intelligence', 'Intelligence'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
@@ -88,6 +89,21 @@
       #agworldV2FarmDetailHost .agworld-v2-detail-content dl{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0}
       #agworldV2FarmDetailHost .agworld-v2-detail-content dt{font-weight:700;color:#63747c}
       #agworldV2FarmDetailHost .agworld-v2-detail-content dd{margin:0;text-align:right;color:#26343d}
+      #agworldV2FarmDetailHost .agworld-intelligence-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
+      #agworldV2FarmDetailHost .agworld-intelligence-toolbar strong{font-size:9px;letter-spacing:.5px;color:#36515a}
+      #agworldV2FarmDetailHost .agworld-intelligence-toolbar button,#agworldV2FarmDetailHost .agworld-intelligence-metrics>button,#agworldV2FarmDetailHost .agworld-intelligence-form button,#agworldV2FarmDetailHost .agworld-intelligence-add button{width:auto;margin:0;padding:5px 8px;background:#168aa0;color:#fff;border:1px solid #168aa0;border-radius:4px;font-size:8px;font-weight:700}
+      #agworldV2FarmDetailHost .agworld-metric-row{margin:7px 0}
+      #agworldV2FarmDetailHost .agworld-metric-head{display:flex;justify-content:space-between;font-size:8px;color:#53666e;margin-bottom:3px}
+      #agworldV2FarmDetailHost .agworld-metric-bar{height:6px;background:#e5edef;border-radius:4px;overflow:hidden}
+      #agworldV2FarmDetailHost .agworld-metric-bar i{display:block;height:100%;background:#168aa0;border-radius:4px}
+      #agworldV2FarmDetailHost .agworld-intelligence-list{display:grid;gap:6px}
+      #agworldV2FarmDetailHost .agworld-intelligence-item{padding:7px;border:1px solid #dce7e9;border-radius:5px;background:#fff;font-size:8px}
+      #agworldV2FarmDetailHost .agworld-intelligence-item small{display:block;margin-top:3px;color:#819198}
+      #agworldV2FarmDetailHost .agworld-intelligence-item button{float:right;width:auto;margin:3px 0 0;padding:3px 6px;background:#fff;color:#8a5a5a;border:1px solid #e6caca;border-radius:4px;font-size:8px}
+      #agworldV2FarmDetailHost .agworld-intelligence-form,#agworldV2FarmDetailHost .agworld-intelligence-add{display:grid;gap:7px}
+      #agworldV2FarmDetailHost .agworld-intelligence-form label{display:grid;grid-template-columns:1fr 58px;align-items:center;gap:8px;font-size:8px;font-weight:700;color:#53666e}
+      #agworldV2FarmDetailHost .agworld-intelligence-form input,#agworldV2FarmDetailHost .agworld-intelligence-add textarea{width:100%;box-sizing:border-box;padding:5px;border:1px solid #d6e1e4;border-radius:4px;background:#fff;color:#26343d;font:inherit;font-size:8px}
+      #agworldV2FarmDetailHost .agworld-intelligence-add textarea{resize:vertical}
       #agworldV2FarmDetailHost .agworld-relationship-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
       #agworldV2FarmDetailHost .agworld-relationship-toolbar strong{font-size:9px;color:#36515a;letter-spacing:.4px}
       #agworldV2FarmDetailHost .agworld-relationship-toolbar button,#agworldV2FarmDetailHost .agworld-relationship-form-actions button{width:auto;margin:0;padding:5px 8px;background:#168aa0;color:#fff;border:1px solid #168aa0;border-radius:4px;font-size:8px;font-weight:700}
@@ -202,6 +218,7 @@
     tabs() {
       return [
         ['details', 'Entity Details'],
+        ['intelligence', 'Intelligence'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
