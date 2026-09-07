@@ -2811,6 +2811,174 @@ function selectDynamicEntity(entity, zoom = true) {
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
 
+
+// V2 Relationship Network Layer. The network is derived only from active
+// relationship records; it is never hard-coded into the map.
+const relationshipNetworkState = {
+  overlays: [],
+  selectedEntity: null,
+  requestVersion: 0
+};
+
+function clearRelationshipNetwork() {
+  relationshipNetworkState.overlays.forEach(overlay => {
+    try { overlay.setMap(null); } catch (_) {}
+  });
+  relationshipNetworkState.overlays = [];
+}
+
+function networkEntityKey(type, id) {
+  return String(type || 'farm') + ':' + String(id || '');
+}
+
+function normaliseRelationshipRecord(r) {
+  const value = (camel, snake) => r?.[camel] ?? r?.[snake];
+  return {
+    id: r?.id,
+    sourceId: value('sourceEntityId', 'source_entity_id'),
+    sourceType: value('sourceEntityType', 'source_entity_type') || 'farm',
+    targetId: value('targetEntityId', 'target_entity_id'),
+    targetType: value('targetEntityType', 'target_entity_type') || 'farm',
+    relationshipType: value('relationshipType', 'relationship_type') || 'works_with',
+    status: String(r?.status || 'active').toLowerCase(),
+    metadata: r?.metadata || {}
+  };
+}
+
+function entityPositionForNetwork(type, id) {
+  const wantedId = String(id);
+  const normalType = type === 'company_facility' ? 'companyFacility' : type;
+
+  if (normalType === 'farm') {
+    const farm = farms.find(item => String(item.id) === wantedId);
+    if (!farm) return null;
+    const point = farm.center || (farm.boundary?.length ? centroid(farm.boundary) : null);
+    return point ? { lat: Number(point.lat), lng: Number(point.lng), entity: farm } : null;
+  }
+
+  const arrays = {
+    contractor: contractors,
+    competitor: competitors,
+    companyFacility: companyFacilities
+  };
+  const item = (arrays[normalType] || []).find(row => String(row.id) === wantedId);
+  if (!item || !Number.isFinite(Number(item.lat)) || !Number.isFinite(Number(item.lng))) return null;
+  return { lat: Number(item.lat), lng: Number(item.lng), entity: item };
+}
+
+function relationshipNetworkStyle(type) {
+  const styles = {
+    works_with: { strokeColor: '#39b7c9', icons: [] },
+    supported_by: { strokeColor: '#6f8f3d', icons: [] },
+    supplies: { strokeColor: '#d7e66b', icons: [] },
+    serves: { strokeColor: '#69a7d4', icons: [] },
+    competes_with: { strokeColor: '#e37a5f', icons: [] },
+    owned_by: { strokeColor: '#a486d8', icons: [] },
+    manages: { strokeColor: '#f0b44d', icons: [] },
+    partnered_with: { strokeColor: '#8fb339', icons: [] }
+  };
+  return styles[type] || { strokeColor: '#9aa9af', icons: [] };
+}
+
+async function renderRelationshipNetwork(selection) {
+  if (!map || !selection?.id) return;
+  const requestVersion = ++relationshipNetworkState.requestVersion;
+  relationshipNetworkState.selectedEntity = selection;
+  clearRelationshipNetwork();
+
+  const db = getFarmDb();
+  if (!db) return;
+
+  const entityId = String(selection.id);
+  const result = await db
+    .from('entity_relationships')
+    .select('*')
+    .eq('status', 'active')
+    .or('source_entity_id.eq.' + entityId + ',target_entity_id.eq.' + entityId);
+
+  if (requestVersion !== relationshipNetworkState.requestVersion || result.error) return;
+
+  (result.data || []).map(normaliseRelationshipRecord).forEach(rel => {
+    const source = entityPositionForNetwork(rel.sourceType, rel.sourceId);
+    const target = entityPositionForNetwork(rel.targetType, rel.targetId);
+    if (!source || !target) return;
+
+    const style = relationshipNetworkStyle(rel.relationshipType);
+    const line = new google.maps.Polyline({
+      path: [{ lat: source.lat, lng: source.lng }, { lat: target.lat, lng: target.lng }],
+      geodesic: true,
+      strokeColor: style.strokeColor,
+      strokeOpacity: .9,
+      strokeWeight: 3,
+      zIndex: 85,
+      map
+    });
+    relationshipNetworkState.overlays.push(line);
+
+    const selectedIsSource = String(rel.sourceId) === entityId;
+    const otherType = selectedIsSource ? rel.targetType : rel.sourceType;
+    const otherId = selectedIsSource ? rel.targetId : rel.sourceId;
+    const other = entityPositionForNetwork(otherType, otherId);
+    if (!other) return;
+
+    const label = String(rel.relationshipType || '').replaceAll('_', ' ').toUpperCase();
+    const node = new google.maps.Marker({
+      position: { lat: other.lat, lng: other.lng },
+      map,
+      zIndex: 90,
+      title: label,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 7,
+        fillColor: style.strokeColor,
+        fillOpacity: 1,
+        strokeColor: '#ffffff',
+        strokeWeight: 2
+      },
+      label: {
+        text: label.length > 12 ? label.slice(0, 12) : label,
+        color: '#ffffff',
+        fontSize: '8px',
+        fontWeight: '700'
+      }
+    });
+    node.addListener('click', () => {
+      if (otherType === 'farm') {
+        const farm = farms.find(item => String(item.id) === String(otherId));
+        if (farm) selectFarm(farm, true);
+      } else {
+        const dynamicType = otherType === 'company_facility' ? 'companyFacility' : otherType;
+        const item = (dynamicArray(dynamicType) || []).find(row => String(row.id) === String(otherId));
+        if (item) selectDynamicEntity(item, true);
+      }
+    });
+    relationshipNetworkState.overlays.push(node);
+  });
+
+  window.dispatchEvent(new CustomEvent('agworld:relationship-network-rendered', {
+    detail: { entityId, count: relationshipNetworkState.overlays.length }
+  }));
+}
+
+function scheduleRelationshipNetwork(selection) {
+  setTimeout(() => renderRelationshipNetwork(selection).catch(error => {
+    console.warn('Relationship network render failed', error);
+  }), 0);
+}
+
+window.addEventListener('agworld:farm-selected', event => {
+  const farm = event?.detail?.farm;
+  if (farm) scheduleRelationshipNetwork({ id: farm.id, type: 'farm' });
+});
+window.addEventListener('agworld:dynamic-entity-selected', event => {
+  const entity = event?.detail?.entity;
+  if (entity) scheduleRelationshipNetwork({
+    id: entity.id,
+    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type
+  });
+});
+window.addEventListener('agworld:farm-selection-cleared', clearRelationshipNetwork);
+
 async function loadDynamicLayer(type) {
   const cfg = DYNAMIC_LAYER_CONFIG[type];
   const db = getFarmDb();
