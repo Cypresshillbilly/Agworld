@@ -2835,17 +2835,36 @@ function selectDynamicEntity(entity, zoom = true) {
     if (entity._marker) entity._marker.setMap(map);
   }
 
-  // Emit the canonical V2 selection signal first, then the compatibility
-  // signal used elsewhere in the current UI. This is the same selection route
-  // regardless of whether the entity was clicked on the map, card, or detail UI.
+  // IMPORTANT: the working relationship-card navigation reaches the renderer
+  // through the V2 detail selection lifecycle. Direct map-icon selection must
+  // enter that same lifecycle, not merely emit a map-level compatibility event.
+  const openV2Dynamic = () => {
+    try {
+      if (typeof window.openV2EntityDetail === 'function') {
+        window.openV2EntityDetail(entity);
+        return true;
+      }
+      if (typeof window.openV2DynamicEntityDetail === 'function') {
+        window.openV2DynamicEntityDetail(entity);
+        return true;
+      }
+      window.dispatchEvent(new CustomEvent('agworld:v2-open-live-entity', { detail: { entity } }));
+      return false;
+    } catch (error) {
+      console.error('[AG World V2] Dynamic entity bridge attempt failed', error);
+      return false;
+    }
+  };
+
+  // Enter the canonical V2 detail lifecycle first. This preserves the existing
+  // Farm-card relationship navigation behaviour and makes a direct marker click
+  // arrive at the same selection/render route.
+  openV2Dynamic();
+
+  // Keep compatibility events for existing listeners, but publish them after
+  // the canonical detail bridge has had the opportunity to establish selection.
   window.dispatchEvent(new CustomEvent('agworld:v2-entity-selected', { detail: { entity } }));
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
-
-  // Do not call the older in-loader relationship scheduler here. The canonical
-  // V2 renderer owns the overlay lifecycle for every entity type. Calling both
-  // renderers from a dynamic marker click creates two asynchronous render paths
-  // and is precisely why a dynamic entity can show relationship data while the
-  // visual links disappear. The selection events above are now the only trigger.
 
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
