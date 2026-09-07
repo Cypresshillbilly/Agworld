@@ -1243,24 +1243,55 @@ function wizardBaseFarm() {
   };
 }
 async function saveFarmWizardStep(step) {
-  if (step === 1 && newBoundary.length < 3) { toast('Select and finish a boundary with at least 3 points.'); return false; }
-  if (step === 2 && !$('newFarmName').value.trim()) { toast('Enter a farm name before saving farm information.'); return false; }
-  const farm = wizardBaseFarm();
-  farmWizardDraftId = farm.id;
-  const existingIndex = farms.findIndex(f => String(f.id) === String(farm.id));
-  if (existingIndex >= 0) farms[existingIndex] = { ...farms[existingIndex], ...farm };
-  else farms.push(farm);
-  window.__AG_WORLD_FARMS = farms;
-  saveLocal();
-  // Save each completed step to the database immediately.
-  try {
-    await saveFarmToDatabase(farm, existingIndex >= 0 ? cleanFarm(farms[existingIndex]) : null);
-  } catch (error) {
-    console.error('Wizard step database save failed', error);
-    toast('Step saved locally, but database save failed.');
+  if (step === 1 && newBoundary.length < 3) {
+    toast('Select and finish a boundary with at least 3 points.');
     return false;
   }
-  toast(step === 1 ? 'Boundary saved' : step === 2 ? 'Farm information saved' : 'Farm assets saved');
+  if (step === 2 && !$('newFarmName').value.trim()) {
+    toast('Enter a farm name before saving farm information.');
+    return false;
+  }
+
+  const farm = wizardBaseFarm();
+  farmWizardDraftId = farm.id;
+
+  // Step 1 happens before the user has entered a farm name. The shared farms
+  // table requires a name, so persist the boundary as a real database draft
+  // instead of allowing the insert to fail and silently block SAVE & NEXT.
+  if (step === 1 && !String(farm.name || '').trim()) {
+    farm.name = `Untitled Farm ${String(farm.id).replace(/^farm-user-/, '').slice(-8)}`;
+  }
+
+  const existingIndex = farms.findIndex(f => String(f.id) === String(farm.id));
+  const beforeState = existingIndex >= 0
+    ? JSON.parse(JSON.stringify(cleanFarm(farms[existingIndex])))
+    : null;
+
+  if (existingIndex >= 0) {
+    farms[existingIndex] = { ...farms[existingIndex], ...farm };
+  } else {
+    farms.push(farm);
+  }
+
+  window.__AG_WORLD_FARMS = farms;
+  saveLocal();
+
+  // Each wizard step is persisted immediately. SAVE & NEXT only advances after
+  // the shared backend confirms the step, so the next player can see it too.
+  try {
+    await saveFarmToDatabase(farm, beforeState);
+  } catch (error) {
+    console.error('Wizard step database save failed', error);
+    const detail = error?.message || error?.details || 'Unknown database error';
+    toast(`Step was not saved to the shared database: ${detail}`);
+    return false;
+  }
+
+  toast(step === 1
+    ? 'Boundary saved to the shared farm database'
+    : step === 2
+      ? 'Farm information saved to the shared farm database'
+      : 'Farm assets saved to the shared farm database');
   return true;
 }
 
