@@ -189,8 +189,10 @@
     }
 
     const entityId = String(selection.id);
+    const entityType = canonicalType(selection.type);
     const relationships = (data || []).map(normalise).filter(rel =>
-      String(rel.sourceId) === entityId || String(rel.targetId) === entityId
+      (String(rel.sourceId) === entityId && canonicalType(rel.sourceType) === entityType) ||
+      (String(rel.targetId) === entityId && canonicalType(rel.targetType) === entityType)
     );
 
     const candidates = relationships.map(rel => ({
@@ -199,27 +201,37 @@
       target: position(rel.targetType, rel.targetId, selection)
     }));
     const resolved = candidates.filter(item => item.source && item.target);
+    const unresolved = candidates.filter(item => !item.source || !item.target);
 
     // Dynamic layers can still be hydrating when their selection event fires.
     // Do not clear a valid network with an empty transient result; retry from
     // the exact same canonical selection after the layer/markers are ready.
-    if (relationships.length && !resolved.length) {
+    if (relationships.length && unresolved.length) {
       global.__AGWORLD_RELATIONSHIP_DEBUG__ = {
         entityId,
-        entityType: canonicalType(selection.type),
+        entityType,
         relationshipCount: relationships.length,
-        resolvedCount: 0,
+        resolvedCount: resolved.length,
+        unresolved: unresolved.map(item => ({
+          source: item.source ? null : canonicalType(item.rel.sourceType) + ':' + item.rel.sourceId,
+          target: item.target ? null : canonicalType(item.rel.targetType) + ':' + item.rel.targetId
+        })),
         overlayCount: state.overlays.length,
         waitingForPositions: true,
         timestamp: Date.now(),
         canonical: true
       };
-      if ((attempt || 0) < 12) {
+      // Dynamic endpoints are refreshed independently from the card selection.
+      // Keep retrying the same canonical selection until every endpoint has a
+      // live position; do not clear the network while the refresh is transient.
+      if ((attempt || 0) < 20) {
         setTimeout(() => {
           if (request === state.request) render(selection, (attempt || 0) + 1).catch(console.warn);
-        }, 220);
+        }, 180);
       }
-      return;
+      // If some links are already resolvable, draw them now. If none are
+      // resolved, preserve the current network until the retry succeeds.
+      if (!resolved.length) return;
     }
 
     // Clear only when this latest selection has a usable render result.
