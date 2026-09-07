@@ -385,6 +385,89 @@
   // Backwards-compatible bridge for older callers.
   global.addEventListener('agworld:v2-open-live-farm', e => global.openV2FarmDetail(e.detail));
 
+  // Last-resort canonical V2 host watchdog.
+  // The GIS runtime owns the visible Farm Card and can replace its innerHTML
+  // after a selection event has already fired. When that happens, the static
+  // "Preparing connected entity data…" fallback can remain visible even though
+  // the V2 bridge itself is ready. Re-open from the current canonical runtime
+  // selection whenever that fallback is detected. This applies equally to
+  // Farms, Contractors, Competitors and Company Facilities.
+  let v2HostWatchdogScheduled = false;
+
+  function dynamicEntityFromRuntimeSelection() {
+    const selection = global.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+    if (!selection?.entityId) return null;
+
+    const world = global.AG_WORLD_WORLD || {};
+    const canonicalType = selection.entityType === 'companyFacility'
+      ? 'companyFacility'
+      : selection.entityType;
+    const sources = canonicalType === 'contractor'
+      ? [world.getContractors?.(), global.__AG_WORLD_CONTRACTORS]
+      : canonicalType === 'competitor'
+        ? [world.getCompetitors?.(), global.__AG_WORLD_COMPETITORS]
+        : [world.getCompanyFacilities?.(), global.__AG_WORLD_COMPANY_FACILITIES];
+
+    for (const source of sources) {
+      const list = Array.isArray(source) ? source : [];
+      const entity = list.find(item => String(item?.id) === String(selection.entityId));
+      if (entity) return entity;
+    }
+    return null;
+  }
+
+  function v2HostNeedsRecovery() {
+    const host = document.getElementById('agworldV2FarmDetailHost');
+    if (!host) return false;
+    const text = String(host.textContent || '');
+    return /Preparing connected entity data|Connecting entity and relationship data|V2 is still initialising/i.test(text);
+  }
+
+  function recoverCanonicalV2Host() {
+    if (!v2HostNeedsRecovery()) return;
+
+    const farmSelection = global.__AGWORLD_RUNTIME_FARM_SELECTION_V2__;
+    if (farmSelection?.farmId) {
+      const world = global.AG_WORLD_WORLD || {};
+      const farms = global.__AG_WORLD_FARMS || world.farms || world.getFarms?.() || [];
+      const farm = (Array.isArray(farms) ? farms : []).find(item => String(item?.id) === String(farmSelection.farmId));
+      if (farm && typeof global.openV2FarmDetail === 'function') {
+        global.openV2FarmDetail(farm);
+        return;
+      }
+    }
+
+    const dynamicEntity = dynamicEntityFromRuntimeSelection();
+    if (dynamicEntity && typeof global.openV2DynamicEntityDetail === 'function') {
+      global.openV2DynamicEntityDetail(dynamicEntity, 0, dynamicSelectionToken);
+    }
+  }
+
+  function scheduleCanonicalV2Recovery() {
+    if (v2HostWatchdogScheduled) return;
+    v2HostWatchdogScheduled = true;
+    setTimeout(() => {
+      v2HostWatchdogScheduled = false;
+      recoverCanonicalV2Host();
+    }, 0);
+  }
+
+  global.addEventListener('agworld:farm-selected', () => {
+    [0, 80, 220, 600].forEach(delay => setTimeout(recoverCanonicalV2Host, delay));
+  });
+  global.addEventListener('agworld:dynamic-entity-selected', () => {
+    [0, 120, 260, 650].forEach(delay => setTimeout(recoverCanonicalV2Host, delay));
+  });
+
+  const watchV2Host = () => {
+    const card = document.getElementById('farmCard');
+    if (!card || typeof MutationObserver === 'undefined') return;
+    const observer = new MutationObserver(() => {
+      if (v2HostNeedsRecovery()) scheduleCanonicalV2Recovery();
+    });
+    observer.observe(card, { childList:true, subtree:true, characterData:true });
+  };
+
   const initialiseLiveBridge = () => {
     installLiveBridge();
 
