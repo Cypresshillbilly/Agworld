@@ -340,13 +340,31 @@ function seedDemoFarms() {
     const municipality = municipalities[(i * 37 + 11) % municipalities.length];
     demos.push(createDemoFarm(i, municipality));
   }
-  farms = [...existing, ...demos];
+  // Reapply persisted local edits and shared-world patches onto the freshly
+  // generated demo records. Demo seeding must never erase an authenticated
+  // player's saved farm changes.
+  let localById = new Map(), sharedById = new Map();
+  try {
+    const saved = JSON.parse(localStorage.getItem('agworld-farms-v2') || '[]');
+    localById = new Map((Array.isArray(saved) ? saved : []).map(f => [String(f?.id), f]));
+  } catch (_) {}
+  try {
+    const shared = JSON.parse(localStorage.getItem('agworld-shared-farm-patches-v1') || '{}');
+    sharedById = new Map(Object.entries(shared || {}));
+  } catch (_) {}
+  farms = [...existing, ...demos].map(baseFarm => {
+    const id = String(baseFarm.id);
+    const local = localById.get(id);
+    const shared = sharedById.get(id);
+    // Shared state wins over an older local copy.
+    return { ...baseFarm, ...(local || {}), ...(shared || {}) };
+  });
   // Publish the authoritative demo dataset for other map modules.
   window.__AG_WORLD_FARMS = farms;
-  localStorage.setItem('agworld-demo-farms-v1', JSON.stringify(demos));
+  localStorage.setItem('agworld-demo-farms-v1', JSON.stringify(farms.map(cleanFarm)));
   window.dispatchEvent(new CustomEvent('agworld:farms-reset'));
   initialiseGameTerritories();
-  return demos;
+  return farms;
 }
 
 async function loadFarms() {
