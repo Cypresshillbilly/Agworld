@@ -1804,11 +1804,52 @@ $('closeCreateFarm').onclick = closeCreateFarm;
 $('startBoundary').onclick = startBoundary;
 $('finishBoundary').onclick = finishBoundary;
 $('clearBoundary').onclick = clearBoundary;
-$('saveBoundaryStep').onclick = async () => { await saveFarmWizardStep(1); };
-$('nextBoundaryStep').onclick = async () => { if (await saveFarmWizardStep(1)) showFarmWizardStep(2); };
-$('saveInfoStep').onclick = async () => { await saveFarmWizardStep(2); };
-$('nextInfoStep').onclick = async () => { if (await saveFarmWizardStep(2)) showFarmWizardStep(3); };
-$('saveAssetsStep').onclick = async () => { await saveFarmWizardStep(3); };
+// Wizard buttons are explicit button actions (never form submits). Keep the
+// click flow visible and robust even if the modal is embedded by another shell.
+['saveBoundaryStep','nextBoundaryStep','saveInfoStep','nextInfoStep','saveAssetsStep'].forEach(id => {
+  const button = $(id);
+  if (button) button.type = 'button';
+});
+
+$('saveBoundaryStep').onclick = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  try { await saveFarmWizardStep(1); }
+  catch (error) { console.error('SAVE BOUNDARY failed', error); toast('Boundary save failed: ' + (error?.message || 'Unknown error')); }
+};
+$('nextBoundaryStep').onclick = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  const button = $('nextBoundaryStep');
+  if (button) { button.disabled = true; button.textContent = 'SAVING…'; }
+  try {
+    const saved = await saveFarmWizardStep(1);
+    if (saved) showFarmWizardStep(2);
+  } catch (error) {
+    console.error('SAVE & NEXT boundary failed', error);
+    toast('Could not save boundary: ' + (error?.message || 'Unknown error'));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = 'SAVE & NEXT →'; }
+  }
+};
+$('saveInfoStep').onclick = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  try { await saveFarmWizardStep(2); }
+  catch (error) { console.error('SAVE FARM INFORMATION failed', error); toast('Farm information save failed: ' + (error?.message || 'Unknown error')); }
+};
+$('nextInfoStep').onclick = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  try { if (await saveFarmWizardStep(2)) showFarmWizardStep(3); }
+  catch (error) { console.error('SAVE & NEXT information failed', error); toast('Could not save farm information: ' + (error?.message || 'Unknown error')); }
+};
+$('saveAssetsStep').onclick = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  try { await saveFarmWizardStep(3); }
+  catch (error) { console.error('SAVE FARM ASSETS failed', error); toast('Farm assets save failed: ' + (error?.message || 'Unknown error')); }
+};
 
 // Explicit async wrapper: prevents any browser form/default behaviour from
 // swallowing the SAVE FARM RECORD click and surfaces unexpected errors.
