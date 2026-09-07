@@ -1332,6 +1332,17 @@ function startBoundary() {
     renderDraftBoundary();
     $('mapStatus').textContent = `DRAWING MODE · ${newBoundary.length} boundary points · zoom freely and continue clicking`;
   });
+  // Capture clicks at the map container as an additional safeguard. Territory
+  // overlays may sit above the base map at high zoom, so their selection must
+  // be suppressed while Step 1 is actively collecting boundary points.
+  const mapDiv = map.getDiv?.();
+  if (mapDiv && !mapDiv.__agworldBoundaryGuard) {
+    mapDiv.__agworldBoundaryGuard = event => {
+      if (!creatingFarm || placingObjectType) return;
+      event.stopPropagation();
+    };
+    mapDiv.addEventListener('click', mapDiv.__agworldBoundaryGuard, true);
+  }
   toast('Boundary mode active · zoom freely and click each farm corner');
 }
 
@@ -1350,8 +1361,22 @@ function finishBoundary() {
   drawListener = null;
   creatingFarm = false;
   placingObjectType = null;
+  // Re-enable territory/farm interaction only after boundary capture is finished.
+  farms.forEach(f => {
+    if (f._polygon) f._polygon.setOptions({ clickable: true });
+    if (f._marker) f._marker.setClickable(true);
+  });
+  [...countries, ...territories, ...municipalities, ...towns].forEach(t => {
+    if (t._polygon) t._polygon.setOptions({ clickable: true });
+    if (t._marker) t._marker.setClickable(true);
+  });
   map.setOptions({ draggableCursor: null, clickableIcons: true });
   refreshMapVisibility();
+  const mapDiv = map?.getDiv?.();
+  if (mapDiv?.__agworldBoundaryGuard) {
+    mapDiv.removeEventListener('click', mapDiv.__agworldBoundaryGuard, true);
+    mapDiv.__agworldBoundaryGuard = null;
+  }
   $('farmCreateModal').classList.add('show');
   $('boundaryStatus').textContent = `Boundary captured · ${newBoundary.length} points`;
   $('objectStatus').textContent = 'Choose an object type, then click its position on the map.';
@@ -1367,6 +1392,11 @@ function clearBoundary() {
   boundaryPolygon = null;
   if (drawListener) google.maps.event.removeListener(drawListener);
   drawListener = null;
+  const mapDiv = map?.getDiv?.();
+  if (mapDiv?.__agworldBoundaryGuard) {
+    mapDiv.removeEventListener('click', mapDiv.__agworldBoundaryGuard, true);
+    mapDiv.__agworldBoundaryGuard = null;
+  }
   if (map) { map.setOptions({ draggableCursor: null, clickableIcons: true }); refreshMapVisibility(); }
   $('boundaryStatus').textContent = 'No boundary created.';
   $('objectStatus').textContent = 'No object selected.';
