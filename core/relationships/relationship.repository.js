@@ -29,6 +29,15 @@
       if (!response.ok) throw new Error('Unable to delete relationship');
       return true;
     }
+
+    // The current API exposes create and delete as the stable mutation
+    // contract. Replacing a relationship keeps the manager compatible with
+    // that contract while still giving the UI a true edit workflow.
+    async replace(id, input) {
+      if (!id) return this.create(input);
+      await this.remove(id);
+      return this.create(input);
+    }
   }
 
   global.AGWorldV2 = global.AGWorldV2 || {};
