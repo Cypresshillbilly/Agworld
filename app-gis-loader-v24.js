@@ -2896,15 +2896,55 @@ async function renderRelationshipNetwork(selection) {
   if (!db) return;
 
   const entityId = String(selection.id);
-  const result = await db
+  const selectedType = String(selection.type === 'companyFacility' ? 'company_facility' : selection.type || 'farm');
+
+  // First use the narrow server-side query. Some PostgREST clients have been
+  // observed to return an empty result for a compound .or() filter during a
+  // fresh static-app session, even though the relationship rows are present.
+  // In that case, fall back to the active relationship set and filter the
+  // selected endpoint locally. This keeps the map renderer independent of
+  // query-parser quirks while preserving the canonical database as truth.
+  let result = await db
     .from('entity_relationships')
     .select('*')
     .eq('status', 'active')
     .or('source_entity_id.eq.' + entityId + ',target_entity_id.eq.' + entityId);
 
-  if (requestVersion !== relationshipNetworkState.requestVersion || result.error) return;
+  if (requestVersion !== relationshipNetworkState.requestVersion) return;
 
-  (result.data || []).map(normaliseRelationshipRecord).forEach(rel => {
+  if (result.error || !(result.data || []).length) {
+    const fallback = await db
+      .from('entity_relationships')
+      .select('*')
+      .eq('status', 'active');
+
+    if (requestVersion !== relationshipNetworkState.requestVersion) return;
+    if (!fallback.error) result = fallback;
+  }
+
+  if (result.error) {
+    console.warn('Relationship network query failed', result.error);
+    $('mapStatus').textContent = 'RELATIONSHIP NETWORK · database query failed';
+    return;
+  }
+
+  const relationships = (result.data || [])
+    .map(normaliseRelationshipRecord)
+    .filter(rel => {
+      const sourceMatches =
+        String(rel.sourceId) === entityId &&
+        String(rel.sourceType === 'companyFacility' ? 'company_facility' : rel.sourceType) === selectedType;
+      const targetMatches =
+        String(rel.targetId) === entityId &&
+        String(rel.targetType === 'companyFacility' ? 'company_facility' : rel.targetType) === selectedType;
+      return sourceMatches || targetMatches;
+    });
+
+  if (!relationships.length) {
+    $('mapStatus').textContent = 'RELATIONSHIP NETWORK · no active connections';
+  }
+
+  relationships.forEach(rel => {
     const source = entityPositionForNetwork(rel.sourceType, rel.sourceId);
     const target = entityPositionForNetwork(rel.targetType, rel.targetId);
     if (!source || !target) return;
@@ -3030,8 +3070,13 @@ async function renderRelationshipNetwork(selection) {
     relationshipNetworkState.overlays.push(badge, node);
   });
 
+  const relationshipCount = relationships.length;
+  $('mapStatus').textContent = relationshipCount
+    ? `RELATIONSHIP NETWORK · ${relationshipCount} active connection${relationshipCount === 1 ? '' : 's'}`
+    : 'RELATIONSHIP NETWORK · no active connections';
+
   window.dispatchEvent(new CustomEvent('agworld:relationship-network-rendered', {
-    detail: { entityId, count: relationshipNetworkState.overlays.length }
+    detail: { entityId, entityType: selectedType, relationshipCount, overlayCount: relationshipNetworkState.overlays.length }
   }));
 }
 
