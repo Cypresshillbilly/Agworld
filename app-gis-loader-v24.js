@@ -2835,12 +2835,10 @@ function selectDynamicEntity(entity, zoom = true) {
     if (entity._marker) entity._marker.setMap(map);
   }
 
-  // Emit the canonical V2 selection event and explicitly redraw the
-  // relationship network around every non-Farm entity.
-  // One canonical selection event drives the relationship renderer. Do not
-  // start a second parallel render here: the old event + direct-call pattern
-  // created two competing requests, allowing a later empty/unresolved render
-  // to clear links produced by the first one.
+  // Emit the canonical V2 selection signal first, then the compatibility
+  // signal used elsewhere in the current UI. This is the same selection route
+  // regardless of whether the entity was clicked on the map, card, or detail UI.
+  window.dispatchEvent(new CustomEvent('agworld:v2-entity-selected', { detail: { entity } }));
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
 
   // The Farm path is event-driven. Dynamic entities also emit that canonical
