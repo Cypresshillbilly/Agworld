@@ -2132,25 +2132,17 @@ $('nextInfoStep').onclick = async event => {
   if (button) { button.disabled = true; button.textContent = 'SAVING FARM…'; }
 
   try {
-    // Persist Step 2 first. Editing is allowed for every authenticated player,
-    // but a database permission/audit issue must never trap the player in Step 2.
+    // The exact same canonical save path is used by every authenticated player.
+    // A successful save is required before advancing, so no player's edit can
+    // appear to succeed locally while failing to reach the shared Farms world.
     const saved = await saveFarmWizardStep(2);
-    if (!saved) {
-      // The latest canonical record is already loaded in this session. Keep the
-      // user moving through the editor while the save error remains visible.
-      showFarmWizardStep(3);
-      toast('Continuing to Step 3 · the Step 2 save needs to be checked');
-      return;
-    }
+    if (!saved) throw new Error('Farm information was not saved to the shared Farms database.');
     showFarmWizardStep(3);
-    toast('Farm saved and placed on the map · continue with farm assets');
+    toast('Farm information saved · continue with farm assets');
   }
   catch (error) {
     console.error('SAVE & CONTINUE information failed', error);
-    // Do not leave a player stuck in the wizard because the backend rejected
-    // a save. Step 3 is still useful for editing the existing selections.
-    showFarmWizardStep(3);
-    toast('Continuing to Step 3 · farm information save failed: ' + (error?.message || 'Unknown error'));
+    toast('Could not save farm information: ' + (error?.message || 'Unknown error'));
   } finally {
     if (button) { button.disabled = false; button.textContent = 'SAVE & CONTINUE →'; }
   }
