@@ -40,9 +40,9 @@ async function trigger(){const result=await engine().create({type:$('weType').va
 function init(){
  if(initialized)return;initialized=true;makeHost();$('weCreate').onclick=openCreate;
  global.addEventListener('agworld:world-event-executed',e=>render(e.detail.event.id));global.addEventListener('agworld:world-event-resolved',e=>render(e.detail.id));
- document.querySelector('.nav')?.insertAdjacentHTML('beforeend','<button data-view="world-events">◈ WORLD EVENTS</button>');
- document.querySelector('[data-view="world-events"]')?.addEventListener('click',()=>{makeHost().classList.add('show');document.querySelector('.map-area')?.classList.add('we-map-hidden');render()});
- document.querySelectorAll('.nav button:not([data-view="world-events"])').forEach(b=>b.addEventListener('click',()=>{host?.classList.remove('show');document.querySelector('.map-area')?.classList.remove('we-map-hidden')}));
+ const worldEventsButton=document.getElementById('worldEventsNavBtn')||document.querySelector('[data-view="world-events"]');
+ worldEventsButton?.addEventListener('click',()=>{makeHost().classList.add('show');render()});
+ document.querySelectorAll('.nav button:not([data-view="world-events"])').forEach(b=>b.addEventListener('click',()=>{host?.classList.remove('show')}));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })(window);
