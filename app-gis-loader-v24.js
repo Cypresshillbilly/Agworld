@@ -2828,11 +2828,29 @@ function selectDynamicEntity(entity, zoom = true) {
   // to clear links produced by the first one.
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
 
-  // Use exactly the same relationship-rendering path as Farms.
-  // The canonical selection event above is the ONLY trigger. Do not add a
-  // second direct/idle renderer for dynamic entities: a second request can
-  // clear overlays created by the canonical renderer after the map settles.
-
+  // The Farm path is event-driven. Dynamic entities also emit that canonical
+  // event, but explicitly hand the same selection object to the canonical
+  // scheduler as a reliability bridge. Both calls collapse into the same
+  // debounced canonical renderer, so there is still only one overlay lifecycle.
+  const relationshipSelection = {
+    id: entity.id,
+    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
+    lat: Number(entity.lat),
+    lng: Number(entity.lng),
+    entity
+  };
+  if (typeof window.scheduleRelationshipNetwork === 'function') {
+    window.scheduleRelationshipNetwork(relationshipSelection);
+    // Dynamic layer hydration can replace marker references shortly after a
+    // click. Re-schedule the same canonical selection after that settles.
+    setTimeout(() => {
+      const current = window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+      if (current && String(current.entityId) === String(entity.id) &&
+          String(current.entityType) === String(entity.type)) {
+        window.scheduleRelationshipNetwork(relationshipSelection);
+      }
+    }, 320);
+  }
 
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
