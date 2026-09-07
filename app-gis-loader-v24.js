@@ -1427,14 +1427,35 @@ function renderDraftBoundary() {
 }
 
 function removeBoundaryContinueControl() {
-  // Remove *every* copy. During earlier workflow changes this control could
-  // be created more than once, leaving duplicate elements with the same id.
-  document.querySelectorAll('#farmBoundaryContinueControl, .farm-boundary-continue-control, [data-ag-boundary-control="1"]')
-    .forEach(control => control.remove());
+  // Remove every known map boundary action and any duplicate injected by an
+  // older workflow/module. The Step 1 modal buttons are intentionally left
+  // alone because they do not use the "SAVE BOUNDARY & CONTINUE" map action.
+  document.querySelectorAll(
+    '#farmBoundaryContinueControl, .farm-boundary-continue-control, [data-ag-boundary-control="1"], #saveBoundaryContinueMap, #clearBoundaryMap'
+  ).forEach(node => {
+    const control = node.id === 'saveBoundaryContinueMap' || node.id === 'clearBoundaryMap'
+      ? node.closest('#farmBoundaryContinueControl, .farm-boundary-continue-control, [data-ag-boundary-control="1"]') || node
+      : node;
+    control?.remove();
+  });
+
+  document.querySelectorAll('button').forEach(button => {
+    if (button.id === 'saveBoundaryContinueMap' || button.id === 'clearBoundaryMap') return;
+    if (button.textContent.trim() === 'SAVE BOUNDARY & CONTINUE') {
+      button.closest('.farm-boundary-continue-control, [data-ag-boundary-control], div')?.remove();
+    }
+  });
+}
+
+function enforceSingleBoundaryContinueControl() {
+  const controls = [...document.querySelectorAll('#farmBoundaryContinueControl, .farm-boundary-continue-control, [data-ag-boundary-control="1"]')];
+  if (controls.length <= 1) return;
+  controls.slice(0, -1).forEach(control => control.remove());
 }
 
 function showBoundaryContinueControl() {
-  // The map must have one and only one Step 1 action layer.
+  // Create one canonical map action layer and immediately/continuously remove
+  // stale copies that may be injected by legacy map hooks.
   removeBoundaryContinueControl();
   const control = document.createElement('div');
   control.id = 'farmBoundaryContinueControl';
@@ -1447,6 +1468,10 @@ function showBoundaryContinueControl() {
   host.appendChild(control);
   $('saveBoundaryContinueMap').onclick = finishBoundary;
   $('clearBoundaryMap').onclick = () => { clearBoundary(); startBoundary(); };
+
+  // Catch a second control inserted after this function has returned.
+  requestAnimationFrame(enforceSingleBoundaryContinueControl);
+  setTimeout(enforceSingleBoundaryContinueControl, 0);
 }
 
 async function finishBoundary() {
