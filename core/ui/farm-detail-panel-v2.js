@@ -37,7 +37,7 @@
     if (global.AGWorldV2.LiveFarmDetailBridge) return;
     const panel = document.createElement('div');
     panel.id = 'agworldV2FarmDetailHost';
-    panel.style.cssText = 'position:absolute;right:22px;top:92px;width:min(420px,calc(100vw - 44px));max-height:calc(100vh - 120px);overflow:auto;z-index:1500;display:none;background:rgba(10,18,22,.98);border:1px solid rgba(0,184,217,.65);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.55);color:#f4f7f1;';
+    panel.style.cssText = 'position:fixed;right:22px;top:92px;width:min(420px,calc(100vw - 44px));max-height:calc(100vh - 120px);overflow:auto;z-index:99999;display:none;background:rgba(10,18,22,.98);border:2px solid #00b8d9;border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.75);color:#f4f7f1;';
     document.body.appendChild(panel);
     const apiBase = global.AG_WORLD_API?.baseUrl || global.AGWORLD_API_BASE_URL || 'https://ag-world-api.onrender.com';
     const relationshipRepository = new global.AGWorldV2.RelationshipRepository({ baseUrl: apiBase.replace(/\\/$/, '') + '/api/v2/relationships' });
@@ -67,6 +67,12 @@
       bridge.open(farm);
     } catch (error) {
       console.error('[AG World V2] Unable to open Farm Detail Panel', error);
+      const existing = document.getElementById('agworldV2DetailError');
+      const errorBox = existing || document.createElement('div');
+      errorBox.id = 'agworldV2DetailError';
+      errorBox.style.cssText = 'position:fixed;right:22px;top:92px;z-index:100000;width:min(420px,calc(100vw - 44px));padding:18px;background:#2b1010;color:#fff;border:2px solid #ff6b6b;border-radius:12px;font:13px Arial;';
+      errorBox.textContent = 'AG World V2 Detail Panel error: ' + (error && error.message ? error.message : String(error));
+      if (!existing) document.body.appendChild(errorBox);
     }
   };
 
@@ -76,4 +82,5 @@
 
   global.AGWorldV2 = global.AGWorldV2 || {};
   global.AGWorldV2.FarmDetailPanelV2 = FarmDetailPanelV2;
+  global.__AGWORLD_V2_FARM_DETAIL_READY__ = true;
 })(window);
