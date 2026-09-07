@@ -1233,11 +1233,24 @@ function selectFarm(farm, zoom = true) {
     $('farmCard').classList.remove('show');
     if (selected._polygon) selected._polygon.setOptions({ strokeWeight: 2, fillOpacity: 0.18, zIndex: 20 });
     selected = null;
+    window.__AGWORLD_RUNTIME_FARM_SELECTION_V2__ = null;
+    window.dispatchEvent(new CustomEvent('agworld:farm-selection-cleared'));
     $('mapStatus').textContent = 'Farm information panel closed';
     return;
   }
 
   selected = farm;
+
+  // Canonical runtime selection signal. selectFarm is intentionally scoped inside
+  // the GIS loader, so external wrappers around window.selectFarm are not reliable.
+  // Every real marker/polygon/AI farm selection passes through this exact point.
+  window.__AGWORLD_RUNTIME_FARM_SELECTION_V2__ = {
+    farmId: String(farm.id),
+    name: farm.name || '',
+    timestamp: Date.now()
+  };
+  window.dispatchEvent(new CustomEvent('agworld:farm-selected', { detail: { farm } }));
+
   $('farmCard').classList.add('show');
   $('farmName').textContent = farm.name;
   const territory = territories.find(t => t.id === farm.territoryId);
