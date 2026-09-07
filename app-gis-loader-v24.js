@@ -212,15 +212,23 @@ async function saveFarmToDatabase(farm, beforeState) {
     if (a !== b) changedFields[key] = { before: before[key] ?? null, after: details[key] ?? null };
   });
 
-  const { error: auditError } = await db.from('farm_audit').insert({
+  const auditRecord = {
     farm_id: id,
     action: beforeState ? 'updated' : 'created',
     actor_id: user.id,
     source: 'farm_editor',
     before_state: beforeState || null,
     after_state: { ...details, changed_fields: changedFields, changed_at: now }
-  });
-  if (auditError) console.warn('Farm audit logging failed', auditError);
+  };
+
+  const { error: auditError } = await db.from('farm_audit').insert(auditRecord);
+  if (auditError) {
+    console.warn('Farm audit logging failed', auditError);
+    // Do not claim the history was recorded when it was rejected by RLS.
+    // The shared farm save is still valid, but the audit must be repaired
+    // server-side before the action can be considered fully attributed.
+    throw new Error('Farm saved, but the shared farm history could not be recorded: ' + (auditError.message || auditError.code || 'audit write rejected'));
+  }
 
   return row;
 }
