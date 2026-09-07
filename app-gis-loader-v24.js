@@ -1324,15 +1324,35 @@ function ensureFarmHistoryButton() {
   const card = $('farmCard');
   const updateButton = $('farm3d');
   if (!card || !updateButton) return;
+
+  // Keep both farm actions inside ONE action row. Previously the History
+  // button was inserted below UPDATE FARM DETAILS and could disappear behind
+  // the fixed bottom game panel.
+  let actions = $('farmActions');
+  if (!actions) {
+    actions = document.createElement('div');
+    actions.id = 'farmActions';
+    actions.style.cssText = 'display:flex;gap:6px;margin-top:9px;';
+    updateButton.insertAdjacentElement('beforebegin', actions);
+    actions.appendChild(updateButton);
+  }
+
+  updateButton.style.cssText = 'width:50%;margin-top:0;flex:1;';
+  updateButton.textContent = 'UPDATE FARM DETAILS';
+  updateButton.type = 'button';
+  updateButton.onclick = () => openEditFarm(selected);
+
   let button = $('farmHistoryBtn');
   if (!button) {
-    button = updateButton.cloneNode(false);
+    button = document.createElement('button');
     button.id = 'farmHistoryBtn';
     button.type = 'button';
     button.textContent = 'FARM HISTORY';
-    button.style.marginTop = '8px';
-    updateButton.insertAdjacentElement('afterend', button);
+    actions.appendChild(button);
+  } else if (button.parentElement !== actions) {
+    actions.appendChild(button);
   }
+  button.style.cssText = 'width:50%;margin-top:0;flex:1;';
   button.onclick = () => openFarmHistory(selected);
 }
 
