@@ -470,6 +470,7 @@
 
   const initialiseLiveBridge = () => {
     installLiveBridge();
+    watchV2Host();
 
     // If the GIS selection happened before this module finished loading, replay
     // the current canonical selection exactly once.
