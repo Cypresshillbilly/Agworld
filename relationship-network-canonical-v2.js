@@ -241,7 +241,8 @@
       firstDifference: firstDifference ? { field: firstDifference[0], farm: firstDifference[1], contractor: firstDifference[2] } : null
     };
 
-    global.__AGWORLD_RELATIONSHIP_RUNTIME_COMPARISON__ = comparison;\n    renderRuntimeDiagnostic(comparison);
+    global.__AGWORLD_RELATIONSHIP_RUNTIME_COMPARISON__ = comparison;
+    renderRuntimeDiagnostic(comparison);
     console.groupCollapsed('[AG World] Relationship runtime comparison');
     console.table({
       Farm: {
