@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import { registerV2RelationshipRoutes } from './v2-relationship-routes.js';
 
 const { Pool } = pg;
 const app = express();
@@ -8,6 +9,9 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: '2mb' }));
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.DATABASE_SSL === 'false' ? false : { rejectUnauthorized: false } });
 const PORT = Number(process.env.PORT || 8080);
+
+// V2.6 Relationship Engine: register before feature routes so relationships are available to all entity types.
+registerV2RelationshipRoutes(app, pool);
 const allowedTypes = new Set(['crop-field','dam','building','tractor','drone','competitor-drone','livestock-area','irrigation']);
 const point = p => `SRID=4326;POINT(${Number(p.lng)} ${Number(p.lat)})`;
 const polygon = ring => { const coords=ring.map(p=>`${Number(p.lng)} ${Number(p.lat)}`).join(','); const first=ring[0],last=ring[ring.length-1]; const closed=first.lat===last.lat&&first.lng===last.lng; return `SRID=4326;POLYGON((${coords}${closed?'':`,${Number(first.lng)} ${Number(first.lat)}`}))`; };
