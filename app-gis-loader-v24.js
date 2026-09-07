@@ -2979,10 +2979,13 @@ async function renderRelationshipNetwork(selection) {
   // This removes PostgREST compound-filter parsing from the runtime selection
   // path entirely. The relationship graph is intentionally small and is the
   // same shared graph used by every entity type.
+  // Read the full canonical graph. Older relationship rows may have a null
+  // status (the normaliser treats null as active), so filtering in PostgREST
+  // with .eq('status', 'active') can silently remove valid dynamic links before
+  // the renderer ever sees them.
   const result = await db
     .from('entity_relationships')
-    .select('*')
-    .eq('status', 'active');
+    .select('*');
 
   if (requestVersion !== relationshipNetworkState.requestVersion) return;
 
@@ -2992,7 +2995,11 @@ async function renderRelationshipNetwork(selection) {
     return;
   }
 
-  const allRelationships = (result.data || []).map(normaliseRelationshipRecord);
+  // Keep the normaliser's backward-compatible default: a missing status is
+  // active. Only an explicitly inactive/disabled relationship is excluded.
+  const allRelationships = (result.data || [])
+    .map(normaliseRelationshipRecord)
+    .filter(rel => !['inactive', 'disabled', 'archived'].includes(String(rel.status || 'active').toLowerCase()));
   window.__AGWORLD_ACTIVE_RELATIONSHIPS__ = allRelationships;
 
   // Entity IDs are globally unique across the game layer.
