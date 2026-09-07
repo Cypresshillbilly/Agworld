@@ -2848,19 +2848,38 @@ function selectDynamicEntity(entity, zoom = true) {
   if (isDirectDiagnosticSelection) directMarkerDiagnostic('RUNTIME SELECTION STATE WRITTEN');
 
   if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY CARD UPDATE START');
-  $('farmCard').classList.add('show');
-  $('farmName').textContent = entity.name || cfg.label;
-  $('farmMeta').textContent = `${cfg.label.toUpperCase()} · ${entity.status || 'Active'} · ${entity.details?.nearestTown || entity.details?.municipality || 'Mapped location'}`;
-  $('farmDrones').textContent = entity.type === 'contractor' ? (entity.details?.capabilities?.filter?.(x => /drone/i.test(x)).length || 0) : '—';
-  $('farmTractors').textContent = entity.type === 'competitor' ? (entity.details?.capabilities?.length || 0) : '—';
-  $('farmCrops').textContent = entity.type === 'companyFacility' ? (entity.details?.capabilities?.length || 0) : '—';
-  $('farmScore').textContent = entity.status || 'Active';
-  $('farmLivestock').textContent = entity.contactName || '—';
-  $('farmHarvest').textContent = entity.contactCell || '—';
-  $('farmService').textContent = entity.contactEmail || '—';
+
+  // Dynamic entities use the existing Farm information card shell. Some
+  // deployments do not contain every legacy Farm-only field, so card updates
+  // must never be allowed to abort the canonical relationship selection path.
+  const setCardText = (id, value) => {
+    const node = $(id);
+    if (!node) {
+      if (isDirectDiagnosticSelection) directMarkerDiagnostic('CARD FIELD NOT PRESENT', id);
+      return false;
+    }
+    node.textContent = value == null ? '' : String(value);
+    return true;
+  };
+  const farmCardNode = $('farmCard');
+  if (farmCardNode) {
+    farmCardNode.classList.add('show');
+  } else if (isDirectDiagnosticSelection) {
+    directMarkerDiagnostic('CARD FIELD NOT PRESENT', 'farmCard');
+  }
+
+  setCardText('farmName', entity.name || cfg.label);
+  setCardText('farmMeta', `${cfg.label.toUpperCase()} · ${entity.status || 'Active'} · ${entity.details?.nearestTown || entity.details?.municipality || 'Mapped location'}`);
+  setCardText('farmDrones', entity.type === 'contractor' ? (entity.details?.capabilities?.filter?.(x => /drone/i.test(x)).length || 0) : '—');
+  setCardText('farmTractors', entity.type === 'competitor' ? (entity.details?.capabilities?.length || 0) : '—');
+  setCardText('farmCrops', entity.type === 'companyFacility' ? (entity.details?.capabilities?.length || 0) : '—');
+  setCardText('farmScore', entity.status || 'Active');
+  setCardText('farmLivestock', entity.contactName || '—');
+  setCardText('farmHarvest', entity.contactCell || '—');
+  setCardText('farmService', entity.contactEmail || '—');
   const capabilities = Array.isArray(entity.details?.capabilities) ? entity.details.capabilities.join(', ') : '';
-  $('farmDetailText').textContent = entity.details?.notes || capabilities || `${cfg.label} location and intelligence record.`;
-  $('aiText').textContent = `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`;
+  setCardText('farmDetailText', entity.details?.notes || capabilities || `${cfg.label} location and intelligence record.`);
+  setCardText('aiText', `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`);
 
   if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY CARD UPDATE COMPLETED');
 
@@ -2902,7 +2921,9 @@ function selectDynamicEntity(entity, zoom = true) {
   enterWorkingRelationshipPath();
 
   if (isDirectDiagnosticSelection) directMarkerDiagnostic('SELECTION PATH COMPLETED');
-  $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
+  const mapStatusNode = $('mapStatus');
+  if (mapStatusNode) mapStatusNode.textContent = `${cfg.label} selected · ${entity.name}`;
+  else if (isDirectDiagnosticSelection) directMarkerDiagnostic('CARD FIELD NOT PRESENT', 'mapStatus');
 }
 
 // V2 Relationship Network Layer. The network is derived only from active
