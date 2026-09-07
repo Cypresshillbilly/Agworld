@@ -2762,6 +2762,18 @@ function renderDynamicEntity(entity) {
     }
   });
   entity._marker.addListener('click', () => selectDynamicEntity(entity, true));
+
+  // Keep a marker-backed runtime position registry. Relationship rendering must
+  // be able to resolve an entity from the live marker layer even while the
+  // backing dynamic arrays are being refreshed or replaced.
+  const position = entity._marker.getPosition?.();
+  if (position) {
+    window.__AGWORLD_RELATIONSHIP_POSITIONS__ ||= new Map();
+    window.__AGWORLD_RELATIONSHIP_POSITIONS__.set(
+      networkEntityKey ? networkEntityKey(entity.type === 'companyFacility' ? 'company_facility' : entity.type, entity.id) : String(entity.id),
+      { lat: position.lat(), lng: position.lng(), entity }
+    );
+  }
 }
 
 function selectDynamicEntity(entity, zoom = true) {
@@ -2809,14 +2821,11 @@ function selectDynamicEntity(entity, zoom = true) {
 
   // Emit the canonical V2 selection event and explicitly redraw the
   // relationship network around every non-Farm entity.
+  // One canonical selection event drives the relationship renderer. Do not
+  // start a second parallel render here: the old event + direct-call pattern
+  // created two competing requests, allowing a later empty/unresolved render
+  // to clear links produced by the first one.
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
-  scheduleRelationshipNetwork({
-    id: entity.id,
-    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
-    lat: Number(entity.lat),
-    lng: Number(entity.lng),
-    entity
-  });
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
 
@@ -2884,6 +2893,14 @@ function entityPositionForNetwork(type, id, selectedSelection = null) {
     };
   }
   const canonicalType = canonicalEntityType(type);
+  const registry = window.__AGWORLD_RELATIONSHIP_POSITIONS__;
+  const registryPoint = registry?.get(networkEntityKey(canonicalType, wantedId));
+  if (registryPoint &&
+      Number.isFinite(Number(registryPoint.lat)) &&
+      Number.isFinite(Number(registryPoint.lng))) {
+    return registryPoint;
+  }
+
   const normalType = canonicalType === 'company_facility' ? 'companyFacility' : canonicalType;
 
   if (normalType === 'farm') {
@@ -3110,10 +3127,27 @@ async function renderRelationshipNetwork(selection) {
   }));
 }
 
+let relationshipNetworkTimer = null;
+let pendingRelationshipSelection = null;
+
 function scheduleRelationshipNetwork(selection) {
-  setTimeout(() => renderRelationshipNetwork(selection).catch(error => {
-    console.warn('Relationship network render failed', error);
-  }), 0);
+  // Collapse duplicate or near-simultaneous selection signals into one
+  // deterministic render of the latest entity. This is particularly important
+  // for dynamic markers, whose card selection and map-pan events happen in the
+  // same click cycle.
+  pendingRelationshipSelection = selection;
+  if (relationshipNetworkTimer) clearTimeout(relationshipNetworkTimer);
+
+  relationshipNetworkTimer = setTimeout(() => {
+    relationshipNetworkTimer = null;
+    const latest = pendingRelationshipSelection;
+    pendingRelationshipSelection = null;
+    if (!latest) return;
+
+    renderRelationshipNetwork(latest).catch(error => {
+      console.warn('Relationship network render failed', error);
+    });
+  }, 140);
 }
 
 window.addEventListener('agworld:farm-selected', event => {
