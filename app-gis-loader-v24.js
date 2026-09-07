@@ -1427,13 +1427,19 @@ function renderDraftBoundary() {
 }
 
 function removeBoundaryContinueControl() {
-  document.getElementById('farmBoundaryContinueControl')?.remove();
+  // Remove *every* copy. During earlier workflow changes this control could
+  // be created more than once, leaving duplicate elements with the same id.
+  document.querySelectorAll('#farmBoundaryContinueControl, .farm-boundary-continue-control, [data-ag-boundary-control="1"]')
+    .forEach(control => control.remove());
 }
 
 function showBoundaryContinueControl() {
+  // The map must have one and only one Step 1 action layer.
   removeBoundaryContinueControl();
   const control = document.createElement('div');
   control.id = 'farmBoundaryContinueControl';
+  control.className = 'farm-boundary-continue-control';
+  control.dataset.agBoundaryControl = '1';
   control.style.cssText = 'position:absolute;top:72px;left:50%;transform:translateX(-50%);z-index:1400;display:flex;gap:8px;padding:8px;background:rgba(8,18,22,.92);border:1px solid rgba(151,204,76,.55);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.35)';
   control.innerHTML = '<button type="button" id="saveBoundaryContinueMap" style="background:#9dcc38;color:#10200d;border:0;border-radius:5px;padding:10px 16px;font-weight:900;letter-spacing:.6px;cursor:pointer">SAVE BOUNDARY & CONTINUE</button><button type="button" id="clearBoundaryMap" style="background:#18242a;color:#fff;border:1px solid #52626a;border-radius:5px;padding:10px 12px;font-weight:700;cursor:pointer">CLEAR</button>';
   const host = $('map')?.parentElement || document.body;
