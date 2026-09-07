@@ -1,33 +1,9 @@
-/* AG World automatic farm-level visualisation. HUD is loaded only by index.html. */
+/* AG World farm visual controller.
+   Interactive 3D/visual farm mode is manual-only. Map zooming, map clicks and
+   farm-card mutations must never open it automatically. */
 (() => {
-  let lastOpenedStage = '';
-  let lastOpenedFarmName = '';
-  let opening = false;
-  function atFarmStage() {
-    const stage = document.getElementById('zoomStage')?.textContent || '';
-    return /ZOOM\s+[34]/i.test(stage) || /INTERACTIVE\s+FARM/i.test(stage);
-  }
-  function tryOpen() {
-    // Farm selection should open only the single farm information panel.\n    // The interactive 3D/visual modal must be opened deliberately via its button.\n    return;\n    if (opening || !atFarmStage()) return;
-    const stage = document.getElementById('zoomStage')?.textContent?.trim() || '';
-    const farmName = document.getElementById('farmName')?.textContent?.trim() || '';
-    const button = document.getElementById('farm3d');
-    const modal = document.getElementById('farm3dModal');
-    if (!button || !farmName || farmName === 'Farm') return;
-    if (modal?.classList.contains('show')) return;
-    if (stage === lastOpenedStage && farmName === lastOpenedFarmName) return;
-    lastOpenedStage = stage; lastOpenedFarmName = farmName; opening = true;
-    setTimeout(() => { try { button.click(); } finally { opening = false; } }, 150);
-  }
-  function connect() {
-    const stage = document.getElementById('zoomStage'); const card = document.getElementById('farmCard');
-    if (!stage && !card) return false;
-    const observer = new MutationObserver(() => setTimeout(tryOpen, 30));
-    if (stage) observer.observe(stage, {childList:true,characterData:true,subtree:true});
-    if (card) observer.observe(card, {childList:true,characterData:true,attributes:true,subtree:true});
-    document.addEventListener('click', () => setTimeout(tryOpen, 120));
-    setTimeout(tryOpen, 700); return true;
-  }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (!connect()) setTimeout(connect,800); });
-  else if (!connect()) setTimeout(connect,800);
+  window.AG_WORLD_AUTO_OPEN_FARM_VISUAL = false;
+  // Intentionally no observers or click handlers here.
+  // app-gis-loader-v24.js owns selection; its OPEN FARM IN 3D button is the
+  // sole entry point into the interactive visual.
 })();
