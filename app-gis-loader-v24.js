@@ -2045,7 +2045,16 @@ new MutationObserver(() => {
 $('close3d').onclick = close3D;
 $('close3dBottom').onclick = close3D;
 $('farm3dModal').onclick = event => { if (event.target.id === 'farm3dModal') close3D(); };
-$('farmCreateModal').onclick = event => { if (event.target.id === 'farmCreateModal') closeCreateFarm(); };
+// The farm creation workflow is a protected multi-step process. Clicking the
+// backdrop must NEVER discard the in-progress boundary or captured farm data.
+// The wizard may only be closed through its explicit close/cancel controls.
+$('farmCreateModal').onclick = event => {
+  if (event.target.id === 'farmCreateModal') {
+    event.preventDefault();
+    event.stopPropagation();
+    toast('Farm creation is still open · use the close button if you want to cancel.');
+  }
+};
 const aiAction = $('aiAction');
 if (aiAction) aiAction.onclick = () => { const farm = farms.filter(f => (f.drones || 0) === 0).sort((a, b) => (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0))[0]; if (farm) selectFarm(farm); };
 document.querySelectorAll('.mission').forEach(mission => mission.onclick = () => toast(`Mission opened: ${mission.querySelector('strong').textContent}`));
