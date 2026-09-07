@@ -86,32 +86,60 @@ const getFarmDb = () => farmDbClient || (farmDbClient = window.supabase?.createC
 async function loadFarmDatabaseOverrides() {
   const db = getFarmDb();
   const user = window.AGWorldBackend?.getUser?.();
-  if (!db || !user || !farms.length) return false;
+  if (!db || !user) return false;
+
   const { data, error } = await db.from('farms')
     .select('id,name,owner,region,status,annual_harvest,last_service,opportunity_score,source,notes,details,updated_at')
     .order('updated_at', { ascending: true });
   if (error) { console.warn('Farm database load failed', error); return false; }
-  const byId = new Map((data || []).map(row => [String(row.id), row]));
+
+  const rows = Array.isArray(data) ? data : [];
+  const byId = new Map(rows.map(row => [String(row.id), row]));
+  const existingIds = new Set(farms.map(farm => String(farm.id)));
   let changed = false;
-  farms.forEach(farm => {
+
+  const hydrateRow = (row, base = {}) => {
+    const details = row.details && typeof row.details === 'object' ? row.details : {};
+    return {
+      ...base,
+      ...details,
+      id: String(row.id),
+      name: row.name || details.name || base.name || 'Unnamed Farm',
+      owner: row.owner ?? details.owner ?? base.owner ?? '',
+      region: row.region ?? details.region ?? base.region ?? '',
+      status: row.status ?? details.status ?? base.status ?? 'Prospect',
+      annualHarvest: row.annual_harvest ?? details.annualHarvest ?? base.annualHarvest,
+      lastService: row.last_service ?? details.lastService ?? base.lastService,
+      opportunityScore: Number(row.opportunity_score ?? details.opportunityScore ?? base.opportunityScore ?? 0),
+      source: row.source || details.source || base.source || 'manual',
+      notes: row.notes ?? details.notes ?? base.notes,
+      updatedAt: row.updated_at || details.updatedAt || base.updatedAt
+    };
+  };
+
+  farms.forEach((farm, index) => {
     const row = byId.get(String(farm.id));
     if (!row) return;
-    const details = row.details && typeof row.details === 'object' ? row.details : {};
-    Object.assign(farm, details, {
-      id: farm.id,
-      name: row.name || details.name || farm.name,
-      owner: row.owner ?? details.owner ?? farm.owner,
-      region: row.region ?? details.region ?? farm.region,
-      status: row.status ?? details.status ?? farm.status,
-      annualHarvest: row.annual_harvest ?? details.annualHarvest ?? farm.annualHarvest,
-      lastService: row.last_service ?? details.lastService ?? farm.lastService,
-      opportunityScore: Number(row.opportunity_score ?? details.opportunityScore ?? farm.opportunityScore ?? 0),
-      source: row.source || details.source || farm.source,
-      notes: row.notes ?? details.notes ?? farm.notes,
-      updatedAt: row.updated_at || details.updatedAt || farm.updatedAt
-    });
+    farms[index] = hydrateRow(row, farm);
     changed = true;
   });
+
+  // A newly created farm is not part of the generated demo set. It must be
+  // reconstructed from the canonical Farms database after every refresh,
+  // otherwise demo seeding would make it disappear.
+  rows.forEach(row => {
+    if (existingIds.has(String(row.id))) return;
+    const farm = hydrateRow(row);
+    if (!Array.isArray(farm.boundary) || farm.boundary.length < 3) return;
+    if (!farm.center) farm.center = centroid(farm.boundary);
+    farms.push(farm);
+    existingIds.add(String(row.id));
+    changed = true;
+    if (map) {
+      try { addFarm(farm); } catch (error) { console.warn('Database farm map add failed', error); }
+    }
+  });
+
   if (changed) {
     window.__AG_WORLD_FARMS = farms;
     saveLocal();
@@ -464,32 +492,48 @@ function seedDemoFarms() {
   objectMarkers.forEach(marker => marker.setMap(null));
   objectMarkers.length = 0;
 
-  // Demo mode contains ONLY the generated farms.
-  const existing = [];
+  // Generate the demo farms, but never discard manually created farms.
+  // The Farms database is canonical, so user-created records must survive the
+  // demo reseed that happens when GIS layers finish loading.
   const demos = [];
   for (let i = 0; i < 100; i++) {
     const municipality = municipalities[(i * 37 + 11) % municipalities.length];
     demos.push(createDemoFarm(i, municipality));
   }
-  // Reapply persisted local edits and shared-world patches onto the freshly
-  // generated demo records. Demo seeding must never erase an authenticated
-  // player's saved farm changes.
+
   let localById = new Map(), sharedById = new Map();
   try {
     const saved = JSON.parse(localStorage.getItem('agworld-farms-v2') || '[]');
-    localById = new Map((Array.isArray(saved) ? saved : []).map(f => [String(f?.id), f]));
+    localById = new Map((Array.isArray(saved) ? saved : []).filter(Boolean).map(f => [String(f?.id), f]));
   } catch (_) {}
   try {
     const shared = JSON.parse(localStorage.getItem('agworld-shared-farm-patches-v1') || '{}');
     sharedById = new Map(Object.entries(shared || {}));
   } catch (_) {}
-  farms = [...existing, ...demos].map(baseFarm => {
+
+  const demoIds = new Set(demos.map(farm => String(farm.id)));
+  const customById = new Map();
+
+  // Preserve custom farms already loaded from the canonical database.
+  farms.forEach(farm => {
+    if (farm && !demoIds.has(String(farm.id))) customById.set(String(farm.id), farm);
+  });
+
+  // Preserve custom farms saved locally as an offline/cache fallback.
+  localById.forEach((farm, id) => {
+    if (farm && !demoIds.has(String(id))) customById.set(String(id), farm);
+  });
+
+  const mergedDemos = demos.map(baseFarm => {
     const id = String(baseFarm.id);
     const local = localById.get(id);
     const shared = sharedById.get(id);
-    // Shared state wins over an older local copy.
     return { ...baseFarm, ...(local || {}), ...(shared || {}) };
   });
+
+  farms = [...mergedDemos, ...customById.values()].filter(farm =>
+    farm && Array.isArray(farm.boundary) && farm.boundary.length >= 3
+  );
   // Publish the authoritative demo dataset for other map modules.
   window.__AG_WORLD_FARMS = farms;
   localStorage.setItem('agworld-demo-farms-v1', JSON.stringify(farms.map(cleanFarm)));
