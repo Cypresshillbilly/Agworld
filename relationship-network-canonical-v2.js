@@ -185,6 +185,32 @@
     return colors[type] || '#39b7c9';
   }
 
+  function renderRuntimeDiagnostic(comparison) {
+    let box = document.getElementById('agworldRelationshipRuntimeDiagnostic');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'agworldRelationshipRuntimeDiagnostic';
+      box.style.cssText = [
+        'position:fixed','right:12px','bottom:12px','z-index:20000',
+        'width:min(420px,calc(100vw - 24px))','padding:12px 14px',
+        'background:rgba(7,18,22,.94)','border:1px solid rgba(157,204,56,.55)',
+        'border-radius:10px','box-shadow:0 12px 34px rgba(0,0,0,.35)',
+        'color:#edf3ed','font:11px/1.45 Arial,sans-serif'
+      ].join(';');
+      document.body.appendChild(box);
+    }
+    const farm = comparison.farm;
+    const contractor = comparison.contractor;
+    const diff = comparison.firstDifference
+      ? comparison.firstDifference.field + ' | Farm: ' + comparison.firstDifference.farm + ' | Contractor: ' + comparison.firstDifference.contractor
+      : 'No structural difference captured';
+    box.innerHTML =
+      '<b style="color:#9dcc38;letter-spacing:.7px">RELATIONSHIP RUNTIME COMPARISON</b>' +
+      '<div style="margin-top:7px"><b>Farm</b> · rel ' + farm.relationshipCount + ' · resolved ' + farm.resolvedCount + ' · overlays ' + farm.overlayCount + ' · attached ' + farm.allOverlaysAttached + '</div>' +
+      '<div><b>Contractor</b> · rel ' + contractor.relationshipCount + ' · resolved ' + contractor.resolvedCount + ' · overlays ' + contractor.overlayCount + ' · attached ' + contractor.allOverlaysAttached + '</div>' +
+      '<div style="margin-top:7px;color:#f0c66a"><b>FIRST DIFFERENCE:</b> ' + diff + '</div>';
+  }
+
   function publishTrace(trace) {
     runtimeTrace[trace.key] = trace;
     global.__AGWORLD_RELATIONSHIP_DEBUG__ = trace;
@@ -213,7 +239,7 @@
       firstDifference: firstDifference ? { field: firstDifference[0], farm: firstDifference[1], contractor: firstDifference[2] } : null
     };
 
-    global.__AGWORLD_RELATIONSHIP_RUNTIME_COMPARISON__ = comparison;
+    global.__AGWORLD_RELATIONSHIP_RUNTIME_COMPARISON__ = comparison;\n    renderRuntimeDiagnostic(comparison);
     console.groupCollapsed('[AG World] Relationship runtime comparison');
     console.table({
       Farm: {
