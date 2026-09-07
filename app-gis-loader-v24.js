@@ -2839,18 +2839,21 @@ function selectDynamicEntity(entity, zoom = true) {
     lng: Number(entity.lng),
     entity
   };
-  if (typeof window.scheduleRelationshipNetwork === 'function') {
-    window.scheduleRelationshipNetwork(relationshipSelection);
-    // Dynamic layer hydration can replace marker references shortly after a
-    // click. Re-schedule the same canonical selection after that settles.
-    setTimeout(() => {
-      const current = window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
-      if (current && String(current.entityId) === String(entity.id) &&
-          String(current.entityType) === String(entity.type)) {
-        window.scheduleRelationshipNetwork(relationshipSelection);
-      }
-    }, 320);
-  }
+  // IMPORTANT: call the lexical canonical scheduler directly. The GIS loader
+  // may be executed in a scope where top-level functions are not exposed as
+  // window properties, so window.scheduleRelationshipNetwork can be undefined
+  // even though the Farm event path can still reach this exact scheduler.
+  scheduleRelationshipNetwork(relationshipSelection);
+
+  // Dynamic layer hydration can replace marker references shortly after a
+  // click. Re-schedule the same canonical selection after that settles.
+  setTimeout(() => {
+    const current = window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+    if (current && String(current.entityId) === String(entity.id) &&
+        String(current.entityType) === String(entity.type)) {
+      scheduleRelationshipNetwork(relationshipSelection);
+    }
+  }, 320);
 
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
