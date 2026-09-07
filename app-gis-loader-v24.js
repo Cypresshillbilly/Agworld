@@ -2749,6 +2749,15 @@ function directMarkerDiagnostic(stage, detail = '', error = null) {
   if (!active) return;
   const entry = { stage, detail: detail == null ? '' : String(detail), error: error ? String(error?.message || error) : '', timestamp: Date.now() };
   active.steps.push(entry); active.lastStage = stage; active.updatedAt = entry.timestamp;
+
+  // Diagnostics remain available in memory for troubleshooting, but the
+  // on-screen diagnostic window is hidden during normal AG World operation.
+  // Set this flag manually only when a future debugging session needs the UI.
+  if (window.__AGWORLD_SHOW_DIRECT_MARKER_DIAGNOSTIC__ !== true) {
+    document.getElementById('agworldDirectMarkerDiagnostic')?.remove();
+    return;
+  }
+
   let box = document.getElementById('agworldDirectMarkerDiagnostic');
   if (!box) {
     box = document.createElement('div'); box.id = 'agworldDirectMarkerDiagnostic';
