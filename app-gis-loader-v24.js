@@ -1271,13 +1271,37 @@ function selectFarm(farm, zoom = true) {
   }
   showFarmDetail(farm);
 
-  // V2.6 live UI bridge: the GIS loader owns selectFarm in this module scope,
-  // so dispatch directly from the real selection event rather than relying on
-  // window.selectFarm (which does not exist for this module-scoped function).
-  if (typeof window.openV2FarmDetail === 'function') {
-    window.openV2FarmDetail(farm);
-  } else {
+  // V2.6 live UI bridge. The existing Farm Card is the visual host for the
+  // shared Entity Engine. Create the host here, inside the real selection flow,
+  // so a Farm selection can never silently omit the V2 layer.
+  let v2Host = document.getElementById('agworldV2FarmDetailHost');
+  if (!v2Host) {
+    v2Host = document.createElement('div');
+    v2Host.id = 'agworldV2FarmDetailHost';
+    v2Host.style.cssText = 'margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8;display:block;font-size:9px;color:#60717a;';
+    const actions = $('farmActions');
+    if (actions) $('farmCard').insertBefore(v2Host, actions);
+    else $('farmCard').appendChild(v2Host);
+  }
+  v2Host.innerHTML = '<div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#168aa0;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div>Loading connected entity data…</div>';
+
+  const openV2 = () => {
+    if (typeof window.openV2FarmDetail === 'function') {
+      window.openV2FarmDetail(farm);
+      return true;
+    }
     window.dispatchEvent(new CustomEvent('agworld:v2-open-live-farm', { detail: farm }));
+    return false;
+  };
+
+  if (!openV2()) {
+    // The V2 script can be cache-busted independently from this GIS loader.
+    // Retry briefly rather than leaving the card silently incomplete.
+    setTimeout(() => {
+      if (!openV2()) {
+        v2Host.innerHTML = '<div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#9b5d22;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div>V2 Entity Engine is still loading. Please select this Farm again.</div>';
+      }
+    }, 300);
   }
 }
 
