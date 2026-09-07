@@ -15,6 +15,12 @@
   const SESSION = master ? 'gamechanger.master.authenticated' : 'gamechanger.authenticated';
   const ROLE = master ? 'gamechanger.master.role' : 'gamechanger.role';
   const USER = master ? 'gamechanger.master.username' : 'gamechanger.username';
+  // Master Admin "Remember Me" is intentionally scoped to the local browser
+  // profile used by the desktop shortcut. It never shares credentials with
+  // Ag World player sign-in.
+  const REMEMBER_USER = 'gamechanger.master.remembered.username';
+  const REMEMBER_PASS = 'gamechanger.master.remembered.password';
+  const REMEMBER_FLAG = 'gamechanger.master.remembered.enabled';
 
   async function sha256(text){
     const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
@@ -58,6 +64,23 @@
     const username=gate.querySelector('#agUsername');
     const password=gate.querySelector('#agPassword');
     const remember=gate.querySelector('#agRemember');
+
+    // Restore Master Admin credentials only when this browser/profile has
+    // explicitly been told to remember them. This makes the desktop shortcut
+    // reopen with the last remembered credentials already filled in.
+    if(master){
+      try{
+        const remembered=localStorage.getItem(REMEMBER_FLAG)==='1';
+        if(remembered){
+          username.value=localStorage.getItem(REMEMBER_USER)||'';
+          password.value=localStorage.getItem(REMEMBER_PASS)||'';
+          remember.checked=!!(username.value||password.value);
+        }
+      }catch(err){
+        console.warn('Unable to restore remembered Master Admin credentials',err);
+      }
+    }
+
     // Login fields are ordinary inputs. Do not clear, lock, reset or mutate them
     // after the form is rendered; this same authentication component serves both
     // Master Admin and Ag World login screens.
@@ -102,6 +125,26 @@
       const error=gate.querySelector('.ag-login-error');
       error.textContent='';
       if(!account || await sha256(password.value)!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}
+
+      // Persist Master Admin credentials only after a successful login and only
+      // when the user has explicitly ticked Remember Me. Unticking it on a
+      // successful login removes any previously remembered credentials.
+      if(master){
+        try{
+          if(remember.checked){
+            localStorage.setItem(REMEMBER_FLAG,'1');
+            localStorage.setItem(REMEMBER_USER,username.value.trim());
+            localStorage.setItem(REMEMBER_PASS,password.value);
+          }else{
+            localStorage.removeItem(REMEMBER_FLAG);
+            localStorage.removeItem(REMEMBER_USER);
+            localStorage.removeItem(REMEMBER_PASS);
+          }
+        }catch(err){
+          console.warn('Unable to save Master Admin remembered credentials',err);
+        }
+      }
+
       sessionStorage.setItem(SESSION,'1'); sessionStorage.setItem(ROLE,account.role); sessionStorage.setItem(USER,username.value.trim());
       if(!master && account.role==='agriculture_sales' && window.GAME_CHANGER_BUILD?.set) window.GAME_CHANGER_BUILD.set('agriculture');
       const dest=landing(account.role);
