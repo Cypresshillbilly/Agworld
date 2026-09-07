@@ -2827,28 +2827,11 @@ function selectDynamicEntity(entity, zoom = true) {
   // to clear links produced by the first one.
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
 
-  // The map selection itself is authoritative. Render again once the pan/zoom
-  // has settled, using the exact marker entity that was clicked. This bypasses
-  // any timing interaction between the V2 detail panel's Loading state and the
-  // map overlay lifecycle.
-  const renderAfterIdle = () => {
-    if (relationshipNetworkState.selectedEntity &&
-        String(relationshipNetworkState.selectedEntity.id) !== String(entity.id)) return;
-    renderRelationshipNetwork({
-      id: entity.id,
-      type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
-      lat: Number(entity.lat),
-      lng: Number(entity.lng),
-      entity
-    }).catch(error => console.warn('Relationship network idle render failed', error));
-  };
-  if (map && google?.maps?.event?.addListenerOnce) {
-    google.maps.event.addListenerOnce(map, 'idle', renderAfterIdle);
-    // If the map is already idle and emits no new idle event, keep a fallback.
-    setTimeout(renderAfterIdle, 450);
-  } else {
-    setTimeout(renderAfterIdle, 0);
-  }
+  // Use exactly the same relationship-rendering path as Farms.
+  // The canonical selection event above is the ONLY trigger. Do not add a
+  // second direct/idle renderer for dynamic entities: a second request can
+  // clear overlays created by the canonical renderer after the map settles.
+
 
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
