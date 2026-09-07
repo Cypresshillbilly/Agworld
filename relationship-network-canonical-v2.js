@@ -32,13 +32,39 @@
   }
 
   function worldMap(selection) {
-    const selectedMarker = selection?.entity?._marker;
-    const selectedMap = selectedMarker?.getMap?.();
-    if (selectedMap) return selectedMap;
+    // The Farm path worked because the Farm object always carries its live
+    // marker. Dynamic entities can be re-hydrated after their marker is
+    // created, so their selected object is not guaranteed to carry _marker.
+    // Resolve the one canonical Google Map from any live game-layer marker.
+    const direct = selection?.entity?._marker?.getMap?.();
+    if (direct) return direct;
 
-    const farms = global.AG_WORLD_WORLD?.farms || global.__AG_WORLD_FARMS || [];
-    const farm = farms.find(item => String(item.id) === String(selection?.id));
-    return farm?._marker?.getMap?.() || null;
+    const wantedType = canonicalType(selection?.type);
+    const wantedId = String(selection?.id || '');
+    const registry = global.__AGWORLD_RELATIONSHIP_POSITIONS__;
+    const cached = registry?.get?.(key(wantedType, wantedId));
+    const cachedMap = cached?.entity?._marker?.getMap?.();
+    if (cachedMap) return cachedMap;
+
+    const pools = [
+      global.AG_WORLD_WORLD?.farms,
+      global.__AG_WORLD_FARMS,
+      typeof global.AG_WORLD_WORLD?.getContractors === 'function' ? global.AG_WORLD_WORLD.getContractors() : null,
+      global.__AG_WORLD_CONTRACTORS,
+      typeof global.AG_WORLD_WORLD?.getCompetitors === 'function' ? global.AG_WORLD_WORLD.getCompetitors() : null,
+      global.__AG_WORLD_COMPETITORS,
+      typeof global.AG_WORLD_WORLD?.getCompanyFacilities === 'function' ? global.AG_WORLD_WORLD.getCompanyFacilities() : null,
+      global.__AG_WORLD_COMPANY_FACILITIES
+    ];
+
+    for (const pool of pools) {
+      for (const entity of (Array.isArray(pool) ? pool : [])) {
+        const candidate = entity?._marker?.getMap?.();
+        if (candidate) return candidate;
+      }
+    }
+
+    return global.__AGWORLD_GOOGLE_MAP__ || global.AG_WORLD_WORLD?.map || null;
   }
 
   function pointFromMarker(entity) {
@@ -87,15 +113,23 @@
         ? global.AG_WORLD_WORLD?.getCompetitors
         : global.AG_WORLD_WORLD?.getCompanyFacilities;
 
-    const items = typeof getter === 'function' ? getter() : [];
-    const entity = (items || []).find(item => String(item.id) === wanted);
+    const fallback = wantedType === 'contractor'
+      ? global.__AG_WORLD_CONTRACTORS
+      : wantedType === 'competitor'
+        ? global.__AG_WORLD_COMPETITORS
+        : global.__AG_WORLD_COMPANY_FACILITIES;
+    const items = [
+      ...(typeof getter === 'function' ? (getter() || []) : []),
+      ...(Array.isArray(fallback) ? fallback : [])
+    ];
+    const entity = items.find(item => String(item?.id) === wanted);
     if (!entity) return null;
 
     const markerPoint = pointFromMarker(entity);
     if (markerPoint) return markerPoint;
 
-    const lat = Number(entity.lat);
-    const lng = Number(entity.lng);
+    const lat = Number(entity.lat ?? entity.details?.lat ?? entity.location?.lat);
+    const lng = Number(entity.lng ?? entity.details?.lng ?? entity.location?.lng);
     return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng, entity } : null;
   }
 
@@ -159,13 +193,36 @@
       String(rel.sourceId) === entityId || String(rel.targetId) === entityId
     );
 
-    const resolved = relationships.map(rel => ({
+    const candidates = relationships.map(rel => ({
       rel,
       source: position(rel.sourceType, rel.sourceId, selection),
       target: position(rel.targetType, rel.targetId, selection)
-    })).filter(item => item.source && item.target);
+    }));
+    const resolved = candidates.filter(item => item.source && item.target);
 
-    // Clear only when this latest selection has a fully resolved render set.
+    // Dynamic layers can still be hydrating when their selection event fires.
+    // Do not clear a valid network with an empty transient result; retry from
+    // the exact same canonical selection after the layer/markers are ready.
+    if (relationships.length && !resolved.length) {
+      global.__AGWORLD_RELATIONSHIP_DEBUG__ = {
+        entityId,
+        entityType: canonicalType(selection.type),
+        relationshipCount: relationships.length,
+        resolvedCount: 0,
+        overlayCount: state.overlays.length,
+        waitingForPositions: true,
+        timestamp: Date.now(),
+        canonical: true
+      };
+      if ((attempt || 0) < 12) {
+        setTimeout(() => {
+          if (request === state.request) render(selection, (attempt || 0) + 1).catch(console.warn);
+        }, 220);
+      }
+      return;
+    }
+
+    // Clear only when this latest selection has a usable render result.
     clear();
 
     resolved.forEach(({ rel, source, target }) => {
@@ -251,6 +308,15 @@
   global.addEventListener('agworld:farm-selection-cleared', () => {
     ++state.request;
     clear();
+  });
+
+  // Re-run the same canonical selection after asynchronous dynamic-layer
+  // hydration. Farms already have stable geometry; this closes the timing gap
+  // that affected Contractors, Competitors and Company Facilities.
+  global.addEventListener('agworld:dynamic-layers-loaded', () => {
+    if (state.selected && canonicalType(state.selected.type) !== 'farm') {
+      schedule(state.selected);
+    }
   });
 
   global.__AGWORLD_RELATIONSHIP_NETWORK_CANONICAL_V2__ = true;
