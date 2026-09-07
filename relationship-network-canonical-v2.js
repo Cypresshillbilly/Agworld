@@ -12,6 +12,11 @@
   };
   global.__AGWORLD_RELATIONSHIP_CANONICAL_STATE__ = state;
 
+  // Temporary live runtime instrumentation. This records the exact Farm and
+  // Contractor render paths without changing the renderer's behaviour.
+  const runtimeTrace = global.__AGWORLD_RELATIONSHIP_RUNTIME_TRACE__ || {};
+  global.__AGWORLD_RELATIONSHIP_RUNTIME_TRACE__ = runtimeTrace;
+
   function canonicalType(type) {
     const key = String(type || 'farm').trim().toLowerCase().replace(/[\s_-]+/g, '');
     if (key === 'companyfacility') return 'company_facility';
@@ -24,6 +29,30 @@
     return canonicalType(type) + ':' + String(id);
   }
 
+  function traceKey(selection) {
+    return canonicalType(selection?.type) + ':' + String(selection?.id || '');
+  }
+
+  function plainPoint(point) {
+    if (!point) return null;
+    const lat = Number(point.lat);
+    const lng = Number(point.lng);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  }
+
+  function mapSnapshot(map, selection) {
+    const markerMap = selection?.entity?._marker?.getMap?.() || null;
+    const center = map?.getCenter?.();
+    return {
+      exists: !!map,
+      isCanonicalMap: !!map && map === global.__AGWORLD_GOOGLE_MAP__,
+      isSelectionMarkerMap: !!map && !!markerMap && map === markerMap,
+      markerHasMap: !!markerMap,
+      zoom: Number(map?.getZoom?.()) || null,
+      center: center ? { lat: Number(center.lat()), lng: Number(center.lng()) } : null
+    };
+  }
+
   function clear() {
     state.overlays.forEach(overlay => {
       try { overlay.setMap(null); } catch (_) {}
@@ -32,10 +61,6 @@
   }
 
   function worldMap(selection) {
-    // The Farm path worked because the Farm object always carries its live
-    // marker. Dynamic entities can be re-hydrated after their marker is
-    // created, so their selected object is not guaranteed to carry _marker.
-    // Resolve the one canonical Google Map from any live game-layer marker.
     const direct = selection?.entity?._marker?.getMap?.();
     if (direct) return direct;
 
@@ -118,6 +143,7 @@
       : wantedType === 'competitor'
         ? global.__AG_WORLD_COMPETITORS
         : global.__AG_WORLD_COMPANY_FACILITIES;
+
     const items = [
       ...(typeof getter === 'function' ? (getter() || []) : []),
       ...(Array.isArray(fallback) ? fallback : [])
@@ -159,13 +185,92 @@
     return colors[type] || '#39b7c9';
   }
 
+  function publishTrace(trace) {
+    runtimeTrace[trace.key] = trace;
+    global.__AGWORLD_RELATIONSHIP_DEBUG__ = trace;
+    global.dispatchEvent(new CustomEvent('agworld:relationship-runtime-trace', { detail: trace }));
+
+    const farm = Object.values(runtimeTrace).filter(item => item.entityType === 'farm').sort((a, b) => b.timestamp - a.timestamp)[0];
+    const contractor = Object.values(runtimeTrace).filter(item => item.entityType === 'contractor').sort((a, b) => b.timestamp - a.timestamp)[0];
+
+    if (!farm || !contractor) return;
+
+    const checks = [
+      ['map.exists', farm.map.exists, contractor.map.exists],
+      ['map.isCanonicalMap', farm.map.isCanonicalMap, contractor.map.isCanonicalMap],
+      ['relationshipCount', farm.relationshipCount, contractor.relationshipCount],
+      ['resolvedCount', farm.resolvedCount, contractor.resolvedCount],
+      ['candidateResolution', JSON.stringify(farm.candidates.map(x => [x.sourceResolved, x.targetResolved])), JSON.stringify(contractor.candidates.map(x => [x.sourceResolved, x.targetResolved]))],
+      ['overlayCount', farm.overlayCount, contractor.overlayCount],
+      ['allOverlaysAttached', farm.allOverlaysAttached, contractor.allOverlaysAttached]
+    ];
+
+    const firstDifference = checks.find(item => item[1] !== item[2]) || null;
+    const comparison = {
+      comparedAt: Date.now(),
+      farm,
+      contractor,
+      firstDifference: firstDifference ? { field: firstDifference[0], farm: firstDifference[1], contractor: firstDifference[2] } : null
+    };
+
+    global.__AGWORLD_RELATIONSHIP_RUNTIME_COMPARISON__ = comparison;
+    console.groupCollapsed('[AG World] Relationship runtime comparison');
+    console.table({
+      Farm: {
+        selectedCoordinates: JSON.stringify(farm.selectedCoordinates),
+        map: JSON.stringify(farm.map),
+        relationshipCount: farm.relationshipCount,
+        resolvedCount: farm.resolvedCount,
+        overlayCount: farm.overlayCount,
+        allOverlaysAttached: farm.allOverlaysAttached
+      },
+      Contractor: {
+        selectedCoordinates: JSON.stringify(contractor.selectedCoordinates),
+        map: JSON.stringify(contractor.map),
+        relationshipCount: contractor.relationshipCount,
+        resolvedCount: contractor.resolvedCount,
+        overlayCount: contractor.overlayCount,
+        allOverlaysAttached: contractor.allOverlaysAttached
+      }
+    });
+    console.log('First relevant difference:', comparison.firstDifference);
+    console.log('Full comparison:', comparison);
+    console.groupEnd();
+    global.dispatchEvent(new CustomEvent('agworld:relationship-runtime-comparison', { detail: comparison }));
+  }
+
   async function render(selection, attempt) {
     if (!selection?.id) return;
+
     const request = ++state.request;
     state.selected = selection;
-
+    const entityType = canonicalType(selection.type);
+    const entityId = String(selection.id);
     const map = worldMap(selection);
+    const selectedPosition = position(entityType, entityId, selection);
+    const trace = {
+      key: traceKey(selection),
+      entityId,
+      entityType,
+      attempt: Number(attempt || 0),
+      selectedCoordinates: plainPoint(selectedPosition),
+      selectionInputCoordinates: {
+        lat: Number.isFinite(Number(selection.lat)) ? Number(selection.lat) : null,
+        lng: Number.isFinite(Number(selection.lng)) ? Number(selection.lng) : null
+      },
+      map: mapSnapshot(map, selection),
+      relationshipCount: 0,
+      resolvedCount: 0,
+      overlayCount: state.overlays.length,
+      allOverlaysAttached: false,
+      candidates: [],
+      timestamp: Date.now(),
+      canonical: true
+    };
+
     if (!map) {
+      trace.reason = 'map-unavailable';
+      publishTrace(trace);
       if ((attempt || 0) < 8) {
         setTimeout(() => {
           if (request === state.request) render(selection, (attempt || 0) + 1).catch(console.warn);
@@ -175,7 +280,11 @@
     }
 
     const db = global.supabase?.createClient?.(DB_URL, DB_KEY);
-    if (!db) return;
+    if (!db) {
+      trace.reason = 'supabase-unavailable';
+      publishTrace(trace);
+      return;
+    }
 
     const { data, error } = await db
       .from('entity_relationships')
@@ -183,13 +292,15 @@
       .eq('status', 'active');
 
     if (request !== state.request) return;
+
     if (error) {
+      trace.reason = 'relationship-query-error';
+      trace.error = error?.message || String(error);
+      publishTrace(trace);
       console.warn('[AG World] Canonical relationship query failed', error);
       return;
     }
 
-    const entityId = String(selection.id);
-    const entityType = canonicalType(selection.type);
     const relationships = (data || []).map(normalise).filter(rel =>
       (String(rel.sourceId) === entityId && canonicalType(rel.sourceType) === entityType) ||
       (String(rel.targetId) === entityId && canonicalType(rel.targetType) === entityType)
@@ -200,41 +311,39 @@
       source: position(rel.sourceType, rel.sourceId, selection),
       target: position(rel.targetType, rel.targetId, selection)
     }));
+
     const resolved = candidates.filter(item => item.source && item.target);
     const unresolved = candidates.filter(item => !item.source || !item.target);
 
-    // Dynamic layers can still be hydrating when their selection event fires.
-    // Do not clear a valid network with an empty transient result; retry from
-    // the exact same canonical selection after the layer/markers are ready.
+    trace.relationshipCount = relationships.length;
+    trace.resolvedCount = resolved.length;
+    trace.candidates = candidates.map(item => ({
+      relationshipId: item.rel.id,
+      sourceType: canonicalType(item.rel.sourceType),
+      sourceId: String(item.rel.sourceId),
+      sourceCoordinates: plainPoint(item.source),
+      sourceResolved: !!item.source,
+      targetType: canonicalType(item.rel.targetType),
+      targetId: String(item.rel.targetId),
+      targetCoordinates: plainPoint(item.target),
+      targetResolved: !!item.target
+    }));
+
     if (relationships.length && unresolved.length) {
-      global.__AGWORLD_RELATIONSHIP_DEBUG__ = {
-        entityId,
-        entityType,
-        relationshipCount: relationships.length,
-        resolvedCount: resolved.length,
-        unresolved: unresolved.map(item => ({
-          source: item.source ? null : canonicalType(item.rel.sourceType) + ':' + item.rel.sourceId,
-          target: item.target ? null : canonicalType(item.rel.targetType) + ':' + item.rel.targetId
-        })),
-        overlayCount: state.overlays.length,
-        waitingForPositions: true,
-        timestamp: Date.now(),
-        canonical: true
-      };
-      // Dynamic endpoints are refreshed independently from the card selection.
-      // Keep retrying the same canonical selection until every endpoint has a
-      // live position; do not clear the network while the refresh is transient.
+      trace.reason = 'waiting-for-unresolved-endpoints';
+      trace.unresolved = trace.candidates.filter(item => !item.sourceResolved || !item.targetResolved);
+      trace.overlayCount = state.overlays.length;
+      publishTrace(trace);
+
       if ((attempt || 0) < 20) {
         setTimeout(() => {
           if (request === state.request) render(selection, (attempt || 0) + 1).catch(console.warn);
         }, 180);
       }
-      // If some links are already resolvable, draw them now. If none are
-      // resolved, preserve the current network until the retry succeeds.
+
       if (!resolved.length) return;
     }
 
-    // Clear only when this latest selection has a usable render result.
     clear();
 
     resolved.forEach(({ rel, source, target }) => {
@@ -248,6 +357,7 @@
         path, geodesic: true, strokeColor: color, strokeOpacity: .48,
         strokeWeight: 12, zIndex: 980, map
       });
+
       const core = new google.maps.Polyline({
         path, geodesic: true, strokeColor: '#ffffff', strokeOpacity: .98,
         strokeWeight: 4, zIndex: 990,
@@ -261,6 +371,7 @@
         }],
         map
       });
+
       const accent = new google.maps.Polyline({
         path, geodesic: true, strokeColor: color, strokeOpacity: 1,
         strokeWeight: 2, zIndex: 995, map
@@ -269,18 +380,17 @@
       state.overlays.push(glow, core, accent);
     });
 
-    global.__AGWORLD_RELATIONSHIP_DEBUG__ = {
-      entityId,
-      entityType: canonicalType(selection.type),
-      relationshipCount: relationships.length,
-      resolvedCount: resolved.length,
-      overlayCount: state.overlays.length,
-      timestamp: Date.now(),
-      canonical: true
-    };
+    trace.reason = 'render-complete';
+    trace.overlayCount = state.overlays.length;
+    trace.allOverlaysAttached = state.overlays.length > 0 && state.overlays.every(overlay => {
+      try { return overlay.getMap?.() === map; } catch (_) { return false; }
+    });
+    trace.timestamp = Date.now();
+
+    publishTrace(trace);
 
     global.dispatchEvent(new CustomEvent('agworld:relationship-network-rendered', {
-      detail: global.__AGWORLD_RELATIONSHIP_DEBUG__
+      detail: trace
     }));
   }
 
@@ -293,8 +403,6 @@
     }, 60);
   }
 
-  // Replace the legacy renderer's global hooks. Existing Farm and dynamic
-  // selection listeners now resolve through one canonical scheduler.
   global.renderRelationshipNetwork = render;
   global.scheduleRelationshipNetwork = schedule;
   global.clearRelationshipNetwork = clear;
@@ -322,9 +430,6 @@
     clear();
   });
 
-  // Re-run the same canonical selection after asynchronous dynamic-layer
-  // hydration. Farms already have stable geometry; this closes the timing gap
-  // that affected Contractors, Competitors and Company Facilities.
   global.addEventListener('agworld:dynamic-layers-loaded', () => {
     if (state.selected && canonicalType(state.selected.type) !== 'farm') {
       schedule(state.selected);
