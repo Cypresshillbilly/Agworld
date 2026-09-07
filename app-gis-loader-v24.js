@@ -2431,6 +2431,7 @@ setInterval(() => {
 // ---------------------------------------------------------------------------
 const contractors = [];
 const competitors = [];
+const companyFacilities = [];
 let dynamicEntityType = null;
 let dynamicEntityId = null;
 let dynamicEntityLocation = null;
@@ -2472,11 +2473,36 @@ const DYNAMIC_LAYER_CONFIG = {
       ['Training', 'Competing training capability'],
       ['Other Activity', 'Other competitive agricultural activity']
     ]
+  },
+  companyFacility: {
+    table: 'company_facilities',
+    audit: 'company_facility_audit',
+    auditForeignKey: 'company_facility_id',
+    plural: 'Company Facilities',
+    title: 'CREATE COMPANY FACILITY',
+    label: 'Company Facility',
+    markerLabel: 'AG',
+    color: '#4d9f61',
+    step3Eyebrow: 'STEP 3 · FACILITY CAPABILITY',
+    options: [
+      ['Head Office', 'Company head office or administration centre'],
+      ['Regional Office', 'Regional operations or management base'],
+      ['Operations Base', 'Operational deployment facility'],
+      ['Drone Hub', 'Drone storage, deployment and support hub'],
+      ['Training Centre', 'Training and competency development facility'],
+      ['Workshop & Maintenance', 'Workshop, repair and maintenance capability'],
+      ['Warehouse & Logistics', 'Equipment, stock and logistics facility']
+    ]
   }
 };
 
 function dynamicConfig() { return DYNAMIC_LAYER_CONFIG[dynamicEntityType]; }
-function dynamicArray(type) { return type === 'contractor' ? contractors : competitors; }
+function dynamicArray(type) {
+  if (type === 'contractor') return contractors;
+  if (type === 'competitor') return competitors;
+  if (type === 'companyFacility') return companyFacilities;
+  return [];
+}
 
 function dynamicDetailsFromForm() {
   const capabilities = [...document.querySelectorAll('#dynamicChecklist input[type="checkbox"]:checked')].map(input => input.value);
@@ -2623,7 +2649,7 @@ async function saveDynamicEntity(step) {
   });
 
   const { error: auditError } = await db.from(cfg.audit).insert({
-    [dynamicEntityType + '_id']: entity.id,
+    [cfg.auditForeignKey || (dynamicEntityType + '_id')]: entity.id,
     action: before ? 'updated' : 'created',
     actor_id: user.id,
     source: dynamicEntityType + '_editor',
@@ -2709,14 +2735,19 @@ async function loadDynamicLayer(type) {
 }
 
 async function loadDynamicLayers() {
-  await Promise.allSettled([loadDynamicLayer('contractor'), loadDynamicLayer('competitor')]);
+  await Promise.allSettled([
+    loadDynamicLayer('contractor'),
+    loadDynamicLayer('competitor'),
+    loadDynamicLayer('companyFacility')
+  ]);
   window.dispatchEvent(new CustomEvent('agworld:dynamic-layers-loaded', {
-    detail: { contractors, competitors }
+    detail: { contractors, competitors, companyFacilities }
   }));
 }
 
 $('createContractorBtn').onclick = () => openDynamicEntity('contractor');
 $('createCompetitorBtn').onclick = () => openDynamicEntity('competitor');
+$('createCompanyFacilityBtn').onclick = () => openDynamicEntity('companyFacility');
 $('closeDynamicEntity').onclick = () => {
   stopDynamicLocationMode();
   $('dynamicEntityModal').classList.remove('show');
@@ -2775,3 +2806,4 @@ setInterval(() => { if (map) loadDynamicLayers().catch(() => {}); }, 5000);
 
 window.AG_WORLD_WORLD.getContractors = () => contractors;
 window.AG_WORLD_WORLD.getCompetitors = () => competitors;
+window.AG_WORLD_WORLD.getCompanyFacilities = () => companyFacilities;
