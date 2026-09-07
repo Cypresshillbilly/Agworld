@@ -2744,6 +2744,7 @@ function hydrateDynamicEntity(row, type) {
 }
 
 function renderDynamicEntity(entity) {
+  if (map) window.__AGWORLD_GOOGLE_MAP__ = map;
   if (!map || !entity?.name || !Number.isFinite(entity.lat) || !Number.isFinite(entity.lng)) return;
   const cfg = DYNAMIC_LAYER_CONFIG[entity.type];
   if (entity._marker) entity._marker.setMap(null);
@@ -3151,11 +3152,19 @@ function scheduleRelationshipNetwork(selection) {
   }, 140);
 }
 
+// Legacy relationship listeners remain only as a fallback for older builds.
+// The canonical V2 renderer is the single runtime path whenever it is loaded.
+// Without this guard, these closed-over legacy listeners still render in parallel
+// even after window.renderRelationshipNetwork has been replaced, creating a
+// second request/overlay lifecycle that can make non-Farm selections appear
+// data-complete while their visual links are missing.
 window.addEventListener('agworld:farm-selected', event => {
+  if (window.__AGWORLD_RELATIONSHIP_NETWORK_CANONICAL_V2__) return;
   const farm = event?.detail?.farm;
   if (farm) scheduleRelationshipNetwork({ id: farm.id, type: 'farm' });
 });
 window.addEventListener('agworld:dynamic-entity-selected', event => {
+  if (window.__AGWORLD_RELATIONSHIP_NETWORK_CANONICAL_V2__) return;
   const entity = event?.detail?.entity;
   if (entity) scheduleRelationshipNetwork({
     id: entity.id,
@@ -3165,7 +3174,10 @@ window.addEventListener('agworld:dynamic-entity-selected', event => {
     entity
   });
 });
-window.addEventListener('agworld:farm-selection-cleared', clearRelationshipNetwork);
+window.addEventListener('agworld:farm-selection-cleared', () => {
+  if (window.__AGWORLD_RELATIONSHIP_NETWORK_CANONICAL_V2__) return;
+  clearRelationshipNetwork();
+});
 
 async function loadDynamicLayer(type) {
   const cfg = DYNAMIC_LAYER_CONFIG[type];
