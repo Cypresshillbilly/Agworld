@@ -1386,10 +1386,16 @@ window.addEventListener('agworld:spatial-edit-request', event => {
     startDynamicSpatialMove(entity);
     return;
   }
+  if (action === 'territory') {
+    const live = resolveDynamicSpatialEntity(entity) || entity;
+    spatialEditState = { entity: live, action: 'territory', before: { ...live, details: { ...(live.details || {}) } } };
+    agInstallTerritoryAssignmentHook();
+    window.dispatchEvent(new CustomEvent('agworld:dynamic-spatial-edit-request', { detail: { entity: live, action } }));
+    toast('Select the territory directly on the map to assign this entity.');
+    return;
+  }
   window.dispatchEvent(new CustomEvent('agworld:dynamic-spatial-edit-request', { detail: { entity, action } }));
-  toast(action === 'territory'
-    ? 'Territory editing is ready for the geographic assignment workflow.'
-    : 'Spatial edit mode sent to the entity map layer');
+  toast('Spatial edit mode sent to the entity map layer');
 });
 
 function addFarm(farm) {
