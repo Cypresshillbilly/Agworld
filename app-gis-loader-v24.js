@@ -118,14 +118,17 @@ async function saveFarmToDatabase(farm, beforeState) {
   };
   const { error } = await db.from('farms').upsert(row, { onConflict: 'id' });
   if (error) throw error;
-  await db.from('farm_audit').insert({
+
+  // Audit logging must never make a successfully saved farm look like it failed.
+  const { error: auditError } = await db.from('farm_audit').insert({
     farm_id: String(farm.id),
     action: beforeState ? 'updated' : 'created',
-    actor_id: user.id,
+    actor_id: String(user.id || ''),
     source: 'farm_editor',
     before_state: beforeState || null,
     after_state: details
   });
+  if (auditError) console.warn('Farm audit logging failed', auditError);
   return row;
 }
 
