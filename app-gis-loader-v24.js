@@ -2841,32 +2841,11 @@ function selectDynamicEntity(entity, zoom = true) {
   window.dispatchEvent(new CustomEvent('agworld:v2-entity-selected', { detail: { entity } }));
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
 
-  // The Farm path is event-driven. Dynamic entities also emit that canonical
-  // event, but explicitly hand the same selection object to the canonical
-  // scheduler as a reliability bridge. Both calls collapse into the same
-  // debounced canonical renderer, so there is still only one overlay lifecycle.
-  const relationshipSelection = {
-    id: entity.id,
-    type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
-    lat: Number(entity.lat),
-    lng: Number(entity.lng),
-    entity
-  };
-  // IMPORTANT: call the lexical canonical scheduler directly. The GIS loader
-  // may be executed in a scope where top-level functions are not exposed as
-  // window properties, so window.scheduleRelationshipNetwork can be undefined
-  // even though the Farm event path can still reach this exact scheduler.
-  scheduleRelationshipNetwork(relationshipSelection);
-
-  // Dynamic layer hydration can replace marker references shortly after a
-  // click. Re-schedule the same canonical selection after that settles.
-  setTimeout(() => {
-    const current = window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
-    if (current && String(current.entityId) === String(entity.id) &&
-        String(current.entityType) === String(entity.type)) {
-      scheduleRelationshipNetwork(relationshipSelection);
-    }
-  }, 320);
+  // Do not call the older in-loader relationship scheduler here. The canonical
+  // V2 renderer owns the overlay lifecycle for every entity type. Calling both
+  // renderers from a dynamic marker click creates two asynchronous render paths
+  // and is precisely why a dynamic entity can show relationship data while the
+  // visual links disappear. The selection events above are now the only trigger.
 
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
