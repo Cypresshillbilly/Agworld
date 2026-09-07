@@ -117,6 +117,214 @@
         : '<p>' + esc(emptyMessage) + '</p>';
     }
 
+    relationshipValue(relationship, camel, snake) {
+      return relationship?.[camel] ?? relationship?.[snake];
+    }
+
+    collectEntityOptions() {
+      const options = [];
+      const add = (id, type, name, raw) => {
+        if (!id || String(id) === String(this.entity?.id)) return;
+        options.push({ id: String(id), type, name: name || 'Unnamed entity', raw });
+      };
+
+      const world = global.AG_WORLD_WORLD || {};
+      const farms = global.__AG_WORLD_FARMS || world.farms || world.getFarms?.() || [];
+      (Array.isArray(farms) ? farms : []).forEach(farm => add(farm.id, 'farm', farm.name, farm));
+
+      const dynamicSources = [
+        ['contractor', world.getContractors?.()],
+        ['competitor', world.getCompetitors?.()],
+        ['company_facility', world.getCompanyFacilities?.()]
+      ];
+      dynamicSources.forEach(([type, items]) => {
+        (Array.isArray(items) ? items : []).forEach(item => add(item.id, type, item.name, item));
+      });
+
+      const seen = new Set();
+      return options.filter(option => {
+        const key = option.type + ':' + option.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    relatedInfo(relationship) {
+      const sourceId = this.relationshipValue(relationship, 'sourceEntityId', 'source_entity_id');
+      const sourceType = this.relationshipValue(relationship, 'sourceEntityType', 'source_entity_type');
+      const targetId = this.relationshipValue(relationship, 'targetEntityId', 'target_entity_id');
+      const targetType = this.relationshipValue(relationship, 'targetEntityType', 'target_entity_type');
+      const metadata = relationship.metadata || {};
+      const isSource = String(sourceId) === String(this.entity.id);
+      return {
+        id: String(isSource ? targetId : sourceId),
+        type: isSource ? targetType : sourceType,
+        name: isSource
+          ? (relationship.targetEntityName || metadata.targetEntityName || targetId)
+          : (relationship.sourceEntityName || metadata.sourceEntityName || sourceId),
+        relationshipType: this.relationshipValue(relationship, 'relationshipType', 'relationship_type') || '',
+        status: relationship.status || 'active',
+        metadata
+      };
+    }
+
+    openRelatedEntity(info) {
+      const option = this.collectEntityOptions().find(item =>
+        String(item.id) === String(info.id) && String(item.type) === String(info.type)
+      );
+      if (!option) return;
+
+      if (option.type === 'farm') {
+        global.dispatchEvent(new CustomEvent('agworld:farm-selected', { detail: { farm: option.raw } }));
+      } else {
+        global.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity: option.raw } }));
+      }
+    }
+
+    relationshipForm(target, relationships, editing) {
+      const options = this.collectEntityOptions();
+      const current = editing ? this.relatedInfo(editing) : null;
+      const selectedKey = current ? current.type + ':' + current.id : '';
+      const relationshipType = editing
+        ? this.relationshipValue(editing, 'relationshipType', 'relationship_type')
+        : 'works_with';
+      const purpose = editing ? (editing.metadata?.purpose || editing.metadata?.note || '') : '';
+      const status = editing?.status || 'active';
+
+      target.innerHTML = `
+        <div class="agworld-relationship-manager">
+          <div class="agworld-relationship-toolbar">
+            <strong>${editing ? 'EDIT RELATIONSHIP' : 'CREATE RELATIONSHIP'}</strong>
+            <button type="button" data-rm-action="cancel">Cancel</button>
+          </div>
+          <form class="agworld-relationship-form">
+            <label>Connected entity
+              <select name="target" required>
+                <option value="">Select an entity…</option>
+                ${options.map(option => {
+                  const key = option.type + ':' + option.id;
+                  const label = (global.AGWorldV2.EntityTypes?.[option.type]?.label || option.type) + ' · ' + option.name;
+                  return '<option value="' + esc(key) + '" ' + (key === selectedKey ? 'selected' : '') + '>' + esc(label) + '</option>';
+                }).join('')}
+              </select>
+            </label>
+            <label>Relationship type
+              <select name="relationshipType" required>
+                ${[
+                  ['works_with','Works with'],
+                  ['supported_by','Supported by'],
+                  ['supplies','Supplies'],
+                  ['serves','Serves'],
+                  ['competes_with','Competes with'],
+                  ['owned_by','Owned by'],
+                  ['manages','Manages'],
+                  ['partnered_with','Partnered with'],
+                  ['other','Other']
+                ].map(([value,label]) => '<option value="' + value + '" ' + (value === relationshipType ? 'selected' : '') + '>' + label + '</option>').join('')}
+              </select>
+            </label>
+            <label>Status
+              <select name="status">
+                ${['active','inactive','planned'].map(value => '<option value="' + value + '" ' + (value === status ? 'selected' : '') + '>' + value[0].toUpperCase() + value.slice(1) + '</option>').join('')}
+              </select>
+            </label>
+            <label>Purpose / description
+              <textarea name="purpose" rows="3" placeholder="Why are these entities connected?">${esc(purpose)}</textarea>
+            </label>
+            <div class="agworld-relationship-form-actions">
+              <button type="submit">${editing ? 'Save changes' : 'Create relationship'}</button>
+            </div>
+          </form>
+        </div>`;
+
+      target.querySelector('[data-rm-action="cancel"]').addEventListener('click', () => this.renderRelationshipManager(target, relationships));
+      target.querySelector('form').addEventListener('submit', async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const key = String(new FormData(form).get('target') || '');
+        const splitAt = key.indexOf(':');
+        const targetType = key.slice(0, splitAt);
+        const targetId = key.slice(splitAt + 1);
+        const selected = options.find(option => option.type === targetType && option.id === targetId);
+        if (!selected) return;
+
+        const sourceName = this.entity.name || this.entity.id;
+        const input = {
+          sourceEntityId: String(this.entity.id),
+          sourceEntityType: this.entity.type || 'farm',
+          relationshipType: String(new FormData(form).get('relationshipType') || 'works_with'),
+          targetEntityId: selected.id,
+          targetEntityType: selected.type,
+          status: String(new FormData(form).get('status') || 'active'),
+          metadata: {
+            ...(editing?.metadata || {}),
+            purpose: String(new FormData(form).get('purpose') || '').trim(),
+            sourceEntityName: sourceName,
+            targetEntityName: selected.name
+          }
+        };
+
+        const submit = form.querySelector('[type="submit"]');
+        submit.disabled = true;
+        submit.textContent = editing ? 'Saving…' : 'Creating…';
+        try {
+          if (editing?.id) await this.relationshipRepository.replace(editing.id, input);
+          else await this.relationshipRepository.create(input);
+          await this.loadRelationships(target);
+        } catch (error) {
+          submit.disabled = false;
+          submit.textContent = 'Could not save · try again';
+        }
+      });
+    }
+
+    renderRelationshipManager(target, relationships) {
+      const rows = Array.isArray(relationships) ? relationships : [];
+      target.innerHTML = `
+        <div class="agworld-relationship-manager">
+          <div class="agworld-relationship-toolbar">
+            <strong>ENTITY RELATIONSHIPS</strong>
+            <button type="button" data-rm-action="create">+ Add relationship</button>
+          </div>
+          <div class="agworld-relationship-list">
+            ${rows.length ? rows.map((relationship, index) => {
+              const info = this.relatedInfo(relationship);
+              const purpose = info.metadata?.purpose || info.metadata?.note || '';
+              return `
+                <article class="agworld-relationship-card" data-rm-index="${index}">
+                  <button type="button" class="agworld-relationship-open" data-rm-action="open">${esc(info.name)}</button>
+                  <div class="agworld-relationship-meta">${esc(global.AGWorldV2.EntityTypes?.[info.type]?.label || info.type || 'Entity')} · ${esc(info.relationshipType)} · ${esc(info.status)}</div>
+                  ${purpose ? '<div class="agworld-relationship-purpose">' + esc(purpose) + '</div>' : ''}
+                  <div class="agworld-relationship-actions">
+                    <button type="button" data-rm-action="edit">Edit</button>
+                    <button type="button" data-rm-action="remove">Remove</button>
+                  </div>
+                </article>`;
+            }).join('') : '<p>No relationships recorded yet. Create the first connection for this entity.</p>'}
+          </div>
+        </div>`;
+
+      target.querySelector('[data-rm-action="create"]').addEventListener('click', () => this.relationshipForm(target, rows, null));
+      target.querySelectorAll('[data-rm-index]').forEach(card => {
+        const relationship = rows[Number(card.dataset.rmIndex)];
+        card.querySelector('[data-rm-action="open"]').addEventListener('click', () => this.openRelatedEntity(this.relatedInfo(relationship)));
+        card.querySelector('[data-rm-action="edit"]').addEventListener('click', () => this.relationshipForm(target, rows, relationship));
+        card.querySelector('[data-rm-action="remove"]').addEventListener('click', async () => {
+          if (!relationship?.id || !global.confirm('Remove this relationship?')) return;
+          const button = card.querySelector('[data-rm-action="remove"]');
+          button.disabled = true;
+          try {
+            await this.relationshipRepository.remove(relationship.id);
+            await this.loadRelationships(target);
+          } catch (error) {
+            button.disabled = false;
+            button.textContent = 'Could not remove';
+          }
+        });
+      });
+    }
+
     async loadRelationships(target) {
       if (!this.relationshipRepository) {
         target.innerHTML = '<p>Relationships will be connected to the V2 Relationship Engine next.</p>';
@@ -124,9 +332,7 @@
       }
       try {
         const relationships = await this.relationshipRepository.list(this.entity.id);
-        target.innerHTML = relationships.length
-          ? '<ul>' + relationships.map(r => { const relatedId = String(r.sourceEntityId) === String(this.entity.id) ? r.targetEntityId : r.sourceEntityId; const relatedName = String(r.sourceEntityId) === String(this.entity.id) ? (r.targetEntityName || r.metadata?.targetEntityName) : (r.sourceEntityName || r.metadata?.sourceEntityName); return '<li>' + esc(r.relationshipType) + ': ' + esc(relatedName || relatedId) + '</li>'; }).join('') + '</ul>'
-          : '<p>No relationships recorded yet.</p>';
+        this.renderRelationshipManager(target, relationships);
       } catch (error) {
         target.innerHTML = '<p>Relationships could not be loaded.</p>';
       }
