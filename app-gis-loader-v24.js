@@ -2762,7 +2762,17 @@ function renderDynamicEntity(entity) {
       scale: 11
     }
   });
-  entity._marker.addListener('click', () => selectDynamicEntity(entity, true));
+  // Map icons must use the exact same canonical selection path as every other
+  // entity selection. Read the live marker position first because hydration can
+  // replace the backing entity object while the marker remains on the map.
+  entity._marker.addListener('click', () => {
+    const livePosition = entity._marker?.getPosition?.();
+    if (livePosition) {
+      entity.lat = Number(livePosition.lat());
+      entity.lng = Number(livePosition.lng());
+    }
+    selectDynamicEntity(entity, true);
+  });
 
   // Keep a marker-backed runtime position registry. Relationship rendering must
   // be able to resolve an entity from the live marker layer even while the
@@ -2810,7 +2820,12 @@ function selectDynamicEntity(entity, zoom = true) {
   if (updateButton) {
     updateButton.textContent = 'VIEW ENTITY DETAILS';
     updateButton.onclick = () => {
-      window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+      // Publish both the V2 canonical selection event and the legacy-compatible
+  // dynamic event. The canonical relationship renderer subscribes directly to
+  // these selection signals, so clicking the map icon follows the same route
+  // as selecting the entity through the card or detail workflow.
+  window.dispatchEvent(new CustomEvent('agworld:v2-entity-selected', { detail: { entity } }));
+  window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
     };
   }
 
