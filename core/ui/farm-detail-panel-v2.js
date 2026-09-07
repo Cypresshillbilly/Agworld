@@ -183,6 +183,130 @@
     }
   };
 
+  class DynamicEntityDetailPanelV2 extends global.AGWorldV2.EntityDetailPanelV2 {
+    tabs() {
+      return [
+        ['details', 'Entity Details'],
+        ['relationships', 'Relationships'],
+        ['activity', 'Activity'],
+        ['documents', 'Documents'],
+        ['media', 'Media'],
+        ['notes', 'Notes']
+      ];
+    }
+
+    open(entity) {
+      this.entity = entity;
+      this.activeTab = 'relationships';
+      this.render();
+    }
+
+    render() {
+      super.render();
+      const header = this.container?.querySelector('.agworld-v2-detail-header');
+      if (!header) return;
+      const close = header.querySelector('[data-action="close"]');
+      if (close) close.remove();
+      const type = header.querySelector('.agworld-v2-entity-type');
+      if (type) type.textContent = 'AG WORLD V2 ENTITY ENGINE · ' + (global.AGWorldV2.EntityTypes?.[this.entity.type]?.label || this.entity.type).toUpperCase();
+      const title = header.querySelector('h2');
+      if (title) title.textContent = this.entity.name || 'CONNECTED ENTITY DATA';
+      const status = header.querySelector('.agworld-v2-status');
+      if (status) status.textContent = String(this.entity.status || 'active').toUpperCase();
+    }
+
+    renderContent() {
+      if (this.activeTab !== 'details') return super.renderContent();
+      const target = this.container.querySelector('.agworld-v2-detail-content');
+      const data = this.entity.metadata || {};
+      const rows = [
+        ['Primary contact', data.contactName],
+        ['Mobile', data.contactCell],
+        ['Email', data.contactEmail],
+        ['Country', data.country],
+        ['Province', data.province],
+        ['Municipality', data.municipality],
+        ['Nearest town', data.nearestTown],
+        ['Capabilities', Array.isArray(data.capabilities) ? data.capabilities.join(', ') : data.capabilities],
+        ['Website', data.website],
+        ['Notes', data.notes]
+      ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+      target.innerHTML = rows.length
+        ? '<dl>' + rows.map(([label,value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl>'
+        : '<p>No entity details have been added yet.</p>';
+    }
+  }
+
+  function installDynamicLiveBridge() {
+    if (global.AGWorldV2?.LiveDynamicEntityDetailBridge) return true;
+    if (!installLiveBridge()) return false;
+
+    const host = document.getElementById('agworldV2FarmDetailHost');
+    if (!host) return false;
+
+    const apiBase = global.AG_WORLD_API?.baseUrl || global.AGWORLD_API_BASE_URL || 'https://ag-world-api.onrender.com';
+    const relationshipRepository = new global.AGWorldV2.RelationshipRepository({
+      baseUrl: apiBase.replace(/\/$/, '') + '/api/v2/relationships'
+    });
+    const detailPanel = new DynamicEntityDetailPanelV2({ container: host, relationshipRepository });
+
+    global.AGWorldV2.LiveDynamicEntityDetailBridge = {
+      open(dynamicEntity) {
+        if (!dynamicEntity?.id) return;
+        const typeMap = {
+          contractor: 'contractor',
+          competitor: 'competitor',
+          companyFacility: 'company_facility'
+        };
+        const type = typeMap[dynamicEntity.type] || dynamicEntity.type;
+        const entity = global.AGWorldV2.EntitySchema.createEntity({
+          id: String(dynamicEntity.id),
+          type,
+          name: dynamicEntity.name || 'Unnamed entity',
+          description: dynamicEntity.details?.notes || '',
+          status: dynamicEntity.status || 'active',
+          territoryIds: [dynamicEntity.details?.province, dynamicEntity.details?.municipality].filter(Boolean),
+          geometry: Number.isFinite(Number(dynamicEntity.lat)) && Number.isFinite(Number(dynamicEntity.lng))
+            ? { type: 'Point', coordinates: [Number(dynamicEntity.lng), Number(dynamicEntity.lat)] }
+            : null,
+          metadata: {
+            contactName: dynamicEntity.contactName,
+            contactCell: dynamicEntity.contactCell,
+            contactEmail: dynamicEntity.contactEmail,
+            ...(dynamicEntity.details || {})
+          }
+        });
+        host.hidden = false;
+        host.style.display = 'block';
+        host.style.visibility = 'visible';
+        host.style.opacity = '1';
+        detailPanel.open(entity);
+      },
+      close() { detailPanel.close(); }
+    };
+    return true;
+  }
+
+  global.openV2DynamicEntityDetail = function (entity) {
+    try {
+      if (!installDynamicLiveBridge()) {
+        global.addEventListener('DOMContentLoaded', () => global.openV2DynamicEntityDetail(entity), { once:true });
+        return;
+      }
+      global.AGWorldV2.LiveDynamicEntityDetailBridge.open(entity);
+    } catch (error) {
+      console.error('[AG World V2] Unable to open dynamic entity detail', error);
+    }
+  };
+
+  global.addEventListener('agworld:dynamic-entity-selected', e => {
+    const entity = e?.detail?.entity;
+    if (entity) global.openV2DynamicEntityDetail(entity);
+  });
+
+  global.AGWorldV2 = global.AGWorldV2 || {};
+  global.AGWorldV2.DynamicEntityDetailPanelV2 = DynamicEntityDetailPanelV2;
+
   // Primary integration: the GIS loader emits this from inside its actual
   // local selectFarm function. Do not depend on window.selectFarm, which is not
   // the public runtime function in this application.
