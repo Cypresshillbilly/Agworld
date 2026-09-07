@@ -1270,6 +1270,11 @@ function selectFarm(farm, zoom = true) {
     }
   }
   showFarmDetail(farm);
+
+  // V2.6 live UI bridge: the GIS loader owns selectFarm in this module scope,
+  // so dispatch directly from the real selection event rather than relying on
+  // window.selectFarm (which does not exist for this module-scoped function).
+  window.dispatchEvent(new CustomEvent('agworld:v2-open-live-farm', { detail: farm }));
 }
 
 async function openFarmHistory(farm = selected) {
