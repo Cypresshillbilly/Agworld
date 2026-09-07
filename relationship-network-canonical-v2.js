@@ -486,5 +486,93 @@
     }
   });
 
+  // Direct-marker diagnostic. If a Contractor/Competitor/Company Facility
+  // is selected directly and its relationship lines are still absent, show the
+  // exact runtime stage that failed instead of silently trying another render.
+  function showDirectSelectionDiagnostic(entity) {
+    const type = canonicalType(entity?.type);
+    const id = String(entity?.id || '');
+    const trace = runtimeTrace[type + ':' + id];
+    const selectedMatches = String(state.selected?.id || '') === id && canonicalType(state.selected?.type) === type;
+    const attached = state.overlays.length > 0 && state.overlays.every(overlay => {
+      try { return overlay.getMap?.() === worldMap(state.selected); } catch (_) { return false; }
+    });
+
+    let diagnosis;
+    if (!trace) {
+      diagnosis = 'CANONICAL RENDERER DID NOT RECEIVE THIS SELECTION EVENT.';
+    } else if (trace.reason === 'map-unavailable') {
+      diagnosis = 'MAP INSTANCE WAS NOT AVAILABLE TO THE CANONICAL RENDERER.';
+    } else if (trace.reason === 'supabase-unavailable') {
+      diagnosis = 'SUPABASE CLIENT WAS NOT AVAILABLE.';
+    } else if (trace.reason === 'relationship-query-error') {
+      diagnosis = 'DATABASE QUERY FAILED: ' + (trace.error || 'unknown error');
+    } else if (!trace.relationshipCount) {
+      diagnosis = 'NO ACTIVE entity_relationships RECORD MATCHED THIS ENTITY ID + TYPE.';
+    } else if (!trace.resolvedCount) {
+      diagnosis = 'RELATIONSHIP RECORD EXISTS, BUT ONE OR BOTH ENDPOINTS COULD NOT BE RESOLVED.';
+    } else if (trace.reason !== 'render-complete') {
+      diagnosis = 'RENDERER IS STILL WAITING: ' + String(trace.reason || 'unknown stage');
+    } else if (!trace.overlayCount || !trace.allOverlaysAttached || !attached) {
+      diagnosis = 'LINES WERE CREATED BUT ARE NOT ATTACHED TO THE ACTIVE GOOGLE MAP.';
+    } else {
+      diagnosis = 'RENDERER REPORTS SUCCESS. IF NO LINE IS VISIBLE, ANOTHER LATER SELECTION/CLEAR OPERATION IS REMOVING OR HIDING THE OVERLAYS.';
+    }
+
+    let box = document.getElementById('agworldDirectRelationshipDiagnostic');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'agworldDirectRelationshipDiagnostic';
+      box.style.cssText = [
+        'position:fixed','left:50%','top:50%','transform:translate(-50%,-50%)',
+        'z-index:30000','width:min(620px,calc(100vw - 28px))','max-height:80vh',
+        'overflow:auto','background:#102126','color:#f2f6f4',
+        'border:2px solid #9dcc38','border-radius:12px',
+        'box-shadow:0 20px 70px rgba(0,0,0,.55)','padding:18px',
+        'font:13px/1.5 Arial,sans-serif'
+      ].join(';');
+      document.body.appendChild(box);
+    }
+
+    const coords = trace?.selectedCoordinates || null;
+    const rows = [
+      ['Entity', type + ' · ' + id],
+      ['Name', entity?.name || '—'],
+      ['Trace received', trace ? 'YES' : 'NO'],
+      ['Renderer reason', trace?.reason || 'no trace'],
+      ['Relationships found', trace?.relationshipCount ?? '—'],
+      ['Endpoints resolved', trace ? String(trace.resolvedCount) + ' / ' + String(trace.relationshipCount) : '—'],
+      ['Selected coordinates', coords ? coords.lat + ', ' + coords.lng : 'MISSING'],
+      ['Map available', trace?.map?.exists ? 'YES' : 'NO'],
+      ['Selection marker on renderer map', trace?.map?.isSelectionMarkerMap ? 'YES' : 'NO'],
+      ['Overlays created', trace?.overlayCount ?? state.overlays.length],
+      ['Overlays attached', trace ? (trace.allOverlaysAttached ? 'YES' : 'NO') : (attached ? 'YES' : 'NO')],
+      ['Renderer still selected entity', selectedMatches ? 'YES' : 'NO']
+    ];
+
+    box.innerHTML =
+      '<button type="button" id="agworldDiagClose" style="float:right;border:0;border-radius:5px;padding:5px 9px;cursor:pointer">Close</button>' +
+      '<div style="font-weight:800;font-size:16px;color:#9dcc38">RELATIONSHIP DIAGNOSTIC</div>' +
+      '<div style="margin:10px 0;padding:10px;background:#172e35;border-radius:7px;color:#ffd27d"><b>WHAT IS WRONG:</b><br>' + diagnosis + '</div>' +
+      '<table style="width:100%;border-collapse:collapse">' +
+      rows.map(row => '<tr><td style="padding:4px 8px 4px 0;color:#9eb1b8;vertical-align:top">' + row[0] + '</td><td style="padding:4px 0;word-break:break-word">' + row[1] + '</td></tr>').join('') +
+      '</table>' +
+      (trace?.candidates?.length ? '<div style="margin-top:10px;color:#9eb1b8">Candidate endpoint details are available in window.__AGWORLD_RELATIONSHIP_DEBUG__.</div>' : '');
+    box.querySelector('#agworldDiagClose')?.addEventListener('click', () => box.remove());
+
+    global.__AGWORLD_DIRECT_RELATIONSHIP_DIAGNOSTIC__ = { diagnosis, trace, selectedMatches, attached, checkedAt: Date.now() };
+  }
+
+  global.addEventListener('agworld:dynamic-entity-selected', event => {
+    const entity = event?.detail?.entity;
+    if (!entity) return;
+    const token = (global.__AGWORLD_DIRECT_RELATIONSHIP_DIAGNOSTIC_TOKEN__ || 0) + 1;
+    global.__AGWORLD_DIRECT_RELATIONSHIP_DIAGNOSTIC_TOKEN__ = token;
+    setTimeout(() => {
+      if (global.__AGWORLD_DIRECT_RELATIONSHIP_DIAGNOSTIC_TOKEN__ !== token) return;
+      showDirectSelectionDiagnostic(entity);
+    }, 1200);
+  });
+
   global.__AGWORLD_RELATIONSHIP_NETWORK_CANONICAL_V2__ = true;
 })(window);
