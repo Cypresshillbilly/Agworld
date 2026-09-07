@@ -1027,7 +1027,11 @@ function selectFarm(farm, zoom = true) {
   $('aiText').textContent = farm.drones === 0
     ? `${farm.name} has no company drone recorded and scores ${farm.opportunityScore ?? '—'}/100. Qualify this opportunity and move the territory forward.`
     : `${farm.name} is an active relationship. Protect the account through service quality and customer satisfaction.`;
-  ensureEditButton();
+  const updateButton = $('farm3d');
+  if (updateButton) {
+    updateButton.textContent = 'UPDATE FARM DETAILS';
+    updateButton.onclick = () => openEditFarm(selected);
+  }
   if (map && zoom) {
     map.panTo(farm.center);
     map.setZoom(12);
@@ -1547,7 +1551,7 @@ $('importBtn').onclick = importData;
 $('exportBtn').onclick = exportData;
 $('datasetFile').onchange = handleImport;
 document.querySelectorAll('.object-palette button').forEach(button => button.onclick = () => chooseObject(button.dataset.object));
-$('farm3d').onclick = open3D;
+$('farm3d').onclick = () => openEditFarm(selected);
 $('close3d').onclick = close3D;
 $('close3dBottom').onclick = close3D;
 $('farm3dModal').onclick = event => { if (event.target.id === 'farm3dModal') close3D(); };
