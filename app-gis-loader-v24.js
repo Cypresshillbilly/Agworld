@@ -1071,6 +1071,94 @@ function selectTerritory(territory, zoom = true) {
   }
   $('mapStatus').textContent = `${MASTER_PLAYER.name} territory control · ${levelLabel} · ${territory.name} · ${summary.control}% · ${summary.company}/${summary.total} farms`;
 }
+
+let spatialEditState = null;
+
+function spatialPoint(value) {
+  if (!value) return null;
+  if (typeof value.lat === 'function') return { lat: value.lat(), lng: value.lng() };
+  const lat = Number(value.lat), lng = Number(value.lng);
+  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+}
+
+async function persistSpatialFarm(farm, beforeState, action) {
+  saveLocal();
+  try {
+    await saveFarmToDatabase(farm, beforeState);
+    window.dispatchEvent(new CustomEvent('agworld:entity-updated', { detail: { entity: farm, action: action || 'spatial-updated', patch: { center: farm.center, boundary: farm.boundary } } }));
+    toast('Map changes saved');
+  } catch (error) {
+    console.warn('Spatial farm save failed', error);
+    toast('Map changed locally; shared save failed');
+  }
+}
+
+function stopSpatialEdit(silent = false) {
+  const state = spatialEditState;
+  if (!state) return;
+  const farm = state.entity;
+  if (farm?._marker) farm._marker.setDraggable(false);
+  if (farm?._polygon) farm._polygon.setEditable(false);
+  spatialEditState = null;
+  if (!silent) toast('Map editing cancelled');
+}
+
+function startFarmMove(farm) {
+  stopSpatialEdit(true);
+  if (!farm?._marker) { toast('This farm has no map marker to move'); return; }
+  spatialEditState = { entity: farm, action: 'move', before: cleanFarm(farm) };
+  farm._marker.setDraggable(true);
+  farm._marker.setAnimation(google.maps.Animation.BOUNCE);
+  farm._marker.addListener('dragend', async event => {
+    if (!spatialEditState || spatialEditState.entity !== farm || spatialEditState.action !== 'move') return;
+    farm.center = spatialPoint(event.latLng);
+    farm._marker.setAnimation(null);
+    farm._marker.setDraggable(false);
+    spatialEditState = null;
+    await persistSpatialFarm(farm, spatialEditState?.before || null, 'position-updated');
+  });
+  toast('Drag the farm marker to its new location');
+}
+
+function startFarmBoundaryEdit(farm) {
+  stopSpatialEdit(true);
+  if (!farm?._polygon) { toast('This farm has no boundary to edit'); return; }
+  const before = cleanFarm(farm);
+  spatialEditState = { entity: farm, action: 'boundary', before };
+  farm._polygon.setEditable(true);
+  const path = farm._polygon.getPath();
+  const save = async () => {
+    if (!spatialEditState || spatialEditState.entity !== farm || spatialEditState.action !== 'boundary') return;
+    farm.boundary = path.getArray().map(spatialPoint).filter(Boolean);
+    if (farm.boundary.length >= 3) farm.center = centroid(farm.boundary);
+    farm._marker?.setPosition(farm.center);
+    const state = spatialEditState; spatialEditState = null;
+    farm._polygon.setEditable(false);
+    await persistSpatialFarm(farm, state.before, 'boundary-updated');
+  };
+  google.maps.event.addListener(path, 'set_at', () => { clearTimeout(farm.__spatialSaveTimer); farm.__spatialSaveTimer = setTimeout(save, 900); });
+  google.maps.event.addListener(path, 'insert_at', () => { clearTimeout(farm.__spatialSaveTimer); farm.__spatialSaveTimer = setTimeout(save, 900); });
+  google.maps.event.addListener(path, 'remove_at', () => { clearTimeout(farm.__spatialSaveTimer); farm.__spatialSaveTimer = setTimeout(save, 900); });
+  toast('Drag boundary points or add points directly on the farm boundary');
+}
+
+window.addEventListener('agworld:spatial-edit-request', event => {
+  const { entity, action } = event.detail || {};
+  if (!entity) return;
+  if (action === 'cancel') { stopSpatialEdit(); return; }
+  if (entity.type === 'farm') {
+    if (action === 'move') startFarmMove(entity);
+    else if (action === 'boundary') startFarmBoundaryEdit(entity);
+    else if (action === 'territory') {
+      toast('Territory assignment is selected from the existing territory map layer; click a territory to assign it.');
+      spatialEditState = { entity, action: 'territory', before: cleanFarm(entity) };
+    }
+    return;
+  }
+  window.dispatchEvent(new CustomEvent('agworld:dynamic-spatial-edit-request', { detail: { entity, action } }));
+  toast('Spatial edit mode sent to the entity map layer');
+});
+
 function addFarm(farm) {
   if (!map || !farm?.center) return;
 
