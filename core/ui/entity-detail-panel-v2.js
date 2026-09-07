@@ -40,6 +40,7 @@
       return [
         ['overview', 'Overview'],
         ['details', 'Details'],
+        ['lifecycle', 'Lifecycle'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
@@ -88,6 +89,43 @@
       global.dispatchEvent(new CustomEvent('agworld:entity-panel-rendered', {
         detail: global.__AGWORLD_ENTITY_PANEL_RUNTIME__
       }));
+    }
+
+    entityStoreKey() { return 'agworld.entity-overrides.' + String(this.entity?.type || 'entity') + '.' + String(this.entity?.id || 'unknown'); }
+
+    persistEntityChanges(patch, action) {
+      if (!this.entity) return;
+      Object.assign(this.entity, patch);
+      try { localStorage.setItem(this.entityStoreKey(), JSON.stringify({ ...this.entity, updatedAt: new Date().toISOString() })); } catch (_) {}
+      global.dispatchEvent(new CustomEvent('agworld:entity-updated', { detail: { entity: this.entity, patch, action: action || 'updated' } }));
+    }
+
+    lifecycleStatus() {
+      const status = String(this.entity?.status || 'active').toLowerCase();
+      return ['active','inactive','archived'].includes(status) ? status : 'active';
+    }
+
+    renderEntityDetails(target) {
+      const entity = this.entity, metadata = entity.metadata || {};
+      const entries = Object.entries(metadata).filter(([key]) => !['documents','media','notes','activity','metrics'].includes(key));
+      target.innerHTML = '<div class="agworld-entity-toolbar"><strong>ENTITY DETAILS</strong><button type="button" data-entity-action="edit-details">Edit entity</button></div><dl>' +
+        [['Name',entity.name],['Description',entity.description],['Status',this.lifecycleStatus()],...entries.map(([key,value])=>[key.replace(/([A-Z])/g,' $1'),Array.isArray(value)?value.join(', '):value])]
+        .filter(([,v])=>v!==undefined&&v!==null&&v!=='').map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('') + '</dl>';
+      target.querySelector('[data-entity-action="edit-details"]')?.addEventListener('click', () => this.renderEntityEditor(target));
+    }
+
+    renderEntityEditor(target) {
+      const entity=this.entity, metadata=entity.metadata||{}, protectedKeys=['documents','media','notes','activity','metrics'];
+      const meta=Object.entries(metadata).filter(([k])=>!protectedKeys.includes(k)).map(([k,v])=>k+': '+(Array.isArray(v)?v.join(', '):v)).join('\n');
+      target.innerHTML='<form class="agworld-entity-editor"><label>Name<input name="name" required value="'+esc(entity.name||'')+'"></label><label>Description<textarea name="description" rows="3">'+esc(entity.description||'')+'</textarea></label><label>Status<select name="status">'+['active','inactive','archived'].map(s=>'<option value="'+s+'"'+(this.lifecycleStatus()===s?' selected':'')+'>'+s[0].toUpperCase()+s.slice(1)+'</option>').join('')+'</select></label><label>Metadata (one item per line: Field: Value)<textarea name="metadata" rows="6">'+esc(meta)+'</textarea></label><div class="agworld-entity-editor-actions"><button type="submit">Save changes</button><button type="button" data-entity-action="cancel-edit">Cancel</button></div></form>';
+      target.querySelector('[data-entity-action="cancel-edit"]')?.addEventListener('click',()=>this.renderEntityDetails(target));
+      target.querySelector('form')?.addEventListener('submit',event=>{event.preventDefault();const form=new FormData(event.currentTarget), nextMeta={...metadata};Object.keys(nextMeta).forEach(k=>{if(!protectedKeys.includes(k))delete nextMeta[k]});String(form.get('metadata')||'').split(/\n+/).forEach(line=>{const i=line.indexOf(':');if(i>0){const k=line.slice(0,i).trim(),v=line.slice(i+1).trim();if(k&&v)nextMeta[k]=v}});this.persistEntityChanges({name:String(form.get('name')||'').trim(),description:String(form.get('description')||'').trim(),status:String(form.get('status')||'active'),metadata:nextMeta},'details-updated');this.render()});
+    }
+
+    renderLifecycle(target) {
+      const current=this.lifecycleStatus();
+      target.innerHTML='<div class="agworld-lifecycle"><strong>LIFECYCLE MANAGEMENT</strong><p>Control whether this entity is active in AG World. Archived entities are retained for history.</p><div class="agworld-lifecycle-actions">'+['active','inactive','archived'].map(status=>'<button type="button" data-lifecycle="'+status+'" class="'+(current===status?'is-active':'')+'">'+status[0].toUpperCase()+status.slice(1)+'</button>').join('')+'</div><small>Current status: <b>'+esc(current.toUpperCase())+'</b></small></div>';
+      target.querySelectorAll('[data-lifecycle]').forEach(button=>button.addEventListener('click',()=>{this.persistEntityChanges({status:button.dataset.lifecycle},'lifecycle-changed');this.render()}));
     }
 
     managementKey() {
@@ -208,10 +246,9 @@
             <dt>Geometry</dt><dd>${esc(entity.geometry?.type || 'Not mapped')}</dd>
           </dl>`;
       } else if (this.activeTab === 'details') {
-        const entries = Object.entries(metadata).filter(([key]) => !['documents','media','notes','activity'].includes(key));
-        target.innerHTML = entries.length
-          ? '<dl>' + entries.map(([key,value]) => `<dt>${esc(key.replace(/([A-Z])/g, ' $1'))}</dt><dd>${esc(Array.isArray(value) ? value.join(', ') : value)}</dd>`).join('') + '</dl>'
-          : '<p>No additional details have been added yet.</p>';
+        this.renderEntityDetails(target);
+      } else if (this.activeTab === 'lifecycle') {
+        this.renderLifecycle(target);
       } else if (this.activeTab === 'relationships') {
         target.innerHTML = '<p>Loading relationships…</p>';
         this.loadRelationships(target);
