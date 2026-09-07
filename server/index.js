@@ -14,6 +14,7 @@ const PORT = Number(process.env.PORT || 8080);
 registerV2RelationshipRoutes(app, pool);
 
 async function ensureV2RelationshipSchema() {
+  await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
   await pool.query(`CREATE TABLE IF NOT EXISTS entity_relationships (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     source_entity_id text NOT NULL,
