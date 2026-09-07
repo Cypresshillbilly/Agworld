@@ -41,6 +41,7 @@
         ['overview', 'Overview'],
         ['details', 'Details'],
         ['lifecycle', 'Lifecycle'],
+        ['spatial', 'Map & Location'],
         ['relationships', 'Relationships'],
         ['activity', 'Activity'],
         ['documents', 'Documents'],
@@ -126,6 +127,22 @@
       const current=this.lifecycleStatus();
       target.innerHTML='<div class="agworld-lifecycle"><strong>LIFECYCLE MANAGEMENT</strong><p>Control whether this entity is active in AG World. Archived entities are retained for history.</p><div class="agworld-lifecycle-actions">'+['active','inactive','archived'].map(status=>'<button type="button" data-lifecycle="'+status+'" class="'+(current===status?'is-active':'')+'">'+status[0].toUpperCase()+status.slice(1)+'</button>').join('')+'</div><small>Current status: <b>'+esc(current.toUpperCase())+'</b></small></div>';
       target.querySelectorAll('[data-lifecycle]').forEach(button=>button.addEventListener('click',()=>{this.persistEntityChanges({status:button.dataset.lifecycle},'lifecycle-changed');this.render()}));
+    }
+
+    renderSpatial(target) {
+      const entity=this.entity;
+      const geometry=entity.geometry||{};
+      const hasFarmBoundary=entity.type==='farm' && Array.isArray(entity.boundary) && entity.boundary.length>=3;
+      target.innerHTML='<div class="agworld-spatial-manager"><strong>MAP & SPATIAL MANAGEMENT</strong><p>Edit where this entity exists in AG World. Changes update the entity geometry and map position together.</p><dl><dt>Geometry</dt><dd>'+esc(geometry.type||(hasFarmBoundary?'Polygon':'Point / not mapped'))+'</dd><dt>Territory</dt><dd>'+esc((entity.territoryIds||[entity.territoryId]).filter(Boolean).join(', ')||'Not assigned')+'</dd></dl><div class="agworld-spatial-actions">'+
+        '<button type="button" data-spatial-action="move">Move on map</button>'+
+        (entity.type==='farm'?'<button type="button" data-spatial-action="boundary">Edit farm boundary</button>':'')+
+        '<button type="button" data-spatial-action="territory">Change territory</button>'+
+        '<button type="button" data-spatial-action="cancel">Cancel map editing</button></div><p class="agworld-spatial-hint">Select an action, then make the change directly on the map. Save is confirmed by the map workflow.</p></div>';
+      const dispatch=action=>global.dispatchEvent(new CustomEvent('agworld:spatial-edit-request',{detail:{entity,action}}));
+      target.querySelector('[data-spatial-action="move"]')?.addEventListener('click',()=>dispatch('move'));
+      target.querySelector('[data-spatial-action="boundary"]')?.addEventListener('click',()=>dispatch('boundary'));
+      target.querySelector('[data-spatial-action="territory"]')?.addEventListener('click',()=>dispatch('territory'));
+      target.querySelector('[data-spatial-action="cancel"]')?.addEventListener('click',()=>dispatch('cancel'));
     }
 
     managementKey() {
@@ -249,6 +266,8 @@
         this.renderEntityDetails(target);
       } else if (this.activeTab === 'lifecycle') {
         this.renderLifecycle(target);
+      } else if (this.activeTab === 'spatial') {
+        this.renderSpatial(target);
       } else if (this.activeTab === 'relationships') {
         target.innerHTML = '<p>Loading relationships…</p>';
         this.loadRelationships(target);
