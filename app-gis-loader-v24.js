@@ -52,6 +52,83 @@ function saveLocal() {
   refreshTerritoryControl();
 }
 
+// The Supabase farms table is the source of truth for farm information.
+// Generated demo data is only the initial fallback used when no database row exists.
+const FARM_DB_URL = 'https://vcnkspaljmsjvonftfcw.supabase.co';
+const FARM_DB_KEY = 'sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o';
+let farmDbClient;
+const getFarmDb = () => farmDbClient || (farmDbClient = window.supabase?.createClient?.(FARM_DB_URL, FARM_DB_KEY));
+
+async function loadFarmDatabaseOverrides() {
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!db || !user || !farms.length) return false;
+  const { data, error } = await db.from('farms')
+    .select('id,name,owner,region,status,annual_harvest,last_service,opportunity_score,source,notes,details,updated_at')
+    .order('updated_at', { ascending: true });
+  if (error) { console.warn('Farm database load failed', error); return false; }
+  const byId = new Map((data || []).map(row => [String(row.id), row]));
+  let changed = false;
+  farms.forEach(farm => {
+    const row = byId.get(String(farm.id));
+    if (!row) return;
+    const details = row.details && typeof row.details === 'object' ? row.details : {};
+    Object.assign(farm, details, {
+      id: farm.id,
+      name: row.name || details.name || farm.name,
+      owner: row.owner ?? details.owner ?? farm.owner,
+      region: row.region ?? details.region ?? farm.region,
+      status: row.status ?? details.status ?? farm.status,
+      annualHarvest: row.annual_harvest ?? details.annualHarvest ?? farm.annualHarvest,
+      lastService: row.last_service ?? details.lastService ?? farm.lastService,
+      opportunityScore: Number(row.opportunity_score ?? details.opportunityScore ?? farm.opportunityScore ?? 0),
+      source: row.source || details.source || farm.source,
+      notes: row.notes ?? details.notes ?? farm.notes,
+      updatedAt: row.updated_at || details.updatedAt || farm.updatedAt
+    });
+    changed = true;
+  });
+  if (changed) {
+    window.__AG_WORLD_FARMS = farms;
+    saveLocal();
+    window.dispatchEvent(new CustomEvent('agworld:farm-database-loaded', { detail: { farms } }));
+  }
+  return changed;
+}
+
+async function saveFarmToDatabase(farm, beforeState) {
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!db || !user) throw new Error('You must be signed in to save a farm record.');
+  const details = cleanFarm(farm);
+  const row = {
+    id: String(farm.id),
+    name: farm.name,
+    owner: farm.owner || null,
+    region: farm.region || null,
+    status: farm.status || 'Prospect',
+    annual_harvest: farm.annualHarvest || null,
+    last_service: /^\d{4}-\d{2}-\d{2}$/.test(String(farm.lastService || '')) ? farm.lastService : null,
+    opportunity_score: Number(farm.opportunityScore || 0),
+    source: farm.source || 'manual',
+    notes: farm.notes || null,
+    details,
+    updated_at: new Date().toISOString(),
+    updated_by: user.id
+  };
+  const { error } = await db.from('farms').upsert(row, { onConflict: 'id' });
+  if (error) throw error;
+  await db.from('farm_audit').insert({
+    farm_id: String(farm.id),
+    action: beforeState ? 'updated' : 'created',
+    actor_id: user.id,
+    source: 'farm_editor',
+    before_state: beforeState || null,
+    after_state: details
+  });
+  return row;
+}
+
 function geometryToBoundary(geometry) {
   if (!geometry?.coordinates) return [];
 
@@ -1351,7 +1428,7 @@ function renderObjectEditor() {
     : 'No objects placed yet.';
 }
 
-function saveFarm() {
+async function saveFarm() {
   if (newBoundary.length < 3) { toast('Draw the farm boundary first.'); return; }
   const name = $('newFarmName').value.trim();
   if (!name) { toast('Enter a farm name.'); return; }
@@ -1364,6 +1441,7 @@ function saveFarm() {
   const id = editingFarmId || `farm-user-${Date.now()}`;
   const territoryMatch = territories.find(t => (t.regions || []).includes($('newFarmRegion').value.trim()));
   const existing = farms.find(f => f.id === id);
+  const beforeState = existing ? cleanFarm(existing) : null;
   const farm = {
     ...(existing || {}), id,
     territoryId: existing?.territoryId || territoryMatch?.id || null,
@@ -1397,6 +1475,16 @@ function saveFarm() {
     objectMarkers = objectMarkers.filter(m => m.__farmId !== id);
   } else {
     farms.push(farm);
+  }
+
+  // Save to the farms database first. The database is authoritative, so a
+  // refresh on any player must reproduce the saved field values.
+  try {
+    await saveFarmToDatabase(farm, beforeState);
+  } catch (error) {
+    console.error('Farm database save failed', error);
+    toast('Farm record was not saved to the shared database.');
+    return;
   }
 
   window.__AG_WORLD_FARMS = farms;
@@ -1634,3 +1722,13 @@ window.AG_WORLD_WORLD = {
   get farms(){ return farms; },
   selectTerritory, selectFarm
 };
+
+
+window.addEventListener('agworld:farms-reset', () => {
+  setTimeout(() => loadFarmDatabaseOverrides().catch(error => console.warn('Farm database override failed', error)), 0);
+});
+setInterval(() => {
+  if (window.AGWorldBackend?.getUser?.() && farms.length) {
+    loadFarmDatabaseOverrides().catch(() => {});
+  }
+}, 5000);
