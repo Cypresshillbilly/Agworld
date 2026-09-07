@@ -1492,11 +1492,14 @@ function openEditFarm(farm) {
   $('newFarmNotes').value = farm.notes || '';
   if (boundaryPolygon) boundaryPolygon.setMap(null);
   boundaryPolygon = new google.maps.Polygon({ paths: newBoundary, strokeOpacity: .95, strokeWeight: 3, fillOpacity: .12, map, clickable: false });
+  // Editing an existing farm never re-enters boundary creation. The saved
+  // boundary remains untouched and the user starts directly at Step 2 with
+  // the current canonical database values populated.
   renderObjectEditor();
   $('boundaryStatus').textContent = `Existing boundary loaded · ${newBoundary.length} points`;
-  $('objectStatus').textContent = 'Edit the record or place additional objects.';
-  $('farmCreateModal').querySelector('.farm3d-head strong').textContent = 'EDIT FARM RECORD';
-  showFarmWizardStep(1);
+  $('objectStatus').textContent = 'Update farm information, then continue to Step 3 to adjust equipment and crops.';
+  $('farmCreateModal').querySelector('.farm3d-head strong').textContent = 'UPDATE FARM DETAILS';
+  showFarmWizardStep(2);
   $('farmCreateModal').classList.add('show');
 }
 
