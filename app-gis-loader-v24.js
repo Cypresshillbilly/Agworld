@@ -146,6 +146,18 @@ async function loadFarmDatabaseOverrides() {
     saveLocal();
     window.dispatchEvent(new CustomEvent('agworld:farm-database-loaded', { detail: { farms } }));
   }
+
+  // Always re-render the map layer from the canonical database-hydrated farm
+  // collection. This prevents an older demo reseed from visually overwriting
+  // a database update after the page refresh.
+  if (map && farms.length) {
+    try {
+      farms.forEach(farm => addFarm(farm));
+      refreshMapVisibility();
+    } catch (error) {
+      console.warn('Farm database render refresh failed', error);
+    }
+  }
   return changed;
 }
 
@@ -532,9 +544,19 @@ function seedDemoFarms() {
     return { ...baseFarm, ...(local || {}), ...(shared || {}) };
   });
 
-  farms = [...mergedDemos, ...customById.values()].filter(farm =>
-    farm && Array.isArray(farm.boundary) && farm.boundary.length >= 3
-  );
+  const databaseById = new Map();
+  // Preserve any canonical database-loaded farm currently in memory, including
+  // updates to demo farms. Database data must win over generated demo defaults.
+  farms.forEach(farm => {
+    if (farm && demoIds.has(String(farm.id)) && farm.source && farm.updatedAt) {
+      databaseById.set(String(farm.id), farm);
+    }
+  });
+
+  farms = [
+    ...mergedDemos.map(farm => databaseById.get(String(farm.id)) || farm),
+    ...customById.values()
+  ].filter(farm => farm && Array.isArray(farm.boundary) && farm.boundary.length >= 3);
   // Publish the authoritative demo dataset for other map modules.
   window.__AG_WORLD_FARMS = farms;
   localStorage.setItem('agworld-demo-farms-v1', JSON.stringify(farms.map(cleanFarm)));
