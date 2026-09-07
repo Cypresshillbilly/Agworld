@@ -1695,7 +1695,19 @@ $('closeCreateFarm').onclick = closeCreateFarm;
 $('startBoundary').onclick = startBoundary;
 $('finishBoundary').onclick = finishBoundary;
 $('clearBoundary').onclick = clearBoundary;
-$('saveFarm').onclick = saveFarm;
+// Explicit async wrapper: prevents any browser form/default behaviour from
+// swallowing the SAVE FARM RECORD click and surfaces unexpected errors.
+$('saveFarm').type = 'button';
+$('saveFarm').onclick = async event => {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  try {
+    await saveFarm();
+  } catch (error) {
+    console.error('Unexpected SAVE FARM RECORD error', error);
+    toast('Save failed. Check the browser console for details.');
+  }
+};
 $('importBtn').onclick = importData;
 $('exportBtn').onclick = exportData;
 $('datasetFile').onchange = handleImport;
