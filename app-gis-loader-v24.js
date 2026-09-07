@@ -344,6 +344,7 @@ function seedDemoFarms() {
   // Publish the authoritative demo dataset for other map modules.
   window.__AG_WORLD_FARMS = farms;
   localStorage.setItem('agworld-demo-farms-v1', JSON.stringify(demos));
+  window.dispatchEvent(new CustomEvent('agworld:farms-reset'));
   initialiseGameTerritories();
   return demos;
 }
