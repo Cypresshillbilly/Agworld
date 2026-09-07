@@ -2826,6 +2826,30 @@ function selectDynamicEntity(entity, zoom = true) {
   // created two competing requests, allowing a later empty/unresolved render
   // to clear links produced by the first one.
   window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected', { detail: { entity } }));
+
+  // The map selection itself is authoritative. Render again once the pan/zoom
+  // has settled, using the exact marker entity that was clicked. This bypasses
+  // any timing interaction between the V2 detail panel's Loading state and the
+  // map overlay lifecycle.
+  const renderAfterIdle = () => {
+    if (relationshipNetworkState.selectedEntity &&
+        String(relationshipNetworkState.selectedEntity.id) !== String(entity.id)) return;
+    renderRelationshipNetwork({
+      id: entity.id,
+      type: entity.type === 'companyFacility' ? 'company_facility' : entity.type,
+      lat: Number(entity.lat),
+      lng: Number(entity.lng),
+      entity
+    }).catch(error => console.warn('Relationship network idle render failed', error));
+  };
+  if (map && google?.maps?.event?.addListenerOnce) {
+    google.maps.event.addListenerOnce(map, 'idle', renderAfterIdle);
+    // If the map is already idle and emits no new idle event, keep a fallback.
+    setTimeout(renderAfterIdle, 450);
+  } else {
+    setTimeout(renderAfterIdle, 0);
+  }
+
   $('mapStatus').textContent = `${cfg.label} selected · ${entity.name}`;
 }
 
@@ -2946,29 +2970,16 @@ async function renderRelationshipNetwork(selection) {
   const entityId = String(selection.id);
   const selectedType = canonicalEntityType(selection.type || 'farm');
 
-  // First use the narrow server-side query. Some PostgREST clients have been
-  // observed to return an empty result for a compound .or() filter during a
-  // fresh static-app session, even though the relationship rows are present.
-  // In that case, fall back to the active relationship set and filter the
-  // selected endpoint locally. This keeps the map renderer independent of
-  // query-parser quirks while preserving the canonical database as truth.
-  let result = await db
+  // Always read the canonical active relationship set and filter locally.
+  // This removes PostgREST compound-filter parsing from the runtime selection
+  // path entirely. The relationship graph is intentionally small and is the
+  // same shared graph used by every entity type.
+  const result = await db
     .from('entity_relationships')
     .select('*')
-    .eq('status', 'active')
-    .or('source_entity_id.eq.' + entityId + ',target_entity_id.eq.' + entityId);
+    .eq('status', 'active');
 
   if (requestVersion !== relationshipNetworkState.requestVersion) return;
-
-  if (result.error || !(result.data || []).length) {
-    const fallback = await db
-      .from('entity_relationships')
-      .select('*')
-      .eq('status', 'active');
-
-    if (requestVersion !== relationshipNetworkState.requestVersion) return;
-    if (!fallback.error) result = fallback;
-  }
 
   if (result.error) {
     console.warn('Relationship network query failed', result.error);
@@ -2976,16 +2987,14 @@ async function renderRelationshipNetwork(selection) {
     return;
   }
 
-  // Entity IDs are the canonical relationship identity in AG World and are
-  // globally unique across the game layer. Match by endpoint ID here rather
-  // than allowing presentation/runtime type aliases to suppress a valid link.
-  // Types are still canonicalised when resolving the endpoint positions.
-  const relationships = (result.data || [])
-    .map(normaliseRelationshipRecord)
-    .filter(rel =>
-      String(rel.sourceId) === entityId ||
-      String(rel.targetId) === entityId
-    );
+  const allRelationships = (result.data || []).map(normaliseRelationshipRecord);
+  window.__AGWORLD_ACTIVE_RELATIONSHIPS__ = allRelationships;
+
+  // Entity IDs are globally unique across the game layer.
+  const relationships = allRelationships.filter(rel =>
+    String(rel.sourceId) === entityId ||
+    String(rel.targetId) === entityId
+  );
 
   if (!relationships.length) {
     $('mapStatus').textContent = 'RELATIONSHIP NETWORK · no active connections';
@@ -3122,8 +3131,17 @@ async function renderRelationshipNetwork(selection) {
     ? `RELATIONSHIP NETWORK · ${relationshipCount} active connection${relationshipCount === 1 ? '' : 's'}`
     : 'RELATIONSHIP NETWORK · no active connections';
 
+  const overlayCount = relationshipNetworkState.overlays.length;
+  window.__AGWORLD_RELATIONSHIP_DEBUG__ = {
+    entityId,
+    entityType: selectedType,
+    relationshipCount,
+    overlayCount,
+    timestamp: Date.now()
+  };
+
   window.dispatchEvent(new CustomEvent('agworld:relationship-network-rendered', {
-    detail: { entityId, entityType: selectedType, relationshipCount, overlayCount: relationshipNetworkState.overlays.length }
+    detail: { entityId, entityType: selectedType, relationshipCount, overlayCount }
   }));
 }
 
