@@ -20,11 +20,45 @@ function fleetApi(w){return w.AGWorldFleetUI||null}
 function selectedFleetEntity(w){return fleetApi(w)?.selected?.()||null}
 function setFleetStatus(message,state=''){const el=$('fleetDevStatus');if(!el)return;el.textContent=message;el.className='population-status '+state}
 function syncFleetControls(){const w=root(),api=fleetApi(w),selectedEntity=selectedFleetEntity(w);const ids=['fleetReassert','fleetOpenSell','fleetOpenHistory'];ids.forEach(id=>{const b=$(id);if(b)b.disabled=!(api&&selectedEntity)});if(!api){setFleetStatus(opener()?'WAITING · Fleet public bridge is not ready yet.':'OPEN THIS PAGE FROM AG WORLD to access the live Fleet system.','warn');return}if(!selectedEntity){setFleetStatus('READY · Fleet system is available. Select a Farm or Contractor in the AG World tab, then return here.','warn');$('fleetDevNote').textContent='No eligible Farm or Contractor is currently selected.';return}setFleetStatus('SELECTED · '+selectedEntity.type.toUpperCase()+' · '+(selectedEntity.name||selectedEntity.id)+' · Fleet controls can now be tested.','ready');$('fleetDevNote').textContent='Selected entity ID: '+selectedEntity.id}
-function checkFleetSystem(){const w=root(),api=fleetApi(w),sell=!!w.openFleetTransaction,history=!!w.openFleetManagement,tx=!!w.document?.getElementById('fleetTransactionModal'),mg=!!w.document?.getElementById('fleetManagementModal');let health=null;try{health=api?.health?.({repair:true})||null}catch(e){capture('FLEET HEALTH',e?.message||e)}const ui=health?.healthy===true;setFleetStatus((api&&sell&&history&&tx&&mg&&ui?'PASS · ':'WARN · ')+'API: '+(sell?'SELL OK':'SELL MISSING')+' · '+(history?'HISTORY OK':'HISTORY MISSING')+' · Transaction modal: '+(tx?'READY':'MISSING')+' · History modal: '+(mg?'READY':'MISSING')+' · Visible Fleet UI: '+(ui?'READY':'NOT READY'),api&&sell&&history&&tx&&mg&&ui?'ready':'warn');syncFleetControls();return health}
+function fleetOverlayReady(w,el){
+  if(!el)return false;
+  const cs=w.getComputedStyle?.(el);
+  return !!cs && cs.position==='fixed' && Number(cs.zIndex||0)>=1000;
+}
+function fleetModalState(w,el){
+  if(!el)return 'MISSING';
+  return el.hidden?'CLOSED':'OPEN';
+}
+function checkFleetSystem(){
+  const w=root(),api=fleetApi(w),sell=!!w.openFleetTransaction,history=!!w.openFleetManagement,
+    tx=w.document?.getElementById('fleetTransactionModal'),mg=w.document?.getElementById('fleetManagementModal');
+  let health=null;
+  try{health=api?.health?.({repair:true})||null}catch(e){capture('FLEET HEALTH',e?.message||e)}
+  const ui=health?.healthy===true;
+  const txOverlay=fleetOverlayReady(w,tx),mgOverlay=fleetOverlayReady(w,mg);
+  const pass=!!(api&&sell&&history&&tx&&mg&&ui&&txOverlay&&mgOverlay);
+  setFleetStatus((pass?'PASS · ':'WARN · ')+'API: '+(sell?'SELL OK':'SELL MISSING')+' · '+(history?'HISTORY OK':'HISTORY MISSING')+' · Transaction: '+(txOverlay?'OVERLAY READY':'OVERLAY STYLE FAILED')+' ('+fleetModalState(w,tx)+') · History: '+(mgOverlay?'OVERLAY READY':'OVERLAY STYLE FAILED')+' ('+fleetModalState(w,mg)+') · Visible Fleet UI: '+(ui?'READY':'NOT READY'),pass?'ready':'warn');
+  syncFleetControls();
+  return {...(health||{}),transactionOverlayReady:txOverlay,historyOverlayReady:mgOverlay,transactionModalState:fleetModalState(w,tx),historyModalState:fleetModalState(w,mg)};
+}
 function fleetSelectedOrWarn(){const w=root(),s=selectedFleetEntity(w);if(!s)throw new Error('Select a Farm or Contractor in AG World first.');return {w,s}}
 function reassertFleet(){try{const {w,s}=fleetSelectedOrWarn();const r=fleetApi(w).ensureQuickActions(s.type,s.id);setFleetStatus('BUTTONS REASSERTED · '+s.name+' now has the dedicated Fleet quick-action host.','ready');checkFleetSystem();return r}catch(e){setFleetStatus('REASSERT FAILED · '+(e?.message||e),'error');capture('FLEET UI',e?.message||e)}}
-function openFleetSellFromDev(){try{const {w,s}=fleetSelectedOrWarn();w.openFleetTransaction(s.type,s.id);setFleetStatus('TRANSACTION MODAL OPENED · Verify the modal in the AG World tab.','ready')}catch(e){setFleetStatus('SELL TEST FAILED · '+(e?.message||e),'error');capture('FLEET SELL',e?.message||e)}}
-function openFleetHistoryFromDev(){try{const {w,s}=fleetSelectedOrWarn();w.openFleetManagement(s.type,s.id);setFleetStatus('FLEET HISTORY OPENED · Verify the modal in the AG World tab.','ready')}catch(e){setFleetStatus('HISTORY TEST FAILED · '+(e?.message||e),'error');capture('FLEET HISTORY',e?.message||e)}}
+function openFleetSellFromDev(){
+  try{
+    const {w,s}=fleetSelectedOrWarn(); w.openFleetTransaction(s.type,s.id);
+    const modal=w.document?.getElementById('fleetTransactionModal');
+    if(!modal||modal.hidden)throw new Error('Transaction action ran but the modal did not enter OPEN state.');
+    setFleetStatus('PASS · TRANSACTION MODAL OPEN and visible overlay style verified.','ready');
+  }catch(e){setFleetStatus('SELL TEST FAILED · '+(e?.message||e),'error');capture('FLEET SELL',e?.message||e)}
+}
+async function openFleetHistoryFromDev(){
+  try{
+    const {w,s}=fleetSelectedOrWarn(); await w.openFleetManagement(s.type,s.id);
+    const modal=w.document?.getElementById('fleetManagementModal');
+    if(!modal||modal.hidden)throw new Error('History action ran but the modal did not enter OPEN state.');
+    setFleetStatus('PASS · FLEET HISTORY MODAL OPEN and visible overlay style verified.','ready');
+  }catch(e){setFleetStatus('HISTORY TEST FAILED · '+(e?.message||e),'error');capture('FLEET HISTORY',e?.message||e)}
+}
 
 function populationReady(w){return !!(w.AGWorldDemoWorldSeed?.run && w.AGWorldDynamicEntityAPI?.create && w.AGWorldDynamicEntityAPI?.createRelationship && w.AGWorldDynamicEntityAPI?.repairUniqueContractorFarmAssignments && w.AGWorldDynamicEntityAPI?.snapshotExistingAsDemo)}
 function setPopulationStatus(message,state=''){const el=$('populationStatus');if(!el)return;el.textContent=message;el.className='population-status '+state}
