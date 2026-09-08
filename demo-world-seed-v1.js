@@ -2,11 +2,11 @@
 'use strict';
 const SEED_KEY='agworld:demo-world-seed-v2';
 const facilities=[
- {name:'Ballito Company Facility',town:'Ballito',province:'KwaZulu-Natal',lat:-29.5389,lng:31.2144,type:'Operations & Sales Hub',address:'6 Adam Park, Garlick Drive, Ballito, 4420',facilityRole:'Ballito operations and sales facility'},
- {name:'Lichtenburg Company Facility',town:'Lichtenburg',province:'North West',lat:-26.1520,lng:26.1597,type:'Head Office',address:'40 Daniel Straat, Lichtenburg, 2740',facilityRole:'Company head office'},
- {name:'Bothaville Company Facility',town:'Bothaville',province:'Free State',lat:-27.3886,lng:26.6170,type:'Sales & Service Hub',address:'Corner of 7de Ave and Nywerheids Ave, Bothaville, 9660',facilityRole:'Sales and service facility'},
- {name:'Brits Company Facility',town:'Brits',province:'North West',lat:-25.6347,lng:27.7802,type:'Service & Demonstration Centre',address:'Krokodildrift 64, R512, Brits, 0250',facilityRole:'Service and demonstration facility'},
- {name:'Upington Company Facility',town:'Upington',province:'Northern Cape',lat:-28.4478,lng:21.2561,type:'Regional Sales Hub',address:'3 Vooruit St, Upington, 8801',facilityRole:'Regional sales hub'}
+ {name:'Ballito Company Facility',town:'Ballito',province:'KwaZulu-Natal',lat:-29.5389,lng:31.2144,type:'Head Office & Sales'},
+ {name:'Bothaville Company Facility',town:'Bothaville',province:'Free State',lat:-27.3886,lng:26.6170,type:'Sales & Service Hub'},
+ {name:'Upington Company Facility',town:'Upington',province:'Northern Cape',lat:-28.4478,lng:21.2561,type:'Regional Sales Hub'},
+ {name:'Lichtenburg Company Facility',town:'Lichtenburg',province:'North West',lat:-26.1520,lng:26.1597,type:'Sales & Support Hub'},
+ {name:'Brits Company Facility',town:'Brits',province:'North West',lat:-25.6347,lng:27.7802,type:'Service & Demonstration Centre'}
 ];
 const names=['AgriSky','FieldForce','Precision Crop','Rural Air','HarvestTech','GreenWing','FarmFlight','AgriReach','CropScan','LandLift'];
 const surnames=['Mokoena','Botha','Jacobs','Naidoo','van Wyk','Mahlangu','Smit','Dlamini','Fourie','Nkosi'];
@@ -32,37 +32,24 @@ function farms(){
 function progress(stage,current,total,message){global.dispatchEvent(new CustomEvent('agworld:demo-world-seed-progress',{detail:{stage,current,total,message}}));}
 
 async function seed(){
- if(!global.AGWorldDynamicEntityAPI?.create||!global.AGWorldDynamicEntityAPI?.reconcile||!global.AGWorldDynamicEntityAPI?.createRelationship) throw new Error('The canonical Contractor / Company Facility creation workflow is not ready.');
-
- // Always reconcile the five real Company Facilities before checking the
- // one-time contractor seed. This lets corrected physical addresses and map
- // placements roll out to existing AG World sessions without duplication.
- const reconciledFacilities=[];
- for(let i=0;i<facilities.length;i++){
-  const f=facilities[i];
-  progress('facilities',i,facilities.length,'Reconciling '+f.name+' with its confirmed physical address…');
-  reconciledFacilities.push(await global.AGWorldDynamicEntityAPI.reconcile('companyFacility',{
-   id:'seed-company-facility-'+f.town.toLowerCase().replace(/[^a-z]+/g,'-'),
-   name:f.name,lat:f.lat,lng:f.lng,status:'Active',
-   details:{
-    country:'South Africa',province:f.province,nearestTown:f.town,municipality:'',
-    website:'',address:f.address,physicalAddress:f.address,facilityRole:f.facilityRole,
-    notes:'Confirmed physical address: '+f.address+'. '+f.facilityRole+'.',
-    capabilities:[f.type==='Head Office'?'Head Office':'Regional Office','Operations Base']
-   }
-  }));
- }
- if(global.localStorage.getItem(SEED_KEY)) {
-  global.dispatchEvent(new CustomEvent('agworld:entity-updated',{detail:{reason:'confirmed-company-facility-address-reconciliation'}}));
-  return {facilities:reconciledFacilities.length,contractors:50,alreadyComplete:true,reconciled:true};
- }
+ if(global.localStorage.getItem(SEED_KEY)) return {facilities:5,contractors:50,alreadyComplete:true};
+ if(!global.AGWorldDynamicEntityAPI?.create||!global.AGWorldDynamicEntityAPI?.createRelationship) throw new Error('The canonical Contractor / Company Facility creation workflow is not ready.');
 
  const fs=farms();
  if(!fs.length) throw new Error('No mapped farms are available. Contractors cannot be populated because each must be geographically linked to farms within 300 km.');
 
  progress('preparing',0,1,'Verifying the live map, creation workflow and farms…');
 
- const createdFacilities=reconciledFacilities;
+ const createdFacilities=[];
+ for(let i=0;i<facilities.length;i++){
+  const f=facilities[i];
+  progress('facilities',i,facilities.length,'Creating or verifying '+f.name+'…');
+  createdFacilities.push(await global.AGWorldDynamicEntityAPI.create('companyFacility',{
+   id:'seed-company-facility-'+f.town.toLowerCase().replace(/[^a-z]+/g,'-'),
+   name:f.name,lat:f.lat,lng:f.lng,status:'Active',
+   details:{country:'South Africa',province:f.province,nearestTown:f.town,municipality:'',website:'',notes:'Company '+f.type+' located at the centre of '+f.town+'.',capabilities:[f.type.includes('Head Office')?'Head Office':'Regional Office','Operations Base']}
+  }));
+ }
 
  const createdContractors=[];
  for(let i=0;i<50;i++){
@@ -125,20 +112,4 @@ async function seed(){
  return {facilities:createdFacilities.length,contractors:createdContractors.length,relationships:relationshipCount};
 }
 global.AGWorldDemoWorldSeed={run:seed,facilities};
-
-// Existing populated worlds reconcile confirmed facility locations automatically
-// after authentication becomes available. New worlds remain opt-in and still
-// require the normal controlled population workflow.
-let autoReconcileAttempts=0;
-const autoReconcileTimer=global.setInterval(async()=>{
-  autoReconcileAttempts++;
-  if(!global.localStorage.getItem(SEED_KEY)) { global.clearInterval(autoReconcileTimer); return; }
-  if(!global.AGWorldDynamicEntityAPI?.reconcile || !global.AGWorldBackend?.getUser?.()) {
-    if(autoReconcileAttempts>=30) global.clearInterval(autoReconcileTimer);
-    return;
-  }
-  global.clearInterval(autoReconcileTimer);
-  try { await seed(); }
-  catch(err) { console.warn('Company facility address reconciliation deferred:',err); }
-},1000);
 })(window);
