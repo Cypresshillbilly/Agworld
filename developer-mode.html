@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AG World · Developer Mode</title>
+<link rel="stylesheet" href="developer-mode.css?v=20260908-1">
+</head>
+<body>
+<header class="dev-head">
+  <div><span class="eyebrow">AG WORLD · INTERNAL</span><h1>DEVELOPER MODE</h1><p>Live diagnostics for AG World systems. This page is intended for testing and screenshot-based troubleshooting.</p></div>
+  <div class="head-actions"><span id="connectionState" class="status">CONNECTING…</span><button id="refreshDiagnostics">↻ REFRESH</button><button id="toggleAuto">AUTO REFRESH: ON</button></div>
+</header>
+<main>
+  <section class="summary-grid">
+    <article class="summary"><span>APP</span><strong id="appStatus">CHECKING</strong></article>
+    <article class="summary"><span>MAP / GIS</span><strong id="mapStatus">CHECKING</strong></article>
+    <article class="summary"><span>ENTITY TOTAL</span><strong id="entityTotal">—</strong></article>
+    <article class="summary"><span>RELATIONSHIPS</span><strong id="relationshipTotal">—</strong></article>
+    <article class="summary"><span>ACTIVE EVENTS</span><strong id="eventTotal">—</strong></article>
+    <article class="summary"><span>CAPTURED ERRORS</span><strong id="errorTotal">0</strong></article>
+  </section>
+
+  <section class="toolbar">
+    <button data-filter="all" class="active">ALL</button>
+    <button data-filter="pass">PASS</button>
+    <button data-filter="warn">WARN</button>
+    <button data-filter="fail">FAIL</button>
+    <button id="expandAll">EXPAND ALL</button>
+    <button id="collapseAll">COLLAPSE ALL</button>
+  </section>
+
+  <div id="diagnosticPanels" class="diagnostic-grid"></div>
+
+  <section class="panel full">
+    <div class="panel-title"><div><span class="eyebrow">CAPTURED RUNTIME OUTPUT</span><h2>ERROR & EVENT LOG</h2></div><button id="clearErrors">CLEAR</button></div>
+    <pre id="errorLog">No errors captured.</pre>
+  </section>
+
+  <section class="panel full">
+    <div class="panel-title"><div><span class="eyebrow">STORAGE INSPECTION</span><h2>LOCAL APPLICATION STATE</h2></div><button id="refreshStorage">REFRESH STORAGE</button></div>
+    <div id="storageState" class="kv"></div>
+  </section>
+</main>
+<script src="developer-mode.js?v=20260908-1"></script>
+</body>
+</html>
