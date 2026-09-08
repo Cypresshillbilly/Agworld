@@ -186,3 +186,62 @@
     window.__AGWORLD_SELECTED_TERRITORY__=event.detail?.territory||event.detail||null;
   });
 })();
+
+/* AG World v4 layout state: national strategic summary remains fixed until a territory is selected. */
+(function(){
+  const $=id=>document.getElementById(id);
+  let userSelected=false;
+  let nationalTimer=null;
+
+  function farmList(){
+    const world=window.AG_WORLD_WORLD||{};
+    return Array.isArray(window.__AG_WORLD_FARMS)?window.__AG_WORLD_FARMS:
+      (Array.isArray(world.farms)?world.farms:(world.getFarms?.()||[]));
+  }
+  function ownership(farm){
+    const items=[...(farm?.assets||[]),...(farm?.objects||[])].map(x=>String(x?.type||x?.name||x||'').toLowerCase());
+    if(items.some(x=>x.includes('our drone')||x.includes('company drone')||x==='drone')) return 'company';
+    if(items.some(x=>x.includes('competitor'))) return 'competitor';
+    return 'neutral';
+  }
+  function nationalSummary(){
+    const farms=farmList();
+    const total=farms.length;
+    const company=farms.filter(f=>ownership(f)==='company').length;
+    const competitor=farms.filter(f=>ownership(f)==='competitor').length;
+    const neutral=Math.max(0,total-company-competitor);
+    const pct=n=>total?Math.round(n/total*100):0;
+    return {total,company,competitor,neutral,companyPct:pct(company),competitorPct:pct(competitor),neutralPct:pct(neutral)};
+  }
+  function renderNationalPanel(){
+    if(userSelected) return;
+    const panel=$('territoryInfoPanel');
+    if(!panel) return false;
+    const s=nationalSummary();
+    panel.innerHTML=
+      '<div class="territory-info-header"><div><div class="territory-info-level">NATIONAL TERRITORY</div><div class="territory-info-name">SOUTH AFRICA · NATIONAL OVERVIEW</div></div></div>'+
+      '<div class="territory-info-control"><div class="territory-info-control-value">'+s.companyPct+'%</div><div><div class="territory-info-control-title">THE COMPANY NATIONAL CONTROL</div><div class="territory-info-status territory-info-status-strong">LIVE NATIONAL BASELINE</div></div></div>'+
+      '<div class="territory-info-progress"><div class="territory-info-progress-company" style="width:'+s.companyPct+'%"></div><div class="territory-info-progress-enemy" style="width:'+s.competitorPct+'%"></div><div class="territory-info-progress-neutral" style="width:'+s.neutralPct+'%"></div></div>'+
+      '<div class="territory-info-legend"><span>🟢 Company '+s.companyPct+'%</span><span>🔴 Competitor '+s.competitorPct+'%</span><span>⚪ Neutral '+s.neutralPct+'%</span></div>'+
+      '<div class="territory-info-grid"><div><strong>'+s.total+'</strong><span>Total Farms</span></div><div><strong>'+s.company+'</strong><span>Company Control</span></div><div><strong>'+s.competitor+'</strong><span>Competitor</span></div><div><strong>'+s.neutral+'</strong><span>Neutral</span></div><div><strong>NATIONAL</strong><span>Active Scope</span></div></div>';
+    panel.classList.add('show');
+    window.__AGWORLD_TERRITORY_STARTUP__='NATIONAL';
+    window.__AGWORLD_TERRITORY_SCOPE__='NATIONAL';
+    return true;
+  }
+  function initialiseNational(){
+    if(renderNationalPanel()) return;
+    clearTimeout(nationalTimer);
+    nationalTimer=setTimeout(initialiseNational,300);
+  }
+  window.addEventListener('agworld:territory-selected',event=>{
+    const territory=event.detail?.territory||event.detail;
+    if(!territory) return;
+    userSelected=true;
+    window.__AGWORLD_TERRITORY_SCOPE__='TERRITORY';
+    window.__AGWORLD_TERRITORY_STARTUP__='NATIONAL_THEN_TERRITORY';
+  });
+  window.addEventListener('load',()=>{ setTimeout(initialiseNational,400); setTimeout(initialiseNational,1200); setTimeout(initialiseNational,3000); });
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(initialiseNational,250));
+  window.__AGWORLD_RENDER_NATIONAL_TERRITORY__=()=>{userSelected=false;return renderNationalPanel()};
+})();
