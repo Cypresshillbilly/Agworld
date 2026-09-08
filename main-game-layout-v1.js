@@ -774,6 +774,36 @@
     '#entityInformationSection .agworld-entity-command-management p,#entityInformationSection .agworld-entity-command-management li,#entityInformationSection .agworld-entity-command-management td,#entityInformationSection .agworld-entity-command-management th,#entityInformationSection .agworld-entity-command-management label{font-size:13px!important;line-height:1.35!important}'+
     '#entityInformationSection .agworld-entity-command-management input,#entityInformationSection .agworld-entity-command-management select,#entityInformationSection .agworld-entity-command-management textarea,#entityInformationSection .agworld-entity-command-management button{font-size:13px!important}';
   document.head.appendChild(entityCommandReadabilityStyle);
+
+  // FULL ENTITY COMMAND CENTRE DARK SURFACE
+  // The entity command context is a permanent dark game surface. This override
+  // deliberately stays scoped to the command panel so it cannot affect popups,
+  // the map, missions or territory statistics.
+  const entityCommandDarkSurfaceStyle=document.createElement('style');
+  entityCommandDarkSurfaceStyle.textContent=
+    '#entityInformationSection{background:linear-gradient(180deg,#0b151a 0%,#071015 100%)!important;color:#dcebe1!important}'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card){background:linear-gradient(145deg,#101c21 0%,#0a1318 58%,#071015 100%)!important;color:#dcebe1!important}'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card)>*:not(button):not(input):not(select):not(textarea),'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card)>*>*:not(button):not(input):not(select):not(textarea){background-color:#0d181d!important;color:#dcebe1!important;border-color:rgba(126,167,148,.18)!important}'+
+    '#entityInformationSection .farm-card .farm-info-hero,'+
+    '#entityInformationSection .farm-card .agworld-entity-summary,'+
+    '#entityInformationSection .farm-card .agworld-entity-command-actions,'+
+    '#entityInformationSection .farm-card .agworld-entity-command-management,'+
+    '#entityInformationSection .farm-card .entity-management,'+
+    '#entityInformationSection .farm-card .entity-management-content,'+
+    '#entityInformationSection .farm-card .entity-management-tabs,'+
+    '#entityInformationSection .farm-card .tab-content,'+
+    '#entityInformationSection .farm-card .management-tab-content{background:#0d181d!important;color:#dcebe1!important;border-color:rgba(126,167,148,.18)!important}'+
+    '#entityInformationSection .farm-card h1,#entityInformationSection .farm-card h2,#entityInformationSection .farm-card h3,#entityInformationSection .farm-card h4,#entityInformationSection .farm-card strong,#entityInformationSection .farm-card b{color:#eef8f1!important}'+
+    '#entityInformationSection .farm-card p,#entityInformationSection .farm-card span,#entityInformationSection .farm-card label,#entityInformationSection .farm-card li,#entityInformationSection .farm-card td,#entityInformationSection .farm-card th{color:#b8cbbf!important}'+
+    '#entityInformationSection .farm-card input,#entityInformationSection .farm-card select,#entityInformationSection .farm-card textarea{background:#071015!important;color:#eef8f1!important;border:1px solid rgba(126,167,148,.28)!important;box-shadow:inset 0 1px 3px rgba(0,0,0,.25)!important}'+
+    '#entityInformationSection .farm-card button{background:linear-gradient(180deg,#173229 0%,#10251f 100%)!important;color:#e8f6ec!important;border-color:rgba(117,224,132,.32)!important}'+
+    '#entityInformationSection .farm-card button:hover{background:linear-gradient(180deg,#1c3d31 0%,#143127 100%)!important;border-color:rgba(117,224,132,.58)!important}'+
+    '#entityInformationSection .farm-card [data-tab],#entityInformationSection .farm-card .tab{background:#0a1419!important;color:#aebfb5!important;border-color:rgba(126,167,148,.16)!important}'+
+    '#entityInformationSection .farm-card [data-tab].active,#entityInformationSection .farm-card .tab.active{background:#153126!important;color:#ecf8ef!important;border-color:rgba(117,224,132,.42)!important;box-shadow:inset 0 -2px 0 #75e084!important}'+
+    '#entityInformationSection .farm-card hr{border-color:rgba(126,167,148,.16)!important}'+
+    '#entityInformationSection .farm-card ::placeholder{color:#70877b!important}';
+  document.head.appendChild(entityCommandDarkSurfaceStyle);
 })();
 
 
