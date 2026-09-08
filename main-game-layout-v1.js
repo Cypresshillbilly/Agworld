@@ -433,7 +433,7 @@
     document.querySelectorAll('#farmCard [data-company-facility-id]').forEach(row=>{
       if(row.dataset.agworldFacilityBound==='1') return;
       row.dataset.agworldFacilityBound='1';
-      const facility=fs.find(item=>String(item?.id)===String(row.dataset.companyFacilityId));
+      const facility=fs.find(item=>String(item?.id||item?.name||'')===String(row.dataset.companyFacilityId));
       if(!facility) return;
       const activate=()=>{
         document.querySelectorAll('#farmCard .company-facility-row').forEach(node=>node.classList.remove('is-selected'));
