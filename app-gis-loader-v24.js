@@ -3386,17 +3386,22 @@ window.AGWorldDynamicEntityAPI.repairUniqueContractorFarmAssignments = async fun
   const user = window.AGWorldBackend?.getUser?.();
   if (!db || !user) throw new Error('You must be signed in to repair Contractor assignments.');
 
-  const { data: rows, error } = await db.from('entity_relationships')
+  const { data: allRows, error } = await db.from('entity_relationships')
     .select('id,source_entity_id,target_entity_id,source_entity_type,target_entity_type,relationship_type,status,metadata')
-    .eq('source_entity_type', 'contractor')
-    .eq('target_entity_type', 'farm')
-    .eq('relationship_type', 'serves')
     .eq('status', 'active');
   if (error) throw new Error(error.message || error.code || 'Unable to load Contractor-Farm assignments');
 
+  // Treat Contractor-Farm links as directional-independent. Older records may
+  // have been written in either direction or with different relationship labels.
+  const rows = (allRows || []).filter(row =>
+    relationshipPairKey(row.source_entity_type, row.target_entity_type) === relationshipPairKey('farm', 'contractor')
+  );
+
   const groups = new Map();
-  (rows || []).forEach(row => {
-    const key = String(row.target_entity_id);
+  rows.forEach(row => {
+    const source = canonicalRelationshipEntityType(row.source_entity_type);
+    const farmId = source === 'farm' ? row.source_entity_id : row.target_entity_id;
+    const key = String(farmId);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(row);
   });
