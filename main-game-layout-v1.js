@@ -394,6 +394,91 @@
     return agworldPreservedFarmActions;
   }
 
+  function openEntityDetailsFromAction(entity){
+    // Select the Details tab directly in the already-rendered V2 panel, then
+    // invoke its real Edit entity control. Retry briefly because selection and
+    // panel rendering complete asynchronously.
+    const open=()=>{
+      const host=document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
+      const detailsTab=host?.querySelector('[data-tab="details"]');
+      if(detailsTab) detailsTab.click();
+      const edit=host?.querySelector('[data-entity-action="edit-details"]');
+      if(edit){ edit.click(); return true; }
+      return false;
+    };
+    if(open()) return;
+    window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected',{detail:{entity}}));
+    let attempts=0;
+    const retry=()=>{
+      if(open() || ++attempts>=8) return;
+      setTimeout(retry,80);
+    };
+    setTimeout(retry,0);
+  }
+
+  function openEntityHistoryFromAction(entity){
+    const host=document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
+    const history=[...host?.querySelectorAll?.('[data-tab]')||[]].find(node=>/history|activity/i.test(node.dataset.tab||''));
+    if(history) history.click();
+    else window.dispatchEvent(new CustomEvent('agworld:entity-history-request',{detail:{entity}}));
+  }
+
+  function normalizeEntityActionRow(actions, entity){
+    if(!actions) return actions;
+
+    // The legacy row already contains all four proven controls, but the fleet
+    // controls were deliberately hidden until a farm was selected. Inside the
+    // Entity Command Centre they must be visible and operate for the selected
+    // entity, including Company Facilities.
+    actions.querySelectorAll('button').forEach(button=>{
+      button.hidden=false;
+      button.removeAttribute('hidden');
+      button.style.removeProperty('display');
+      button.style.removeProperty('visibility');
+      button.style.removeProperty('opacity');
+    });
+
+    const update=actions.querySelector('#farm3d');
+    if(update){
+      update.textContent='UPDATE '+entityCommandTypeLabel(entity?.type).toUpperCase()+' DETAILS';
+      update.onclick=(event)=>{ event.preventDefault(); event.stopPropagation(); openEntityDetailsFromAction(entity); };
+    }
+
+    const history=actions.querySelector('#farmHistoryBtn');
+    if(history){
+      history.onclick=(event)=>{ event.preventDefault(); event.stopPropagation(); openEntityHistoryFromAction(entity); };
+    }
+
+    // If a previous renderer supplied only two controls, complete the action
+    // set here. The IDs match the original legacy controls so delegated game
+    // handlers still receive the exact same action targets.
+    const add=(id,label,handler)=>{
+      let button=actions.querySelector('#'+id);
+      if(!button){
+        button=document.createElement('button');
+        button.id=id;
+        button.type='button';
+        button.textContent=label;
+        actions.appendChild(button);
+      }
+      button.hidden=false;
+      button.removeAttribute('hidden');
+      if(handler) button.addEventListener('click',handler);
+      return button;
+    };
+
+    add('fleetTransactionAction','🚁 SELL / MANAGE FLEET',event=>{
+      if(typeof window.openFleetTransaction==='function') return window.openFleetTransaction(String(entity?.type||'farm'),String(entity?.id||''));
+      window.dispatchEvent(new CustomEvent('agworld:fleet-transaction-request',{detail:{entity}}));
+    });
+    add('fleetHistoryAction','📊 SALES HISTORY & FLEET',event=>{
+      if(typeof window.openFleetManagement==='function') return window.openFleetManagement(String(entity?.type||'farm'),String(entity?.id||''));
+      window.dispatchEvent(new CustomEvent('agworld:fleet-history-request',{detail:{entity}}));
+    });
+
+    return actions;
+  }
+
   function ensureEntityCommandFallbackActions(summary, entity){
     if(!summary) return null;
 
@@ -411,15 +496,7 @@
     const type=String(entity?.type||'farm');
     const label=entityCommandTypeLabel(type).toUpperCase();
 
-    const openDetailsEditor=()=>{
-      window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected',{detail:{entity}}));
-      requestAnimationFrame(()=>{
-        const host=document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
-        const detailsTab=host?.querySelector('[data-tab="details"]');
-        if(detailsTab && !detailsTab.classList.contains('is-active')) detailsTab.click();
-        requestAnimationFrame(()=>host?.querySelector('[data-entity-action="edit-details"]')?.click());
-      });
-    };
+    const openDetailsEditor=()=>openEntityDetailsFromAction(entity);
 
     const update=document.createElement('button');
     update.id='farm3d';
@@ -442,7 +519,7 @@
       actions.appendChild(history);
     }
 
-    if(type==='farm' || type==='contractor'){
+    if(type==='farm' || type==='contractor' || type==='company_facility' || type==='companyFacility'){
       const fleet=document.createElement('button');
       fleet.type='button';
       fleet.textContent='🚁 SELL / MANAGE FLEET';
@@ -552,6 +629,7 @@
       actionRow=ensureEntityCommandFallbackActions(summary, entity);
     }
     if(actionRow){
+      normalizeEntityActionRow(actionRow, entity);
       actionRow.hidden=false;
       actionRow.removeAttribute('hidden');
       actionRow.style.removeProperty('display');
@@ -585,6 +663,7 @@
         actions=ensureEntityCommandFallbackActions(summary, entity);
       }
       if(actions){
+        normalizeEntityActionRow(actions, entity);
         actions.hidden=false;
         actions.removeAttribute('hidden');
         actions.style.removeProperty('display');
