@@ -400,6 +400,53 @@ function contractorAssetControl(contractor) {
 }
 
 
+
+// SALES HISTORY & FLEET MANAGEMENT VIEW
+let activeFleetManagement=null;
+function escapeFleetText(value){return String(value??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+async function loadFleetTransactionHistory(type,id){
+  const db=getFarmDb?.(); if(!db) return [];
+  try {
+    const result=await db.from('fleet_transactions').select('*').eq('entity_type',type).eq('entity_id',String(id)).order('created_at',{ascending:false}).limit(100);
+    return result.error?[]:(result.data||[]);
+  } catch(_){ return []; }
+}
+async function openFleetManagement(type,id){
+  const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
+  if(!entity) return toast('Entity could not be found.');
+  activeFleetManagement={type,id:String(id)};
+  const portfolio=salesPortfolio(entity);
+  const drone=dronePortfolioInfluence(type,entity);
+  $('fleetManagementTitle').textContent=(entity.name||'Entity')+' · Fleet Management';
+  $('fleetManagementSummary').innerHTML='<span>'+type.toUpperCase()+' · LIVE MARKET POSITION</span><h3>🟢 '+drone.companyDrones+' Company Drones · 🔴 '+drone.competitorDrones+' Competitor Drones</h3><p>Total fleet: '+drone.totalDrones+' drones. Company influence: '+(drone.totalDrones?Math.round(drone.companyDrones/drone.totalDrones*1000)/10:0)+'%.</p>';
+  $('fleetPortfolioRows').innerHTML=portfolio.length?portfolio.map((p,index)=>'<div class="farm-check-option"><span class="check-icon">'+(marketEntityType(p.supplierType)==='companyFacility'?'✦':'◇')+'</span><span><b>'+escapeFleetText(p.supplierName)+'</b><small>'+(marketEntityType(p.supplierType)==='companyFacility'?'Company Facility':'Competitor')+' · '+Number(p.quantity||0)+' drones</small></span><button type="button" data-fleet-adjust="'+index+'">MANAGE</button></div>').join(''):'<div class="farm-assets-status">No drone portfolio recorded yet.</div>';
+  $('fleetPortfolioRows').querySelectorAll('[data-fleet-adjust]').forEach(button=>button.onclick=()=>editFleetPortfolioLine(type,id,Number(button.dataset.fleetAdjust)));
+  $('fleetHistoryRows').innerHTML='<div class="farm-assets-status">Loading transaction history…</div>';
+  $('fleetManagementModal').hidden=false;
+  const history=await loadFleetTransactionHistory(type,id);
+  $('fleetHistoryRows').innerHTML=history.length?history.map(row=>'<div class="farm-check-option"><span class="check-icon">'+(row.transaction_type==='companySale'?'✦':'◇')+'</span><span><b>'+escapeFleetText(row.metadata?.supplierName||row.supplier_type||'Supplier')+' · '+Number(row.drone_quantity||0)+' drones</b><small>'+escapeFleetText(row.notes||'Fleet transaction')+' · '+escapeFleetText(row.created_at?new Date(row.created_at).toLocaleString():'Recorded')+'</small></span></div>').join(''):'<div class="farm-assets-status">No transaction ledger entries yet. Current portfolio is shown above.</div>';
+}
+async function editFleetPortfolioLine(type,id,index){
+  const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
+  const portfolio=salesPortfolio(entity); const item=portfolio[index]; if(!item) return;
+  const value=window.prompt('Set the current number of drones for '+item.supplierName+'. Enter 0 to remove this supplier.',String(item.quantity||0));
+  if(value===null) return;
+  const quantity=Math.max(0,Number(value)); if(!Number.isFinite(quantity)) return toast('Enter a valid drone quantity.');
+  if(quantity===0) portfolio.splice(index,1); else portfolio[index]={...item,quantity};
+  const db=getFarmDb?.(); const table=type==='farm'?'farms':'contractors';
+  const details={...(entity.details||{}),dronePortfolio:portfolio};
+  const result=await db.from(table).update({details,updated_at:new Date().toISOString()}).eq('id',id);
+  if(result.error) return toast('Fleet update failed: '+result.error.message);
+  entity.details=details; entity.dronePortfolio=portfolio;
+  marketInfluenceState.components.clear(); await loadMarketInfluenceRelationships({force:true}); refreshTerritoryControl();
+  toast('Fleet portfolio updated. Territory influence recalculated.');
+  openFleetManagement(type,id);
+}
+function installFleetManagementView(){
+  if(!$('fleetManagementModal')) return;
+  $('closeFleetManagement').onclick=()=>{$('fleetManagementModal').hidden=true;activeFleetManagement=null;};
+}
+
 // ---------------------------------------------------------------------------
 // SALES & FLEET TRANSACTION ENGINE
 // Transactions are additive, preserve supplier-level provenance, update the
@@ -511,7 +558,8 @@ window.AGWorldFleetTransactions={
   open:openFleetTransaction,
   complete:completeFleetTransaction,
   getPortfolio:(type,id)=>salesPortfolio(salesEntityList(type).find(e=>String(e.id)===String(id))),
-  getInfluence:(type,id)=>{const e=salesEntityList(type).find(e=>String(e.id)===String(id));return e?dronePortfolioInfluence(type,e):null;}
+  getInfluence:(type,id)=>{const e=salesEntityList(type).find(e=>String(e.id)===String(id));return e?dronePortfolioInfluence(type,e):null;},
+  openManagement:openFleetManagement
 };
 
 // ---------------------------------------------------------------------------
@@ -3998,12 +4046,14 @@ function updateFleetTransactionAction(entity, type) {
   if(!button) return;
   const eligible=type==='farm'||type==='contractor';
   button.hidden=!eligible;
-  if(!eligible) { button.onclick=null; return; }
+  if(!eligible) { button.onclick=null; const historyButton=$('fleetHistoryAction'); if(historyButton) { historyButton.hidden=true; historyButton.onclick=null; } return; }
   const drone=dronePortfolioInfluence(type,entity);
   button.textContent='🚁 SELL / MANAGE FLEET · '+drone.totalDrones+' DRONES';
   button.dataset.entityType=type;
   button.dataset.entityId=String(entity.id);
   button.onclick=()=>openFleetTransaction(type,entity.id);
+  const historyButton=$('fleetHistoryAction');
+  if(historyButton){ historyButton.hidden=false; historyButton.onclick=()=>openFleetManagement(type,entity.id); }
 }
 
 function selectDynamicEntity(entity, zoom = true) {
