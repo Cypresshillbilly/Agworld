@@ -3194,6 +3194,92 @@ function hydrateDynamicEntity(row, type) {
   };
 }
 
+
+// Programmatic entry point for controlled/admin world population.
+// This uses the SAME dynamic-entity tables, hydration, rendering and audit
+// model as the visible Create Contractor / Create Company Facility workflow.
+window.AGWorldDynamicEntityAPI = window.AGWorldDynamicEntityAPI || {};
+window.AGWorldDynamicEntityAPI.create = async function(type, input) {
+  const cfg = DYNAMIC_LAYER_CONFIG[type];
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!cfg || !db || !user) throw new Error('You must be signed in to create this shared game-layer record.');
+
+  const lat = Number(input?.lat), lng = Number(input?.lng);
+  if (!input?.name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new Error('A name and valid map location are required.');
+  }
+
+  const id = String(input.id || ('dyn-' + type + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)));
+  const array = dynamicArray(type);
+  const existing = array.find(item => String(item.id) === id || String(item.name).toLowerCase() === String(input.name).toLowerCase());
+  if (existing) return existing;
+
+  const row = {
+    id,
+    name: String(input.name).trim(),
+    contact_name: input.contactName || null,
+    contact_cell: input.contactCell || null,
+    contact_email: input.contactEmail || null,
+    status: input.status || 'Active',
+    location_lat: lat,
+    location_lng: lng,
+    details: { ...(input.details || {}), updatedAt: new Date().toISOString(), workflowStep: 3 },
+    updated_at: new Date().toISOString(),
+    updated_by: user.id
+  };
+
+  const { error } = await db.from(cfg.table).insert(row);
+  if (error) throw new Error(error.message || error.code || 'Unable to create shared game-layer record');
+
+  const entity = hydrateDynamicEntity(row, type);
+  array.push(entity);
+  const { error: auditError } = await db.from(cfg.audit).insert({
+    [cfg.auditForeignKey || (type + '_id')]: entity.id,
+    action: 'created',
+    actor_id: user.id,
+    source: type + '_controlled_population',
+    before_state: null,
+    after_state: { ...entity, changed_at: row.updated_at }
+  });
+  if (auditError) console.warn('Entity created but audit write failed', auditError);
+
+  renderDynamicEntity(entity);
+  refreshMapVisibility();
+  window.dispatchEvent(new CustomEvent('agworld:dynamic-layer-updated', { detail: { type, id: entity.id, source: 'controlled_population' } }));
+  return entity;
+};
+
+window.AGWorldDynamicEntityAPI.createRelationship = async function(input) {
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!db || !user) throw new Error('You must be signed in to create relationships.');
+
+  const row = {
+    source_entity_id: String(input.sourceEntityId),
+    source_entity_type: input.sourceEntityType || 'contractor',
+    target_entity_id: String(input.targetEntityId),
+    target_entity_type: input.targetEntityType || 'farm',
+    relationship_type: input.relationshipType || 'serves',
+    status: input.status || 'active',
+    metadata: input.metadata || {},
+    created_by: user.id
+  };
+  const { data: existingRows, error: checkError } = await db.from('entity_relationships')
+    .select('id')
+    .eq('source_entity_id', row.source_entity_id)
+    .eq('target_entity_id', row.target_entity_id)
+    .eq('relationship_type', row.relationship_type)
+    .limit(1);
+  if (checkError) throw new Error(checkError.message || checkError.code || 'Unable to check relationships');
+  if (existingRows && existingRows.length) return existingRows[0];
+
+  const { data, error } = await db.from('entity_relationships').insert(row).select().single();
+  if (error) throw new Error(error.message || error.code || 'Unable to create relationship');
+  window.dispatchEvent(new CustomEvent('agworld:relationship-created', { detail: { relationship: data } }));
+  return data;
+};
+
 // Direct marker-click diagnostic. This instruments the source click path itself.
 function directMarkerDiagnostic(stage, detail = '', error = null) {
   const active = window.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
