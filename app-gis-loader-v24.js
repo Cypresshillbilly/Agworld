@@ -1456,11 +1456,11 @@ function selectTerritory(territory, zoom = true) {
   $('farmScore').textContent = `${summary.control}%`;
   $('farmLivestock').textContent = summary.neutral;
   $('farmHarvest').textContent = MASTER_PLAYER.name.toUpperCase();
-  $('farmService').textContent = `${summary.company} COMPANY · ${summary.competitor} COMPETITOR · ${summary.contested || 0} CONTESTED`;
+  $('farmService').textContent = `🟢 ${summary.companyDrones || 0} COMPANY DRONES · 🔴 ${summary.competitorDrones || 0} COMPETITOR DRONES · 🟠 ${summary.contested || 0} CONTESTED ENTITIES`;
   $('farmDetailText').textContent =
-    `${summary.control}% market control is calculated from ${summary.total} Farms + Contractors: ${summary.company} Company-controlled, ${summary.competitor} Competitor-controlled, ${summary.contested || 0} contested through competing network influence, and ${summary.neutral} neutral.`;
+    `${summary.control}% market control is drone-weighted across ${summary.total} Farms + Contractors: ${summary.companyDrones || 0} Company drones versus ${summary.competitorDrones || 0} Competitor drones. ${summary.contested || 0} entities are currently contested and ${summary.neutral} remain open market.`;
   $('aiText').textContent =
-    `${MASTER_PLAYER.name} controls ${summary.company}/${summary.total} market entities in this ${levelLabel.toLowerCase()} territory = ${summary.control}% control. Competitor control: ${summary.enemyControl}%. Contested: ${summary.contestedControl || 0}%.`;
+    `${MASTER_PLAYER.name} has ${summary.companyDrones || 0} Company drones versus ${summary.competitorDrones || 0} Competitor drones in this ${levelLabel.toLowerCase()} territory, producing ${summary.control}% drone-weighted control. Competitor control: ${summary.enemyControl}%. Contested entities: ${summary.contested || 0}.`;
 
   selected = null;
   if (map && zoom) {
