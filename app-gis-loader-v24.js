@@ -1255,6 +1255,8 @@ function syncVisibleTownOverlays() {
 
 function territoryStrategicStatus(summary) {
   const control = Number(summary.control || 0);
+  const contested = Number(summary.contestedControl || 0);
+  if (contested > 0 && control === 0 && Number(summary.enemyControl || 0) === 0) return { title: 'MARKET CONTESTED', tone: 'contested' };
   if (control >= 100) return { title: 'FULLY CONTROLLED', tone: 'controlled' };
   if (control >= 76) return { title: 'DOMINATING', tone: 'dominating' };
   if (control >= 51) return { title: 'STRONG PRESENCE', tone: 'strong' };
@@ -1275,7 +1277,8 @@ function renderTerritoryInformationPanel(territory, summary) {
     : territory.name;
   const control = Number(summary.control || 0);
   const enemy = Number(summary.enemyControl || 0);
-  const neutralPct = summary.total ? Math.max(0, 100 - control - enemy) : 0;
+  const contestedPct = Number(summary.contestedControl || 0);
+  const neutralPct = summary.total ? Math.max(0, 100 - control - enemy - contestedPct) : 0;
 
   panel.innerHTML = `
     <div class="territory-info-header">
@@ -1302,6 +1305,7 @@ function renderTerritoryInformationPanel(territory, summary) {
     <div class="territory-info-legend">
       <span>🟢 ${MASTER_PLAYER.name} ${control}%</span>
       <span>🔴 Enemy ${enemy}%</span>
+      <span>🟠 Contested ${contestedPct}%</span>
       <span>⚪ Neutral ${Math.round(neutralPct * 10) / 10}%</span>
     </div>
 
@@ -1309,11 +1313,12 @@ function renderTerritoryInformationPanel(territory, summary) {
       <div><strong>${summary.total}</strong><span>Total Farms</span></div>
       <div><strong>${summary.company}</strong><span>Our Drone</span></div>
       <div><strong>${summary.competitor}</strong><span>Competitor</span></div>
+      <div><strong>${summary.contested || 0}</strong><span>Contested</span></div>
       <div><strong>${summary.neutral}</strong><span>Neutral</span></div>
     </div>
 
     <div class="territory-info-footer">
-      <span>${summary.company} / ${summary.total || 0} farms currently contribute to ${MASTER_PLAYER.name} control.</span>
+      <span>${summary.company} of ${summary.total || 0} Farms + Contractors contribute to ${MASTER_PLAYER.name} market control through assets and relationships.</span>
     </div>`;
 
   panel.classList.add('show');
@@ -1336,11 +1341,11 @@ function selectTerritory(territory, zoom = true) {
   $('farmScore').textContent = `${summary.control}%`;
   $('farmLivestock').textContent = summary.neutral;
   $('farmHarvest').textContent = MASTER_PLAYER.name.toUpperCase();
-  $('farmService').textContent = `${summary.company} OUR FARMS · ${summary.competitor} ENEMY FARMS`;
+  $('farmService').textContent = `${summary.company} COMPANY · ${summary.competitor} COMPETITOR · ${summary.contested || 0} CONTESTED`;
   $('farmDetailText').textContent =
-    `${summary.control}% territory control is calculated from ${summary.total} created farms: ${summary.company} under ${MASTER_PLAYER.name} control (Our Drone), ${summary.competitor} controlled by competitors (Competitor drone), and ${summary.neutral} neutral.`;
+    `${summary.control}% market control is calculated from ${summary.total} Farms + Contractors: ${summary.company} Company-controlled, ${summary.competitor} Competitor-controlled, ${summary.contested || 0} contested through competing network influence, and ${summary.neutral} neutral.`;
   $('aiText').textContent =
-    `${MASTER_PLAYER.name} controls ${summary.company}/${summary.total} farms in this ${levelLabel.toLowerCase()} territory = ${summary.control}% control. Enemy control: ${summary.enemyControl}%.`;
+    `${MASTER_PLAYER.name} controls ${summary.company}/${summary.total} market entities in this ${levelLabel.toLowerCase()} territory = ${summary.control}% control. Competitor control: ${summary.enemyControl}%. Contested: ${summary.contestedControl || 0}%.`;
 
   selected = null;
   if (map && zoom) {
@@ -1348,7 +1353,7 @@ function selectTerritory(territory, zoom = true) {
     const targetZoom = { country: 5, province: 7, municipality: 10, town: 12 }[territory.level] || 7;
     map.setZoom(targetZoom);
   }
-  $('mapStatus').textContent = `${MASTER_PLAYER.name} territory control · ${levelLabel} · ${territory.name} · ${summary.control}% · ${summary.company}/${summary.total} farms`;
+  $('mapStatus').textContent = `${MASTER_PLAYER.name} market influence · ${levelLabel} · ${territory.name} · ${summary.control}% Company · ${summary.enemyControl}% Competitor · ${summary.neutralControl || 0}% Open`;
 }
 
 
