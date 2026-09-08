@@ -207,8 +207,8 @@ function healthCheck(){
       id:String(facility?.id||''),
       coordinates:coords,
       coordinatesReady:!!coords,
-      markerReady:!!facility?._marker,
-      mapReady:!!facility?._marker?.getMap?.()
+      markerReady:!!(facility?._marker),
+      mapReady:!!(facility?._marker?.getMap?.())
     };
   });
   result.healthy=CANONICAL.every(meta=>{
@@ -221,12 +221,14 @@ function healthCheck(){
 
 function renderRow(row,facility,meta){
   if(!row || !facility || !meta) return;
+  const alreadyPolished=row.dataset.agworldFacilityCommandPolished==='1' && row.dataset.agworldFacilityCommandKey===meta.key;
   row.dataset.agworldFacilityCommandPolished='1';
   row.dataset.agworldFacilityCommandKey=meta.key;
   row.dataset.mapReady=facility?._marker?.getMap?.()?'true':'pending';
   row.classList.add('agworld-company-facility-command');
   row.setAttribute('aria-label','Open '+meta.name+' on map');
   row.title='Open '+meta.name+' on the map';
+  if(alreadyPolished) return;
 
   const staff=Number(facility?.details?.employees??facility?.details?.employeeCount??facility?.employees??facility?.employeeCount??0)||0;
   row.innerHTML=
