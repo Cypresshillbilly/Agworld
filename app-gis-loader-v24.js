@@ -3635,6 +3635,60 @@ function openDynamicEntity(type) {
   $('dynamicEntityModal').classList.add('show');
 }
 
+
+// Open an existing dynamic entity in the SAME multi-step workflow used to
+// create it. Editing deliberately starts at Step 2: the existing map location
+// is retained unless the user explicitly changes it through the spatial tools.
+function openEditDynamicEntity(entity) {
+  if (!entity || !map) { toast('Select an entity first.'); return false; }
+  const type = entity.type === 'company_facility' ? 'companyFacility' : entity.type;
+  const cfg = DYNAMIC_LAYER_CONFIG[type];
+  if (!cfg) return false;
+
+  dynamicEntityType = type;
+  dynamicEntityId = String(entity.id);
+  dynamicEntityLocation = {
+    lat: Number(entity.lat),
+    lng: Number(entity.lng)
+  };
+
+  resetDynamicEntityForm();
+  configureDynamicEntityForm(type);
+
+  const d = entity.details || {};
+  $('dynamicCountry').value = d.country || '';
+  $('dynamicProvince').value = d.province || '';
+  $('dynamicMunicipality').value = d.municipality || '';
+  $('dynamicNearestTown').value = d.nearestTown || '';
+  $('dynamicName').value = entity.name || '';
+  $('dynamicContactName').value = entity.contactName || '';
+  $('dynamicContactCell').value = entity.contactCell || '';
+  $('dynamicContactEmail').value = entity.contactEmail || '';
+  $('dynamicWebsite').value = d.website || '';
+  $('dynamicNotes').value = d.notes || '';
+  $('dynamicStatus').value = entity.status || 'Active';
+
+  $('dynamicLocationStatus').textContent =
+    Number.isFinite(dynamicEntityLocation.lat) && Number.isFinite(dynamicEntityLocation.lng)
+      ? 'Existing location retained · ' + dynamicEntityLocation.lat.toFixed(6) + ', ' + dynamicEntityLocation.lng.toFixed(6)
+      : 'Existing location retained.';
+
+  renderDynamicChecklist(type, Array.isArray(d.capabilities) ? d.capabilities : []);
+  renderDronePortfolio('dynamicDronePortfolio', Array.isArray(d.dronePortfolio) ? d.dronePortfolio : []);
+
+  $('dynamicEntityModalTitle').textContent = 'UPDATE ' + cfg.label.toUpperCase() + ' DETAILS';
+  $('dynamicEntityModalSubtitle').textContent =
+    'Editing the existing shared ' + cfg.label.toLowerCase() + ' record · original create workflow';
+
+  // Match the Farm update workflow: preserve the saved location and enter the
+  // information stage of the same wizard instead of asking for a new location.
+  showDynamicStep(2);
+  $('dynamicEntityModal').classList.add('show');
+  return true;
+}
+
+window.openEditDynamicEntity = openEditDynamicEntity;
+
 function stopDynamicLocationMode() {
   if (dynamicEntityLocationListener) {
     try { google.maps.event.removeListener(dynamicEntityLocationListener); } catch (_) {}
@@ -4418,25 +4472,10 @@ function selectDynamicEntity(entity, zoom = true) {
     updateButton.textContent = updateLabel;
     updateButton.type = 'button';
     updateButton.onclick = () => {
-      // Dynamic entities now mirror the Farm card action. The button enters the
-      // canonical Entity Engine first, then opens its shared edit form.
-      enterWorkingRelationshipPath();
-      let editorAttempts = 0;
-      const openEditor = () => {
-        const host = document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
-        if (!host) {
-          if (++editorAttempts < 20) setTimeout(openEditor, 60);
-          else toast('Entity details panel did not open. Please select Entity Details and use Edit entity.');
-          return;
-        }
-        const detailsTab = host.querySelector('[data-tab="details"]');
-        if (detailsTab && !detailsTab.classList.contains('is-active')) detailsTab.click();
-        requestAnimationFrame(() => {
-          const editButton = host.querySelector('[data-entity-action="edit-details"]');
-          if (editButton) editButton.click();
-        });
-      };
-      requestAnimationFrame(openEditor);
+      // Use the canonical CREATE ENTITY wizard in edit mode. This is the same
+      // proven workflow used before the Entity Command Centre layout refactor,
+      // with the existing entity pre-populated and its location preserved.
+      openEditDynamicEntity(entity);
     };
   }
 
