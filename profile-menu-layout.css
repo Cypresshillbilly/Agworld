@@ -283,3 +283,57 @@ html body.ag-premium-mode .sidebar > .profile{display:none!important}
   html body.ag-game-mode .sidebar .menu-user,html body.ag-premium-mode .sidebar .menu-user{min-height:108px!important;flex-basis:108px!important;padding:8px!important;grid-template-columns:52px minmax(0,1fr)!important}
   html body.ag-game-mode .sidebar .menu-user-avatar,html body.ag-premium-mode .sidebar .menu-user-avatar{width:52px!important;height:52px!important}
 }
+
+
+/* AG WORLD — Final screenshot correction: force logo and player identity block to own the sidebar header. */
+html body .sidebar .brand{
+  order:1!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  height:104px!important;
+  min-height:104px!important;
+  flex:0 0 104px!important;
+  margin:0 0 8px!important;
+  padding:4px!important;
+  box-sizing:border-box!important;
+  background-image:url('/Agworld/assets/Logo.png?v=20260908-sidebar-final')!important;
+  background-repeat:no-repeat!important;
+  background-position:center!important;
+  background-size:92% auto!important;
+  background-color:transparent!important;
+  font-size:0!important;
+  color:transparent!important;
+  overflow:hidden!important;
+}
+html body .sidebar .brand:before,
+html body .sidebar .brand small{display:none!important}
+
+html body .sidebar .menu-user{
+  order:2!important;
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
+  grid-template-columns:64px minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto 9px auto!important;
+  column-gap:11px!important;
+  align-items:center!important;
+  width:100%!important;
+  min-height:128px!important;
+  height:128px!important;
+  flex:0 0 128px!important;
+  margin:0 0 9px!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+html body .sidebar .menu-user-avatar{width:64px!important;height:64px!important;grid-row:1 / span 5!important}
+html body .sidebar .menu-user-avatar span{font-size:25px!important}
+html body .sidebar .menu-user-name{font-size:13px!important;line-height:1.12!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+html body .sidebar .menu-user-role{font-size:7.5px!important;line-height:1.2!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+html body .sidebar .menu-user-level{font-size:10px!important;margin:5px 0 6px!important}
+html body .sidebar .menu-user-xp{height:8px!important}
+html body .sidebar .menu-user-xptext{font-size:7px!important;margin-top:5px!important}
+html body .sidebar .menu-user-xptext b{font-size:7.5px!important}
+html body .sidebar .nav{order:3!important}
