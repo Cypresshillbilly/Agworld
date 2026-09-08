@@ -192,3 +192,60 @@
 }
 #regionWindow .region-window-body{padding:20px 24px 24px}
 #regionWindow .region-window-head button{cursor:pointer;min-width:38px;min-height:38px}
+
+
+/* FINAL LAYOUT LOCK — must win over legacy profile/footer layout rules. */
+html body .app-shell > .sidebar{
+  bottom:170px!important;
+  height:650px!important;
+}
+html body .app-shell > .missions{
+  left:180px!important;
+  top:0!important;
+  width:285px!important;
+  height:650px!important;
+  bottom:auto!important;
+}
+html body .app-shell > .map-area{
+  left:465px!important;
+  top:0!important;
+  right:0!important;
+  height:650px!important;
+  bottom:auto!important;
+}
+html body .app-shell > .bottom.user-profile-section{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+html body .app-shell > #territorySection{
+  position:absolute!important;
+  left:0!important;
+  top:650px!important;
+  right:auto!important;
+  bottom:0!important;
+  width:465px!important;
+  height:170px!important;
+  display:block!important;
+  visibility:visible!important;
+  z-index:999!important;
+}
+html body .app-shell > #entityInformationSection{
+  position:absolute!important;
+  left:465px!important;
+  top:650px!important;
+  right:0!important;
+  bottom:0!important;
+  width:auto!important;
+  height:170px!important;
+  display:block!important;
+  visibility:visible!important;
+  z-index:999!important;
+}
+#territorySection > #territoryInfoPanel{
+  display:block!important;
+  visibility:visible!important;
+}
+#entityInformationSection > #farmCard{
+  position:static!important;
+}
