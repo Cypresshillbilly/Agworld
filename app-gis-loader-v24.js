@@ -582,6 +582,13 @@ function installFleetQuickActionBridge() {
   document.addEventListener('click', event => {
     const button = event.target?.closest?.('[data-fleet-action]');
     if (!button) return;
+
+    // The visible quick-action buttons have their own direct handlers bound by
+    // updateFleetTransactionAction(). Do not intercept them in the document
+    // capture phase: doing so created a second action path that could throw
+    // before the proven direct handler was allowed to run.
+    if (button.dataset.fleetDirect === '1') return;
+
     const type = button.dataset.entityType;
     const id = button.dataset.entityId;
     if (!type || !id) return;
@@ -596,13 +603,22 @@ function installFleetQuickActionBridge() {
       lastActionEntityType: type
     };
     try {
-      if (action === 'history') openFleetManagement(type,id);
-      else openFleetTransaction(type,id);
+      const result = action === 'history' ? openFleetManagement(type,id) : openFleetTransaction(type,id);
+      if (result?.catch) result.catch(error => {
+        const message = String(error?.message || error);
+        toast('Fleet action failed: '+message);
+        window.__AGWORLD_FLEET_UI_STATE__ = {
+          ...(window.__AGWORLD_FLEET_UI_STATE__ || {}),
+          lastActionError: message,
+          lastActionErrorAt: Date.now()
+        };
+      });
     } catch (error) {
-      toast('Fleet action failed: '+(error?.message || error));
+      const message = String(error?.message || error);
+      toast('Fleet action failed: '+message);
       window.__AGWORLD_FLEET_UI_STATE__ = {
         ...(window.__AGWORLD_FLEET_UI_STATE__ || {}),
-        lastActionError: String(error?.message || error),
+        lastActionError: message,
         lastActionErrorAt: Date.now()
       };
     }
@@ -4218,22 +4234,59 @@ function updateFleetTransactionAction(entity, type) {
   sell.style.cssText = buttonCss + ';pointer-events:auto!important;touch-action:manipulation!important;';
   history.style.cssText = buttonCss + ';pointer-events:auto!important;touch-action:manipulation!important;';
   sell.dataset.fleetAction = 'transaction';
+  sell.dataset.fleetDirect = '1';
   sell.dataset.entityType = type;
   sell.dataset.entityId = String(entity.id);
   history.dataset.fleetAction = 'history';
+  history.dataset.fleetDirect = '1';
   history.dataset.entityType = type;
   history.dataset.entityId = String(entity.id);
   window.__AGWORLD_FLEET_SELECTED_ENTITY__ = { type, id:String(entity.id), entity, updatedAt:Date.now() };
-  sell.onclick = (event) => {
-    event?.preventDefault?.(); event?.stopPropagation?.();
-    window.__AGWORLD_FLEET_UI_STATE__ = { ...(window.__AGWORLD_FLEET_UI_STATE__ || {}), lastAction:'transaction', lastActionAt:Date.now() };
-    return openFleetTransaction(type, entity.id);
+
+  // One canonical path for the visible gameplay controls. Resolve from the
+  // button dataset at click time so a rebuilt Entity/Farm card can never retain
+  // a stale closure from the previous selection.
+  const runQuickFleetAction = async (event, action) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    const source = event?.currentTarget;
+    const liveType = source?.dataset?.entityType || type;
+    const liveId = source?.dataset?.entityId || String(entity.id);
+    try {
+      const result = action === 'history'
+        ? await openFleetManagement(liveType, liveId)
+        : openFleetTransaction(liveType, liveId);
+
+      const modalId = action === 'history' ? 'fleetManagementModal' : 'fleetTransactionModal';
+      const modal = $(modalId);
+      if (!modal || modal.hidden) throw new Error((action === 'history' ? 'Fleet History' : 'Fleet Transaction')+' window did not open.');
+      window.__AGWORLD_FLEET_UI_STATE__ = {
+        ...(window.__AGWORLD_FLEET_UI_STATE__ || {}),
+        lastAction: action,
+        lastActionAt: Date.now(),
+        lastActionEntityId: String(liveId),
+        lastActionEntityType: liveType,
+        lastActionError: ''
+      };
+      return result;
+    } catch (error) {
+      const message = String(error?.message || error);
+      console.error('[AG World] visible Fleet quick action failed', { action, liveType, liveId, error });
+      toast('Fleet action failed: '+message);
+      window.__AGWORLD_FLEET_UI_STATE__ = {
+        ...(window.__AGWORLD_FLEET_UI_STATE__ || {}),
+        lastAction: action,
+        lastActionAt: Date.now(),
+        lastActionEntityId: String(liveId),
+        lastActionEntityType: liveType,
+        lastActionError: message,
+        lastActionErrorAt: Date.now()
+      };
+      return false;
+    }
   };
-  history.onclick = (event) => {
-    event?.preventDefault?.(); event?.stopPropagation?.();
-    window.__AGWORLD_FLEET_UI_STATE__ = { ...(window.__AGWORLD_FLEET_UI_STATE__ || {}), lastAction:'history', lastActionAt:Date.now() };
-    return openFleetManagement(type, entity.id);
-  };
+  sell.onclick = event => runQuickFleetAction(event, 'transaction');
+  history.onclick = event => runQuickFleetAction(event, 'history');
 
   // Legacy IDs remain wired for older integrations, but the visible controls
   // above are now the canonical gameplay controls.
