@@ -2174,6 +2174,8 @@ function selectFarm(farm, zoom = true) {
     }
   }
   showFarmDetail(farm);
+  // Reassert Fleet controls after the legacy Farm action lifecycle has rebuilt the action area.
+  updateFleetTransactionAction(farm, 'farm');
 
   // V2.6 live UI bridge. The existing Farm Card is the visual host for the
   // shared Entity Engine. Create the host here, inside the real selection flow,
@@ -2288,7 +2290,8 @@ function ensureFarmHistoryButton() {
     actions.appendChild(updateButton);
   }
 
-  updateButton.style.cssText = 'width:50%;margin-top:0;flex:1;';
+  actions.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin-top:9px;width:100%;';
+  updateButton.style.cssText = 'width:100%;margin-top:0;flex:none;display:block;';
   updateButton.textContent = 'UPDATE FARM DETAILS';
   updateButton.type = 'button';
   updateButton.onclick = () => openEditFarm(selected);
@@ -2303,7 +2306,7 @@ function ensureFarmHistoryButton() {
   } else if (button.parentElement !== actions) {
     actions.appendChild(button);
   }
-  button.style.cssText = 'width:50%;margin-top:0;flex:1;';
+  button.style.cssText = 'width:100%;margin-top:0;flex:none;display:block;';
   button.onclick = () => openFarmHistory(selected);
 }
 
@@ -4081,10 +4084,9 @@ function updateFleetTransactionAction(entity, type) {
   button.textContent='🚁 SELL / MANAGE FLEET · '+drone.totalDrones+' DRONES';
   button.dataset.entityType=type;
   button.dataset.entityId=String(entity.id);
-  button.style.display='inline-flex';
-  button.style.visibility='visible';
-  historyButton.style.display='inline-flex';
-  historyButton.style.visibility='visible';
+  actions.style.cssText='display:flex!important;flex-direction:column!important;gap:6px!important;margin-top:9px!important;width:100%!important;overflow:visible!important;';
+  button.style.cssText='width:100%!important;margin-top:0!important;flex:none!important;display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:5!important;';
+  historyButton.style.cssText='width:100%!important;margin-top:0!important;flex:none!important;display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:5!important;';
   button.onclick=()=>openFleetTransaction(type,entity.id);
   historyButton.onclick=()=>openFleetManagement(type,entity.id);
 }
