@@ -1,6 +1,15 @@
 const CONFIG = window.AG_WORLD_CONFIG || {};
-// Current build is running the territory-control demo dataset only.
-window.AG_WORLD_DEMO_MODE = true;
+// World data mode is selected before this loader starts. Demo mode shows the
+// controlled testing population; user mode excludes records marked as demo.
+window.AG_WORLD_DEMO_MODE = window.AGWorldWorldDataMode
+  ? window.AGWorldWorldDataMode.isDemoMode()
+  : true;
+
+function shouldIncludeWorldRecord(type, record) {
+  return window.AGWorldWorldDataMode?.shouldInclude
+    ? window.AGWorldWorldDataMode.shouldInclude(type, record)
+    : true;
+}
 
 let farms = [];
 let territories = [];
@@ -94,7 +103,7 @@ async function loadFarmDatabaseOverrides() {
     .order('updated_at', { ascending: true });
   if (error) { console.warn('Farm database load failed', error); return false; }
 
-  const rows = Array.isArray(data) ? data : [];
+  const rows = (Array.isArray(data) ? data : []).filter(row => shouldIncludeWorldRecord('farm', row));
   const byId = new Map(rows.map(row => [String(row.id), row]));
   const existingIds = new Set(farms.map(farm => String(farm.id)));
   let changed = false;
@@ -895,7 +904,7 @@ async function loadSpatialLayersInBackground() {
   } else { errors.push('town boundaries'); errorDetails.push(townLayer.reason?.message || 'unknown town error'); }
 
   linkHierarchySpatialParents();
-  seedDemoFarms();
+  if (window.AG_WORLD_DEMO_MODE) seedDemoFarms();
   refreshTerritoryControl();
 
   if (map) {
@@ -4028,7 +4037,7 @@ async function loadDynamicLayer(type) {
   const array = dynamicArray(type);
   const byId = new Map(array.map(item => [String(item.id), item]));
   const seen = new Set();
-  (data || []).forEach(row => {
+  (data || []).filter(row => shouldIncludeWorldRecord(type, row)).forEach(row => {
     const fresh = hydrateDynamicEntity(row, type);
     seen.add(fresh.id);
     const current = byId.get(fresh.id);
