@@ -195,6 +195,50 @@
 <script src="shared-farm-world-v38.js?v=shared-cache-v4-20260907"></script>
 <script src="login-gate-bridge-v39.js?v=supabase-only-v41"></script>
 <script src="login-panel-layout-v40.js?v=20260906-login-layout-v2"></script>
+<style id="fleetModalVisibilityFix">
+  /* Fleet modals must be true application overlays, not normal document content. */
+  .modal-overlay[hidden]{display:none!important}
+  .modal-overlay{
+    position:fixed!important;
+    inset:0!important;
+    z-index:2147483000!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    padding:24px!important;
+    box-sizing:border-box!important;
+    background:rgba(3,12,16,.72)!important;
+    backdrop-filter:blur(3px)!important;
+    overflow:auto!important;
+  }
+  .modal-overlay .modal-card{
+    display:block!important;
+    position:relative!important;
+    width:min(100%,820px)!important;
+    max-height:calc(100vh - 48px)!important;
+    overflow:auto!important;
+    background:#102028!important;
+    color:#eef6f7!important;
+    border:1px solid rgba(108,196,183,.35)!important;
+    border-radius:12px!important;
+    box-shadow:0 24px 80px rgba(0,0,0,.55)!important;
+  }
+  .modal-overlay .modal-head{
+    display:flex!important;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    gap:16px!important;
+    padding:20px 24px 14px!important;
+    border-bottom:1px solid rgba(255,255,255,.08)!important;
+  }
+  .modal-overlay .modal-body{padding:20px 24px 24px!important}
+  .modal-overlay .modal-head button{
+    flex:0 0 auto!important;
+    min-width:38px!important;
+    min-height:38px!important;
+    cursor:pointer!important;
+  }
+</style>
 <div id="fleetTransactionModal" class="modal-overlay" hidden>
   <div class="modal-card" style="max-width:620px">
     <div class="modal-head"><div><span class="eyebrow">SALES & FLEET TRANSACTION</span><h2 id="fleetTransactionTitle">Sell Company Drones</h2></div><button id="closeFleetTransaction" type="button">×</button></div>
