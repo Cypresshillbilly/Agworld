@@ -3265,6 +3265,25 @@ window.AGWorldDynamicEntityAPI.createRelationship = async function(input) {
     metadata: input.metadata || {},
     created_by: user.id
   };
+
+  // WORLD RULE: a Farm may belong to only one Contractor relationship.
+  // Enforce this at the canonical relationship creation boundary so every
+  // controlled/admin workflow follows the same rule.
+  if (row.source_entity_type === 'contractor' && row.target_entity_type === 'farm' && row.relationship_type === 'serves') {
+    const { data: assignedRows, error: assignedError } = await db.from('entity_relationships')
+      .select('id,source_entity_id')
+      .eq('target_entity_id', row.target_entity_id)
+      .eq('target_entity_type', 'farm')
+      .eq('source_entity_type', 'contractor')
+      .eq('relationship_type', 'serves')
+      .eq('status', 'active')
+      .limit(1);
+    if (assignedError) throw new Error(assignedError.message || assignedError.code || 'Unable to verify the Farm contractor assignment');
+    if (assignedRows && assignedRows.length && String(assignedRows[0].source_entity_id) !== row.source_entity_id) {
+      throw new Error('This Farm is already linked to another Contractor. A Farm may only have one active Contractor.');
+    }
+  }
+
   const { data: existingRows, error: checkError } = await db.from('entity_relationships')
     .select('id')
     .eq('source_entity_id', row.source_entity_id)
