@@ -412,8 +412,8 @@ async function loadFleetTransactionHistory(type,id){
   } catch(_){ return []; }
 }
 async function openFleetManagement(type,id){
-  const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
-  if(!entity) return toast('Entity could not be found.');
+  const entity=resolveFleetEntity(type,id);
+  if(!entity) return toast('Fleet action could not resolve the selected '+String(type)+'.');
   activeFleetManagement={type,id:String(id)};
   const portfolio=salesPortfolio(entity);
   const drone=dronePortfolioInfluence(type,entity);
@@ -458,6 +458,26 @@ function salesEntityList(type) {
   return type==='farm' ? (window.AG_WORLD_WORLD?.farms || []) :
     type==='contractor' ? (window.AG_WORLD_WORLD?.getContractors?.() || []) : [];
 }
+function resolveFleetEntity(type,id) {
+  const canonical = marketEntityType ? marketEntityType(type) : String(type || '').toLowerCase();
+  const list = salesEntityList(canonical);
+  const found = list.find(e => String(e?.id) === String(id));
+  if (found) return found;
+
+  // The visible card is the authoritative fallback during a selection lifecycle.
+  // This prevents a newly-selected entity from becoming unclickable simply
+  // because a cached world array has not yet refreshed.
+  const selected = window.__AGWORLD_FLEET_SELECTED_ENTITY__;
+  if (selected && String(selected.id) === String(id) && marketEntityType(selected.type) === canonical && selected.entity) {
+    return selected.entity;
+  }
+
+  const dynamic = window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+  if (dynamic && String(dynamic.entityId) === String(id) && marketEntityType(dynamic.entityType) === canonical) {
+    return (window.AG_WORLD_WORLD?.getContractors?.() || []).find(e => String(e?.id) === String(id)) || null;
+  }
+  return null;
+}
 function salesSupplierList(kind) {
   return kind==='companySale' ? (window.AG_WORLD_WORLD?.getCompanyFacilities?.() || []) : (window.AG_WORLD_WORLD?.getCompetitors?.() || []);
 }
@@ -472,8 +492,8 @@ function renderFleetSupplierOptions() {
   $('fleetSupplier').innerHTML=suppliers.length ? suppliers.map(s=>'<option value="'+String(s.id).replace(/"/g,'&quot;')+'">'+s.name+'</option>').join('') : '<option value="">No supplier entities available</option>';
 }
 function openFleetTransaction(type,id) {
-  const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
-  if(!entity) return toast('Entity could not be found.');
+  const entity=resolveFleetEntity(type,id);
+  if(!entity) return toast('Fleet action could not resolve the selected '+String(type)+'.');
   activeFleetTransaction={type,id:String(id)};
   $('fleetTransactionEntityType').textContent=type.toUpperCase()+' · LIVE MARKET ENTITY';
   $('fleetTransactionEntityName').textContent=entity.name || entity.id;
@@ -553,6 +573,52 @@ function injectFleetTransactionActions() {
     openFleetTransaction(button.dataset.entityType,button.dataset.entityId);
   });
 }
+
+// Canonical visible quick-action bridge. Capture phase makes these buttons
+// independent of the Farm/Entity panel renderers that may stop bubbling clicks.
+function installFleetQuickActionBridge() {
+  if (window.__AGWORLD_FLEET_QUICK_ACTION_BRIDGE__) return;
+  window.__AGWORLD_FLEET_QUICK_ACTION_BRIDGE__ = true;
+  document.addEventListener('click', event => {
+    const button = event.target?.closest?.('[data-fleet-action]');
+    if (!button) return;
+    const type = button.dataset.entityType;
+    const id = button.dataset.entityId;
+    if (!type || !id) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const action = button.dataset.fleetAction;
+    window.__AGWORLD_FLEET_UI_STATE__ = {
+      ...(window.__AGWORLD_FLEET_UI_STATE__ || {}),
+      lastAction: action,
+      lastActionAt: Date.now(),
+      lastActionEntityId: String(id),
+      lastActionEntityType: type
+    };
+    try {
+      if (action === 'history') openFleetManagement(type,id);
+      else openFleetTransaction(type,id);
+    } catch (error) {
+      toast('Fleet action failed: '+(error?.message || error));
+      window.__AGWORLD_FLEET_UI_STATE__ = {
+        ...(window.__AGWORLD_FLEET_UI_STATE__ || {}),
+        lastActionError: String(error?.message || error),
+        lastActionErrorAt: Date.now()
+      };
+    }
+  }, true);
+
+  // Install the modal handlers after all HTML has been parsed. The loader runs
+  // before the modal markup in index.html, so eager installation can silently
+  // miss the controls.
+  const install = () => {
+    try { installFleetTransactionEngine(); } catch (_) {}
+    try { installFleetManagementView(); } catch (_) {}
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, {once:true});
+  else install();
+}
+installFleetQuickActionBridge();
 
 window.AGWorldFleetTransactions={
   open:openFleetTransaction,
@@ -4149,10 +4215,25 @@ function updateFleetTransactionAction(entity, type) {
     'cursor:pointer!important'
   ].join(';');
 
-  sell.style.cssText = buttonCss;
-  history.style.cssText = buttonCss;
-  sell.onclick = () => openFleetTransaction(type, entity.id);
-  history.onclick = () => openFleetManagement(type, entity.id);
+  sell.style.cssText = buttonCss + ';pointer-events:auto!important;touch-action:manipulation!important;';
+  history.style.cssText = buttonCss + ';pointer-events:auto!important;touch-action:manipulation!important;';
+  sell.dataset.fleetAction = 'transaction';
+  sell.dataset.entityType = type;
+  sell.dataset.entityId = String(entity.id);
+  history.dataset.fleetAction = 'history';
+  history.dataset.entityType = type;
+  history.dataset.entityId = String(entity.id);
+  window.__AGWORLD_FLEET_SELECTED_ENTITY__ = { type, id:String(entity.id), entity, updatedAt:Date.now() };
+  sell.onclick = (event) => {
+    event?.preventDefault?.(); event?.stopPropagation?.();
+    window.__AGWORLD_FLEET_UI_STATE__ = { ...(window.__AGWORLD_FLEET_UI_STATE__ || {}), lastAction:'transaction', lastActionAt:Date.now() };
+    return openFleetTransaction(type, entity.id);
+  };
+  history.onclick = (event) => {
+    event?.preventDefault?.(); event?.stopPropagation?.();
+    window.__AGWORLD_FLEET_UI_STATE__ = { ...(window.__AGWORLD_FLEET_UI_STATE__ || {}), lastAction:'history', lastActionAt:Date.now() };
+    return openFleetManagement(type, entity.id);
+  };
 
   // Legacy IDs remain wired for older integrations, but the visible controls
   // above are now the canonical gameplay controls.
