@@ -1148,3 +1148,24 @@
     '@media(max-width:900px){#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{grid-template-columns:1fr!important;grid-template-rows:auto minmax(0,1fr)!important;overflow:auto!important}#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane{grid-column:1!important;grid-row:1!important;border-right:0!important;border-bottom:1px solid rgba(117,224,132,.18)!important}#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{grid-column:1!important;grid-row:2!important}}';
   document.head.appendChild(style);
 })();
+
+
+/* COMPANY COMMAND CENTRE FLEX 50/50 HARD RESET v30 */
+(function(){
+  /*
+   * The screenshot shows the grid is still being influenced by the legacy
+   * bottom-panel geometry. Remove grid placement from the equation entirely:
+   * the two Company panes are now physical 50% flex items starting at the
+   * left edge of the Company card.
+   */
+  const style=document.createElement('style');
+  style.id='agworldCompanyCommandFlexSplitV30';
+  style.textContent=
+    '#entityInformationSection .farm-card.agworld-company-entity-card{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{display:flex!important;flex-direction:row!important;align-items:stretch!important;justify-content:flex-start!important;flex:1 1 0!important;align-self:stretch!important;width:100%!important;max-width:100%!important;min-width:0!important;margin:0!important;padding:0!important;box-sizing:border-box!important;overflow:hidden!important;grid-template-columns:none!important;grid-template-rows:none!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane{display:flex!important;flex:0 0 50%!important;width:50%!important;max-width:50%!important;min-width:0!important;height:100%!important;box-sizing:border-box!important;position:static!important;order:0!important;margin:0!important;left:auto!important;right:auto!important;transform:none!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{display:flex!important;flex:0 0 50%!important;width:50%!important;max-width:50%!important;min-width:0!important;height:100%!important;box-sizing:border-box!important;position:static!important;order:1!important;margin:0!important;left:auto!important;right:auto!important;transform:none!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane *,#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane *{box-sizing:border-box!important}'+
+    '@media(max-width:900px){#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{flex-direction:column!important;overflow:auto!important}#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane,#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{flex:0 0 auto!important;width:100%!important;max-width:100%!important;height:auto!important}}';
+  document.head.appendChild(style);
+})();
