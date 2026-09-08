@@ -127,7 +127,9 @@
 
   function installLiveBridge() {
     const existingBridge = global.AGWorldV2?.LiveFarmDetailBridge;
-    if (existingBridge) return true;
+    const liveHost = document.getElementById('agworldV2FarmDetailHost');
+    if (existingBridge && existingBridge.__host === liveHost && liveHost?.isConnected) return true;
+    if (existingBridge) delete global.AGWorldV2.LiveFarmDetailBridge;
 
     const card = document.getElementById('farmCard');
     if (!card) return false;
@@ -157,6 +159,7 @@
     };
 
     global.AGWorldV2.LiveFarmDetailBridge = {
+      __host: host,
       open(farm) {
         if (!farm?.id) return;
         const entity = global.AGWorldV2.FarmEntity.create({
@@ -263,7 +266,11 @@
   }
 
   function installDynamicLiveBridge() {
-    if (global.AGWorldV2?.LiveDynamicEntityDetailBridge) return true;
+    const currentHost = document.getElementById('agworldV2FarmDetailHost');
+    const existingBridge = global.AGWorldV2?.LiveDynamicEntityDetailBridge;
+    if (existingBridge && existingBridge.__host === currentHost && currentHost?.isConnected) return true;
+    if (existingBridge) delete global.AGWorldV2.LiveDynamicEntityDetailBridge;
+
     if (!installLiveBridge()) return false;
 
     const host = document.getElementById('agworldV2FarmDetailHost');
@@ -276,6 +283,7 @@
     const detailPanel = new DynamicEntityDetailPanelV2({ container: host, relationshipRepository });
 
     global.AGWorldV2.LiveDynamicEntityDetailBridge = {
+      __host: host,
       open(dynamicEntity) {
         if (!dynamicEntity?.id) return;
         const typeMap = {
