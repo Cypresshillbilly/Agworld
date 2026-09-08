@@ -125,4 +125,20 @@ async function seed(){
  return {facilities:createdFacilities.length,contractors:createdContractors.length,relationships:relationshipCount};
 }
 global.AGWorldDemoWorldSeed={run:seed,facilities};
+
+// Existing populated worlds reconcile confirmed facility locations automatically
+// after authentication becomes available. New worlds remain opt-in and still
+// require the normal controlled population workflow.
+let autoReconcileAttempts=0;
+const autoReconcileTimer=global.setInterval(async()=>{
+  autoReconcileAttempts++;
+  if(!global.localStorage.getItem(SEED_KEY)) { global.clearInterval(autoReconcileTimer); return; }
+  if(!global.AGWorldDynamicEntityAPI?.reconcile || !global.AGWorldBackend?.getUser?.()) {
+    if(autoReconcileAttempts>=30) global.clearInterval(autoReconcileTimer);
+    return;
+  }
+  global.clearInterval(autoReconcileTimer);
+  try { await seed(); }
+  catch(err) { console.warn('Company facility address reconciliation deferred:',err); }
+},1000);
 })(window);
