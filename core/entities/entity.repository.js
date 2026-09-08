@@ -3,7 +3,7 @@
 
   class EntityRepository {
     constructor(options) {
-      this.baseUrl = (options && options.baseUrl) || '/api/v2/entities';
+      this.baseUrl = (options && options.baseUrl) || ((global.AG_WORLD_API && global.AG_WORLD_API.baseUrl ? global.AG_WORLD_API.baseUrl : '') + '/api/v2/entities');
     }
 
     async list(filters) {
