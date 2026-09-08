@@ -2,11 +2,9 @@
 'use strict';
 const SEED_KEY='agworld:demo-world-seed-v2';
 const facilities=[
- {name:'Ballito Company Facility',town:'Ballito',province:'KwaZulu-Natal',lat:-29.5389,lng:31.2144,type:'Head Office & Sales'},
- {name:'Bothaville Company Facility',town:'Bothaville',province:'Free State',lat:-27.3886,lng:26.6170,type:'Sales & Service Hub'},
- {name:'Upington Company Facility',town:'Upington',province:'Northern Cape',lat:-28.4478,lng:21.2561,type:'Regional Sales Hub'},
- {name:'Lichtenburg Company Facility',town:'Lichtenburg',province:'North West',lat:-26.1520,lng:26.1597,type:'Sales & Support Hub'},
- {name:'Brits Company Facility',town:'Brits',province:'North West',lat:-25.6347,lng:27.7802,type:'Service & Demonstration Centre'}
+ {name:'Ballito Company Facility',town:'Ballito',province:'KwaZulu-Natal',lat:-29.5389,lng:31.2144,type:'Company Facility',address:'6 Adam Park, Garlick Drive, Ballito, 4420'},
+ {name:'Lichtenburg Company Facility',town:'Lichtenburg',province:'North West',lat:-26.1520,lng:26.1597,type:'Head Office',address:'40 Daniel Straat, Lichtenburg, 2740'},
+ {name:'Bothaville Company Facility',town:'Bothaville',province:'Free State',lat:-27.3886,lng:26.6170,type:'Company Facility',address:'Corner of 7de Ave and Nywerheids Ave, Bothaville'}
 ];
 const names=['AgriSky','FieldForce','Precision Crop','Rural Air','HarvestTech','GreenWing','FarmFlight','AgriReach','CropScan','LandLift'];
 const surnames=['Mokoena','Botha','Jacobs','Naidoo','van Wyk','Mahlangu','Smit','Dlamini','Fourie','Nkosi'];
@@ -32,7 +30,7 @@ function farms(){
 function progress(stage,current,total,message){global.dispatchEvent(new CustomEvent('agworld:demo-world-seed-progress',{detail:{stage,current,total,message}}));}
 
 async function seed(){
- if(global.localStorage.getItem(SEED_KEY)) return {facilities:5,contractors:50,alreadyComplete:true};
+ if(global.localStorage.getItem(SEED_KEY)) return {facilities:3,contractors:50,alreadyComplete:true};
  if(!global.AGWorldDynamicEntityAPI?.create||!global.AGWorldDynamicEntityAPI?.createRelationship) throw new Error('The canonical Contractor / Company Facility creation workflow is not ready.');
 
  const fs=farms();
@@ -47,7 +45,7 @@ async function seed(){
   createdFacilities.push(await global.AGWorldDynamicEntityAPI.create('companyFacility',{
    id:'seed-company-facility-'+f.town.toLowerCase().replace(/[^a-z]+/g,'-'),
    name:f.name,lat:f.lat,lng:f.lng,status:'Active',
-   details:{country:'South Africa',province:f.province,nearestTown:f.town,municipality:'',website:'',notes:'Company '+f.type+' located at the centre of '+f.town+'.',capabilities:[f.type.includes('Head Office')?'Head Office':'Regional Office','Operations Base']}
+   details:{country:'South Africa',province:f.province,nearestTown:f.town,municipality:'',website:'',notes:'Company '+f.type+' located at '+f.address+'.',address:f.address,capabilities:[f.type.includes('Head Office')?'Head Office':'Regional Office','Operations Base']}
   }));
  }
 
@@ -112,4 +110,209 @@ async function seed(){
  return {facilities:createdFacilities.length,contractors:createdContractors.length,relationships:relationshipCount};
 }
 global.AGWorldDemoWorldSeed={run:seed,facilities};
+})(window);
+
+/* COMPANY FACILITY COMMAND POLISH v1 */
+(function(global){
+'use strict';
+
+const CANONICAL=[
+  {key:'ballito',name:'Ballito',town:'Ballito',role:'COMPANY FACILITY',address:'6 Adam Park, Garlick Drive, Ballito, 4420'},
+  {key:'lichtenburg',name:'Lichtenburg (Head Office)',town:'Lichtenburg',role:'HEAD OFFICE',address:'40 Daniel Straat, Lichtenburg, 2740'},
+  {key:'bothaville',name:'Bothaville',town:'Bothaville',role:'COMPANY FACILITY',address:'Corner of 7de Ave and Nywerheids Ave, Bothaville'}
+];
+
+const normalise=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+const metaFor=value=>{
+  const n=normalise(value);
+  return CANONICAL.find(meta=>n.includes(normalise(meta.town))||normalise(meta.town).includes(n))||null;
+};
+const facilityList=()=>{
+  const world=global.AG_WORLD_WORLD||{};
+  const list=world.getCompanyFacilities?.()||global.__AG_WORLD_COMPANY_FACILITIES__||[];
+  return Array.isArray(list)?list:[];
+};
+const coordinatesFor=facility=>{
+  if(!facility) return null;
+  const d=facility.details||{};
+  const lat=Number(facility.lat??facility.latitude??d.lat??d.latitude);
+  const lng=Number(facility.lng??facility.lon??facility.longitude??d.lng??d.lon??d.longitude);
+  return Number.isFinite(lat)&&Number.isFinite(lng)?{lat,lng}:null;
+};
+const findFacility=(id,meta)=>{
+  const list=facilityList();
+  return list.find(f=>String(f?.id)===String(id)) ||
+    list.find(f=>metaFor(f?.name||f?.details?.nearestTown)?.key===meta.key) ||
+    list.find(f=>normalise(f?.name).includes(normalise(meta.town))) || null;
+};
+
+function focusFacility(facility,meta){
+  const coords=coordinatesFor(facility);
+  const marker=facility?._marker;
+  const map=marker?.getMap?.() || global.AG_WORLD_MAP || global.__AG_WORLD_MAP__ || global.AGWorldMapInstance || null;
+  let focused=false;
+
+  if(map && coords){
+    try{ map.panTo({lat:coords.lat,lng:coords.lng}); focused=true; }catch(_){}
+    try{ map.setZoom(Math.max(Number(map.getZoom?.()||0),14)); focused=true; }catch(_){}
+    try{ map.setCenter({lat:coords.lat,lng:coords.lng}); focused=true; }catch(_){}
+  }
+
+  // Trigger the exact live marker selection pipeline whenever the marker exists.
+  if(marker && global.google?.maps?.event?.trigger){
+    try{ global.google.maps.event.trigger(marker,'click'); focused=true; }catch(_){}
+  }
+
+  const payload={entity:facility,facility,coordinates:coords,source:'company-facility-command-polish',facilityKey:meta.key};
+  if(!focused){
+    const hooks=[
+      global.focusEntityOnMap,global.focusMapEntity,global.flyToEntity,
+      global.focusCompanyFacility,global.flyToCompanyFacility,
+      global.AGWorldGIS?.focusEntity,global.AGWorldGIS?.focusCompanyFacility,
+      global.AGWorldMap?.focusEntity,global.AGWorldMap?.focusCompanyFacility,
+      global.AG_WORLD_WORLD?.focusEntity,global.AG_WORLD_WORLD?.focusCompanyFacility
+    ];
+    for(const hook of hooks){
+      if(typeof hook!=='function') continue;
+      try{ hook(facility,payload); focused=true; break; }catch(_){}
+    }
+  }
+
+  global.dispatchEvent(new CustomEvent('agworld:focus-entity',{detail:payload}));
+  global.dispatchEvent(new CustomEvent('agworld:company-facility-open-request',{detail:payload}));
+  global.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected',{detail:{entity:facility}}));
+
+  global.__AGWORLD_COMPANY_FACILITY_COMMAND_HEALTH__=global.__AGWORLD_COMPANY_FACILITY_COMMAND_HEALTH__||{};
+  global.__AGWORLD_COMPANY_FACILITY_COMMAND_HEALTH__[meta.key]={
+    name:meta.name,
+    id:String(facility?.id||''),
+    coordinates:coords,
+    markerReady:!!marker,
+    mapReady:!!map,
+    lastFocusedAt:Date.now(),
+    focused
+  };
+  return focused;
+}
+
+function healthCheck(){
+  const list=facilityList();
+  const result={checkedAt:Date.now(),facilities:{}};
+  CANONICAL.forEach(meta=>{
+    const facility=findFacility('',meta);
+    const coords=coordinatesFor(facility);
+    result.facilities[meta.key]={
+      expectedName:meta.name,
+      found:!!facility,
+      id:String(facility?.id||''),
+      coordinates:coords,
+      coordinatesReady:!!coords,
+      markerReady:!!facility?._marker,
+      mapReady:!!facility?._marker?.getMap?.()
+    };
+  });
+  result.healthy=CANONICAL.every(meta=>{
+    const item=result.facilities[meta.key];
+    return item.found&&item.coordinatesReady;
+  });
+  global.__AGWORLD_COMPANY_FACILITY_COMMAND_HEALTH__={...(global.__AGWORLD_COMPANY_FACILITY_COMMAND_HEALTH__||{}),...result};
+  return result;
+}
+
+function renderRow(row,facility,meta){
+  if(!row || !facility || !meta) return;
+  row.dataset.agworldFacilityCommandPolished='1';
+  row.dataset.agworldFacilityCommandKey=meta.key;
+  row.dataset.mapReady=facility?._marker?.getMap?.()?'true':'pending';
+  row.classList.add('agworld-company-facility-command');
+  row.setAttribute('aria-label','Open '+meta.name+' on map');
+  row.title='Open '+meta.name+' on the map';
+
+  const staff=Number(facility?.details?.employees??facility?.details?.employeeCount??facility?.employees??facility?.employeeCount??0)||0;
+  row.innerHTML=
+    '<div class="company-facility-marker"><i></i></div>'+
+    '<div class="company-facility-command-copy">'+
+      '<b>'+meta.name+'</b>'+
+      '<span class="company-facility-command-role">'+meta.role+'</span>'+
+      '<span class="company-facility-command-address">'+meta.address+'</span>'+
+    '</div>'+
+    (staff?'<div class="company-facility-staff"><b>'+staff+'</b><span>STAFF</span></div>':'')+
+    '<div class="company-facility-command-open"><span>OPEN MAP</span><b>→</b></div>';
+
+  if(row.dataset.agworldFacilityCommandBound==='1') return;
+  row.dataset.agworldFacilityCommandBound='1';
+  const activate=event=>{
+    event?.preventDefault?.();
+    event?.stopImmediatePropagation?.();
+    document.querySelectorAll('#farmCard .company-facility-row').forEach(node=>node.classList.remove('is-selected'));
+    row.classList.add('is-selected');
+    const live=findFacility(row.dataset.companyFacilityId,meta)||facility;
+    focusFacility(live,meta);
+  };
+  row.addEventListener('click',activate,true);
+  row.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){ activate(event); }
+  },true);
+}
+
+function polish(){
+  const card=document.getElementById('farmCard');
+  if(!card?.classList.contains('agworld-company-entity-card')) return false;
+  const rows=[...card.querySelectorAll('.company-facility-row[data-company-facility-id]')];
+  if(!rows.length) return false;
+  let canonicalCount=0;
+  rows.forEach(row=>{
+    const facility=facilityList().find(f=>String(f?.id)===String(row.dataset.companyFacilityId));
+    const meta=metaFor(facility?.name||row.textContent);
+    if(!meta){
+      row.hidden=true;
+      row.style.display='none';
+      return;
+    }
+    row.hidden=false;
+    row.style.removeProperty('display');
+    canonicalCount++;
+    renderRow(row,facility,meta);
+  });
+  card.dataset.agworldCompanyFacilityCommandPolished=String(canonicalCount);
+  healthCheck();
+  return canonicalCount===CANONICAL.length;
+}
+
+const style=document.createElement('style');
+style.id='agworldCompanyFacilityCommandPolishV1';
+style.textContent=
+'#entityInformationSection .agworld-company-entity-card .company-facility-row.agworld-company-facility-command{display:grid!important;grid-template-columns:22px minmax(0,1fr) auto auto!important;align-items:center!important;gap:12px!important;min-height:68px!important;padding:11px 13px!important;margin:0 0 8px!important;border:1px solid rgba(126,167,148,.24)!important;border-radius:8px!important;cursor:pointer!important;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease,background .14s ease!important;outline:none!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-row.agworld-company-facility-command:hover,#entityInformationSection .agworld-company-entity-card .company-facility-row.agworld-company-facility-command:focus-visible,#entityInformationSection .agworld-company-entity-card .company-facility-row.agworld-company-facility-command.is-selected{transform:translateY(-1px)!important;background:linear-gradient(135deg,#102228 0%,#0b171c 100%)!important;border-color:rgba(117,224,132,.62)!important;box-shadow:0 0 0 1px rgba(117,224,132,.08),0 10px 22px rgba(0,0,0,.22)!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-copy{min-width:0!important;display:flex!important;flex-direction:column!important;gap:2px!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-copy>b{font-size:13px!important;letter-spacing:.02em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-role{font-size:9px!important;letter-spacing:.12em!important;font-weight:800!important;color:#8ee99d!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-address{font-size:10px!important;line-height:1.3!important;color:#9fb2a7!important;white-space:normal!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-open{display:flex!important;align-items:center!important;gap:7px!important;padding-left:9px!important;border-left:1px solid rgba(126,167,148,.16)!important;color:#8ee99d!important;white-space:nowrap!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-open span{font-size:8px!important;letter-spacing:.12em!important;font-weight:800!important;color:#8ee99d!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-command-open b{font-size:18px!important;line-height:1!important;color:#dfffe5!important}'+
+'#entityInformationSection .agworld-company-entity-card .company-facility-row[data-map-ready="pending"] .company-facility-command-open span::after{content:" · READYING";opacity:.65}';
+document.head.appendChild(style);
+
+let queued=false;
+const queue=()=>{
+  if(queued) return;
+  queued=true;
+  requestAnimationFrame(()=>{queued=false;polish();});
+};
+new MutationObserver(queue).observe(document.documentElement,{childList:true,subtree:true});
+global.addEventListener('load',()=>{queue();setTimeout(queue,400);setTimeout(queue,1200);setTimeout(queue,3000);});
+global.addEventListener('agworld:dynamic-layers-loaded',()=>{queue();setTimeout(queue,120);});
+global.addEventListener('agworld:entity-updated',queue);
+global.AGWorldCompanyFacilityCommand={
+  canonical:CANONICAL.map(item=>({...item})),
+  polish,
+  health:healthCheck,
+  open(key){
+    const meta=CANONICAL.find(item=>item.key===key);
+    const facility=meta&&findFacility('',meta);
+    return meta&&facility?focusFacility(facility,meta):false;
+  }
+};
+queue();
 })(window);
