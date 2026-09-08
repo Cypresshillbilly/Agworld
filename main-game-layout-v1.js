@@ -280,6 +280,31 @@
     'Brits Company Facility':{employees:11,role:'Service & Demonstration Centre'}
   };
   let companyCardActive=true;
+  // Preserve the real Entity Command Centre shell before the startup Company
+  // portfolio temporarily occupies it. Selecting any map entity must restore
+  // this shell in the same bottom-right command centre, not open or append a
+  // second card somewhere else.
+  let entityCommandTemplate=null;
+
+  function captureEntityCommandTemplate(){
+    const card=$('farmCard');
+    if(!card) return false;
+    if(!entityCommandTemplate && !card.classList.contains('agworld-company-entity-card')){
+      entityCommandTemplate=card.innerHTML;
+    }
+    return !!entityCommandTemplate;
+  }
+
+  function restoreEntityCommandTemplate(){
+    const card=$('farmCard');
+    if(!card) return false;
+    captureEntityCommandTemplate();
+    if(entityCommandTemplate) card.innerHTML=entityCommandTemplate;
+    card.classList.remove('agworld-company-entity-card');
+    delete card.dataset.entityCommandDefault;
+    card.classList.add('show');
+    return true;
+  }
 
   function facilities(){
     const world=window.AG_WORLD_WORLD||{};
@@ -303,6 +328,7 @@
     if(!companyCardActive) return false;
     const card=$('farmCard');
     if(!card) return false;
+    captureEntityCommandTemplate();
     const fs=facilities();
     const employees=fs.reduce((sum,f)=>sum+employeeCount(f),0);
     const active=fs.filter(f=>String(f?.status||'active').toLowerCase()!=='inactive').length;
@@ -344,9 +370,24 @@
     companyCardActive=false;
     window.__AGWORLD_ENTITY_COMMAND_SCOPE__=String(entity.type||'entity').toUpperCase();
     window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY_THEN_ENTITY';
-    const card=$('farmCard');
-    card?.classList.remove('agworld-company-entity-card');
-    if(card) delete card.dataset.entityCommandDefault;
+
+    // The Company portfolio is startup content only. It must never remain in
+    // the Entity Command Centre after a user selects a Farm, Contractor,
+    // Competitor or Company Facility. Restore the canonical entity-card shell
+    // in this exact panel before the selected entity is rendered into it.
+    restoreEntityCommandTemplate();
+
+    // Some V2 listeners run before this layout listener. Farms open their V2
+    // card synchronously, so restoring the startup shell can replace that first
+    // render. Re-open from the canonical selection after restoration. Dynamic
+    // entities already defer their bridge, but this also makes the handoff
+    // deterministic for all entity types.
+    const isFarm=event.type==='agworld:farm-selected' || event?.detail?.farm;
+    const delay=isFarm?0:180;
+    setTimeout(()=>{
+      if(isFarm && typeof window.openV2FarmDetail==='function') window.openV2FarmDetail(entity);
+      else if(!isFarm && typeof window.openV2DynamicEntityDetail==='function') window.openV2DynamicEntityDetail(entity);
+    },delay);
   }
   window.addEventListener('agworld:farm-selected',selectEntityScope);
   window.addEventListener('agworld:dynamic-entity-selected',selectEntityScope);
