@@ -1691,6 +1691,10 @@ function selectTerritory(territory, zoom = true) {
   const territoryFarms = summary.farms;
   const levelLabel = String(territory.level || 'province').toUpperCase();
   renderTerritoryInformationPanel(territory, summary);
+  // Keep the fixed strategic territory panel and My Region window in sync with
+  // the same canonical territory selection.
+  window.__AGWORLD_SELECTED_TERRITORY__ = { ...territory, summary };
+  window.dispatchEvent(new CustomEvent('agworld:territory-selected', { detail: { territory, summary } }));
 
   $('farmCard').classList.add('show');
   $('farmName').textContent = territory.name;
