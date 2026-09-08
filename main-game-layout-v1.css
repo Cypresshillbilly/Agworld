@@ -414,10 +414,17 @@ html body .app-shell > #entityInformationSection::after{
    Do not leave the legacy Farm Card shell above the V2 panel, otherwise empty
    summary columns consume the entire 170px viewport and clip the real entity. */
 #entityInformationSection #farmCard.agworld-selected-entity-command{
+  /* This must override the legacy .show display:grid command-card layout.
+     With the V2 host as the only child, that grid places it in column 1 and
+     leaves the rest of the Entity Command Centre blank. */
+  display:block!important;
+  grid-template-columns:none!important;
+  grid-template-rows:none!important;
   padding:0!important;
   overflow:hidden!important;
   height:100%!important;
   max-height:none!important;
+  width:100%!important;
 }
 #entityInformationSection #farmCard.agworld-selected-entity-command #agworldV2FarmDetailHost{
   /* Override the legacy default that intentionally hides the V2 host. */
