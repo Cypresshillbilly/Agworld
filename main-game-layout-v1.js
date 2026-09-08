@@ -398,7 +398,8 @@
     if(!summary) return null;
 
     let actions=summary.querySelector('#farmActions') || document.getElementById('farmActions') || agworldPreservedFarmActions;
-    if(actions) return actions;
+    if(actions && actions.querySelectorAll('button').length>0) return actions;
+    actions=null;
 
     // A Command Centre rebuild must never leave the user with an entity that
     // has no operational controls. This fallback is only used when another
@@ -545,11 +546,21 @@
       '<div class="agworld-entity-command-summary-grid">'+metrics.map(([label,value])=>
         '<div><span>'+escEntityCommand(label)+'</span><b>'+escEntityCommand(value)+'</b></div>').join('')+'</div>';
 
-    const actionRow=preservedActions || ensureEntityCommandFallbackActions(summary, entity);
+    let actionRow=preservedActions;
+    // An empty or hidden legacy container is not an operational action row.
+    if(!actionRow || actionRow.querySelectorAll('button').length===0){
+      actionRow=ensureEntityCommandFallbackActions(summary, entity);
+    }
     if(actionRow){
+      actionRow.hidden=false;
+      actionRow.removeAttribute('hidden');
+      actionRow.style.removeProperty('display');
       actionRow.classList.remove('agworld-entity-command-actions');
       if(!summary.contains(actionRow)) summary.appendChild(actionRow);
       actionRow.classList.add('agworld-entity-command-actions');
+      actionRow.style.setProperty('display','flex','important');
+      actionRow.style.setProperty('visibility','visible','important');
+      actionRow.style.setProperty('opacity','1','important');
       agworldPreservedFarmActions=actionRow;
     }
 
@@ -569,11 +580,20 @@
     // complete in the same event turn, but the cached real node remains the
     // single source of truth and retains its original onclick handlers.
     requestAnimationFrame(()=>{
-      const actions=captureFarmActions() || ensureEntityCommandFallbackActions(summary, entity);
-      if(actions && !summary.contains(actions)){
+      let actions=captureFarmActions();
+      if(!actions || actions.querySelectorAll('button').length===0){
+        actions=ensureEntityCommandFallbackActions(summary, entity);
+      }
+      if(actions){
+        actions.hidden=false;
+        actions.removeAttribute('hidden');
+        actions.style.removeProperty('display');
         actions.classList.remove('agworld-entity-command-actions');
-        summary.appendChild(actions);
+        if(!summary.contains(actions)) summary.appendChild(actions);
         actions.classList.add('agworld-entity-command-actions');
+        actions.style.setProperty('display','flex','important');
+        actions.style.setProperty('visibility','visible','important');
+        actions.style.setProperty('opacity','1','important');
       }
       entityCommandDiag('ENTITY COMMAND ACTIONS RESTORED',{
         entityId:String(entity?.id||''),
