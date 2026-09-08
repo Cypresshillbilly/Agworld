@@ -151,3 +151,26 @@
     setTimeout(ensureDynamic,40);
   }).observe(document.body,{childList:true,subtree:true});
 })();
+
+/* AG World v4.1 Command Center readability refinement. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldSkillReadabilityRefinementV41';
+  style.textContent=
+    '#entityInformationSection .agworld-company-entity-card .company-command-skills-pane{padding:2px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head{padding:5px 7px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head span{font-size:7px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head b{font-size:9px!important;letter-spacing:.75px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-skill-radar-svg{height:148px!important;max-height:148px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-radar-labels text{font-size:7px!important;font-weight:900!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-stats-pane .company-command-pane-title span{font-size:7px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-stats-pane .company-command-pane-title b{font-size:10px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis>div{padding:8px 9px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis b{font-size:16px!important;line-height:1!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis>div>div>span{font-size:6px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-kpi-icon{width:23px!important;height:23px!important;font-size:11px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-stats-summary{padding-top:7px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-stats-summary span{font-size:6px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-stats-summary b{font-size:8px!important}';
+  document.head.appendChild(style);
+})();
