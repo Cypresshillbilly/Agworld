@@ -245,3 +245,104 @@
   document.addEventListener('DOMContentLoaded',()=>setTimeout(initialiseNational,250));
   window.__AGWORLD_RENDER_NATIONAL_TERRITORY__=()=>{userSelected=false;return renderNationalPanel()};
 })();
+
+
+/* AG World v5 entity command startup: The Company portfolio is the default card. */
+(function(){
+  const $=id=>document.getElementById(id);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+  const facilityDefaults={
+    'Ballito Company Facility':{employees:24,role:'Head Office & Sales'},
+    'Bothaville Company Facility':{employees:14,role:'Sales & Service Hub'},
+    'Upington Company Facility':{employees:10,role:'Regional Sales Hub'},
+    'Lichtenburg Company Facility':{employees:12,role:'Sales & Support Hub'},
+    'Brits Company Facility':{employees:11,role:'Service & Demonstration Centre'}
+  };
+  let companyCardActive=true;
+
+  function facilities(){
+    const world=window.AG_WORLD_WORLD||{};
+    const list=world.getCompanyFacilities?.()||window.__AG_WORLD_COMPANY_FACILITIES__||[];
+    return Array.isArray(list)?list:[];
+  }
+  function employeeCount(f){
+    const d=f?.details||{};
+    const n=d.employees??d.employeeCount??f?.employees??f?.employeeCount??facilityDefaults[f?.name]?.employees??0;
+    return Math.max(0,Number(n)||0);
+  }
+  function facilityRole(f){
+    const d=f?.details||{};
+    return d.facilityType||d.type||d.primaryFunction||facilityDefaults[f?.name]?.role||'Company Facility';
+  }
+  function facilityLocation(f){
+    const d=f?.details||{};
+    return [d.nearestTown||d.town,d.province].filter(Boolean).join(', ')||d.municipality||'South Africa';
+  }
+  function renderCompanyCard(){
+    if(!companyCardActive) return false;
+    const card=$('farmCard');
+    if(!card) return false;
+    const fs=facilities();
+    const employees=fs.reduce((sum,f)=>sum+employeeCount(f),0);
+    const active=fs.filter(f=>String(f?.status||'active').toLowerCase()!=='inactive').length;
+    const provinces=new Set(fs.map(f=>String((f?.details||{}).province||'').trim()).filter(Boolean)).size;
+    card.classList.add('show','agworld-company-entity-card');
+    card.dataset.entityCommandDefault='company';
+    card.innerHTML=
+      '<div class="company-command-card-head">'+
+        '<div><div class="company-command-eyebrow">THE COMPANY · ENTITY COMMAND</div><h2 id="farmName">THE COMPANY</h2><div id="farmMeta" class="meta">National company network · live facility overview</div></div>'+
+        '<div class="company-command-status">LIVE</div>'+
+      '</div>'+
+      '<div class="company-command-kpis">'+
+        '<div><b>'+fs.length+'</b><span>FACILITIES</span></div>'+
+        '<div><b>'+employees+'</b><span>EMPLOYEES</span></div>'+
+        '<div><b>'+active+'</b><span>ACTIVE SITES</span></div>'+
+        '<div><b>'+provinces+'</b><span>PROVINCES</span></div>'+
+      '</div>'+
+      '<div class="company-facility-list-head"><strong>COMPANY FACILITIES</strong><span>'+fs.length+' NATIONAL LOCATIONS</span></div>'+
+      '<div class="company-facility-list">'+
+        (fs.length?fs.map(f=>'<article class="company-facility-row">'+
+          '<div class="company-facility-name"><b>'+esc(f.name)+'</b><span>'+esc(facilityRole(f))+' · '+esc(facilityLocation(f))+'</span></div>'+
+          '<div class="company-facility-staff"><b>'+employeeCount(f)+'</b><span>EMPLOYEES</span></div>'+
+          '<div class="company-facility-state">'+esc(String(f.status||'Active').toUpperCase())+'</div>'+
+        '</article>').join(''):'<div class="company-facility-empty">Loading Company facilities from the live world…</div>')+
+      '</div>'+
+      '<div class="company-command-footer"><span>Company-wide entity information remains visible here until you select another map entity.</span></div>';
+    window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY';
+    window.__AGWORLD_ENTITY_COMMAND_SCOPE__='COMPANY';
+    window.__AGWORLD_ENTITY_COMMAND_COMPANY_SUMMARY__={facilities:fs.length,employees,activeSites:active,provinces};
+    return true;
+  }
+  function waitForFacilities(){
+    if(renderCompanyCard() && facilities().length) return;
+    if(companyCardActive) setTimeout(waitForFacilities,700);
+  }
+  function selectEntityScope(event){
+    const entity=event?.detail?.entity||event?.detail?.farm||event?.detail;
+    if(!entity) return;
+    companyCardActive=false;
+    window.__AGWORLD_ENTITY_COMMAND_SCOPE__=String(entity.type||'entity').toUpperCase();
+    window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY_THEN_ENTITY';
+    const card=$('farmCard');
+    card?.classList.remove('agworld-company-entity-card');
+    if(card) delete card.dataset.entityCommandDefault;
+  }
+  window.addEventListener('agworld:farm-selected',selectEntityScope);
+  window.addEventListener('agworld:dynamic-entity-selected',selectEntityScope);
+  window.addEventListener('agworld:v2-entity-selected',selectEntityScope);
+  window.addEventListener('load',()=>{setTimeout(waitForFacilities,350);setTimeout(waitForFacilities,1400);setTimeout(waitForFacilities,3200);});
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(waitForFacilities,150));
+  window.addEventListener('agworld:dynamic-layer-updated',()=>{if(companyCardActive) renderCompanyCard();});
+  window.__AGWORLD_RENDER_COMPANY_ENTITY_CARD__=()=>{companyCardActive=true;return renderCompanyCard();};
+
+  const style=document.createElement('style');
+  style.textContent=
+    '#entityInformationSection .farm-card{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;bottom:auto!important;top:auto!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:12px;box-sizing:border-box;overflow:hidden}'+
+    '#entityInformationSection .agworld-company-entity-card{display:flex!important;flex-direction:column;background:linear-gradient(145deg,#16252a 0%,#0c161a 58%,#0a1114 100%);border:1px solid rgba(122,224,145,.32);box-shadow:0 12px 28px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.06)}'+
+    '.company-command-card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:13px 16px 9px;border-bottom:1px solid rgba(255,255,255,.07)}'+
+    '.company-command-eyebrow{font-size:8px;letter-spacing:1.35px;font-weight:900;color:#75e084;margin-bottom:4px}.company-command-card-head h2{margin:0;font-size:20px;letter-spacing:.6px}.company-command-status{font-size:8px;font-weight:900;letter-spacing:1px;color:#75e084;border:1px solid rgba(117,224,132,.38);padding:5px 8px;border-radius:999px}'+
+    '.company-command-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:10px 16px}.company-command-kpis>div{padding:9px 10px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.025)}.company-command-kpis b,.company-command-kpis span{display:block}.company-command-kpis b{font-size:17px;color:#e9f6ec}.company-command-kpis span{font-size:7px;letter-spacing:.8px;color:#91a59a;margin-top:3px}'+
+    '.company-facility-list-head{display:flex;justify-content:space-between;gap:10px;padding:3px 16px 7px;font-size:8px;letter-spacing:.9px;color:#a8b8ad}.company-facility-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 16px 9px;overflow:auto;flex:1;align-content:start}.company-facility-row{display:grid;grid-template-columns:minmax(0,1fr) 58px auto;gap:8px;align-items:center;padding:8px 9px;border-radius:8px;background:rgba(5,13,16,.55);border:1px solid rgba(255,255,255,.055)}.company-facility-name{min-width:0}.company-facility-name b,.company-facility-name span{display:block}.company-facility-name b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-name span{font-size:7px;color:#8fa095;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-staff{text-align:center}.company-facility-staff b,.company-facility-staff span{display:block}.company-facility-staff b{font-size:12px;color:#dfeee2}.company-facility-staff span{font-size:6px;letter-spacing:.6px;color:#7f9588}.company-facility-state{font-size:7px;color:#75e084;font-weight:900}.company-facility-empty{padding:12px;font-size:9px;color:#94a39a}.company-command-footer{padding:7px 16px 10px;border-top:1px solid rgba(255,255,255,.055);font-size:8px;color:#84948b}'+
+    '@media(max-width:900px){.company-facility-list{grid-template-columns:1fr}.company-command-kpis{grid-template-columns:repeat(2,1fr)}}';
+  document.head.appendChild(style);
+})();
