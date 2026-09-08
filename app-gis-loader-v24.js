@@ -4681,3 +4681,25 @@ setInterval(() => { if (map) loadDynamicLayers().catch(() => {}); }, 5000);
 window.AG_WORLD_WORLD.getContractors = () => contractors;
 window.AG_WORLD_WORLD.getCompetitors = () => competitors;
 window.AG_WORLD_WORLD.getCompanyFacilities = () => companyFacilities;
+
+// SALES & FLEET · explicit public bridge for Developer Mode and gameplay UI.
+// The Fleet functions historically lived inside this GIS module, which meant the
+// buttons could work while diagnostics incorrectly reported the API as missing.
+window.openFleetTransaction = (type,id) => openFleetTransaction(type,id);
+window.openFleetManagement = (type,id) => openFleetManagement(type,id);
+window.AGWorldFleetUI = {
+  openTransaction: window.openFleetTransaction,
+  openManagement: window.openFleetManagement,
+  ensureQuickActions(type,id){
+    const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
+    if(!entity) throw new Error('Selected Farm or Contractor is no longer available.');
+    updateFleetTransactionAction(entity,type);
+    return {entity,type,quickActions:!!document.getElementById('fleetQuickActions')};
+  },
+  selected(){
+    const current=window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+    if(current && (current.entityType==='contractor'||current.entityType==='farm')) return {type:current.entityType,id:String(current.entityId),name:current.name||''};
+    if(selected?.id) return {type:'farm',id:String(selected.id),name:selected.name||''};
+    return null;
+  }
+};
