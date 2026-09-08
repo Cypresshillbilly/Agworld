@@ -3426,7 +3426,7 @@ window.AGWorldDynamicEntityAPI.repairUniqueContractorFarmAssignments = async fun
       return String(a.id).localeCompare(String(b.id));
     });
     const keep = ranked[0];
-    preview.retained.push({ farmId, relationshipId: keep.id, contractorId: keep.source_entity_id });
+    preview.retained.push({ farmId, relationshipId: keep.id, contractorId: canonicalRelationshipEntityType(keep.source_entity_type) === 'contractor' ? keep.source_entity_id : keep.target_entity_id });
 
     for (const duplicate of ranked.slice(1)) {
       const metadata = {
@@ -3445,7 +3445,7 @@ window.AGWorldDynamicEntityAPI.repairUniqueContractorFarmAssignments = async fun
       preview.deactivated.push({
         farmId,
         relationshipId: duplicate.id,
-        contractorId: duplicate.source_entity_id,
+        contractorId: canonicalRelationshipEntityType(duplicate.source_entity_type) === 'contractor' ? duplicate.source_entity_id : duplicate.target_entity_id,
         retainedRelationshipId: keep.id
       });
     }
