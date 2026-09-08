@@ -4045,59 +4045,142 @@ function renderDynamicEntity(entity) {
 }
 
 function updateFleetTransactionAction(entity, type) {
-  // The V2 Entity Engine can occupy most of the Farm Card. Keep commercial
-  // actions in their own dedicated, always-visible host ABOVE that engine.
-  const card=$('farmCard');
-  if(!card) return;
-  let quick=$('fleetQuickActions');
-  if(!quick){
-    quick=document.createElement('div');
-    quick.id='fleetQuickActions';
-    const v2=$('agworldV2FarmDetailHost');
-    const detail=$('farmDetailText');
-    if(v2) card.insertBefore(quick,v2);
-    else if(detail) detail.insertAdjacentElement('afterend',quick);
-    else card.appendChild(quick);
+  // FINAL VISIBLE UI CONNECTION:
+  // Keep Fleet controls inside the persistent Farm/Entity action area. The V2
+  // Entity Engine may rebuild its own host, but #farmActions is part of the
+  // stable card shell and survives Farm and Contractor detail rendering.
+  const card = $('farmCard');
+  if (!card) return false;
+
+  const eligible = type === 'farm' || type === 'contractor';
+  let actions = $('farmActions');
+  if (!actions) {
+    actions = document.createElement('div');
+    actions.id = 'farmActions';
+    actions.className = 'farm-actions';
+    card.appendChild(actions);
   }
 
-  const eligible=type==='farm'||type==='contractor';
-  if(!eligible){
-    quick.hidden=true;
-    return;
+  let quick = $('fleetQuickActions');
+  if (!quick) {
+    quick = document.createElement('section');
+    quick.id = 'fleetQuickActions';
+    actions.appendChild(quick);
+  } else if (quick.parentElement !== actions) {
+    actions.appendChild(quick);
   }
 
-  quick.hidden=false;
-  quick.style.cssText='display:flex!important;gap:5px!important;margin:7px 0 8px!important;width:100%!important;position:relative!important;z-index:999!important;';
-  let sell=$('fleetQuickSell');
-  if(!sell){
-    sell=document.createElement('button');
-    sell.id='fleetQuickSell';
-    sell.type='button';
-    quick.appendChild(sell);
-  }
-  let history=$('fleetQuickHistory');
-  if(!history){
-    history=document.createElement('button');
-    history.id='fleetQuickHistory';
-    history.type='button';
-    quick.appendChild(history);
+  if (!eligible) {
+    quick.hidden = true;
+    return false;
   }
 
-  const drone=dronePortfolioInfluence(type,entity);
-  sell.textContent='🚁 SELL / MANAGE FLEET · '+drone.totalDrones;
-  history.textContent='📊 SALES HISTORY';
-  const buttonCss='flex:1!important;width:auto!important;min-width:0!important;margin:0!important;padding:7px 6px!important;font-size:8px!important;line-height:1.1!important;display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;z-index:1000!important;';
-  sell.style.cssText=buttonCss;
-  history.style.cssText=buttonCss;
-  sell.onclick=()=>openFleetTransaction(type,entity.id);
-  history.onclick=()=>openFleetManagement(type,entity.id);
+  const drone = dronePortfolioInfluence(type, entity);
+  const entityLabel = type === 'contractor' ? 'CONTRACTOR' : 'FARM';
 
-  // Keep legacy IDs wired for compatibility, but do not rely on the bottom
-  // action row for visibility because it sits below the V2 Entity Engine.
-  const legacySell=$('fleetTransactionAction');
-  const legacyHistory=$('fleetHistoryAction');
-  if(legacySell){ legacySell.hidden=true; legacySell.onclick=()=>openFleetTransaction(type,entity.id); }
-  if(legacyHistory){ legacyHistory.hidden=true; legacyHistory.onclick=()=>openFleetManagement(type,entity.id); }
+  quick.hidden = false;
+  quick.style.cssText = [
+    'display:block!important',
+    'visibility:visible!important',
+    'opacity:1!important',
+    'position:relative!important',
+    'z-index:1002!important',
+    'width:100%!important',
+    'margin:0!important',
+    'padding:8px!important',
+    'border:1px solid rgba(22,138,160,.28)!important',
+    'border-radius:6px!important',
+    'background:rgba(240,248,249,.96)!important'
+  ].join(';');
+
+  let title = $('fleetQuickActionsTitle');
+  if (!title) {
+    title = document.createElement('div');
+    title.id = 'fleetQuickActionsTitle';
+    quick.appendChild(title);
+  }
+  title.textContent = 'ENTITY FLEET · ' + entityLabel;
+  title.style.cssText = 'display:block!important;font-size:8px!important;font-weight:800!important;letter-spacing:.8px!important;color:#168aa0!important;margin:0 0 6px!important;';
+
+  let buttons = $('fleetQuickButtons');
+  if (!buttons) {
+    buttons = document.createElement('div');
+    buttons.id = 'fleetQuickButtons';
+    quick.appendChild(buttons);
+  }
+  buttons.style.cssText = 'display:flex!important;gap:6px!important;width:100%!important;margin:0!important;';
+
+  let sell = $('fleetQuickSell');
+  if (!sell) {
+    sell = document.createElement('button');
+    sell.id = 'fleetQuickSell';
+    sell.type = 'button';
+    buttons.appendChild(sell);
+  } else if (sell.parentElement !== buttons) {
+    buttons.appendChild(sell);
+  }
+
+  let history = $('fleetQuickHistory');
+  if (!history) {
+    history = document.createElement('button');
+    history.id = 'fleetQuickHistory';
+    history.type = 'button';
+    buttons.appendChild(history);
+  } else if (history.parentElement !== buttons) {
+    buttons.appendChild(history);
+  }
+
+  sell.textContent = '🚁 SELL / MANAGE FLEET · ' + drone.totalDrones;
+  history.textContent = '📊 SALES HISTORY';
+
+  const buttonCss = [
+    'flex:1 1 0!important',
+    'width:50%!important',
+    'min-width:0!important',
+    'margin:0!important',
+    'padding:8px 6px!important',
+    'font-size:8px!important',
+    'line-height:1.15!important',
+    'display:block!important',
+    'visibility:visible!important',
+    'opacity:1!important',
+    'position:relative!important',
+    'z-index:1003!important',
+    'cursor:pointer!important'
+  ].join(';');
+
+  sell.style.cssText = buttonCss;
+  history.style.cssText = buttonCss;
+  sell.onclick = () => openFleetTransaction(type, entity.id);
+  history.onclick = () => openFleetManagement(type, entity.id);
+
+  // Legacy IDs remain wired for older integrations, but the visible controls
+  // above are now the canonical gameplay controls.
+  const legacySell = $('fleetTransactionAction');
+  const legacyHistory = $('fleetHistoryAction');
+  if (legacySell) { legacySell.hidden = true; legacySell.onclick = () => openFleetTransaction(type, entity.id); }
+  if (legacyHistory) { legacyHistory.hidden = true; legacyHistory.onclick = () => openFleetManagement(type, entity.id); }
+
+  window.__AGWORLD_FLEET_UI_STATE__ = {
+    entityId: String(entity.id),
+    entityType: type,
+    entityName: entity.name || '',
+    visible: true,
+    host: 'farmActions',
+    updatedAt: Date.now()
+  };
+
+  // Reassert once after the current selection lifecycle finishes. This covers
+  // the Farm V2 host and Entity Detail renderer without polling the map.
+  requestAnimationFrame(() => {
+    if (!quick.isConnected) return;
+    quick.hidden = false;
+    quick.style.display = 'block';
+    sell.style.display = 'block';
+    history.style.display = 'block';
+  });
+
+  return true;
 }
 
 function selectDynamicEntity(entity, zoom = true) {
