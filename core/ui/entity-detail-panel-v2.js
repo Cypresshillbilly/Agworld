@@ -54,22 +54,12 @@
       if (!this.container || !this.entity) return;
       const entity = this.entity;
       this.container.innerHTML = `
-        <section class="agworld-v2-detail-panel" data-entity-id="${esc(entity.id)}">
-          <header class="agworld-v2-detail-header">
-            <div>
-              <div class="agworld-v2-entity-type">${esc(global.AGWorldV2.EntityTypes?.[entity.type]?.label || entity.type)}</div>
-              <h2>${esc(entity.name)}</h2>
-              <div class="agworld-v2-status">${esc(entity.status)}</div>
-            </div>
-            <button type="button" data-action="close" aria-label="Close">×</button>
-          </header>
+        <section class="agworld-v2-detail-panel agworld-v2-management-panel" data-entity-id="${esc(entity.id)}">
           <nav class="agworld-v2-detail-tabs">
             ${this.tabs().map(([key,label]) => `<button type="button" data-tab="${key}" class="${this.activeTab === key ? 'is-active' : ''}">${label}</button>`).join('')}
           </nav>
           <div class="agworld-v2-detail-content"></div>
         </section>`;
-
-      this.container.querySelector('[data-action="close"]').addEventListener('click', () => this.close());
       this.container.querySelectorAll('[data-tab]').forEach(button => {
         button.addEventListener('click', () => {
           this.activeTab = button.dataset.tab;
