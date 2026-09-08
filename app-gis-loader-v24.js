@@ -3299,6 +3299,81 @@ window.AGWorldDynamicEntityAPI.createRelationship = async function(input) {
   return data;
 };
 
+// Repairs relationships created before the one-contractor-per-farm world rule.
+// Duplicate assignments are preserved as history but made inactive; the active
+// assignment retained is the geographically closest Contractor where distance
+// metadata exists.
+window.AGWorldDynamicEntityAPI.repairUniqueContractorFarmAssignments = async function(options = {}) {
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!db || !user) throw new Error('You must be signed in to repair Contractor assignments.');
+
+  const { data: rows, error } = await db.from('entity_relationships')
+    .select('id,source_entity_id,target_entity_id,source_entity_type,target_entity_type,relationship_type,status,metadata')
+    .eq('source_entity_type', 'contractor')
+    .eq('target_entity_type', 'farm')
+    .eq('relationship_type', 'serves')
+    .eq('status', 'active');
+  if (error) throw new Error(error.message || error.code || 'Unable to load Contractor-Farm assignments');
+
+  const groups = new Map();
+  (rows || []).forEach(row => {
+    const key = String(row.target_entity_id);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  });
+
+  const duplicates = [...groups.entries()].filter(([, list]) => list.length > 1);
+  const preview = {
+    farmsChecked: groups.size,
+    conflictingFarms: duplicates.length,
+    duplicateRelationships: duplicates.reduce((sum, [, list]) => sum + list.length - 1, 0),
+    retained: [],
+    deactivated: []
+  };
+  if (options.preview) return preview;
+
+  for (const [farmId, list] of duplicates) {
+    const ranked = [...list].sort((a, b) => {
+      const da = Number(a.metadata?.distanceKm);
+      const dbm = Number(b.metadata?.distanceKm);
+      const va = Number.isFinite(da) ? da : Number.POSITIVE_INFINITY;
+      const vb = Number.isFinite(dbm) ? dbm : Number.POSITIVE_INFINITY;
+      if (va !== vb) return va - vb;
+      return String(a.id).localeCompare(String(b.id));
+    });
+    const keep = ranked[0];
+    preview.retained.push({ farmId, relationshipId: keep.id, contractorId: keep.source_entity_id });
+
+    for (const duplicate of ranked.slice(1)) {
+      const metadata = {
+        ...(duplicate.metadata && typeof duplicate.metadata === 'object' ? duplicate.metadata : {}),
+        uniquenessRepair: {
+          repairedAt: new Date().toISOString(),
+          reason: 'Farm may only have one active Contractor',
+          replacedByRelationshipId: keep.id,
+          repairedBy: user.id
+        }
+      };
+      const { error: updateError } = await db.from('entity_relationships')
+        .update({ status: 'inactive', metadata })
+        .eq('id', duplicate.id);
+      if (updateError) throw new Error(updateError.message || updateError.code || 'Unable to deactivate duplicate Contractor assignment');
+      preview.deactivated.push({
+        farmId,
+        relationshipId: duplicate.id,
+        contractorId: duplicate.source_entity_id,
+        retainedRelationshipId: keep.id
+      });
+    }
+  }
+
+  window.dispatchEvent(new CustomEvent('agworld:contractor-farm-assignments-repaired', { detail: preview }));
+  window.dispatchEvent(new CustomEvent('agworld:entity-updated', { detail: { reason: 'unique-contractor-farm-repair' } }));
+  if (typeof refreshTerritoryControl === 'function') refreshTerritoryControl();
+  return preview;
+};
+
 // Direct marker-click diagnostic. This instruments the source click path itself.
 function directMarkerDiagnostic(stage, detail = '', error = null) {
   const active = window.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
