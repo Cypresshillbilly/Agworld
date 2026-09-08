@@ -1517,3 +1517,16 @@
     '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:1fr!important}.company-command-facility-side{display:none!important}}';
   document.head.appendChild(style);
 })();
+
+
+/* AG World v48 Command Center tablet frame — visual-only, stable layout safe. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldCommandCenterTabletFrameV48';
+  style.textContent=
+    /* Visual treatment only: no sizing, grid, DOM or positioning rules are changed. */
+    '#entityInformationSection{isolation:isolate!important;border-radius:18px!important;box-shadow:0 0 0 1px rgba(210,224,228,.34),0 0 0 3px rgba(82,98,105,.95),0 0 0 5px rgba(20,29,34,.96),0 0 0 7px rgba(72,86,92,.72),0 12px 26px rgba(0,0,0,.34)!important}'+
+    '#entityInformationSection:after{content:""!important;position:absolute!important;inset:0!important;z-index:30!important;pointer-events:none!important;border-radius:18px!important;border:4px solid rgba(88,103,109,.96)!important;box-sizing:border-box!important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(0,0,0,.58),inset 0 0 0 1px rgba(190,204,208,.18),inset 0 0 14px rgba(0,0,0,.20)!important}'+
+    '#entityInformationSection .farm-card{border-radius:12px!important}';
+  document.head.appendChild(style);
+})();
