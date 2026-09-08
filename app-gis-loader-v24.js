@@ -399,6 +399,112 @@ function contractorAssetControl(contractor) {
   return farmAssetControl(contractor);
 }
 
+
+// ---------------------------------------------------------------------------
+// SALES & FLEET TRANSACTION ENGINE
+// Transactions are additive, preserve supplier-level provenance, update the
+// entity portfolio and strategic relationship metadata, then refresh territory
+// influence immediately.
+// ---------------------------------------------------------------------------
+let activeFleetTransaction = null;
+function salesEntityList(type) {
+  return type==='farm' ? (window.AG_WORLD_WORLD?.farms || []) :
+    type==='contractor' ? (window.AG_WORLD_WORLD?.getContractors?.() || []) : [];
+}
+function salesSupplierList(kind) {
+  return kind==='companySale' ? (window.AG_WORLD_WORLD?.getCompanyFacilities?.() || []) : (window.AG_WORLD_WORLD?.getCompetitors?.() || []);
+}
+function salesPortfolio(entity) {
+  const details=entity?.details || {};
+  return Array.isArray(details.dronePortfolio) ? [...details.dronePortfolio] : Array.isArray(entity?.dronePortfolio) ? [...entity.dronePortfolio] : [];
+}
+function renderFleetSupplierOptions() {
+  const kind=$('fleetTransactionType').value;
+  const suppliers=salesSupplierList(kind);
+  $('fleetSupplierLabel').firstChild.textContent=kind==='companySale'?'Supplying Company Facility':'Linked Competitor';
+  $('fleetSupplier').innerHTML=suppliers.length ? suppliers.map(s=>'<option value="'+String(s.id).replace(/"/g,'&quot;')+'">'+s.name+'</option>').join('') : '<option value="">No supplier entities available</option>';
+}
+function openFleetTransaction(type,id) {
+  const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
+  if(!entity) return toast('Entity could not be found.');
+  activeFleetTransaction={type,id:String(id)};
+  $('fleetTransactionEntityType').textContent=type.toUpperCase()+' · LIVE MARKET ENTITY';
+  $('fleetTransactionEntityName').textContent=entity.name || entity.id;
+  $('fleetDroneQuantity').value=1; $('fleetTransactionNotes').value='';
+  $('fleetTransactionType').value='companySale';
+  renderFleetSupplierOptions();
+  const drone=dronePortfolioInfluence(type,entity);
+  $('fleetTransactionCurrent').textContent='Current fleet: '+drone.companyDrones+' Company drones · '+drone.competitorDrones+' Competitor drones.';
+  $('fleetTransactionModal').hidden=false;
+}
+async function completeFleetTransaction() {
+  if(!activeFleetTransaction) throw new Error('No active fleet transaction.');
+  const {type,id}=activeFleetTransaction;
+  const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
+  if(!entity) throw new Error('Entity could not be found.');
+  const kind=$('fleetTransactionType').value;
+  const supplierId=$('fleetSupplier').value;
+  const supplier=salesSupplierList(kind).find(s=>String(s.id)===String(supplierId));
+  const quantity=Math.max(0,Number($('fleetDroneQuantity').value||0));
+  if(!supplierId || !supplier) throw new Error('Select a valid supplier.');
+  if(!Number.isFinite(quantity) || quantity<1) throw new Error('Enter at least one drone.');
+
+  const supplierType=kind==='companySale'?'companyFacility':'competitor';
+  const portfolio=salesPortfolio(entity);
+  const existing=portfolio.find(item=>marketEntityType(item.supplierType)===supplierType && String(item.supplierId)===String(supplierId));
+  if(existing) existing.quantity=Number(existing.quantity||0)+quantity;
+  else portfolio.push({supplierType,supplierId:String(supplierId),supplierName:supplier.name,quantity});
+
+  const details={...(entity.details||{}),dronePortfolio:portfolio};
+  const db=getFarmDb?.();
+  if(!db) throw new Error('Database connection is unavailable.');
+  const table=type==='farm'?'farms':type==='contractor'?'contractors':null;
+  if(!table) throw new Error('Only Farms and Contractors can receive fleet transactions.');
+
+  const update=await db.from(table).update({details,updated_at:new Date().toISOString()}).eq('id',id);
+  if(update.error) throw update.error;
+  entity.details=details; entity.dronePortfolio=portfolio;
+
+  await syncDronePurchaseRelationships(type,id,[{supplierType,supplierId:String(supplierId),supplierName:supplier.name,quantity}]);
+
+  // Optional transaction ledger: keep gameplay audit history when the table
+  // exists, but never fail the sale if an installation has not added it yet.
+  try {
+    await db.from('fleet_transactions').insert({
+      entity_id:id,entity_type:type,supplier_id:String(supplierId),supplier_type:supplierType,
+      transaction_type:kind,drone_quantity:quantity,notes:$('fleetTransactionNotes').value.trim(),
+      metadata:{supplierName:supplier.name}
+    });
+  } catch (_) {}
+
+  marketInfluenceState.components.clear();
+  await loadMarketInfluenceRelationships({force:true});
+  refreshTerritoryControl();
+  window.dispatchEvent(new CustomEvent('agworld:fleet-transaction',{detail:{type,id,kind,supplierId,quantity}}));
+  return {entity,supplier,quantity,kind};
+}
+function installFleetTransactionEngine() {
+  const modal=$('fleetTransactionModal');
+  if(!modal) return;
+  $('closeFleetTransaction').onclick=()=>{modal.hidden=true;activeFleetTransaction=null;};
+  $('fleetTransactionType').onchange=renderFleetSupplierOptions;
+  $('saveFleetTransaction').onclick=async()=>{
+    const button=$('saveFleetTransaction');button.disabled=true;
+    try {
+      const result=await completeFleetTransaction();
+      modal.hidden=true; activeFleetTransaction=null;
+      toast((result.kind==='companySale'?'Sale completed: ':'Competitor fleet recorded: ')+result.quantity+' drone(s) for '+result.entity.name+'. Territory influence updated.');
+    } catch(error) { toast('Transaction failed: '+(error?.message||error)); }
+    finally { button.disabled=false; }
+  };
+}
+window.AGWorldFleetTransactions={
+  open:openFleetTransaction,
+  complete:completeFleetTransaction,
+  getPortfolio:(type,id)=>salesPortfolio(salesEntityList(type).find(e=>String(e.id)===String(id))),
+  getInfluence:(type,id)=>{const e=salesEntityList(type).find(e=>String(e.id)===String(id));return e?dronePortfolioInfluence(type,e):null;}
+};
+
 // ---------------------------------------------------------------------------
 // TERRITORY CONTROL & MARKET INFLUENCE ENGINE
 // Farms and Contractors are the market units. Company Facilities and
