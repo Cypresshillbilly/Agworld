@@ -3220,6 +3220,19 @@ function dynamicArray(type) {
   return [];
 }
 
+function dynamicDronePortfolioFromForm() {
+  const rows = [...document.querySelectorAll('#dynamicDronePortfolio [data-drone-row]')];
+  return rows.map(row => ({ supplierType: row.dataset.supplierType, supplierId: row.dataset.supplierId, supplierName: row.dataset.supplierName, quantity: Math.max(0, Number(row.querySelector('input')?.value || 0)) })).filter(item => item.quantity > 0);
+}
+function renderDronePortfolio(containerId, existing = []) {
+  const facilities = window.AG_WORLD_WORLD?.getCompanyFacilities?.() || [], competitors = window.AG_WORLD_WORLD?.getCompetitors?.() || [];
+  const old = new Map((existing || []).map(item => [String(item.supplierType)+':'+String(item.supplierId), Number(item.quantity)||0]));
+  const rows=[...facilities.map(e=>({supplierType:'companyFacility',supplierId:e.id,supplierName:e.name,label:'Company Facility'})),...competitors.map(e=>({supplierType:'competitor',supplierId:e.id,supplierName:e.name,label:'Competitor'}))];
+  $(containerId).innerHTML=rows.length?rows.map(r=>'<label class="farm-check-option" data-drone-row data-supplier-type="'+r.supplierType+'" data-supplier-id="'+String(r.supplierId).replace(/"/g,'&quot;')+'" data-supplier-name="'+String(r.supplierName).replace(/"/g,'&quot;')+'"><span class="check-icon">'+(r.supplierType==='companyFacility'?'✦':'◇')+'</span><span><b>'+r.supplierName+'</b><small>'+r.label+' · number of drones purchased from / linked to this supplier</small></span><input type="number" min="0" step="1" value="'+(old.get(r.supplierType+':'+r.supplierId)||0)+'"></label>').join(''):'<div class="farm-assets-status">No Company Facilities or Competitors are currently available.</div>';
+}
+async function syncDronePurchaseRelationships(entityType, entityId, portfolio) {
+  for (const item of portfolio) await window.AGWorldDynamicEntityAPI.createRelationship({sourceEntityType:entityType,sourceEntityId:entityId,targetEntityType:item.supplierType,targetEntityId:item.supplierId,relationshipType:item.supplierType==='companyFacility'?'purchased_drones_from':'uses_competitor_drones_from',status:'active',metadata:{droneQuantity:item.quantity,dronePortfolio:true,supplierName:item.supplierName}});
+}
 function dynamicDetailsFromForm() {
   const capabilities = [...document.querySelectorAll('#dynamicChecklist input[type="checkbox"]:checked')].map(input => input.value);
   return {
@@ -3229,7 +3242,8 @@ function dynamicDetailsFromForm() {
     nearestTown: $('dynamicNearestTown').value.trim(),
     website: $('dynamicWebsite').value.trim(),
     notes: $('dynamicNotes').value.trim(),
-    capabilities
+    capabilities,
+    dronePortfolio: dynamicDronePortfolioFromForm()
   };
 }
 
@@ -3249,8 +3263,8 @@ function showDynamicStep(step) {
     section.hidden = Number(section.dataset.dynamicStep) !== Number(step);
   });
   const cfg = dynamicConfig();
-  const titles = ['SELECT LOCATION', `${cfg.label.toUpperCase()} INFORMATION`, 'COMPLETE RECORD'];
-  $('dynamicEntityProgress').textContent = `STEP ${step} OF 3`;
+  const titles = ['SELECT LOCATION', `${cfg.label.toUpperCase()} INFORMATION`, 'SERVICES & CAPABILITY', 'DRONE OWNERSHIP & PURCHASES'];
+  $('dynamicEntityProgress').textContent = `STEP ${step} OF 4`;
   $('dynamicEntityStepTitle').textContent = titles[step - 1];
 }
 
@@ -3274,6 +3288,7 @@ function configureDynamicEntityForm(type) {
   $('dynamicStep3Heading').textContent = `Complete the ${cfg.label} Record`;
   $('dynamicStep3Description').textContent = `Select every service or activity that applies to this ${cfg.label.toLowerCase()}. These selections become part of the shared game layer.`;
   renderDynamicChecklist(type);
+  renderDronePortfolio('dynamicDronePortfolio', []);
 }
 
 function openDynamicEntity(type) {
@@ -4324,15 +4339,24 @@ $('dynamicNextInfo').onclick = async () => {
     const entity = await saveDynamicEntity(2);
     if (!entity.name) throw new Error(`${dynamicConfig().label} name is required.`);
     renderDynamicChecklist(dynamicEntityType, entity.details?.capabilities || []);
+    renderDronePortfolio('dynamicDronePortfolio', entity.details?.dronePortfolio || []);
     showDynamicStep(3);
   } catch (error) { toast('Could not continue: ' + (error.message || error)); }
   finally { button.disabled = false; }
+};
+$('dynamicNextAssets').onclick = async () => {
+  const button = $('dynamicNextAssets'); button.disabled = true;
+  try { const entity = await saveDynamicEntity(3); renderDronePortfolio('dynamicDronePortfolio', entity.details?.dronePortfolio || []); showDynamicStep(4); }
+  catch (error) { toast('Could not continue: ' + (error.message || error)); } finally { button.disabled = false; }
 };
 $('dynamicFinish').onclick = async () => {
   const button = $('dynamicFinish');
   button.disabled = true;
   try {
-    const entity = await saveDynamicEntity(3);
+    const portfolio = dynamicDronePortfolioFromForm();
+    if (dynamicEntityType === 'contractor' && !portfolio.length) throw new Error('A Contractor must have at least one drone relationship with either a Company Facility or a Competitor.');
+    const entity = await saveDynamicEntity(4);
+    await syncDronePurchaseRelationships(dynamicEntityType, entity.id, portfolio);
     $('dynamicEntityModal').classList.remove('show');
     dynamicEntityId = null;
     dynamicEntityLocation = null;
