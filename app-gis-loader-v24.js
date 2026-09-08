@@ -646,14 +646,23 @@ function initialiseGameTerritories() {
   [...countries, ...territories, ...municipalities, ...towns].forEach(territory => {
     territory.game = calculateTerritoryControl(territory);
     territory.control = territory.game.control;
-    territory.owner = territory.game.control > 0 ? MASTER_PLAYER.name : 'Uncontrolled';
-    territory.status = territory.game.control >= 100
-      ? 'Controlled'
-      : territory.game.control > 0
-        ? 'Contested'
-        : territory.game.enemyControl > 0
-          ? 'Competitor controlled'
+    const game = territory.game;
+    territory.owner = game.contested > 0
+      ? 'Contested market'
+      : game.control > game.enemyControl && game.control > 0
+        ? MASTER_PLAYER.name
+        : game.enemyControl > game.control
+          ? 'Competitor'
           : 'Uncontrolled';
+    territory.status = game.contested > 0
+      ? 'Contested market'
+      : game.control >= 100
+        ? 'Controlled'
+        : game.control > game.enemyControl && game.control > 0
+          ? 'Company influence'
+          : game.enemyControl > 0
+            ? 'Competitor controlled'
+            : 'Uncontrolled';
     applyTerritoryControlStyle(territory);
   });
 }
