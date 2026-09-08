@@ -394,6 +394,78 @@
     return agworldPreservedFarmActions;
   }
 
+  function ensureEntityCommandFallbackActions(summary, entity){
+    if(!summary) return null;
+
+    let actions=summary.querySelector('#farmActions') || document.getElementById('farmActions') || agworldPreservedFarmActions;
+    if(actions) return actions;
+
+    // A Command Centre rebuild must never leave the user with an entity that
+    // has no operational controls. This fallback is only used when another
+    // renderer has already removed the legacy action row.
+    actions=document.createElement('div');
+    actions.id='farmActions';
+    actions.className='farm-actions agworld-entity-command-actions agworld-entity-command-fallback-actions';
+
+    const type=String(entity?.type||'farm');
+    const label=entityCommandTypeLabel(type).toUpperCase();
+
+    const openDetailsEditor=()=>{
+      window.dispatchEvent(new CustomEvent('agworld:dynamic-entity-selected',{detail:{entity}}));
+      requestAnimationFrame(()=>{
+        const host=document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
+        const detailsTab=host?.querySelector('[data-tab="details"]');
+        if(detailsTab && !detailsTab.classList.contains('is-active')) detailsTab.click();
+        requestAnimationFrame(()=>host?.querySelector('[data-entity-action="edit-details"]')?.click());
+      });
+    };
+
+    const update=document.createElement('button');
+    update.id='farm3d';
+    update.type='button';
+    update.textContent='UPDATE '+label+' DETAILS';
+    update.onclick=openDetailsEditor;
+    actions.appendChild(update);
+
+    if(type==='farm'){
+      const history=document.createElement('button');
+      history.id='farmHistoryBtn';
+      history.type='button';
+      history.textContent='FARM HISTORY';
+      history.onclick=()=>{
+        if(typeof window.openFarmHistory==='function') return window.openFarmHistory(window.selected||entity);
+        const host=document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
+        const tab=[...host?.querySelectorAll?.('[data-tab]')||[]].find(node=>/history/i.test(node.dataset.tab||''));
+        if(tab) tab.click();
+      };
+      actions.appendChild(history);
+    }
+
+    if(type==='farm' || type==='contractor'){
+      const fleet=document.createElement('button');
+      fleet.type='button';
+      fleet.textContent='🚁 SELL / MANAGE FLEET';
+      fleet.onclick=()=>{
+        if(typeof window.openFleetTransaction==='function') return window.openFleetTransaction(type,String(entity?.id||''));
+        document.getElementById('fleetTransactionAction')?.click();
+      };
+      actions.appendChild(fleet);
+
+      const sales=document.createElement('button');
+      sales.type='button';
+      sales.textContent='📊 SALES HISTORY & FLEET';
+      sales.onclick=()=>{
+        if(typeof window.openFleetManagement==='function') return window.openFleetManagement(type,String(entity?.id||''));
+        document.getElementById('fleetHistoryAction')?.click();
+      };
+      actions.appendChild(sales);
+    }
+
+    summary.appendChild(actions);
+    agworldPreservedFarmActions=actions;
+    return actions;
+  }
+
   function installFarmActionCapture(){
     captureFarmActions();
     if(document.readyState==='loading'){
@@ -473,11 +545,12 @@
       '<div class="agworld-entity-command-summary-grid">'+metrics.map(([label,value])=>
         '<div><span>'+escEntityCommand(label)+'</span><b>'+escEntityCommand(value)+'</b></div>').join('')+'</div>';
 
-    if(preservedActions){
-      preservedActions.classList.remove('agworld-entity-command-actions');
-      summary.appendChild(preservedActions);
-      preservedActions.classList.add('agworld-entity-command-actions');
-      agworldPreservedFarmActions=preservedActions;
+    const actionRow=preservedActions || ensureEntityCommandFallbackActions(summary, entity);
+    if(actionRow){
+      actionRow.classList.remove('agworld-entity-command-actions');
+      if(!summary.contains(actionRow)) summary.appendChild(actionRow);
+      actionRow.classList.add('agworld-entity-command-actions');
+      agworldPreservedFarmActions=actionRow;
     }
 
     const management=document.createElement('section');
@@ -496,7 +569,7 @@
     // complete in the same event turn, but the cached real node remains the
     // single source of truth and retains its original onclick handlers.
     requestAnimationFrame(()=>{
-      const actions=captureFarmActions();
+      const actions=captureFarmActions() || ensureEntityCommandFallbackActions(summary, entity);
       if(actions && !summary.contains(actions)){
         actions.classList.remove('agworld-entity-command-actions');
         summary.appendChild(actions);
