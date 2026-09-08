@@ -396,40 +396,181 @@ function territoryContractorSet(territory) {
 }
 
 function contractorAssetControl(contractor) {
-  // Contractors use exactly the same commercial control test as farms:
-  // company drone = company control, competitor drone = competitor control.
   return farmAssetControl(contractor);
+}
+
+// ---------------------------------------------------------------------------
+// TERRITORY CONTROL & MARKET INFLUENCE ENGINE
+// Farms and Contractors are the market units. Company Facilities and
+// Competitors are strategic influence nodes. Active relationships propagate
+// influence through the connected commercial network.
+// ---------------------------------------------------------------------------
+const marketInfluenceState = {
+  relationships: [],
+  graph: new Map(),
+  components: new Map(),
+  signature: '',
+  loading: false,
+  lastLoadedAt: 0
+};
+
+function marketEntityType(type) {
+  const value = String(type || '').toLowerCase().replace(/[ _-]+/g, '');
+  if (value === 'farm' || value === 'farms') return 'farm';
+  if (value === 'contractor' || value === 'contractors') return 'contractor';
+  if (value === 'competitor' || value === 'competitors') return 'competitor';
+  if (value === 'companyfacility' || value === 'companyfacilities' || value === 'facility' || value === 'facilities') return 'companyFacility';
+  return value;
+}
+function marketNodeKey(type, id) {
+  return marketEntityType(type) + ':' + String(id);
+}
+function marketRelationshipActive(row) {
+  return !['inactive','disabled','archived','deleted'].includes(String(row?.status || 'active').toLowerCase());
+}
+function marketAllowedEdge(a, b) {
+  const key=[marketEntityType(a),marketEntityType(b)].sort().join('|');
+  return [
+    'companyFacility|contractor',
+    'companyFacility|farm',
+    'competitor|competitor',
+    'competitor|contractor',
+    'competitor|farm',
+    'contractor|farm'
+  ].includes(key);
+}
+function rebuildMarketInfluenceGraph(rows) {
+  const graph = new Map();
+  const add = (key, value) => {
+    if (!graph.has(key)) graph.set(key, new Set());
+    graph.get(key).add(value);
+  };
+  (rows || []).filter(marketRelationshipActive).forEach(row => {
+    const aType=marketEntityType(row.source_entity_type || row.sourceType);
+    const bType=marketEntityType(row.target_entity_type || row.targetType);
+    const aId=row.source_entity_id ?? row.sourceId;
+    const bId=row.target_entity_id ?? row.targetId;
+    if (!aId || !bId || !marketAllowedEdge(aType,bType)) return;
+    const a=marketNodeKey(aType,aId), b=marketNodeKey(bType,bId);
+    add(a,b); add(b,a);
+  });
+  marketInfluenceState.relationships=(rows || []).filter(marketRelationshipActive);
+  marketInfluenceState.graph=graph;
+  marketInfluenceState.components=new Map();
+}
+function marketInfluenceSeed(type, entity) {
+  const canonical=marketEntityType(type);
+  if (canonical==='companyFacility') return 'company';
+  if (canonical==='competitor') return 'competitor';
+  if (canonical==='farm') return farmAssetControl(entity);
+  if (canonical==='contractor') return contractorAssetControl(entity);
+  return 'neutral';
+}
+function getMarketEntity(type,id) {
+  const world=window.AG_WORLD_WORLD || {};
+  const list = type==='farm' ? (world.farms || []) :
+    type==='contractor' ? (world.getContractors?.() || []) :
+    type==='competitor' ? (world.getCompetitors?.() || []) :
+    type==='companyFacility' ? (world.getCompanyFacilities?.() || []) : [];
+  return list.find(item => String(item?.id)===String(id)) || null;
+}
+function marketComponentFor(type,id) {
+  const key=marketNodeKey(type,id);
+  if (marketInfluenceState.components.has(key)) return marketInfluenceState.components.get(key);
+  const graph=marketInfluenceState.graph;
+  const queue=[key], visited=new Set(), companySeeds=[], competitorSeeds=[];
+  while(queue.length) {
+    const node=queue.shift();
+    if(visited.has(node)) continue;
+    visited.add(node);
+    const [nodeType,...rest]=node.split(':');
+    const nodeId=rest.join(':');
+    const entity=getMarketEntity(nodeType,nodeId);
+    const seed=marketInfluenceSeed(nodeType,entity);
+    if(seed==='company') companySeeds.push(node);
+    if(seed==='competitor') competitorSeeds.push(node);
+    (graph.get(node) || []).forEach(next => { if(!visited.has(next)) queue.push(next); });
+  }
+  const result={
+    nodes:[...visited],
+    company:companySeeds.length>0,
+    competitor:competitorSeeds.length>0,
+    companySeeds,
+    competitorSeeds
+  };
+  visited.forEach(node => marketInfluenceState.components.set(node,result));
+  return result;
+}
+function entityMarketInfluence(type, entity) {
+  const direct=marketInfluenceSeed(type,entity);
+  const component=marketComponentFor(type,entity?.id);
+  const company=direct==='company' || component.company;
+  const competitor=direct==='competitor' || component.competitor;
+  if(company && competitor) return 'contested';
+  if(company) return 'company';
+  if(competitor) return 'competitor';
+  return 'neutral';
+}
+async function loadMarketInfluenceRelationships(options={}) {
+  const db=getFarmDb?.();
+  if(!db || marketInfluenceState.loading) return false;
+  const now=Date.now();
+  if(!options.force && now-marketInfluenceState.lastLoadedAt<8000) return false;
+  marketInfluenceState.loading=true;
+  try {
+    const result=await db.from('entity_relationships').select('id,source_entity_id,source_entity_type,target_entity_id,target_entity_type,relationship_type,status,metadata,updated_at,created_at');
+    if(result.error) throw result.error;
+    const rows=result.data || [];
+    const signature=rows.map(r=>String(r.id)+':'+String(r.status)+':'+String(r.updated_at||r.created_at||'')).sort().join('|');
+    const changed=signature!==marketInfluenceState.signature;
+    marketInfluenceState.signature=signature;
+    marketInfluenceState.lastLoadedAt=now;
+    if(changed || options.force) {
+      rebuildMarketInfluenceGraph(rows);
+      window.__AGWORLD_ACTIVE_RELATIONSHIPS__=marketInfluenceState.relationships;
+      window.dispatchEvent(new CustomEvent('agworld:market-influence-updated',{detail:{relationships:marketInfluenceState.relationships.length}}));
+      if(typeof refreshTerritoryControl==='function') refreshTerritoryControl();
+    }
+    return changed;
+  } catch(error) {
+    console.warn('[AG World] Market influence relationship load failed',error);
+    return false;
+  } finally {
+    marketInfluenceState.loading=false;
+  }
 }
 
 function calculateTerritoryControl(territory) {
   const territoryFarms = territoryFarmSet(territory);
   const territoryContractors = territoryContractorSet(territory);
-  const combined = [...territoryFarms, ...territoryContractors];
+  const farmCounts={company:0,competitor:0,neutral:0,contested:0};
+  const contractorCounts={company:0,competitor:0,neutral:0,contested:0};
 
-  const farmCompany = territoryFarms.filter(f => farmAssetControl(f) === 'company').length;
-  const farmCompetitor = territoryFarms.filter(f => farmAssetControl(f) === 'competitor').length;
-  const contractorCompany = territoryContractors.filter(c => contractorAssetControl(c) === 'company').length;
-  const contractorCompetitor = territoryContractors.filter(c => contractorAssetControl(c) === 'competitor').length;
+  territoryFarms.forEach(farm => {
+    const influence=entityMarketInfluence('farm',farm);
+    farmCounts[influence]=(farmCounts[influence] || 0)+1;
+  });
+  territoryContractors.forEach(contractor => {
+    const influence=entityMarketInfluence('contractor',contractor);
+    contractorCounts[influence]=(contractorCounts[influence] || 0)+1;
+  });
 
-  const total = combined.length;
-  const company = farmCompany + contractorCompany;
-  const competitor = farmCompetitor + contractorCompetitor;
-  const neutral = total - company - competitor;
-  const control = total ? Math.round((company / total) * 1000) / 10 : 0;
-  const enemyControl = total ? Math.round((competitor / total) * 1000) / 10 : 0;
+  const total=territoryFarms.length+territoryContractors.length;
+  const company=farmCounts.company+contractorCounts.company;
+  const competitor=farmCounts.competitor+contractorCounts.competitor;
+  const contested=farmCounts.contested+contractorCounts.contested;
+  const neutral=farmCounts.neutral+contractorCounts.neutral;
+  const pct=value=>total ? Math.round(value/total*1000)/10 : 0;
+  const control=pct(company);
+  const enemyControl=pct(competitor);
+  const contestedControl=pct(contested);
+  const neutralControl=pct(neutral);
 
   return {
-    total, company, competitor, neutral, control, enemyControl,
-    farms: {
-      total: territoryFarms.length, company: farmCompany, competitor: farmCompetitor,
-      neutral: territoryFarms.length - farmCompany - farmCompetitor,
-      control: territoryFarms.length ? Math.round(farmCompany / territoryFarms.length * 1000) / 10 : 0
-    },
-    contractors: {
-      total: territoryContractors.length, company: contractorCompany, competitor: contractorCompetitor,
-      neutral: territoryContractors.length - contractorCompany - contractorCompetitor,
-      control: territoryContractors.length ? Math.round(contractorCompany / territoryContractors.length * 1000) / 10 : 0
-    }
+    total,company,competitor,contested,neutral,control,enemyControl,contestedControl,neutralControl,
+    farms:{total:territoryFarms.length,...farmCounts,control:territoryFarms.length?Math.round(farmCounts.company/territoryFarms.length*1000)/10:0},
+    contractors:{total:territoryContractors.length,...contractorCounts,control:territoryContractors.length?Math.round(contractorCounts.company/territoryContractors.length*1000)/10:0},
+    influenceModel:'relationship-network-v1'
   };
 }
 
