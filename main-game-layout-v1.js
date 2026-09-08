@@ -654,32 +654,73 @@
     return host;
   }
 
+  // Selection events are dispatched from inside the legacy Farm/Dynamic
+  // selection functions. Those functions continue doing important work *after*
+  // dispatchEvent() returns: they populate the card and, crucially, bind the
+  // original Farm Card button handlers. Rebuilding #farmCard synchronously
+  // inside the event listener removes those DOM targets and aborts the legacy
+  // selection function before its button wiring runs.
+  //
+  // Therefore the Command Centre handoff must happen on the next task, after
+  // the canonical selection function has completed its existing workflow.
+  let entityCommandSelectionToken = 0;
+
   function selectEntityScope(event){
     const entity=event?.detail?.entity||event?.detail?.farm||event?.detail;
     if(!entity) return;
-    entityCommandDiag('SELECTION RECEIVED',{eventType:event.type,entityId:String(entity.id||''),entityName:entity.name||'',entityType:entity.type||''});
-    companyCardActive=false;
-    window.__AGWORLD_ENTITY_COMMAND_SCOPE__=String(entity.type||'entity').toUpperCase();
-    window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY_THEN_ENTITY';
 
-    // The Company portfolio is startup content only. On selection, give the
-    // selected entity the entire visible Entity Command Centre instead of
-    // restoring the old legacy shell as blank spacer columns.
-    const host=prepareEntityCommandCentreForSelection(entity);
-    entityCommandDiag('ENTITY COMMAND CENTRE PREPARED',{prepared:!!host,entityId:String(entity.id||''),entityType:entity.type||''});
+    const token=++entityCommandSelectionToken;
+    const eventType=event.type;
+    const entityId=String(entity.id||'');
+    const entityType=entity.type||'';
 
-    // Re-open from the canonical selection after the dedicated visible canvas
-    // has been prepared. This makes the handoff deterministic for all types.
-    const isFarm=event.type==='agworld:farm-selected' || event?.detail?.farm;
-    const delay=isFarm?0:180;
-    entityCommandDiag('V2 HANDOFF SCHEDULED',{isFarm,delay,hasFarmOpen:typeof window.openV2FarmDetail==='function',hasDynamicOpen:typeof window.openV2DynamicEntityDetail==='function'});
+    entityCommandDiag('SELECTION RECEIVED',{
+      eventType,
+      entityId,
+      entityName:entity.name||'',
+      entityType,
+      deferred:true
+    });
+
     setTimeout(()=>{
-      entityCommandDiag('V2 HANDOFF EXECUTING',{isFarm,entityId:String(entity.id||''),entityType:entity.type||''});
-      if(isFarm && typeof window.openV2FarmDetail==='function') window.openV2FarmDetail(entity);
-      else if(!isFarm && typeof window.openV2DynamicEntityDetail==='function') window.openV2DynamicEntityDetail(entity);
-      setTimeout(()=>entityCommandDiag('V2 HANDOFF POSTCHECK',{isFarm,entityId:String(entity.id||'')}),60);
-    },delay);
+      // Ignore an older deferred handoff if another entity was selected first.
+      if(token!==entityCommandSelectionToken) return;
+
+      companyCardActive=false;
+      window.__AGWORLD_ENTITY_COMMAND_SCOPE__=String(entityType||'entity').toUpperCase();
+      window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY_THEN_ENTITY';
+
+      // At this point the original selection routine has completed, including
+      // UPDATE DETAILS, FARM HISTORY and Fleet button wiring.
+      const host=prepareEntityCommandCentreForSelection(entity);
+      entityCommandDiag('ENTITY COMMAND CENTRE PREPARED',{
+        prepared:!!host,
+        entityId,
+        entityType,
+        deferred:true
+      });
+
+      // Re-open from the canonical selection after the dedicated visible canvas
+      // has been prepared. This remains separate from the legacy button setup.
+      const isFarm=eventType==='agworld:farm-selected' || event?.detail?.farm;
+      const delay=isFarm?0:180;
+      entityCommandDiag('V2 HANDOFF SCHEDULED',{
+        isFarm,
+        delay,
+        hasFarmOpen:typeof window.openV2FarmDetail==='function',
+        hasDynamicOpen:typeof window.openV2DynamicEntityDetail==='function'
+      });
+
+      setTimeout(()=>{
+        if(token!==entityCommandSelectionToken) return;
+        entityCommandDiag('V2 HANDOFF EXECUTING',{isFarm,entityId,entityType});
+        if(isFarm && typeof window.openV2FarmDetail==='function') window.openV2FarmDetail(entity);
+        else if(!isFarm && typeof window.openV2DynamicEntityDetail==='function') window.openV2DynamicEntityDetail(entity);
+        setTimeout(()=>entityCommandDiag('V2 HANDOFF POSTCHECK',{isFarm,entityId}),60);
+      },delay);
+    },0);
   }
+
   window.addEventListener('agworld:farm-selected',selectEntityScope);
   window.addEventListener('agworld:dynamic-entity-selected',selectEntityScope);
   window.addEventListener('agworld:v2-entity-selected',selectEntityScope);
