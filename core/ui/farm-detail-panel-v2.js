@@ -243,7 +243,8 @@
       const close = header.querySelector('[data-action="close"]');
       if (close) close.remove();
       const type = header.querySelector('.agworld-v2-entity-type');
-      if (type) type.textContent = 'AG WORLD V2 ENTITY ENGINE · ' + (global.AGWorldV2.EntityTypes?.[this.entity.type]?.label || this.entity.type).toUpperCase();
+      const canonicalType = this.entity.type === 'companyFacility' ? 'company_facility' : this.entity.type;
+      if (type) type.textContent = 'AG WORLD V2 ENTITY ENGINE · ' + (global.AGWorldV2.EntityTypes?.[canonicalType]?.label || canonicalType).toUpperCase();
       const title = header.querySelector('h2');
       if (title) title.textContent = this.entity.name || 'CONNECTED ENTITY DATA';
       const status = header.querySelector('.agworld-v2-status');
@@ -252,23 +253,12 @@
 
     renderContent() {
       if (this.activeTab !== 'details') return super.renderContent();
+
+      // Dynamic entities use the same editable Entity Details manager as the
+      // Farm card. The base manager exposes the full metadata set and the
+      // canonical Edit entity action used by the legacy UPDATE button.
       const target = this.container.querySelector('.agworld-v2-detail-content');
-      const data = this.entity.metadata || {};
-      const rows = [
-        ['Primary contact', data.contactName],
-        ['Mobile', data.contactCell],
-        ['Email', data.contactEmail],
-        ['Country', data.country],
-        ['Province', data.province],
-        ['Municipality', data.municipality],
-        ['Nearest town', data.nearestTown],
-        ['Capabilities', Array.isArray(data.capabilities) ? data.capabilities.join(', ') : data.capabilities],
-        ['Website', data.website],
-        ['Notes', data.notes]
-      ].filter(([, value]) => value !== null && value !== undefined && value !== '');
-      target.innerHTML = rows.length
-        ? '<dl>' + rows.map(([label,value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl>'
-        : '<p>No entity details have been added yet.</p>';
+      if (target) this.renderEntityDetails(target);
     }
   }
 
