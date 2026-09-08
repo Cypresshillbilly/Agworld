@@ -501,7 +501,62 @@ function marketComponentFor(type,id) {
   visited.forEach(node => marketInfluenceState.components.set(node,result));
   return result;
 }
+function dronePortfolioInfluence(type, entity) {
+  const portfolio = Array.isArray(entity?.details?.dronePortfolio) ? entity.details.dronePortfolio :
+    Array.isArray(entity?.dronePortfolio) ? entity.dronePortfolio : [];
+  let companyDrones=0, competitorDrones=0;
+  portfolio.forEach(item => {
+    const quantity=Math.max(0,Number(item?.quantity || item?.droneQuantity || 0));
+    const supplier=marketEntityType(item?.supplierType || item?.entityType);
+    if(supplier==='companyFacility') companyDrones+=quantity;
+    if(supplier==='competitor') competitorDrones+=quantity;
+  });
+  // Relationship metadata is the authoritative fallback for records created
+  // before the Step 4 portfolio field existed.
+  const key=marketNodeKey(type,entity?.id);
+  (marketInfluenceState.relationships || []).forEach(row => {
+    const a=marketNodeKey(row.source_entity_type,row.source_entity_id);
+    const b=marketNodeKey(row.target_entity_type,row.target_entity_id);
+    const quantity=Math.max(0,Number(row?.metadata?.droneQuantity || row?.metadata?.quantity || 0));
+    if(!quantity || (a!==key && b!==key)) return;
+    const other=a===key ? marketEntityType(row.target_entity_type) : marketEntityType(row.source_entity_type);
+    if(other==='companyFacility') companyDrones+=quantity;
+    if(other==='competitor') competitorDrones+=quantity;
+  });
+  // De-duplicate when both portfolio and relationship metadata represent the
+  // same purchase by preferring the larger recorded quantity per supplier.
+  // New records normally have both, so supplier-level aggregation prevents
+  // relationship syncing from double-counting market influence.
+  const portfolioBySupplier=new Map();
+  portfolio.forEach(item=>{
+    const id=String(item?.supplierId||''), typeKey=marketEntityType(item?.supplierType);
+    const q=Math.max(0,Number(item?.quantity||0));
+    if(id) portfolioBySupplier.set(typeKey+':'+id,q);
+  });
+  let relCompany=0, relCompetitor=0;
+  const relBySupplier=new Map();
+  (marketInfluenceState.relationships || []).forEach(row=>{
+    const a=marketNodeKey(row.source_entity_type,row.source_entity_id), b=marketNodeKey(row.target_entity_type,row.target_entity_id);
+    if(a!==key && b!==key) return;
+    const otherType=a===key?marketEntityType(row.target_entity_type):marketEntityType(row.source_entity_type);
+    const otherId=String(a===key?row.target_entity_id:row.source_entity_id);
+    const q=Math.max(0,Number(row?.metadata?.droneQuantity||row?.metadata?.quantity||0));
+    if(q) relBySupplier.set(otherType+':'+otherId,Math.max(relBySupplier.get(otherType+':'+otherId)||0,q));
+  });
+  // Portfolio totals are already in companyDrones/competitorDrones above;
+  // rebuild from max values for exact accounting.
+  companyDrones=0; competitorDrones=0;
+  const keys=new Set([...portfolioBySupplier.keys(),...relBySupplier.keys()]);
+  keys.forEach(k=>{const q=Math.max(portfolioBySupplier.get(k)||0,relBySupplier.get(k)||0);if(k.startsWith('companyFacility:')) companyDrones+=q;if(k.startsWith('competitor:')) competitorDrones+=q;});
+  return {companyDrones,competitorDrones,totalDrones:companyDrones+competitorDrones};
+}
 function entityMarketInfluence(type, entity) {
+  const drone=dronePortfolioInfluence(type,entity);
+  if(drone.totalDrones>0) {
+    if(drone.companyDrones>drone.competitorDrones) return 'company';
+    if(drone.competitorDrones>drone.companyDrones) return 'competitor';
+    return 'contested';
+  }
   const direct=marketInfluenceSeed(type,entity);
   const component=marketComponentFor(type,entity?.id);
   const company=direct==='company' || component.company;
@@ -511,6 +566,23 @@ function entityMarketInfluence(type, entity) {
   if(competitor) return 'competitor';
   return 'neutral';
 }
+function entityMarketWeights(type, entity) {
+  const drone=dronePortfolioInfluence(type,entity);
+  if(drone.totalDrones>0) return {
+    company: drone.companyDrones,
+    competitor: drone.competitorDrones,
+    total: drone.totalDrones,
+    mode:'drone-weighted'
+  };
+  const influence=entityMarketInfluence(type,entity);
+  return {
+    company: influence==='company'?1:influence==='contested'?.5:0,
+    competitor: influence==='competitor'?1:influence==='contested'?.5:0,
+    total: influence==='neutral'?0:1,
+    mode:'relationship-fallback'
+  };
+}
+
 async function loadMarketInfluenceRelationships(options={}) {
   const db=getFarmDb?.();
   if(!db || marketInfluenceState.loading) return false;
@@ -541,39 +613,36 @@ async function loadMarketInfluenceRelationships(options={}) {
 }
 
 function calculateTerritoryControl(territory) {
-  const territoryFarms = territoryFarmSet(territory);
-  const territoryContractors = territoryContractorSet(territory);
-  const farmCounts={company:0,competitor:0,neutral:0,contested:0};
-  const contractorCounts={company:0,competitor:0,neutral:0,contested:0};
+  const territoryFarms=territoryFarmSet(territory), territoryContractors=territoryContractorSet(territory);
+  const farmCounts={company:0,competitor:0,neutral:0,contested:0}, contractorCounts={company:0,competitor:0,neutral:0,contested:0};
+  let companyDroneWeight=0, competitorDroneWeight=0, marketWeight=0, companyDrones=0, competitorDrones=0;
 
-  territoryFarms.forEach(farm => {
-    const influence=entityMarketInfluence('farm',farm);
-    farmCounts[influence]=(farmCounts[influence] || 0)+1;
-  });
-  territoryContractors.forEach(contractor => {
-    const influence=entityMarketInfluence('contractor',contractor);
-    contractorCounts[influence]=(contractorCounts[influence] || 0)+1;
-  });
+  const score=(type,entity,counts)=>{
+    const influence=entityMarketInfluence(type,entity);
+    counts[influence]=(counts[influence]||0)+1;
+    const weights=entityMarketWeights(type,entity);
+    companyDroneWeight+=weights.company; competitorDroneWeight+=weights.competitor; marketWeight+=weights.total;
+    const drone=dronePortfolioInfluence(type,entity);
+    companyDrones+=drone.companyDrones; competitorDrones+=drone.competitorDrones;
+  };
+  territoryFarms.forEach(f=>score('farm',f,farmCounts));
+  territoryContractors.forEach(c=>score('contractor',c,contractorCounts));
 
   const total=territoryFarms.length+territoryContractors.length;
-  const company=farmCounts.company+contractorCounts.company;
-  const competitor=farmCounts.competitor+contractorCounts.competitor;
-  const contested=farmCounts.contested+contractorCounts.contested;
-  const neutral=farmCounts.neutral+contractorCounts.neutral;
-  const pct=value=>total ? Math.round(value/total*1000)/10 : 0;
-  const control=pct(company);
-  const enemyControl=pct(competitor);
-  const contestedControl=pct(contested);
-  const neutralControl=pct(neutral);
+  const company=farmCounts.company+contractorCounts.company, competitor=farmCounts.competitor+contractorCounts.competitor;
+  const contested=farmCounts.contested+contractorCounts.contested, neutral=farmCounts.neutral+contractorCounts.neutral;
+  const pct=v=>marketWeight?Math.round(v/marketWeight*1000)/10:0;
+  const control=pct(companyDroneWeight), enemyControl=pct(competitorDroneWeight);
+  const contestedControl=total?Math.round(contested/total*1000)/10:0, neutralControl=total?Math.round(neutral/total*1000)/10:0;
 
   return {
     total,company,competitor,contested,neutral,control,enemyControl,contestedControl,neutralControl,
+    companyDroneWeight,competitorDroneWeight,marketWeight,companyDrones,competitorDrones,totalDrones:companyDrones+competitorDrones,
     farms:{total:territoryFarms.length,...farmCounts,control:territoryFarms.length?Math.round(farmCounts.company/territoryFarms.length*1000)/10:0},
     contractors:{total:territoryContractors.length,...contractorCounts,control:territoryContractors.length?Math.round(contractorCounts.company/territoryContractors.length*1000)/10:0},
-    influenceModel:'relationship-network-v1'
+    influenceModel:'drone-weighted-market-influence-v1'
   };
 }
-
 
 // Public strategic API used by the World Event, relationship and mission
 // systems. The API deliberately exposes summaries rather than map internals.
@@ -584,15 +653,16 @@ window.AGWorldTerritoryControl = {
   },
   refreshRelationships: () => loadMarketInfluenceRelationships({ force: true }),
   getInfluence: (type, entity) => entityMarketInfluence(marketEntityType(type), entity),
+  getWeights: (type, entity) => entityMarketWeights(marketEntityType(type), entity),
   getSummary: (territory) => territory ? calculateTerritoryControl(territory) : null,
   getModel: () => ({
-    version: 'relationship-network-v1',
+    version: 'drone-weighted-market-influence-v1',
     marketUnits: ['farm', 'contractor'],
     strategicInfluencers: ['companyFacility', 'competitor'],
     rules: {
-      company: 'Company Facility relationships and Company assets propagate Company influence.',
-      competitor: 'Competitor relationships and Competitor assets propagate Competitor influence.',
-      contested: 'A market entity reached by both Company and Competitor influence is contested.',
+      company: 'Company drone quantities contribute directly to weighted Company market influence.',
+      competitor: 'Competitor drone quantities contribute directly to weighted Competitor market influence.',
+      contested: 'Equal Company and Competitor drone quantities create a contested entity.',
       neutral: 'A market entity with no active Company or Competitor influence remains open market.'
     }
   })
