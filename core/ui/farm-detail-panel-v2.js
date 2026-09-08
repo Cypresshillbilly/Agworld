@@ -195,6 +195,7 @@
 
   global.openV2FarmDetail = function (farm) {
     try {
+      global.__AGWORLD_ENTITY_COMMAND_DIAG__?.('FARM V2 OPEN ENTER',{entityId:String(farm?.id||''),entityName:farm?.name||'',entityType:'farm'});
       if (!installLiveBridge()) {
         global.addEventListener('DOMContentLoaded', () => global.openV2FarmDetail(farm), { once:true });
         return;
@@ -202,6 +203,7 @@
       const bridge = global.AGWorldV2?.LiveFarmDetailBridge;
       if (!bridge) throw new Error('V2 Farm Detail Bridge was not installed');
       bridge.open(farm);
+      global.__AGWORLD_ENTITY_COMMAND_DIAG__?.('FARM V2 OPEN COMPLETE',{entityId:String(farm?.id||''),bridgeHostConnected:!!bridge.__host?.isConnected,panel:!!bridge.__host?.querySelector('.agworld-v2-detail-panel')});
     } catch (error) {
       console.error('[AG World V2] Unable to integrate Farm Detail Panel', error);
       const host = document.getElementById('farmCard');
@@ -346,6 +348,7 @@
     if (currentToken !== dynamicSelectionToken || !entity?.id) return;
 
     try {
+      global.__AGWORLD_ENTITY_COMMAND_DIAG__?.('DYNAMIC V2 OPEN ENTER',{entityId:String(entity?.id||''),entityName:entity?.name||'',entityType:entity?.type||'',attempt:currentAttempt});
       if (!installDynamicLiveBridge()) {
         if (currentAttempt < 12) {
           setTimeout(() => global.openV2DynamicEntityDetail(entity, currentAttempt + 1, currentToken), 80);
@@ -365,7 +368,9 @@
       }
 
       global.AGWorldV2.LiveDynamicEntityDetailBridge.open(entity);
+      global.__AGWORLD_ENTITY_COMMAND_DIAG__?.('DYNAMIC V2 OPEN COMPLETE',{entityId:String(entity?.id||''),entityType:entity?.type||'',bridgeHostConnected:!!global.AGWorldV2.LiveDynamicEntityDetailBridge.__host?.isConnected,panel:!!host.querySelector('.agworld-v2-detail-panel')});
     } catch (error) {
+      global.__AGWORLD_ENTITY_COMMAND_DIAG__?.('DYNAMIC V2 ERROR',{entityId:String(entity?.id||''),entityType:entity?.type||'',attempt:currentAttempt,error:String(error?.message||error)});
       console.error('[AG World V2] Unable to open dynamic entity detail', error);
       if (currentAttempt < 3) {
         setTimeout(() => global.openV2DynamicEntityDetail(entity, currentAttempt + 1, currentToken), 100);
