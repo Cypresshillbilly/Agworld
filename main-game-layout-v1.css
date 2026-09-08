@@ -1,0 +1,194 @@
+/* AG World main game screen reorganisation — fixed strategic bottom panels */
+:root{--ag-bottom-h:170px;--ag-sidebar-w:180px;--ag-missions-w:285px;--ag-left-stage:465px}
+
+.sidebar{
+  bottom:var(--ag-bottom-h)!important;
+  z-index:30;
+  box-sizing:border-box;
+}
+.missions{
+  height:calc(820px - var(--ag-bottom-h))!important;
+  box-sizing:border-box;
+}
+.map-area{
+  bottom:var(--ag-bottom-h)!important;
+}
+
+.bottom.user-profile-section{
+  display:none!important;
+}
+
+/* The former bottom area is now split into two permanent game interfaces. */
+#territorySection,
+#entityInformationSection{
+  position:absolute;
+  bottom:0;
+  height:var(--ag-bottom-h);
+  box-sizing:border-box;
+  overflow:hidden;
+  z-index:25;
+}
+
+#territorySection{
+  left:0;
+  width:var(--ag-left-stage);
+  background:#152127;
+  border-top:1px solid #32434c;
+  border-right:1px solid #32434c;
+  padding:10px 12px;
+}
+
+#entityInformationSection{
+  left:var(--ag-left-stage);
+  right:0;
+  background:#fff;
+  border-top:1px solid #dce2e5;
+  padding:10px 12px;
+}
+
+/* Territory information is no longer a map popup. */
+#territorySection #territoryInfoPanel{
+  position:static!important;
+  inset:auto!important;
+  width:100%!important;
+  max-width:none!important;
+  height:100%;
+  box-sizing:border-box;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  color:#f4f7f1;
+  overflow:auto;
+}
+#territorySection #territoryInfoPanel:not(.show) .territory-info-empty{display:block}
+#territorySection #territoryInfoPanel .territory-info-close{display:none!important}
+#territorySection .territory-info-header{margin-bottom:6px}
+#territorySection .territory-info-level{font-size:8px!important}
+#territorySection .territory-info-name{font-size:16px!important}
+#territorySection .territory-info-control{margin:4px 0!important}
+#territorySection .territory-info-control-value{font-size:24px!important}
+#territorySection .territory-info-grid{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:5px!important;
+  margin-top:7px!important;
+}
+#territorySection .territory-info-grid div{padding:5px!important}
+#territorySection .territory-info-grid strong{font-size:13px!important}
+#territorySection .territory-info-grid span{font-size:7px!important}
+#territorySection .territory-info-legend{
+  display:flex!important;
+  flex-wrap:wrap;
+  gap:4px 10px!important;
+  font-size:8px!important;
+}
+#territorySection .territory-info-footer{display:none!important}
+
+/* Entity Information Card becomes a fixed command panel below the map. */
+#entityInformationSection::before{
+  content:"ENTITY INFORMATION";
+  display:block;
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:1.4px;
+  color:#687981;
+  margin:0 0 5px;
+}
+#entityInformationSection #farmCard{
+  position:static!important;
+  width:100%!important;
+  max-width:none!important;
+  max-height:calc(var(--ag-bottom-h) - 28px)!important;
+  min-height:0!important;
+  box-sizing:border-box;
+  margin:0!important;
+  padding:0 4px 2px 0!important;
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:auto!important;
+  display:none;
+}
+#entityInformationSection #farmCard.show{display:block!important}
+#entityInformationSection #farmCard h2{font-size:15px;margin:0 0 3px}
+#entityInformationSection #farmCard .meta{margin-bottom:6px}
+#entityInformationSection #farmCard .stats{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;
+}
+#entityInformationSection #farmCard .stat{padding:5px}
+#entityInformationSection #farmCard .farm-extra{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:5px;
+  margin-top:5px;
+}
+#entityInformationSection #farmCard .farm-extra>div{padding:5px}
+#entityInformationSection #farmCard .farm-detail-text{margin:5px 0;font-size:9px}
+#entityInformationSection #farmCard .farm-actions{margin-top:5px}
+#entityInformationSection #agworldV2FarmDetailHost{margin-top:5px}
+
+/* Player progression now belongs to the player avatar block. */
+.menu-user{position:relative}
+.menu-user-progress-title{
+  display:block;
+  margin-top:8px;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:1.1px;
+  color:#8da3ac;
+  text-transform:uppercase;
+}
+
+/* Badges now belong to Mission Control, between Skill Profile and Mission Cards. */
+#badgesEarnedSection{
+  margin:10px 0 12px;
+  padding:9px;
+  border:1px solid #d8e1e4;
+  border-radius:8px;
+  background:#fff;
+}
+#badgesEarnedSection .badges-earned-title{
+  font-size:8px;
+  font-weight:800;
+  letter-spacing:1.1px;
+  text-transform:uppercase;
+  color:#687981;
+  margin-bottom:7px;
+}
+#badgesEarnedSection .badges{display:flex;gap:7px}
+#badgesEarnedSection .badge{width:28px;height:28px;font-size:12px}
+
+/* My Region is now a true window, not a main-screen view. */
+#regionWindow{
+  position:fixed;
+  inset:0;
+  z-index:2147483001;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(3,12,16,.72);
+  backdrop-filter:blur(3px);
+  box-sizing:border-box;
+}
+#regionWindow.show{display:flex}
+#regionWindow .region-window-card{
+  width:min(760px,100%);
+  max-height:calc(100vh - 48px);
+  overflow:auto;
+  background:#102028;
+  color:#eef6f7;
+  border:1px solid rgba(108,196,183,.35);
+  border-radius:12px;
+  box-shadow:0 24px 80px rgba(0,0,0,.55);
+}
+#regionWindow .region-window-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:20px 24px 14px;border-bottom:1px solid rgba(255,255,255,.08);
+}
+#regionWindow .region-window-body{padding:20px 24px 24px}
+#regionWindow .region-window-head button{cursor:pointer;min-width:38px;min-height:38px}
