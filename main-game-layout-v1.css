@@ -90,13 +90,18 @@
 
 /* Entity Information Card becomes a fixed command panel below the map. */
 #entityInformationSection::before{
-  content:"ENTITY INFORMATION";
+  content:"COMMAND CENTER";
   display:block;
-  font-size:8px;
-  font-weight:800;
-  letter-spacing:1.4px;
-  color:#687981;
-  margin:0 0 5px;
+  font-family:Impact,Haettenschweiler,"Arial Narrow Bold","Arial Black",sans-serif;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:1.7px;
+  line-height:1;
+  text-transform:uppercase;
+  color:#e9f4ef;
+  margin:0 0 7px;
+  padding:0;
+  text-shadow:0 1px 0 rgba(255,255,255,.08),0 2px 8px rgba(0,0,0,.38);
 }
 #entityInformationSection #farmCard{
   position:static!important;
