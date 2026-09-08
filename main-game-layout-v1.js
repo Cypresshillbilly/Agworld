@@ -383,17 +383,40 @@
   }
   window.__AGWORLD_ENTITY_COMMAND_DIAG__=entityCommandDiag;
 
+  function escEntityCommand(value){
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function entityCommandTypeLabel(type){
+    const canonical=type==='companyFacility'?'company_facility':String(type||'entity');
+    return window.AGWorldV2?.EntityTypes?.[canonical]?.label || canonical.replace(/_/g,' ');
+  }
+
+  function entityCommandSummary(entity){
+    const details=entity?.details||{}, metadata=entity?.metadata||{};
+    const territory=(entity?.territoryIds||details?.territoryIds||[entity?.territoryId||details?.territoryId]).filter(Boolean);
+    const location=details.location || entity.location || metadata.location || metadata.address || entity.address || '';
+    const metrics=[
+      ['STATUS',String(entity?.status||'active').toUpperCase()],
+      ['TERRITORY',territory.join(', ')||'Not assigned'],
+      ['LOCATION',typeof location==='string'?location:'Mapped entity']
+    ];
+    if(entity?.type==='farm'){
+      const size=entity.farmSize ?? metadata.farmSize;
+      const crops=entity.crops ?? metadata.crops;
+      if(size!==undefined&&size!==null&&size!=='') metrics.push(['FARM SIZE',String(size)]);
+      else if(Array.isArray(crops)&&crops.length) metrics.push(['CROPS',crops.join(', ')]);
+    } else {
+      const staff=details.staffCount ?? metadata.staffCount;
+      if(staff!==undefined&&staff!==null&&staff!=='') metrics.push(['STAFF',String(staff)]);
+    }
+    return metrics;
+  }
+
   function prepareEntityCommandCentreForSelection(entity){
     const card=$('farmCard');
     if(!card) return null;
 
-    // The diagnostic trace proves the V2 panel is successfully rendering into
-    // the visible host. The remaining failure is structural: restoring the old
-    // legacy Farm Card shell leaves empty summary columns ahead of the V2 host,
-    // pushing the correctly-rendered selected entity below the 170px Command
-    // Centre viewport. A selected entity therefore gets the Command Centre as
-    // its dedicated canvas; the startup Company view and legacy shell are not
-    // retained as spacer content.
     card.innerHTML='';
     card.classList.remove('agworld-company-entity-card');
     card.classList.add('show','agworld-selected-entity-command');
@@ -404,12 +427,32 @@
       delete window.AGWorldV2.LiveDynamicEntityDetailBridge;
     }
 
+    const shell=document.createElement('div');
+    shell.className='agworld-entity-command-shell';
+
+    const summary=document.createElement('section');
+    summary.className='agworld-entity-command-summary';
+    const metrics=entityCommandSummary(entity);
+    summary.innerHTML=
+      '<div class="agworld-entity-command-eyebrow">'+escEntityCommand(entityCommandTypeLabel(entity?.type)).toUpperCase()+'</div>'+
+      '<h2>'+escEntityCommand(entity?.name||'Unnamed entity')+'</h2>'+
+      '<div class="agworld-entity-command-status">'+escEntityCommand(String(entity?.status||'active').toUpperCase())+'</div>'+
+      '<div class="agworld-entity-command-summary-grid">'+metrics.map(([label,value])=>
+        '<div><span>'+escEntityCommand(label)+'</span><b>'+escEntityCommand(value)+'</b></div>').join('')+'</div>';
+
+    const management=document.createElement('section');
+    management.className='agworld-entity-command-management';
+    management.innerHTML='<div class="agworld-entity-management-label">ENTITY MANAGEMENT</div>';
+
     const host=document.createElement('div');
     host.id='agworldV2FarmDetailHost';
     host.hidden=false;
     host.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;';
-    card.appendChild(host);
-    entityCommandDiag('ENTITY COMMAND CANVAS PREPARED',{entityId:String(entity?.id||''),entityType:entity?.type||'',hostOnlyChild:card.children.length===1});
+    management.appendChild(host);
+    shell.append(summary,management);
+    card.appendChild(shell);
+
+    entityCommandDiag('ENTITY COMMAND SPLIT LAYOUT PREPARED',{entityId:String(entity?.id||''),entityType:entity?.type||'',summary:!!summary,management:!!management,hostOnlyManagementChild:management.children.length===2});
     return host;
   }
 
