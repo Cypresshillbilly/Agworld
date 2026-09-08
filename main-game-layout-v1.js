@@ -1441,3 +1441,18 @@
     observer.observe(section,{childList:true});
   }
 })();
+
+
+/* AG World v43 Command Center skills emphasis and invisible facility scrolling. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldCompanyCommandReadabilityV43';
+  style.textContent=
+    '#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:minmax(150px,48%) minmax(0,52%)!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-skills-pane{padding:3px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side{padding-right:2px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-list{scrollbar-width:none!important;-ms-overflow-style:none!important;padding-right:0!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-list::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}'+
+    '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:1fr!important}}';
+  document.head.appendChild(style);
+})();
