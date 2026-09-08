@@ -134,7 +134,7 @@
     // bottom panels with different start heights.
     const shellH=shell.clientHeight||820;
     const shellW=shell.clientWidth||1280;
-    const bottomH=Math.round(shellH*(170/820));
+    const bottomH=Math.round(shellH*(210/820));
     const topH=shellH-bottomH;
     const sidebarW=Math.round(shellW*(180/1280));
     const missionsW=Math.round(shellW*(285/1280));
@@ -1448,11 +1448,31 @@
   const style=document.createElement('style');
   style.id='agworldCompanyCommandReadabilityV43';
   style.textContent=
-    '#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:minmax(150px,48%) minmax(0,52%)!important}'+
+    '#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:minmax(230px,60%) minmax(0,40%)!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-command-skills-pane{padding:3px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-command-facility-side{padding-right:2px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-list{scrollbar-width:none!important;-ms-overflow-style:none!important;padding-right:0!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-list::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}'+
+    '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:1fr!important}}';
+  document.head.appendChild(style);
+})();
+
+
+/* AG World v44 Command Center enlarged skills intelligence. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldCompanyCommandSkillsV44';
+  style.textContent=
+    '#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:minmax(230px,60%) minmax(0,40%)!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-skills-pane{padding:1px 4px 3px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head{padding:3px 6px!important;min-height:14px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head span{font-size:6px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head b{font-size:8px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-visual{padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-skill-radar-svg{width:100%!important;height:164px!important;max-height:164px!important;overflow:visible!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-radar-labels text{font-size:7px!important;font-weight:900!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side{padding-left:6px!important;padding-top:4px!important;padding-bottom:4px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-row{min-height:42px!important}'+
     '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:1fr!important}}';
   document.head.appendChild(style);
 })();
