@@ -498,6 +498,15 @@ function installFleetTransactionEngine() {
     finally { button.disabled=false; }
   };
 }
+function injectFleetTransactionActions() {
+  const root=document.body;
+  root.addEventListener('click',event=>{
+    const button=event.target.closest('[data-fleet-transaction]');
+    if(!button) return;
+    openFleetTransaction(button.dataset.entityType,button.dataset.entityId);
+  });
+}
+
 window.AGWorldFleetTransactions={
   open:openFleetTransaction,
   complete:completeFleetTransaction,
