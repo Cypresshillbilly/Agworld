@@ -1400,6 +1400,9 @@
     '#entityInformationSection .farm-card{top:50px!important;height:calc(100% - 50px)!important;min-height:calc(100% - 50px)!important}';
   document.head.appendChild(style);
   syncHeading();
-  const observer=new MutationObserver(syncHeading);
-  observer.observe(document.documentElement,{childList:true,subtree:true});
+  const section=document.getElementById('entityInformationSection');
+  if(section){
+    const observer=new MutationObserver(()=>syncHeading());
+    observer.observe(section,{childList:true});
+  }
 })();
