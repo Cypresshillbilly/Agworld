@@ -18,7 +18,7 @@ function make(){
   const status=box.querySelector('[data-status]'), run=box.querySelector('[data-run]'), note=box.querySelector('[data-note]');
   box.querySelector('[data-close]').onclick=()=>box.remove();
 
-  const ready=()=>window.AGWorldDemoWorldSeed?.run && window.AGWorldV2?.EntityService && window.AGWorldV2?.EntityRepository && window.AGWorldV2?.RelationshipRepository;
+  const ready=()=>window.AGWorldDemoWorldSeed?.run && window.AGWorldDynamicEntityAPI?.create && window.AGWorldDynamicEntityAPI?.createRelationship;
   let tries=0;
   const check=()=>{
     if(ready()){
