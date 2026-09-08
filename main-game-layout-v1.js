@@ -448,17 +448,8 @@
     card.classList.add('show','agworld-company-entity-card');
     card.dataset.entityCommandDefault='company';
     card.innerHTML=
-      '<div class="company-command-card-head">'+
-        '<div class="company-command-title-block">'+
-          '<div class="company-command-eyebrow">COMPANY PORTFOLIO · NATIONAL NETWORK</div>'+
-          '<h2 id="farmName">THE COMPANY</h2>'+
-          '<div id="farmMeta" class="meta">Live facility portfolio across South Africa</div>'+
-        '</div>'+
-        '<div class="company-command-status"><i></i><span>LIVE</span></div>'+
-      '</div>'+
       '<div class="company-command-split">'+
-        '<section class="company-command-stats-pane">'+
-          '<div class="company-pane-heading"><div><strong>COMPANY STATS</strong><span>LIVE NATIONAL OVERVIEW</span></div><b>NATIONAL</b></div>'+
+        '<section class="company-command-stats-pane" aria-label="Company statistics">'+
           '<div class="company-command-kpis">'+
             '<div><span class="company-kpi-icon">⌂</span><div><b>'+fs.length+'</b><span>FACILITIES</span></div></div>'+
             '<div><span class="company-kpi-icon">◉</span><div><b>'+employees+'</b><span>EMPLOYEES</span></div></div>'+
@@ -472,8 +463,7 @@
           '</div>'+
           '<div class="company-command-footer"><span>The Company command view remains active until a facility or another map entity is selected.</span><b>NATIONAL SCOPE</b></div>'+
         '</section>'+
-        '<section class="company-command-facilities-pane">'+
-          '<div class="company-pane-heading"><div><strong>COMPANY FACILITIES</strong><span>CLICK A FACILITY TO OPEN IT ON THE MAP</span></div><b>'+fs.length+' SITES</b></div>'+
+        '<section class="company-command-facilities-pane" aria-label="Company facilities">'+
           '<div class="company-facility-list">'+
             (fs.length?fs.map(f=>'<article class="company-facility-row" data-company-facility-id="'+esc(f.id||'')+'" tabindex="0" role="button" aria-label="Open '+esc(f.name)+' on map">'+
               '<div class="company-facility-marker"><i></i></div>'+
@@ -1171,75 +1161,25 @@
 })();
 
 
-/* COMPANY COMMAND CENTRE GEOMETRY ENFORCER v31 */
+;
+
+
+/* COMPANY COMMAND CENTRE FULL AREA v32 */
 (function(){
-  /*
-   * The live screenshot proves the problem is not the individual 50% panes:
-   * a legacy rule is shrinking/anchoring the split container itself. Enforce
-   * the geometry from the actual card bounds after every Company render.
-   */
-  function forceCompanyGeometry(){
-    const card=document.querySelector('#entityInformationSection #farmCard.agworld-company-entity-card');
-    if(!card) return false;
-    const head=card.querySelector(':scope > .company-command-card-head');
-    const split=card.querySelector(':scope > .company-command-split');
-    const stats=split?.querySelector(':scope > .company-command-stats-pane');
-    const facilities=split?.querySelector(':scope > .company-command-facilities-pane');
-    if(!head||!split||!stats||!facilities) return false;
-
-    const top=Math.max(0,Math.round(head.offsetTop+head.offsetHeight));
-    card.style.setProperty('position','relative','important');
-    card.style.setProperty('display','block','important');
-    card.style.setProperty('width','100%','important');
-    card.style.setProperty('padding','0','important');
-
-    head.style.setProperty('position','absolute','important');
-    head.style.setProperty('left','0','important');
-    head.style.setProperty('right','0','important');
-    head.style.setProperty('top','0','important');
-    head.style.setProperty('width','100%','important');
-    head.style.setProperty('box-sizing','border-box','important');
-
-    split.style.setProperty('position','absolute','important');
-    split.style.setProperty('display','flex','important');
-    split.style.setProperty('flex-direction','row','important');
-    split.style.setProperty('left','0','important');
-    split.style.setProperty('right','0','important');
-    split.style.setProperty('top',top+'px','important');
-    split.style.setProperty('bottom','0','important');
-    split.style.setProperty('width','100%','important');
-    split.style.setProperty('height','auto','important');
-    split.style.setProperty('margin','0','important');
-    split.style.setProperty('padding','0','important');
-    split.style.setProperty('overflow','hidden','important');
-    split.style.setProperty('box-sizing','border-box','important');
-
-    [stats,facilities].forEach((pane,i)=>{
-      pane.style.setProperty('position','relative','important');
-      pane.style.setProperty('display','flex','important');
-      pane.style.setProperty('flex-direction','column','important');
-      pane.style.setProperty('flex','0 0 50%','important');
-      pane.style.setProperty('width','50%','important');
-      pane.style.setProperty('max-width','50%','important');
-      pane.style.setProperty('min-width','0','important');
-      pane.style.setProperty('height','100%','important');
-      pane.style.setProperty('left','auto','important');
-      pane.style.setProperty('right','auto','important');
-      pane.style.setProperty('top','auto','important');
-      pane.style.setProperty('bottom','auto','important');
-      pane.style.setProperty('margin','0','important');
-      pane.style.setProperty('order',String(i),'important');
-      pane.style.setProperty('box-sizing','border-box','important');
-    });
-
-    return true;
-  }
-
-  function queue(){ requestAnimationFrame(()=>requestAnimationFrame(forceCompanyGeometry)); }
-  window.addEventListener('load',queue);
-  window.addEventListener('resize',queue);
-  document.addEventListener('agworld:company-card-rendered',queue);
-  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
-  setInterval(forceCompanyGeometry,750);
-  queue();
+  const style=document.createElement('style');
+  style.id='agworldCompanyCommandFullAreaV32';
+  style.textContent=
+    '#entityInformationSection .farm-card.agworld-company-entity-card{position:relative!important;display:block!important;width:100%!important;min-width:0!important;max-width:none!important;height:100%!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#0b151a!important;box-sizing:border-box!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-card-head{display:none!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{position:absolute!important;inset:0!important;display:flex!important;flex-direction:row!important;align-items:stretch!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;box-sizing:border-box!important;background:#0b151a!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane{display:flex!important;flex:0 0 50%!important;flex-direction:column!important;width:50%!important;max-width:50%!important;min-width:0!important;min-height:0!important;height:100%!important;margin:0!important;padding:16px!important;overflow:auto!important;box-sizing:border-box!important;background:#0d181d!important;border-right:1px solid rgba(117,224,132,.22)!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{display:flex!important;flex:0 0 50%!important;flex-direction:column!important;width:50%!important;max-width:50%!important;min-width:0!important;min-height:0!important;height:100%!important;margin:0!important;padding:16px!important;overflow:hidden!important;box-sizing:border-box!important;background:#0a1419!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-pane-heading{display:none!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis{width:100%!important;margin:0 0 12px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-stats-summary{width:100%!important;margin:0!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-footer{margin-top:auto!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-list{width:100%!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;margin:0!important;overflow:auto!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-row{width:100%!important;box-sizing:border-box!important}'+
+    '@media(max-width:900px){#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{position:relative!important;inset:auto!important;flex-direction:column!important;height:auto!important;min-height:100%!important;overflow:auto!important}#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane,#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{flex:0 0 auto!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important}}';
+  document.head.appendChild(style);
 })();
