@@ -408,3 +408,27 @@ html body .app-shell > #entityInformationSection::after{
   #entityInformationSection #farmCard.show{grid-template-columns:1fr 1.3fr!important}
   #entityInformationSection #farmCard .farm-actions{display:none!important}
 }
+
+
+/* Selected entity mode: the Entity Command Centre is a dedicated canvas.
+   Do not leave the legacy Farm Card shell above the V2 panel, otherwise empty
+   summary columns consume the entire 170px viewport and clip the real entity. */
+#entityInformationSection #farmCard.agworld-selected-entity-command{
+  padding:0!important;
+  overflow:hidden!important;
+  height:100%!important;
+  max-height:none!important;
+}
+#entityInformationSection #farmCard.agworld-selected-entity-command #agworldV2FarmDetailHost{
+  width:100%!important;
+  height:100%!important;
+  max-height:100%!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  overflow:auto!important;
+}
+#entityInformationSection #farmCard.agworld-selected-entity-command .agworld-v2-detail-panel{
+  min-height:100%!important;
+  height:auto!important;
+}
