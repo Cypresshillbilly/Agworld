@@ -1249,3 +1249,69 @@
     '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card{height:auto!important;overflow:auto!important}#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split{position:relative!important;display:flex!important;flex-direction:column!important;height:auto!important;overflow:visible!important}#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane,#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{display:flex!important;width:100%!important;height:auto!important;min-height:0!important;overflow:visible!important}#entityInformationSection .agworld-company-entity-card .company-command-kpis{min-height:220px!important}#entityInformationSection .agworld-company-entity-card .company-facility-list{height:auto!important;max-height:none!important;overflow:visible!important}}';
   document.head.appendChild(style);
 })();
+
+/* AG World v35 Territory Stats command-center visual system. */
+(function(){
+  const $=id=>document.getElementById(id);
+
+  function ensureHeading(){
+    const panel=$('territoryInfoPanel');
+    if(!panel) return false;
+    panel.classList.add('agworld-territory-command-panel');
+    let heading=panel.querySelector(':scope > .agworld-territory-stats-heading');
+    if(!heading){
+      heading=document.createElement('div');
+      heading.className='agworld-territory-stats-heading';
+      heading.innerHTML='<span class="agworld-territory-stats-label">TERRATORY STATS</span><span class="agworld-territory-stats-live"><i></i> LIVE</span>';
+      panel.insertBefore(heading,panel.firstChild);
+    }
+    return true;
+  }
+
+  const style=document.createElement('style');
+  style.id='agworldTerritoryStatsCommandStyle';
+  style.textContent=
+    '#territorySection{background:#081217!important;border-top:1px solid rgba(126,167,148,.16)!important;overflow:hidden!important}'+
+    '#territoryInfoPanel.agworld-territory-command-panel{position:relative!important;display:flex!important;flex-direction:column!important;min-width:0!important;min-height:0!important;height:100%!important;max-height:100%!important;margin:0!important;padding:0!important;overflow:auto!important;box-sizing:border-box!important;background:radial-gradient(circle at 100% 0,rgba(73,132,91,.14),transparent 42%),linear-gradient(145deg,#101d22 0%,#091318 58%,#060d11 100%)!important;color:#edf6ef!important;border:1px solid rgba(122,224,145,.22)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.045)!important}'+
+    '#territoryInfoPanel.agworld-territory-command-panel:before{content:"";display:block;position:sticky;top:0;z-index:5;height:4px;flex:0 0 4px;background:linear-gradient(90deg,#5ed879,#a9ee7c 42%,rgba(169,238,124,.10));box-shadow:0 0 18px rgba(94,216,121,.26)}'+
+    '#territoryInfoPanel .agworld-territory-stats-heading{position:sticky!important;top:0!important;z-index:4!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;min-height:46px!important;padding:0 16px!important;box-sizing:border-box!important;background:linear-gradient(180deg,rgba(16,29,34,.98),rgba(9,19,24,.96))!important;border-bottom:1px solid rgba(126,167,148,.18)!important;box-shadow:0 8px 18px rgba(0,0,0,.14)!important}'+
+    '#territoryInfoPanel .agworld-territory-stats-label{font-size:16px!important;line-height:1!important;letter-spacing:1.6px!important;font-weight:900!important;color:#edf8f0!important;text-transform:uppercase!important;font-family:inherit!important}'+
+    '#territoryInfoPanel .agworld-territory-stats-live{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important;padding:6px 8px!important;border:1px solid rgba(117,224,132,.24)!important;border-radius:999px!important;background:rgba(117,224,132,.07)!important;color:#a9efb2!important;font-size:8px!important;font-weight:900!important;letter-spacing:1px!important}'+
+    '#territoryInfoPanel .agworld-territory-stats-live i{display:block!important;width:6px!important;height:6px!important;border-radius:50%!important;background:#75e084!important;box-shadow:0 0 10px rgba(117,224,132,.9)!important}'+
+    '#territoryInfoPanel .territory-info-header{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:12px!important;margin:14px 16px 0!important;padding:0 0 12px!important;border-bottom:1px solid rgba(255,255,255,.08)!important;background:transparent!important}'+
+    '#territoryInfoPanel .territory-info-level{font-size:9px!important;line-height:1.2!important;letter-spacing:1.2px!important;font-weight:900!important;color:#8ee99d!important;text-transform:uppercase!important}'+
+    '#territoryInfoPanel .territory-info-name{margin-top:5px!important;font-size:16px!important;line-height:1.1!important;letter-spacing:.7px!important;font-weight:900!important;color:#f3fbf5!important}'+
+    '#territoryInfoPanel .territory-info-control{display:flex!important;align-items:center!important;gap:12px!important;margin:12px 16px 0!important;padding:12px 14px!important;border:1px solid rgba(126,167,148,.20)!important;border-radius:8px!important;background:linear-gradient(145deg,#122128 0%,#0b151a 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important}'+
+    '#territoryInfoPanel .territory-info-control-value{font-size:28px!important;line-height:1!important;font-weight:900!important;letter-spacing:-.6px!important;color:#9cf1a8!important;text-shadow:0 0 18px rgba(117,224,132,.16)!important}'+
+    '#territoryInfoPanel .territory-info-control-title{font-size:10px!important;font-weight:900!important;letter-spacing:.9px!important;color:#e8f5eb!important}'+
+    '#territoryInfoPanel .territory-info-status{margin-top:4px!important;font-size:8px!important;font-weight:900!important;letter-spacing:1px!important;color:#7f9889!important}'+
+    '#territoryInfoPanel .territory-info-status-strong{color:#93e99e!important}'+
+    '#territoryInfoPanel .territory-info-progress{height:6px!important;margin:10px 16px 0!important;border-radius:999px!important;overflow:hidden!important;background:#071015!important;border:1px solid rgba(255,255,255,.06)!important;display:flex!important}'+
+    '#territoryInfoPanel .territory-info-progress-company{background:linear-gradient(90deg,#48c76a,#9dea7b)!important}'+
+    '#territoryInfoPanel .territory-info-progress-enemy{background:linear-gradient(90deg,#d05b5b,#f08a72)!important}'+
+    '#territoryInfoPanel .territory-info-progress-neutral{background:#64747b!important}'+
+    '#territoryInfoPanel .territory-info-legend{display:flex!important;flex-wrap:wrap!important;gap:7px 14px!important;margin:8px 16px 0!important;color:#91a59a!important;font-size:9px!important;line-height:1.3!important}'+
+    '#territoryInfoPanel .territory-info-grid{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important;margin:12px 16px 16px!important;padding:0!important;background:transparent!important}'+
+    '#territoryInfoPanel .territory-info-grid>div{min-width:0!important;padding:11px 10px!important;border:1px solid rgba(126,167,148,.18)!important;border-radius:7px!important;background:linear-gradient(145deg,#0f1d23 0%,#091217 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important}'+
+    '#territoryInfoPanel .territory-info-grid strong{display:block!important;font-size:17px!important;line-height:1!important;color:#edf8f0!important;font-weight:900!important}'+
+    '#territoryInfoPanel .territory-info-grid span{display:block!important;margin-top:5px!important;font-size:7px!important;line-height:1.2!important;letter-spacing:.8px!important;text-transform:uppercase!important;color:#7f9889!important}'+
+    '#territoryInfoPanel .territory-info-empty{margin:14px 16px 16px!important;padding:16px!important;border:1px solid rgba(126,167,148,.18)!important;border-radius:8px!important;background:linear-gradient(145deg,#0f1d23,#091217)!important;color:#dcebe1!important}'+
+    '#territoryInfoPanel .territory-info-footer{margin-top:10px!important;padding-top:10px!important;border-top:1px solid rgba(255,255,255,.07)!important;color:#91a59a!important;font-size:10px!important}'+
+    '@media(max-width:1050px){#territoryInfoPanel .territory-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}'+
+    '@media(max-width:760px){#territoryInfoPanel .territory-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}#territoryInfoPanel .agworld-territory-stats-label{font-size:14px!important}}';
+  document.head.appendChild(style);
+
+  let observer;
+  function start(){
+    ensureHeading();
+    const panel=$('territoryInfoPanel');
+    if(panel && !observer){
+      observer=new MutationObserver(()=>ensureHeading());
+      observer.observe(panel,{childList:true});
+    }
+  }
+  document.addEventListener('DOMContentLoaded',start);
+  window.addEventListener('load',()=>{start();setTimeout(ensureHeading,300);setTimeout(ensureHeading,1200);setTimeout(ensureHeading,3000)});
+  window.addEventListener('agworld:territory-selected',()=>setTimeout(ensureHeading,0));
+  window.__AGWORLD_ENSURE_TERRATORY_STATS__=ensureHeading;
+})();
