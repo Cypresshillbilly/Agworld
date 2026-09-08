@@ -107,17 +107,46 @@
     return buttons.length>0;
   }
 
+  function lockGeometry(){
+    const shell=document.querySelector('.app-shell');
+    const sidebar=document.querySelector('.sidebar');
+    const missions=document.querySelector('.missions');
+    const mapArea=document.querySelector('.map-area');
+    const territory=$('territorySection');
+    const entity=$('entityInformationSection');
+    const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
+
+    if(sidebar){ important(sidebar,'bottom','170px'); important(sidebar,'height','650px'); }
+    if(missions){ important(missions,'left','180px'); important(missions,'top','0'); important(missions,'width','285px'); important(missions,'height','650px'); }
+    if(mapArea){ important(mapArea,'left','465px'); important(mapArea,'top','0'); important(mapArea,'right','0'); important(mapArea,'height','650px'); }
+    if(territory){ important(territory,'position','absolute'); important(territory,'left','0'); important(territory,'top','650px'); important(territory,'width','465px'); important(territory,'height','170px'); important(territory,'bottom','0'); important(territory,'z-index','999'); }
+    if(entity){ important(entity,'position','absolute'); important(entity,'left','465px'); important(entity,'top','650px'); important(entity,'right','0'); important(entity,'height','170px'); important(entity,'bottom','0'); important(entity,'z-index','999'); }
+
+    const oldProfile=document.querySelector('.bottom.user-profile-section');
+    if(oldProfile) important(oldProfile,'display','none');
+
+    if(shell && territory && territory.parentElement!==shell) shell.appendChild(territory);
+    if(shell && entity && entity.parentElement!==shell) shell.appendChild(entity);
+  }
+
   function run(){
     moveCorePanels();
     moveProgress();
     moveBadges();
     wireMyRegion();
+    lockGeometry();
+    window.__AGWORLD_MAIN_LAYOUT_LOCKED__=true;
   }
 
   run();
-  const observer=new MutationObserver(()=>run());
+  let queued=false;
+  const observer=new MutationObserver(()=>{
+    if(queued) return;
+    queued=true;
+    requestAnimationFrame(()=>{ queued=false; run(); });
+  });
   observer.observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('load',run);
+  window.addEventListener('load',()=>{ run(); setTimeout(run,250); setTimeout(run,1000); setTimeout(run,2500); });
   window.addEventListener('agworld:territory-selected',event=>{
     window.__AGWORLD_SELECTED_TERRITORY__=event.detail?.territory||event.detail||null;
   });
