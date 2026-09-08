@@ -574,6 +574,42 @@ function calculateTerritoryControl(territory) {
   };
 }
 
+
+// Public strategic API used by the World Event, relationship and mission
+// systems. The API deliberately exposes summaries rather than map internals.
+window.AGWorldTerritoryControl = {
+  refresh: () => {
+    refreshTerritoryControl();
+    return true;
+  },
+  refreshRelationships: () => loadMarketInfluenceRelationships({ force: true }),
+  getInfluence: (type, entity) => entityMarketInfluence(marketEntityType(type), entity),
+  getSummary: (territory) => territory ? calculateTerritoryControl(territory) : null,
+  getModel: () => ({
+    version: 'relationship-network-v1',
+    marketUnits: ['farm', 'contractor'],
+    strategicInfluencers: ['companyFacility', 'competitor'],
+    rules: {
+      company: 'Company Facility relationships and Company assets propagate Company influence.',
+      competitor: 'Competitor relationships and Competitor assets propagate Competitor influence.',
+      contested: 'A market entity reached by both Company and Competitor influence is contested.',
+      neutral: 'A market entity with no active Company or Competitor influence remains open market.'
+    }
+  })
+};
+
+window.addEventListener('agworld:relationship-created', () => loadMarketInfluenceRelationships({ force: true }));
+window.addEventListener('agworld:relationship-updated', () => loadMarketInfluenceRelationships({ force: true }));
+window.addEventListener('agworld:entity-updated', () => {
+  marketInfluenceState.components.clear();
+  refreshTerritoryControl();
+});
+
+// Relationship loading is asynchronous and deliberately separate from map
+// startup. This keeps Google Maps responsive while the strategic graph hydrates.
+setTimeout(() => loadMarketInfluenceRelationships({ force: true }), 2500);
+setInterval(() => loadMarketInfluenceRelationships(), 12000);
+
 function territoryControlStyle(territory) {
   const game = territory.game || calculateTerritoryControl(territory);
   const control = Number(game.control || 0);
