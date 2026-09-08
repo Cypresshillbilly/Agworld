@@ -732,4 +732,22 @@
     '.company-facility-list-head{display:flex;justify-content:space-between;gap:10px;padding:3px 16px 7px;font-size:8px;letter-spacing:.9px;color:#a8b8ad}.company-facility-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 16px 9px;overflow:auto;flex:1;align-content:start}.company-facility-row{display:grid;grid-template-columns:minmax(0,1fr) 58px auto;gap:8px;align-items:center;padding:8px 9px;border-radius:8px;background:rgba(5,13,16,.55);border:1px solid rgba(255,255,255,.055)}.company-facility-name{min-width:0}.company-facility-name b,.company-facility-name span{display:block}.company-facility-name b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-name span{font-size:7px;color:#8fa095;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-staff{text-align:center}.company-facility-staff b,.company-facility-staff span{display:block}.company-facility-staff b{font-size:12px;color:#dfeee2}.company-facility-staff span{font-size:6px;letter-spacing:.6px;color:#7f9588}.company-facility-state{font-size:7px;color:#75e084;font-weight:900}.company-facility-empty{padding:12px;font-size:9px;color:#94a39a}.company-command-footer{padding:7px 16px 10px;border-top:1px solid rgba(255,255,255,.055);font-size:8px;color:#84948b}'+
     '@media(max-width:900px){.company-facility-list{grid-template-columns:1fr}.company-command-kpis{grid-template-columns:repeat(2,1fr)}}';
   document.head.appendChild(style);
+  // ENTITY COMMAND CENTRE READABILITY SCALE
+  // Bring summary, action controls and management tabs/content up to the same
+  // practical reading scale as the primary game menu.
+  const entityCommandReadabilityStyle=document.createElement('style');
+  entityCommandReadabilityStyle.textContent=
+    '#entityInformationSection .agworld-entity-command-shell{font-size:14px!important}'+
+    '#entityInformationSection .agworld-entity-command-eyebrow{font-size:11px!important;letter-spacing:1.2px!important}'+
+    '#entityInformationSection .agworld-entity-command-summary h2{font-size:24px!important;line-height:1.12!important}'+
+    '#entityInformationSection .agworld-entity-command-status{font-size:11px!important;padding:6px 10px!important}'+
+    '#entityInformationSection .agworld-entity-command-summary-grid span{font-size:10px!important;letter-spacing:.7px!important}'+
+    '#entityInformationSection .agworld-entity-command-summary-grid b{font-size:14px!important;line-height:1.25!important}'+
+    '#entityInformationSection .agworld-entity-command-actions button{font-size:12px!important;letter-spacing:.5px!important;padding:10px 13px!important;min-height:38px!important}'+
+    '#entityInformationSection .agworld-entity-management-label{font-size:12px!important;letter-spacing:1px!important}'+
+    '#entityInformationSection .agworld-entity-command-management{font-size:14px!important}'+
+    '#entityInformationSection .agworld-entity-command-management [data-tab],#entityInformationSection .agworld-entity-command-management .tab{font-size:12px!important}'+
+    '#entityInformationSection .agworld-entity-command-management p,#entityInformationSection .agworld-entity-command-management li,#entityInformationSection .agworld-entity-command-management td,#entityInformationSection .agworld-entity-command-management th,#entityInformationSection .agworld-entity-command-management label{font-size:13px!important;line-height:1.35!important}'+
+    '#entityInformationSection .agworld-entity-command-management input,#entityInformationSection .agworld-entity-command-management select,#entityInformationSection .agworld-entity-command-management textarea,#entityInformationSection .agworld-entity-command-management button{font-size:13px!important}';
+  document.head.appendChild(entityCommandReadabilityStyle);
 })();
