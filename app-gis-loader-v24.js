@@ -295,31 +295,95 @@ function territoryFarmSet(territory) {
   return [];
 }
 
-function territoryContractorSet(territory) {
+let contractorSpatialIndex = null;
+let contractorSpatialSignature = '';
+
+function contractorPoint(contractor) {
+  const coords = contractor?.geometry?.coordinates;
+  if (Array.isArray(coords) && coords.length >= 2) {
+    return { lat: Number(coords[1]), lng: Number(coords[0]) };
+  }
+  const p = contractor?.position || contractor?.center || contractor;
+  return { lat: Number(p?.lat), lng: Number(p?.lng) };
+}
+
+function getContractorSpatialIndex() {
   const world = window.AG_WORLD_WORLD || {};
   const contractorList = Array.isArray(window.__AG_WORLD_CONTRACTORS)
     ? window.__AG_WORLD_CONTRACTORS
     : (world.getContractors?.() || []);
-  const level = territory.level || 'province';
-  const assigned = contractor => {
-    const p = contractor?.position || contractor?.center || contractor;
-    const municipality = municipalities.find(m => pointInPolygon({ lat: Number(p?.lat), lng: Number(p?.lng) }, m.boundary));
-    const town = towns.find(t => pointInPolygon({ lat: Number(p?.lat), lng: Number(p?.lng) }, t.boundary));
-    const province = territories.find(t => pointInPolygon({ lat: Number(p?.lat), lng: Number(p?.lng) }, t.boundary));
-    return {
-      municipalityId: contractor?.municipalityId || contractor?.details?.municipalityId || municipality?.id,
-      townId: contractor?.townId || contractor?.details?.townId || town?.id,
-      territoryId: contractor?.territoryId || contractor?.details?.territoryId || province?.id || municipality?.parentId
-    };
+
+  // Geometry is resolved once per contractor instead of being recalculated for
+  // every country/province/municipality/town during territory control styling.
+  const signature = contractorList.map(c => {
+    const p = contractorPoint(c);
+    return String(c?.id || '') + ':' + p.lat + ':' + p.lng + ':' +
+      String(c?.municipalityId || c?.details?.municipalityId || '') + ':' +
+      String(c?.townId || c?.details?.townId || '') + ':' +
+      String(c?.territoryId || c?.details?.territoryId || '');
+  }).join('|');
+
+  if (contractorSpatialIndex && signature === contractorSpatialSignature) return contractorSpatialIndex;
+
+  const index = {
+    all: contractorList.slice(),
+    country: contractorList.slice(),
+    province: new Map(),
+    municipality: new Map(),
+    town: new Map()
   };
-  if (level === 'country') return contractorList.slice();
-  return contractorList.filter(contractor => {
-    const geo = assigned(contractor);
-    if (level === 'town') return geo.townId === territory.id;
-    if (level === 'municipality') return geo.municipalityId === territory.id;
-    if (level === 'province') return geo.territoryId === territory.id;
-    return false;
+
+  contractorList.forEach(contractor => {
+    const p = contractorPoint(contractor);
+    const details = contractor?.details || {};
+    const municipalityId = contractor?.municipalityId || details.municipalityId ||
+      (Number.isFinite(p.lat) && Number.isFinite(p.lng)
+        ? municipalities.find(m => pointInPolygon(p, m.boundary))?.id
+        : null);
+    const townId = contractor?.townId || details.townId ||
+      (Number.isFinite(p.lat) && Number.isFinite(p.lng)
+        ? towns.find(t => pointInPolygon(p, t.boundary))?.id
+        : null);
+    let territoryId = contractor?.territoryId || details.territoryId;
+    if (!territoryId && Number.isFinite(p.lat) && Number.isFinite(p.lng)) {
+      territoryId = territories.find(t => pointInPolygon(p, t.boundary))?.id || null;
+    }
+    if (!territoryId && municipalityId) {
+      territoryId = municipalities.find(m => m.id === municipalityId)?.parentId || null;
+    }
+
+    if (territoryId) {
+      if (!index.province.has(String(territoryId))) index.province.set(String(territoryId), []);
+      index.province.get(String(territoryId)).push(contractor);
+    }
+    if (municipalityId) {
+      if (!index.municipality.has(String(municipalityId))) index.municipality.set(String(municipalityId), []);
+      index.municipality.get(String(municipalityId)).push(contractor);
+    }
+    if (townId) {
+      if (!index.town.has(String(townId))) index.town.set(String(townId), []);
+      index.town.get(String(townId)).push(contractor);
+    }
   });
+
+  contractorSpatialSignature = signature;
+  contractorSpatialIndex = index;
+  return index;
+}
+
+function invalidateContractorSpatialIndex() {
+  contractorSpatialIndex = null;
+  contractorSpatialSignature = '';
+}
+
+function territoryContractorSet(territory) {
+  const index = getContractorSpatialIndex();
+  const level = territory.level || 'province';
+  if (level === 'country') return index.country.slice();
+  if (level === 'town') return (index.town.get(String(territory.id)) || []).slice();
+  if (level === 'municipality') return (index.municipality.get(String(territory.id)) || []).slice();
+  if (level === 'province') return (index.province.get(String(territory.id)) || []).slice();
+  return [];
 }
 
 function contractorAssetControl(contractor) {
@@ -427,6 +491,11 @@ function territoryGameSummary(territory) {
 }
 
 function refreshTerritoryControl() {
+  // Contractor geography is indexed once before all territory overlays are
+  // recalculated. This prevents an O(territories × contractors × polygons)
+  // workload from blocking the interactive Google Map.
+  invalidateContractorSpatialIndex();
+  getContractorSpatialIndex();
   // Ensure farm → municipality → province relationships are current before
   // recalculating every territory.
   linkHierarchySpatialParents();
