@@ -611,3 +611,40 @@ html body.ag-premium-mode .sidebar .nav .ag-menu-logout{
   min-height:32px!important;
   font-size:10px!important;
 }
+
+
+/* Final large-type navigation pass — prioritise legibility over compact density. */
+html body.ag-profile-mode .sidebar .nav,
+html body.ag-game-mode .sidebar .nav,
+html body.ag-premium-mode .sidebar .nav{
+  gap:5px!important;
+  padding:5px 0!important;
+}
+html body.ag-profile-mode .sidebar .nav button,
+html body.ag-game-mode .sidebar .nav button,
+html body.ag-premium-mode .sidebar .nav button,
+html body .sidebar .nav button[data-agworld-command-menu="1"]{
+  min-height:38px!important;
+  padding:9px 11px!important;
+  font-size:12px!important;
+  line-height:1.18!important;
+  font-weight:900!important;
+  letter-spacing:.34px!important;
+  color:#d8e4e7!important;
+}
+html body.ag-profile-mode .sidebar .nav button:hover,
+html body.ag-profile-mode .sidebar .nav button.active,
+html body.ag-game-mode .sidebar .nav button:hover,
+html body.ag-game-mode .sidebar .nav button.active,
+html body.ag-premium-mode .sidebar .nav button:hover,
+html body.ag-premium-mode .sidebar .nav button.active{
+  color:#ffffff!important;
+  text-shadow:0 0 8px rgba(190,225,205,.18)!important;
+}
+html body.ag-profile-mode .sidebar .nav .ag-menu-logout,
+html body.ag-game-mode .sidebar .nav .ag-menu-logout,
+html body.ag-premium-mode .sidebar .nav .ag-menu-logout{
+  min-height:40px!important;
+  flex-basis:40px!important;
+  font-size:12px!important;
+}
