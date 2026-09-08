@@ -1,5 +1,5 @@
 /* AG World main game screen reorganisation — fixed strategic bottom panels */
-:root{--ag-bottom-h:170px;--ag-sidebar-w:180px;--ag-missions-w:285px;--ag-left-stage:465px}
+:root{--ag-bottom-h:210px;--ag-sidebar-w:180px;--ag-missions-w:285px;--ag-left-stage:465px}
 
 .sidebar{
   bottom:var(--ag-bottom-h)!important;
@@ -201,21 +201,21 @@
 
 /* FINAL LAYOUT LOCK — must win over legacy profile/footer layout rules. */
 html body .app-shell > .sidebar{
-  bottom:170px!important;
-  height:650px!important;
+  bottom:210px!important;
+  height:610px!important;
 }
 html body .app-shell > .missions{
   left:180px!important;
   top:0!important;
   width:285px!important;
-  height:650px!important;
+  height:610px!important;
   bottom:auto!important;
 }
 html body .app-shell > .map-area{
   left:465px!important;
   top:0!important;
   right:0!important;
-  height:650px!important;
+  height:610px!important;
   bottom:auto!important;
 }
 html body .app-shell > .bottom.user-profile-section{
@@ -226,11 +226,11 @@ html body .app-shell > .bottom.user-profile-section{
 html body .app-shell > #territorySection{
   position:absolute!important;
   left:0!important;
-  top:650px!important;
+  top:610px!important;
   right:auto!important;
   bottom:0!important;
   width:465px!important;
-  height:170px!important;
+  height:210px!important;
   display:block!important;
   visibility:visible!important;
   z-index:999!important;
@@ -238,11 +238,11 @@ html body .app-shell > #territorySection{
 html body .app-shell > #entityInformationSection{
   position:absolute!important;
   left:465px!important;
-  top:650px!important;
+  top:610px!important;
   right:0!important;
   bottom:0!important;
   width:auto!important;
-  height:170px!important;
+  height:210px!important;
   display:block!important;
   visibility:visible!important;
   z-index:999!important;
