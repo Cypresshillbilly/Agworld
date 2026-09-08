@@ -426,10 +426,16 @@
   function normalizeEntityActionRow(actions, entity){
     if(!actions) return actions;
 
-    // The legacy row already contains all four proven controls, but the fleet
-    // controls were deliberately hidden until a farm was selected. Inside the
-    // Entity Command Centre they must be visible and operate for the selected
-    // entity, including Company Facilities.
+    /*
+     * IMPORTANT: Do not recreate, wrap, replace, or overwrite the legacy Farm
+     * Card action handlers here. The real #farmActions DOM node is moved into
+     * the new Entity Command Centre specifically so the exact workflow that
+     * was working before the screen-layout refactor continues unchanged.
+     *
+     * This function is therefore presentation-only: it makes the existing
+     * controls visible and leaves their IDs, labels, listeners and onclick
+     * handlers completely untouched.
+     */
     actions.querySelectorAll('button').forEach(button=>{
       button.hidden=false;
       button.removeAttribute('hidden');
@@ -437,45 +443,6 @@
       button.style.removeProperty('visibility');
       button.style.removeProperty('opacity');
     });
-
-    const update=actions.querySelector('#farm3d');
-    if(update){
-      update.textContent='UPDATE '+entityCommandTypeLabel(entity?.type).toUpperCase()+' DETAILS';
-      update.onclick=(event)=>{ event.preventDefault(); event.stopPropagation(); openEntityDetailsFromAction(entity); };
-    }
-
-    const history=actions.querySelector('#farmHistoryBtn');
-    if(history){
-      history.onclick=(event)=>{ event.preventDefault(); event.stopPropagation(); openEntityHistoryFromAction(entity); };
-    }
-
-    // If a previous renderer supplied only two controls, complete the action
-    // set here. The IDs match the original legacy controls so delegated game
-    // handlers still receive the exact same action targets.
-    const add=(id,label,handler)=>{
-      let button=actions.querySelector('#'+id);
-      if(!button){
-        button=document.createElement('button');
-        button.id=id;
-        button.type='button';
-        button.textContent=label;
-        actions.appendChild(button);
-      }
-      button.hidden=false;
-      button.removeAttribute('hidden');
-      if(handler) button.addEventListener('click',handler);
-      return button;
-    };
-
-    add('fleetTransactionAction','🚁 SELL / MANAGE FLEET',event=>{
-      if(typeof window.openFleetTransaction==='function') return window.openFleetTransaction(String(entity?.type||'farm'),String(entity?.id||''));
-      window.dispatchEvent(new CustomEvent('agworld:fleet-transaction-request',{detail:{entity}}));
-    });
-    add('fleetHistoryAction','📊 SALES HISTORY & FLEET',event=>{
-      if(typeof window.openFleetManagement==='function') return window.openFleetManagement(String(entity?.type||'farm'),String(entity?.id||''));
-      window.dispatchEvent(new CustomEvent('agworld:fleet-history-request',{detail:{entity}}));
-    });
-
     return actions;
   }
 
