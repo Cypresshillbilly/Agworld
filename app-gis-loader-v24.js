@@ -2108,6 +2108,8 @@ function selectFarm(farm, zoom = true) {
   $('aiText').textContent = farm.drones === 0
     ? `${farm.name} has no company drone recorded and scores ${farm.opportunityScore ?? '—'}/100. Qualify this opportunity and move the territory forward.`
     : `${farm.name} is an active relationship. Protect the account through service quality and customer satisfaction.`;
+  updateFleetTransactionAction(farm, 'farm');
+
   const updateButton = $('farm3d');
   if (updateButton) {
     updateButton.textContent = 'UPDATE FARM DETAILS';
@@ -3991,6 +3993,19 @@ function renderDynamicEntity(entity) {
   }
 }
 
+function updateFleetTransactionAction(entity, type) {
+  const button=$('fleetTransactionAction');
+  if(!button) return;
+  const eligible=type==='farm'||type==='contractor';
+  button.hidden=!eligible;
+  if(!eligible) { button.onclick=null; return; }
+  const drone=dronePortfolioInfluence(type,entity);
+  button.textContent='🚁 SELL / MANAGE FLEET · '+drone.totalDrones+' DRONES';
+  button.dataset.entityType=type;
+  button.dataset.entityId=String(entity.id);
+  button.onclick=()=>openFleetTransaction(type,entity.id);
+}
+
 function selectDynamicEntity(entity, zoom = true) {
   const directDiag = window.__AGWORLD_DIRECT_MARKER_DIAGNOSTIC__;
   const isDirectDiagnosticSelection = directDiag && String(directDiag.entityId) === String(entity?.id || '') && String(directDiag.entityType) === String(entity?.type || '');
@@ -4046,6 +4061,7 @@ function selectDynamicEntity(entity, zoom = true) {
   const capabilities = Array.isArray(entity.details?.capabilities) ? entity.details.capabilities.join(', ') : '';
   setCardText('farmDetailText', entity.details?.notes || capabilities || `${cfg.label} location and intelligence record.`);
   setCardText('aiText', `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`);
+  updateFleetTransactionAction(entity, entity.type);
 
   if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY CARD UPDATE COMPLETED');
 
