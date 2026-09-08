@@ -753,33 +753,88 @@
 })();
 
 
-/* AG WORLD MENU COMMAND BRIDGE v1 */
+/* AG WORLD MENU COMMAND BRIDGE v2 */
 (function(){
+  const legacyControls=new Map();
+
   const COMMANDS=[
     {
       id:'agMenuCompanyCommands',
       label:'◈ COMPANY COMMANDS',
       match:/company commands?/i,
+      selectors:['#agCompanyCommandButton','[data-company-command]','[data-action="company-command"]'],
       open:()=>window.AGWorldCompany?.open?.()
     },
     {
       id:'agMenuCompanyControl',
       label:'◉ COMPANY CONTROL',
       match:/company control/i,
+      selectors:['#agControlDashboardButton','[data-company-control]','[data-action="company-control"]'],
       open:()=>window.AGWorldControlDashboard?.open?.()
     },
     {
       id:'agMenuTerritoryGraphics',
       label:'◇ TERRITORY GRAPHICS',
-      match:/territory graphics/i
+      // The legacy control has appeared with more than one label across builds.
+      // Match the button text as well as stable graphic-related IDs/data hooks.
+      match:/(territory\s*graphics?|graphics?\s*territory|^graphics?$|map\s*graphics?)/i,
+      selectors:[
+        '#territoryGraphicsButton',
+        '#agTerritoryGraphicsButton',
+        '#territoryGraphics',
+        '#mapGraphicsButton',
+        '[data-territory-graphics]',
+        '[data-action="territory-graphics"]',
+        '[data-action="graphics"]'
+      ],
+      open:()=>{
+        const targets=[
+          window.AGWorldTerritoryGraphics?.open,
+          window.TerritoryGraphics?.open,
+          window.openTerritoryGraphics,
+          window.showTerritoryGraphics,
+          window.toggleTerritoryGraphics,
+          window.openMapGraphics,
+          window.showMapGraphics
+        ];
+        for(const fn of targets){
+          if(typeof fn==='function'){
+            try{return fn.call(window);}catch(error){console.warn('Territory Graphics command fallback failed',error);}
+          }
+        }
+        return undefined;
+      }
     }
   ];
 
+  function isMenuButton(button){
+    return !!button?.dataset?.agworldCommandMenu;
+  }
+
   function findLiveControl(command){
-    return [...document.querySelectorAll('button')].find(button=>{
-      if(button.id===command.id) return false;
-      return command.match.test((button.textContent||'').replace(/\s+/g,' ').trim());
+    const cached=legacyControls.get(command.id);
+    if(cached && document.contains(cached)) return cached;
+
+    for(const selector of (command.selectors||[])){
+      try{
+        const candidate=document.querySelector(selector);
+        if(candidate && candidate.id!==command.id && !isMenuButton(candidate)){
+          legacyControls.set(command.id,candidate);
+          return candidate;
+        }
+      }catch(_){}
+    }
+
+    const buttons=[...document.querySelectorAll('button')];
+    const candidate=buttons.find(button=>{
+      if(button.id===command.id || isMenuButton(button)) return false;
+      const text=(button.textContent||'').replace(/\s+/g,' ').trim();
+      const signature=[button.id,button.className,button.dataset?.action,button.dataset?.view].filter(Boolean).join(' ');
+      return command.match.test(text)||command.match.test(signature);
     })||null;
+
+    if(candidate) legacyControls.set(command.id,candidate);
+    return candidate;
   }
 
   function hideLegacyControl(command){
@@ -797,8 +852,6 @@
     event?.preventDefault();
     event?.stopPropagation();
 
-    // Preserve the existing window and workflow. Prefer the public command
-    // API where it exists; otherwise invoke the live legacy control itself.
     if(typeof command.open==='function'){
       const result=command.open();
       if(result!==undefined) return result;
@@ -806,8 +859,21 @@
 
     const live=findLiveControl(command);
     if(live){
-      live.click();
-      return true;
+      // Restore just long enough for legacy handlers that guard against
+      // non-visible controls, then invoke the original workflow unchanged.
+      const previousDisplay=live.style.display;
+      live.style.removeProperty('display');
+      try{
+        live.click();
+        return true;
+      }finally{
+        live.style.setProperty('display',previousDisplay||'none','important');
+      }
+    }
+
+    if(command.id==='agMenuTerritoryGraphics'){
+      window.showToast?.('Territory Graphics is still loading. Please try again in a moment.');
+      console.warn('AG World Territory Graphics control was not found in the live DOM.');
     }
     return false;
   }
@@ -837,5 +903,10 @@
   ensureMenuCommands();
   const observer=new MutationObserver(()=>ensureMenuCommands());
   observer.observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('load',()=>{ensureMenuCommands();setTimeout(ensureMenuCommands,400);setTimeout(ensureMenuCommands,1500);});
+  window.addEventListener('load',()=>{
+    ensureMenuCommands();
+    setTimeout(ensureMenuCommands,400);
+    setTimeout(ensureMenuCommands,1500);
+    setTimeout(ensureMenuCommands,3500);
+  });
 })();
