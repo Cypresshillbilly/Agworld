@@ -751,3 +751,91 @@
     '#entityInformationSection .agworld-entity-command-management input,#entityInformationSection .agworld-entity-command-management select,#entityInformationSection .agworld-entity-command-management textarea,#entityInformationSection .agworld-entity-command-management button{font-size:13px!important}';
   document.head.appendChild(entityCommandReadabilityStyle);
 })();
+
+
+/* AG WORLD MENU COMMAND BRIDGE v1 */
+(function(){
+  const COMMANDS=[
+    {
+      id:'agMenuCompanyCommands',
+      label:'◈ COMPANY COMMANDS',
+      match:/company commands?/i,
+      open:()=>window.AGWorldCompany?.open?.()
+    },
+    {
+      id:'agMenuCompanyControl',
+      label:'◉ COMPANY CONTROL',
+      match:/company control/i,
+      open:()=>window.AGWorldControlDashboard?.open?.()
+    },
+    {
+      id:'agMenuTerritoryGraphics',
+      label:'◇ TERRITORY GRAPHICS',
+      match:/territory graphics/i
+    }
+  ];
+
+  function findLiveControl(command){
+    return [...document.querySelectorAll('button')].find(button=>{
+      if(button.id===command.id) return false;
+      return command.match.test((button.textContent||'').replace(/\s+/g,' ').trim());
+    })||null;
+  }
+
+  function hideLegacyControl(command){
+    const button=findLiveControl(command);
+    if(button){
+      button.style.setProperty('display','none','important');
+      button.setAttribute('aria-hidden','true');
+      button.tabIndex=-1;
+      button.dataset.agworldMovedToMenu='1';
+    }
+    return button;
+  }
+
+  function openCommand(command,event){
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    // Preserve the existing window and workflow. Prefer the public command
+    // API where it exists; otherwise invoke the live legacy control itself.
+    if(typeof command.open==='function'){
+      const result=command.open();
+      if(result!==undefined) return result;
+    }
+
+    const live=findLiveControl(command);
+    if(live){
+      live.click();
+      return true;
+    }
+    return false;
+  }
+
+  function ensureMenuCommands(){
+    const nav=document.querySelector('.sidebar .nav')||document.querySelector('.nav');
+    if(!nav) return false;
+
+    const developer=document.getElementById('developerModeBtn');
+    COMMANDS.forEach(command=>{
+      let button=document.getElementById(command.id);
+      if(!button){
+        button=document.createElement('button');
+        button.id=command.id;
+        button.type='button';
+        button.textContent=command.label;
+        button.dataset.agworldCommandMenu='1';
+        button.addEventListener('click',event=>openCommand(command,event));
+        if(developer && developer.parentElement===nav) nav.insertBefore(button,developer);
+        else nav.appendChild(button);
+      }
+      hideLegacyControl(command);
+    });
+    return true;
+  }
+
+  ensureMenuCommands();
+  const observer=new MutationObserver(()=>ensureMenuCommands());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('load',()=>{ensureMenuCommands();setTimeout(ensureMenuCommands,400);setTimeout(ensureMenuCommands,1500);});
+})();
