@@ -44,7 +44,12 @@
     window.dispatchEvent(new CustomEvent('agworld:territory-control-updated',{detail:s}));
     return s;
   };
-  ['agworld:entity-updated','agworld:dynamic-spatial-edit-request','agworld:relationship-created','agworld:relationship-updated','agworld:relationship-removed'].forEach(name=>window.addEventListener(name,()=>setTimeout(publish,0)));
-  setInterval(publish,3000);
+  let publishQueued = false;
+  const schedulePublish = () => {
+    if (publishQueued) return;
+    publishQueued = true;
+    setTimeout(() => { publishQueued = false; publish(); }, 120);
+  };
+  ['agworld:entity-updated','agworld:dynamic-spatial-edit-request','agworld:relationship-created','agworld:relationship-updated','agworld:relationship-removed','agworld:contractor-created','agworld:contractor-updated','agworld:contractor-deleted'].forEach(name=>window.addEventListener(name,schedulePublish));
   publish();
 })();
