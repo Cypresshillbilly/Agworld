@@ -4042,18 +4042,51 @@ function renderDynamicEntity(entity) {
 }
 
 function updateFleetTransactionAction(entity, type) {
-  const button=$('fleetTransactionAction');
-  if(!button) return;
+  // Create the actions at runtime as well as in index.html. This prevents the
+  // Entity Information card from silently losing the controls when an older
+  // cached shell or a V2 card refresh is being used.
+  const actions=$('farmActions');
+  if(!actions) return;
+  let button=$('fleetTransactionAction');
+  if(!button){
+    button=document.createElement('button');
+    button.id='fleetTransactionAction';
+    button.type='button';
+    button.className='save-farm';
+    const anchor=$('farm3d');
+    if(anchor) anchor.insertAdjacentElement('afterend',button);
+    else actions.appendChild(button);
+  }
+  let historyButton=$('fleetHistoryAction');
+  if(!historyButton){
+    historyButton=document.createElement('button');
+    historyButton.id='fleetHistoryAction';
+    historyButton.type='button';
+    historyButton.textContent='📊 SALES HISTORY & FLEET';
+    const anchor=$('fleetTransactionAction') || $('farm3d');
+    if(anchor) anchor.insertAdjacentElement('afterend',historyButton);
+    else actions.appendChild(historyButton);
+  }
+
   const eligible=type==='farm'||type==='contractor';
   button.hidden=!eligible;
-  if(!eligible) { button.onclick=null; const historyButton=$('fleetHistoryAction'); if(historyButton) { historyButton.hidden=true; historyButton.onclick=null; } return; }
+  historyButton.hidden=!eligible;
+  if(!eligible) {
+    button.onclick=null;
+    historyButton.onclick=null;
+    return;
+  }
+
   const drone=dronePortfolioInfluence(type,entity);
   button.textContent='🚁 SELL / MANAGE FLEET · '+drone.totalDrones+' DRONES';
   button.dataset.entityType=type;
   button.dataset.entityId=String(entity.id);
+  button.style.display='inline-flex';
+  button.style.visibility='visible';
+  historyButton.style.display='inline-flex';
+  historyButton.style.visibility='visible';
   button.onclick=()=>openFleetTransaction(type,entity.id);
-  const historyButton=$('fleetHistoryAction');
-  if(historyButton){ historyButton.hidden=false; historyButton.onclick=()=>openFleetManagement(type,entity.id); }
+  historyButton.onclick=()=>openFleetManagement(type,entity.id);
 }
 
 function selectDynamicEntity(entity, zoom = true) {
