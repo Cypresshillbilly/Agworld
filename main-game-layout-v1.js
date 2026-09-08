@@ -357,7 +357,13 @@
     for(const c of candidates){
       if(Array.isArray(c) && c.length>=2){
         const a=Number(c[0]), b=Number(c[1]);
-        if(Number.isFinite(a)&&Number.isFinite(b)) return {lat:Math.abs(a)<=90?a:b,lng:Math.abs(a)<=90?b:a};
+        if(Number.isFinite(a)&&Number.isFinite(b)){
+          const geoJsonCoordinates=c===f?.geometry?.coordinates || c===d.geometry?.coordinates;
+          if(geoJsonCoordinates) return {lat:b,lng:a};
+          if(Math.abs(a)<=90 && Math.abs(b)>90) return {lat:a,lng:b};
+          if(Math.abs(b)<=90 && Math.abs(a)>90) return {lat:b,lng:a};
+          return {lat:a,lng:b};
+        }
       }
       if(c && typeof c==='object'){
         const lat=Number(c.lat??c.latitude), lng=Number(c.lng??c.lon??c.longitude);
@@ -394,7 +400,9 @@
     if(coordinates){
       const map=window.AG_WORLD_MAP||window.__AG_WORLD_MAP__||window.map||window.AGWorldMapInstance;
       if(map?.flyTo){
-        try{ map.flyTo([coordinates.lat,coordinates.lng],Math.max(Number(map.getZoom?.()||0),13),{animate:true,duration:0.9}); }catch(_){}
+        const zoom=Math.max(Number(map.getZoom?.()||0),13);
+        try{ map.flyTo([coordinates.lat,coordinates.lng],zoom,{animate:true,duration:0.9}); }
+        catch(_){ try{ map.flyTo({center:[coordinates.lng,coordinates.lat],zoom}); }catch(__){} }
       }else if(map?.setView){
         try{ map.setView([coordinates.lat,coordinates.lng],13,{animate:true}); }catch(_){}
       }
