@@ -442,6 +442,15 @@
       button.style.removeProperty('display');
       button.style.removeProperty('visibility');
       button.style.removeProperty('opacity');
+
+      // UPDATE FARM DETAILS must enter the exact canonical Farm Card editor:
+      // the original pre-populated multi-step Create Farm workflow in edit mode.
+      // The action row can be moved by the Command Centre, so explicitly keep
+      // this canonical function as the handler rather than replacing it with a
+      // V2 Details-tab editor or a new overlay.
+      if(String(entity?.type||'')==='farm' && button.id==='farm3d' && typeof window.openEditFarm==='function'){
+        button.onclick=()=>window.openEditFarm(entity);
+      }
     });
     return actions;
   }
