@@ -254,11 +254,23 @@
     if(!panel) return false;
     const s=nationalSummary();
     panel.innerHTML=
-      '<div class="territory-info-header"><div><div class="territory-info-level">NATIONAL TERRITORY</div><div class="territory-info-name">SOUTH AFRICA · NATIONAL OVERVIEW</div></div></div>'+
-      '<div class="territory-info-control"><div class="territory-info-control-value">'+s.companyPct+'%</div><div><div class="territory-info-control-title">THE COMPANY NATIONAL CONTROL</div><div class="territory-info-status territory-info-status-strong">LIVE NATIONAL BASELINE</div></div></div>'+
-      '<div class="territory-info-progress"><div class="territory-info-progress-company" style="width:'+s.companyPct+'%"></div><div class="territory-info-progress-enemy" style="width:'+s.competitorPct+'%"></div><div class="territory-info-progress-neutral" style="width:'+s.neutralPct+'%"></div></div>'+
-      '<div class="territory-info-legend"><span>🟢 Company '+s.companyPct+'%</span><span>🔴 Competitor '+s.competitorPct+'%</span><span>⚪ Neutral '+s.neutralPct+'%</span></div>'+
-      '<div class="territory-info-grid"><div><strong>'+s.total+'</strong><span>Total Farms</span></div><div><strong>'+s.company+'</strong><span>Company Control</span></div><div><strong>'+s.competitor+'</strong><span>Competitor</span></div><div><strong>'+s.neutral+'</strong><span>Neutral</span></div><div><strong>NATIONAL</strong><span>Active Scope</span></div></div>';
+      '<div class="territory-national-layout">'+
+        '<section class="territory-national-left">'+
+          '<div class="territory-info-header"><div><div class="territory-info-level">NATIONAL TERRITORY</div><div class="territory-info-name">SOUTH AFRICA · NATIONAL OVERVIEW</div></div></div>'+
+          '<div class="territory-info-control"><div class="territory-info-control-value">'+s.companyPct+'%</div><div><div class="territory-info-control-title">THE COMPANY NATIONAL CONTROL</div><div class="territory-info-status territory-info-status-strong">LIVE NATIONAL BASELINE</div></div></div>'+
+          '<div class="territory-info-progress"><div class="territory-info-progress-company" style="width:'+s.companyPct+'%"></div><div class="territory-info-progress-enemy" style="width:'+s.competitorPct+'%"></div><div class="territory-info-progress-neutral" style="width:'+s.neutralPct+'%"></div></div>'+
+          '<div class="territory-info-legend"><span>🟢 Company '+s.companyPct+'%</span><span>🔴 Competitor '+s.competitorPct+'%</span><span>⚪ Neutral '+s.neutralPct+'%</span></div>'+
+        '</section>'+
+        '<section class="territory-national-right">'+
+          '<div class="territory-info-grid">'+
+            '<div><strong>'+s.total+'</strong><span>Total Farms</span></div>'+
+            '<div><strong>'+s.company+'</strong><span>Company Control</span></div>'+
+            '<div><strong>'+s.competitor+'</strong><span>Competitor</span></div>'+
+            '<div><strong>'+s.neutral+'</strong><span>Neutral</span></div>'+
+            '<div class="territory-national-scope"><strong>NATIONAL</strong><span>Active Scope</span></div>'+
+          '</div>'+
+        '</section>'+
+      '</div>';
     panel.classList.add('show');
     window.__AGWORLD_TERRITORY_STARTUP__='NATIONAL';
     window.__AGWORLD_TERRITORY_SCOPE__='NATIONAL';
@@ -1314,4 +1326,34 @@
   window.addEventListener('load',()=>{start();setTimeout(ensureHeading,300);setTimeout(ensureHeading,1200);setTimeout(ensureHeading,3000)});
   window.addEventListener('agworld:territory-selected',()=>setTimeout(ensureHeading,0));
   window.__AGWORLD_ENSURE_TERRATORY_STATS__=ensureHeading;
+})();
+
+
+/* AG World v36 National Territory two-column layout. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldNationalTerritoryTwoColumnStyle';
+  style.textContent=
+    '#territoryInfoPanel.agworld-territory-command-panel:has(.territory-national-layout){overflow:hidden!important}'+
+    '#territoryInfoPanel .territory-national-layout{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:0!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;box-sizing:border-box!important;overflow:hidden!important}'+
+    '#territoryInfoPanel .territory-national-left,#territoryInfoPanel .territory-national-right{min-width:0!important;min-height:0!important;box-sizing:border-box!important;overflow:hidden!important}'+
+    '#territoryInfoPanel .territory-national-left{display:flex!important;flex-direction:column!important;border-right:1px solid rgba(126,167,148,.22)!important;background:linear-gradient(145deg,rgba(18,33,40,.84),rgba(8,18,23,.74))!important}'+
+    '#territoryInfoPanel .territory-national-right{display:flex!important;align-items:stretch!important;padding:12px 14px!important;background:radial-gradient(circle at 100% 0,rgba(73,132,91,.11),transparent 50%),linear-gradient(145deg,rgba(10,20,25,.92),rgba(6,13,17,.92))!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-header{margin:12px 16px 0!important;padding:0 0 8px!important;flex:0 0 auto!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-level{font-size:8px!important;letter-spacing:1.25px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-name{margin-top:4px!important;font-size:13px!important;letter-spacing:.55px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-control{margin:8px 16px 0!important;padding:9px 12px!important;gap:10px!important;flex:0 0 auto!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-control-value{font-size:25px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-control-title{font-size:8px!important;letter-spacing:.7px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-status{margin-top:3px!important;font-size:7px!important;letter-spacing:.8px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-progress{margin:7px 16px 0!important;height:5px!important;flex:0 0 auto!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-legend{margin:7px 16px 12px!important;gap:5px 10px!important;font-size:8px!important;white-space:nowrap!important;flex:0 0 auto!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(3,minmax(0,1fr))!important;gap:8px!important;width:100%!important;height:100%!important;margin:0!important;padding:0!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid>div{display:flex!important;flex-direction:column!important;justify-content:center!important;min-width:0!important;min-height:0!important;padding:9px 11px!important;border-color:rgba(126,167,148,.20)!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid strong{font-size:20px!important;line-height:1!important;color:#effaf2!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid span{margin-top:4px!important;font-size:7px!important;letter-spacing:.75px!important;color:#8ea196!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid .territory-national-scope{grid-column:1 / -1!important;background:linear-gradient(90deg,rgba(57,125,75,.15),rgba(13,26,31,.88))!important;border-color:rgba(117,224,132,.22)!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid .territory-national-scope strong{font-size:14px!important;letter-spacing:1.2px!important;color:#a8f0b2!important}'+
+    '@media(max-width:900px){#territoryInfoPanel .territory-national-layout{grid-template-columns:1fr!important;overflow:auto!important}#territoryInfoPanel .territory-national-left{border-right:0!important;border-bottom:1px solid rgba(126,167,148,.22)!important}#territoryInfoPanel .territory-national-right{min-height:240px!important}}';
+  document.head.appendChild(style);
 })();
