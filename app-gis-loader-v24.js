@@ -578,6 +578,7 @@ function territoryControlStyle(territory) {
   const game = territory.game || calculateTerritoryControl(territory);
   const control = Number(game.control || 0);
   const enemy = Number(game.enemyControl || 0);
+  const contested = Number(game.contestedControl || 0);
 
   // Company influence is green. Enemy-dominated areas are red. Neutral
   // territories remain muted until farms are placed there.
@@ -585,6 +586,7 @@ function territoryControlStyle(territory) {
   if (control >= 76) return { fillColor: '#19d46b', strokeColor: '#46f08b', fillOpacity: 0.28 };
   if (control >= 51) return { fillColor: '#4caf50', strokeColor: '#76d275', fillOpacity: 0.23 };
   if (control >= 26) return { fillColor: '#8bc34a', strokeColor: '#b4df78', fillOpacity: 0.19 };
+  if (contested > 0) return { fillColor: '#ff9800', strokeColor: '#ffcc80', fillOpacity: 0.22 };
   if (control > 0) return { fillColor: '#cddc39', strokeColor: '#e5ef70', fillOpacity: 0.15 };
   if (enemy > 0) return { fillColor: '#ef5350', strokeColor: '#ff8a80', fillOpacity: 0.20 };
   return { fillColor: '#607d8b', strokeColor: '#90a4ae', fillOpacity: 0.055 };
@@ -641,6 +643,9 @@ function territoryGameSummary(territory) {
 }
 
 function refreshTerritoryControl() {
+  // Entity influence can change after dynamic layers hydrate even when the
+  // relationship rows themselves have not changed.
+  marketInfluenceState.components.clear();
   // Contractor geography is indexed once before all territory overlays are
   // recalculated. This prevents an O(territories × contractors × polygons)
   // workload from blocking the interactive Google Map.
