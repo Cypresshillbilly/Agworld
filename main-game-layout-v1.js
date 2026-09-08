@@ -458,68 +458,52 @@
   function ensureEntityCommandFallbackActions(summary, entity){
     if(!summary) return null;
 
-    let actions=summary.querySelector('#farmActions') || document.getElementById('farmActions') || agworldPreservedFarmActions;
-    if(actions && actions.querySelectorAll('button').length>0) return actions;
-    actions=null;
+    // The Entity Command Centre has one consistent operational action set for
+    // every entity type. Do not inherit type-specific legacy labels/buttons.
+    let actions=summary.querySelector('#farmActions');
+    if(actions) actions.remove();
 
-    // A Command Centre rebuild must never leave the user with an entity that
-    // has no operational controls. This fallback is only used when another
-    // renderer has already removed the legacy action row.
     actions=document.createElement('div');
     actions.id='farmActions';
     actions.className='farm-actions agworld-entity-command-actions agworld-entity-command-fallback-actions';
 
-    const type=String(entity?.type||'farm');
-    const label=entityCommandTypeLabel(type).toUpperCase();
-
-    const openDetailsEditor=()=>openEntityDetailsFromAction(entity);
-
     const update=document.createElement('button');
     update.id='farm3d';
     update.type='button';
-    update.textContent='UPDATE '+label+' DETAILS';
-    update.onclick=openDetailsEditor;
-    actions.appendChild(update);
+    update.textContent='UPDATE ENTITY INFO';
+    update.onclick=()=>{
+      if(String(entity?.type||'')==='farm' && typeof window.openEditFarm==='function'){
+        return window.openEditFarm(entity);
+      }
+      return openEntityDetailsFromAction(entity);
+    };
 
-    if(type==='farm'){
-      const history=document.createElement('button');
-      history.id='farmHistoryBtn';
-      history.type='button';
-      history.textContent='FARM HISTORY';
-      history.onclick=()=>{
-        if(typeof window.openFarmHistory==='function') return window.openFarmHistory(window.selected||entity);
-        const host=document.querySelector('#agworldV2FarmDetailHost, #agworldV2EntityDetailHost');
-        const tab=[...host?.querySelectorAll?.('[data-tab]')||[]].find(node=>/history/i.test(node.dataset.tab||''));
-        if(tab) tab.click();
-      };
-      actions.appendChild(history);
-    }
+    const fleet=document.createElement('button');
+    fleet.id='entityFleetAction';
+    fleet.type='button';
+    fleet.textContent='🚁 SELL / MANAGE FLEET';
+    fleet.onclick=()=>{
+      if(typeof window.openFleetTransaction==='function'){
+        return window.openFleetTransaction(String(entity?.type||'entity'),String(entity?.id||''));
+      }
+      document.getElementById('fleetTransactionAction')?.click();
+    };
 
-    if(type==='farm' || type==='contractor' || type==='company_facility' || type==='companyFacility'){
-      const fleet=document.createElement('button');
-      fleet.type='button';
-      fleet.textContent='🚁 SELL / MANAGE FLEET';
-      fleet.onclick=()=>{
-        if(typeof window.openFleetTransaction==='function') return window.openFleetTransaction(type,String(entity?.id||''));
-        document.getElementById('fleetTransactionAction')?.click();
-      };
-      actions.appendChild(fleet);
+    const sales=document.createElement('button');
+    sales.id='entitySalesFleetAction';
+    sales.type='button';
+    sales.textContent='📊 SALES HISTORY & FLEET';
+    sales.onclick=()=>{
+      if(typeof window.openFleetManagement==='function'){
+        return window.openFleetManagement(String(entity?.type||'entity'),String(entity?.id||''));
+      }
+      document.getElementById('fleetHistoryAction')?.click();
+    };
 
-      const sales=document.createElement('button');
-      sales.type='button';
-      sales.textContent='📊 SALES HISTORY & FLEET';
-      sales.onclick=()=>{
-        if(typeof window.openFleetManagement==='function') return window.openFleetManagement(type,String(entity?.id||''));
-        document.getElementById('fleetHistoryAction')?.click();
-      };
-      actions.appendChild(sales);
-    }
-
+    actions.append(update,fleet,sales);
     summary.appendChild(actions);
-    agworldPreservedFarmActions=actions;
     return actions;
   }
-
   function installFarmActionCapture(){
     captureFarmActions();
     if(document.readyState==='loading'){
@@ -599,11 +583,8 @@
       '<div class="agworld-entity-command-summary-grid">'+metrics.map(([label,value])=>
         '<div><span>'+escEntityCommand(label)+'</span><b>'+escEntityCommand(value)+'</b></div>').join('')+'</div>';
 
-    let actionRow=preservedActions;
-    // An empty or hidden legacy container is not an operational action row.
-    if(!actionRow || actionRow.querySelectorAll('button').length===0){
-      actionRow=ensureEntityCommandFallbackActions(summary, entity);
-    }
+    // Use the same three Command Centre actions for every entity type.
+    let actionRow=ensureEntityCommandFallbackActions(summary, entity);
     if(actionRow){
       normalizeEntityActionRow(actionRow, entity);
       actionRow.hidden=false;
@@ -634,10 +615,7 @@
     // complete in the same event turn, but the cached real node remains the
     // single source of truth and retains its original onclick handlers.
     requestAnimationFrame(()=>{
-      let actions=captureFarmActions();
-      if(!actions || actions.querySelectorAll('button').length===0){
-        actions=ensureEntityCommandFallbackActions(summary, entity);
-      }
+      let actions=summary.querySelector('#farmActions') || ensureEntityCommandFallbackActions(summary, entity);
       if(actions){
         normalizeEntityActionRow(actions, entity);
         actions.hidden=false;
