@@ -114,19 +114,51 @@
     const mapArea=document.querySelector('.map-area');
     const territory=$('territorySection');
     const entity=$('entityInformationSection');
-    const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
+    if(!shell) return;
 
-    if(sidebar){ important(sidebar,'bottom','170px'); important(sidebar,'height','650px'); }
-    if(missions){ important(missions,'left','180px'); important(missions,'top','0'); important(missions,'width','285px'); important(missions,'height','650px'); }
-    if(mapArea){ important(mapArea,'left','465px'); important(mapArea,'top','0'); important(mapArea,'right','0'); important(mapArea,'height','650px'); }
-    if(territory){ important(territory,'position','absolute'); important(territory,'left','0'); important(territory,'top','650px'); important(territory,'width','465px'); important(territory,'height','170px'); important(territory,'bottom','0'); important(territory,'z-index','999'); }
-    if(entity){ important(entity,'position','absolute'); important(entity,'left','465px'); important(entity,'top','650px'); important(entity,'right','0'); important(entity,'height','170px'); important(entity,'bottom','0'); important(entity,'z-index','999'); }
+    // The shell is the single geometry owner. Derive the split from the live
+    // shell dimensions so responsive scaling cannot leave the left and right
+    // bottom panels with different start heights.
+    const shellH=shell.clientHeight||820;
+    const shellW=shell.clientWidth||1280;
+    const bottomH=Math.round(shellH*(170/820));
+    const topH=shellH-bottomH;
+    const sidebarW=Math.round(shellW*(180/1280));
+    const missionsW=Math.round(shellW*(285/1280));
+    const leftStage=sidebarW+missionsW;
+    const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
+    const frame=(el,left,top,width,height)=>{
+      if(!el) return;
+      important(el,'position','absolute');
+      important(el,'left',left+'px');
+      important(el,'top',top+'px');
+      important(el,'width',width+'px');
+      important(el,'height',height+'px');
+      important(el,'right','auto');
+      important(el,'bottom','auto');
+      important(el,'box-sizing','border-box');
+    };
+
+    frame(sidebar,0,0,sidebarW,topH);
+    frame(missions,sidebarW,0,missionsW,topH);
+    frame(mapArea,leftStage,0,shellW-leftStage,topH);
+    frame(territory,0,topH,leftStage,bottomH);
+    frame(entity,leftStage,topH,shellW-leftStage,bottomH);
+
+    if(territory) important(territory,'z-index','999');
+    if(entity) important(entity,'z-index','999');
 
     const oldProfile=document.querySelector('.bottom.user-profile-section');
-    if(oldProfile) important(oldProfile,'display','none');
+    if(oldProfile){
+      important(oldProfile,'display','none');
+      important(oldProfile,'visibility','hidden');
+      important(oldProfile,'pointer-events','none');
+    }
 
-    if(shell && territory && territory.parentElement!==shell) shell.appendChild(territory);
-    if(shell && entity && entity.parentElement!==shell) shell.appendChild(entity);
+    if(territory && territory.parentElement!==shell) shell.appendChild(territory);
+    if(entity && entity.parentElement!==shell) shell.appendChild(entity);
+
+    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage};
   }
 
   function run(){
@@ -146,7 +178,10 @@
     requestAnimationFrame(()=>{ queued=false; run(); });
   });
   observer.observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('load',()=>{ run(); setTimeout(run,250); setTimeout(run,1000); setTimeout(run,2500); });
+  window.addEventListener('load',()=>{ run(); setTimeout(run,250); setTimeout(run,1000); setTimeout(run,2500); setTimeout(run,4000); });
+  window.addEventListener('resize',run);
+  // Late UI scripts must never be allowed to re-own the screen geometry.
+  setInterval(lockGeometry,1500);
   window.addEventListener('agworld:territory-selected',event=>{
     window.__AGWORLD_SELECTED_TERRITORY__=event.detail?.territory||event.detail||null;
   });
