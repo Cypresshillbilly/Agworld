@@ -21,11 +21,10 @@ function farms(){const w=global.AG_WORLD_WORLD||{};const fs=global.__AG_WORLD_FA
 async function seed(){
  // Do not run 55 entity writes + relationship discovery on the interactive map load path.
  // Seeding is now explicit and can be run from the console or a future admin action.
- if(!global.AG_WORLD_RUN_DEMO_SEED) return;
  if(global.localStorage.getItem(SEED_KEY)) return;
- if(!global.AGWorldV2?.EntityService||!global.AGWorldV2?.EntityRepository||!global.AGWorldV2?.RelationshipService){setTimeout(seed,1000);return}
+ if(!global.AGWorldV2?.EntityService||!global.AGWorldV2?.EntityRepository||!global.AGWorldV2?.RelationshipRepository){throw new Error('Entity/relationship creation services are not ready');}
  const er=new global.AGWorldV2.EntityRepository(), es=new global.AGWorldV2.EntityService(er);
- const rr=new global.AGWorldV2.RelationshipRepository(), rs=new global.AGWorldV2.RelationshipService(rr);
+ const rr=new global.AGWorldV2.RelationshipRepository();
  const existing=await er.list({});
  const createdFacilities=[];
  for(const f of facilities){
@@ -48,7 +47,7 @@ async function seed(){
    const nearby=fs.map(f=>({f,d:dist(cp,f)})).filter(x=>x.d<=300).sort((a,b)=>a.d-b.d).slice(0,Math.max(1,Math.min(4,fs.length)));
    for(const {f,d} of nearby){
      const exists=rels.some(r=>String(r.sourceEntityId)===String(c.id)&&String(r.targetEntityId)===String(f.id));
-     if(!exists) await rs.connect(c.id,'serves',f.id,{distanceKm:Math.round(d*10)/10,relationshipStatus:'active',seeded:true});
+     if(!exists) await rr.create({sourceEntityId:c.id,relationshipType:'serves',targetEntityId:f.id,status:'active',metadata:{distanceKm:Math.round(d*10)/10,relationshipStatus:'active',seeded:true}});
    }
  }
  global.localStorage.setItem(SEED_KEY,new Date().toISOString());
@@ -57,6 +56,5 @@ async function seed(){
  if(typeof global.refreshTerritoryControl==='function') global.refreshTerritoryControl();
  console.info('[AG World] Created 5 company facilities and 50 contractors through entity/relationship services.');
 }
-global.AGWorldDemoWorldSeed={run:seed,facilities};
 global.AGWorldDemoWorldSeed={run:seed,facilities};
 })(window);
