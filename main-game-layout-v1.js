@@ -457,6 +457,21 @@
     const active=fs.filter(f=>String(f?.status||'active').toLowerCase()!=='inactive').length;
     const provinces=new Set(fs.map(f=>String((f?.details||{}).province||'').trim()).filter(Boolean)).size;
 
+    const facilityRows=fs.length
+      ? fs.map(f=>{
+          const name=String(f?.name||'Company Facility');
+          const role=String(facilityRole(f));
+          const location=String(facilityLocation(f));
+          const staff=employeeCount(f);
+          return '<button type="button" class="company-facility-row" data-company-facility-id="'+String(f?.id||name).replace(/"/g,'&quot;')+'" aria-label="Open '+name.replace(/"/g,'&quot;')+' on map">'+
+            '<span class="company-facility-marker"><i></i></span>'+
+            '<span class="company-facility-name"><b>'+name+'</b><span>'+role+(location?' · '+location:'')+'</span></span>'+
+            '<span class="company-facility-staff"><b>'+staff+'</b><span>STAFF</span></span>'+
+            '<span class="company-facility-open">›</span>'+
+          '</button>';
+        }).join('')
+      : '<div class="company-facility-empty">No Company facilities available.</div>';
+
     card.classList.add('show','agworld-company-entity-card');
     card.dataset.entityCommandDefault='company';
     card.innerHTML=
@@ -474,8 +489,9 @@
             '<div><span>ACTIVE FOOTPRINT</span><b>'+active+' / '+fs.length+' SITES LIVE</b></div>'+
           '</div>'+
         '</section>'+
-        '<section class="company-command-facilities-pane company-command-skills-pane" aria-label="Combined Company skills">'+
-          '<div id="companySkillChartHost" aria-live="polite"></div>'+
+        '<section class="company-command-facilities-pane company-command-right-pane" aria-label="Company capability and facilities">'+
+          '<div class="company-command-skills-pane" aria-label="Combined Company skills"><div id="companySkillChartHost" aria-live="polite"></div></div>'+
+          '<div class="company-command-facility-side" aria-label="Company facilities"><div class="company-facility-list">'+facilityRows+'</div></div>'+
         '</section>'+
       '</div>';
 
@@ -1255,6 +1271,29 @@
     '#entityInformationSection .agworld-company-entity-card .company-facility-open{display:flex!important;align-items:center!important;gap:5px!important;color:#63df80!important;font-size:12px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-facility-open span{font-size:7px!important;font-weight:800!important;letter-spacing:.08em!important;color:#79ad87!important}'+
     '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card{height:auto!important;overflow:auto!important}#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split{position:relative!important;display:flex!important;flex-direction:column!important;height:auto!important;overflow:visible!important}#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane,#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{display:flex!important;width:100%!important;height:auto!important;min-height:0!important;overflow:visible!important}#entityInformationSection .agworld-company-entity-card .company-command-kpis{min-height:220px!important}#entityInformationSection .agworld-company-entity-card .company-facility-list{height:auto!important;max-height:none!important;overflow:visible!important}}';
+  document.head.appendChild(style);
+})();
+
+// Keep the Company Command Center at a strict 50/50 split while sharing the
+// right half between the compact skills radar and the scrollable facilities.
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldCompanyCommandSkillsFacilitiesStyle';
+  style.textContent=
+    '#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{display:grid!important;grid-template-columns:minmax(112px,38%) minmax(0,62%)!important;align-items:stretch!important;min-width:0!important;min-height:0!important;height:100%!important;padding:0!important;overflow:hidden!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-skills-pane{display:flex!important;min-width:0!important;min-height:0!important;height:100%!important;padding:4px!important;box-sizing:border-box!important;overflow:hidden!important;border-right:1px solid rgba(91,197,119,.14)!important}'+
+    '#entityInformationSection .agworld-company-entity-card #companySkillChartHost{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;overflow:hidden!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side{display:flex!important;min-width:0!important;min-height:0!important;height:100%!important;padding:6px 4px 6px 7px!important;box-sizing:border-box!important;overflow:hidden!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-list{display:flex!important;flex-direction:column!important;gap:5px!important;width:100%!important;height:100%!important;min-height:0!important;margin:0!important;padding:0 2px 0 0!important;overflow-y:auto!important;overflow-x:hidden!important;box-sizing:border-box!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-row{min-height:40px!important;padding:6px 7px!important;grid-template-columns:20px minmax(0,1fr) 28px 10px!important;gap:6px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-marker{width:20px!important;height:20px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-name b{font-size:9px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-name span{font-size:6px!important;margin-top:2px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-staff{min-width:24px!important;padding-left:4px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-staff b{font-size:9px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-staff span{font-size:5px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-facility-side .company-facility-open{font-size:10px!important}'+
+    '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:1fr!important;height:auto!important;overflow:visible!important}#entityInformationSection .agworld-company-entity-card .company-command-skills-pane{height:150px!important;border-right:0!important;border-bottom:1px solid rgba(91,197,119,.14)!important}#entityInformationSection .agworld-company-entity-card .company-command-facility-side{height:260px!important}}';
   document.head.appendChild(style);
 })();
 
