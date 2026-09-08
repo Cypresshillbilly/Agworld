@@ -5,6 +5,22 @@
     return String(value ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
   }
 
+  function formatValue(value) {
+    if (value === null || value === undefined || value === '') return '';
+    if (Array.isArray(value)) return value.map(formatValue).filter(Boolean).join(', ');
+    if (typeof value === 'object') {
+      const preferred = value.name ?? value.title ?? value.text ?? value.label;
+      if (preferred !== undefined) return formatValue(preferred);
+      try {
+        const json = JSON.stringify(value);
+        return json.length > 160 ? json.slice(0, 157) + '…' : json;
+      } catch (_) {
+        return '[record]';
+      }
+    }
+    return String(value);
+  }
+
   class FarmDetailPanelV2 extends global.AGWorldV2.EntityDetailPanelV2 {
     constructor(options) {
       super(options);
@@ -100,21 +116,52 @@
 
       const farm = this.entity;
       const data = farm.metadata || {};
+      // The V2 panel must be a view of the canonical Farm Card record, not a
+      // second partial farm model. Keep the complete selected farm record and
+      // fall back gracefully for older sessions.
+      const canonical = data.canonicalFarm || farm.legacyFarm || data.legacyFarm || farm;
       const rows = [
-        ['Owner', data.owner],
-        ['Farm size', data.farmSize],
-        ['Crops', Array.isArray(data.crops) ? data.crops.join(', ') : data.crops],
-        ['Livestock', data.livestock],
-        ['Annual harvest', data.annualHarvest],
-        ['Last service', data.lastService],
-        ['Opportunity score', data.opportunityScore]
-      ].filter(([, value]) => value !== null && value !== undefined && value !== '');
+        ['Farm name', canonical.name || farm.name],
+        ['Owner', canonical.owner ?? data.owner],
+        ['Region / territory', canonical.region || (Array.isArray(farm.territoryIds) ? farm.territoryIds.join(', ') : farm.territoryIds)],
+        ['Operational status', canonical.status || farm.status],
+        ['Farm size', canonical.farmSize ?? canonical.hectares ?? data.farmSize],
+        ['Crops', canonical.crops ?? data.crops],
+        ['Livestock', canonical.livestock ?? data.livestock],
+        ['Tractors', canonical.tractors],
+        ['Drones / fleet', canonical.drones],
+        ['Annual harvest', canonical.annualHarvest ?? data.annualHarvest],
+        ['Last service', canonical.lastService ?? data.lastService],
+        ['Opportunity score', canonical.opportunityScore ?? data.opportunityScore],
+        ['Contacts', canonical.contacts],
+        ['Infrastructure', canonical.infrastructure],
+        ['Service history', canonical.serviceHistory],
+        ['Sales history', canonical.salesHistory],
+        ['Notes', canonical.notes || farm.description],
+        ['Created', canonical.createdAt || farm.createdAt],
+        ['Last updated', canonical.updatedAt || farm.updatedAt]
+      ].map(([label, value]) => [label, formatValue(value)])
+       .filter(([, value]) => value !== '');
 
       target.innerHTML =
-        '<div class="agworld-farm-details-toolbar"><strong>FARM INFORMATION</strong><span>Use UPDATE ENTITY INFO to change the canonical farm record.</span></div>' +
+        '<div class="agworld-farm-details-toolbar">' +
+          '<div><strong>FARM INFORMATION</strong><span>Canonical Farm Card record · always edited through the existing workflow.</span></div>' +
+          '<button type="button" data-farm-details-action="update">UPDATE ENTITY INFO</button>' +
+        '</div>' +
         (rows.length
           ? '<dl>' + rows.map(([label,value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl>'
           : '<p>No farm details have been added yet.</p>');
+
+      // Do not duplicate the editor. This button delegates to the exact same
+      // Update Entity Info action used by the Entity Command Centre/Farm Card.
+      target.querySelector('[data-farm-details-action="update"]')?.addEventListener('click', () => {
+        const existingAction = document.getElementById('farm3d');
+        if (existingAction) {
+          existingAction.click();
+          return;
+        }
+        if (typeof global.openEditFarm === 'function') global.openEditFarm(canonical);
+      });
     }
   }
 
@@ -140,8 +187,10 @@
       #agworldV2FarmDetailHost .agworld-v2-detail-content dt{font-weight:700;color:#63747c}
       #agworldV2FarmDetailHost .agworld-v2-detail-content dd{margin:0;text-align:right;color:#26343d}
       #agworldV2FarmDetailHost .agworld-farm-details-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #dce7e9}
+      #agworldV2FarmDetailHost .agworld-farm-details-toolbar>div{display:grid;gap:2px;min-width:0}
       #agworldV2FarmDetailHost .agworld-farm-details-toolbar strong{font-size:10px;letter-spacing:.55px;color:#36515a}
-      #agworldV2FarmDetailHost .agworld-farm-details-toolbar span{font-size:8px;color:#819198;text-align:right}
+      #agworldV2FarmDetailHost .agworld-farm-details-toolbar span{font-size:8px;color:#819198}
+      #agworldV2FarmDetailHost .agworld-farm-details-toolbar button{flex:0 0 auto;width:auto;margin:0;padding:6px 9px;background:#168aa0;color:#fff;border:1px solid #168aa0;border-radius:4px;font-size:8px;font-weight:800;letter-spacing:.25px}
       #agworldV2FarmDetailHost .agworld-farm-intelligence-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}
       #agworldV2FarmDetailHost .agworld-farm-intelligence-head strong{display:block;font-size:11px;letter-spacing:.6px;color:#36515a}
       #agworldV2FarmDetailHost .agworld-farm-intelligence-head p{margin:3px 0 0;font-size:8px;color:#667780}
@@ -231,9 +280,14 @@
           status: farm.status || 'active',
           territoryIds: Array.isArray(farm.territoryIds) && farm.territoryIds.length ? farm.territoryIds.map(String) : (farm.territoryId ? [String(farm.territoryId)] : []),
           geometry: farm.boundary ? { type:'Polygon', coordinates: farm.boundary } : null,
+          // Preserve the complete canonical farm record. The Details tab is a
+          // read-only projection of this object and must never be fed from a
+          // reduced metadata subset.
+          legacyFarm: farm,
           metadata: {
+            canonicalFarm: farm,
             owner:farm.owner,
-            farmSize:farm.farmSize,
+            farmSize:farm.farmSize ?? farm.hectares,
             crops:farm.crops || [],
             livestock:farm.livestock,
             annualHarvest:farm.annualHarvest,
