@@ -347,24 +347,29 @@
     card.dataset.entityCommandDefault='company';
     card.innerHTML=
       '<div class="company-command-card-head">'+
-        '<div><div class="company-command-eyebrow">THE COMPANY · ENTITY COMMAND</div><h2 id="farmName">THE COMPANY</h2><div id="farmMeta" class="meta">National company network · live facility overview</div></div>'+
-        '<div class="company-command-status">LIVE</div>'+
+        '<div class="company-command-title-block">'+
+          '<div class="company-command-eyebrow">COMPANY COMMAND · NATIONAL NETWORK</div>'+
+          '<h2 id="farmName">THE COMPANY</h2>'+
+          '<div id="farmMeta" class="meta">Live facility portfolio across South Africa</div>'+
+        '</div>'+
+        '<div class="company-command-status"><i></i><span>LIVE</span></div>'+
       '</div>'+
       '<div class="company-command-kpis">'+
-        '<div><b>'+fs.length+'</b><span>FACILITIES</span></div>'+
-        '<div><b>'+employees+'</b><span>EMPLOYEES</span></div>'+
-        '<div><b>'+active+'</b><span>ACTIVE SITES</span></div>'+
-        '<div><b>'+provinces+'</b><span>PROVINCES</span></div>'+
+        '<div><span class="company-kpi-icon">⌂</span><div><b>'+fs.length+'</b><span>FACILITIES</span></div></div>'+
+        '<div><span class="company-kpi-icon">◉</span><div><b>'+employees+'</b><span>EMPLOYEES</span></div></div>'+
+        '<div><span class="company-kpi-icon">✓</span><div><b>'+active+'</b><span>ACTIVE SITES</span></div></div>'+
+        '<div><span class="company-kpi-icon">⌖</span><div><b>'+provinces+'</b><span>PROVINCES</span></div></div>'+
       '</div>'+
-      '<div class="company-facility-list-head"><strong>COMPANY FACILITIES</strong><span>'+fs.length+' NATIONAL LOCATIONS</span></div>'+
+      '<div class="company-facility-list-head"><div><strong>FACILITY NETWORK</strong><span>LIVE OPERATIONAL PORTFOLIO</span></div><b>'+fs.length+' SITES</b></div>'+
       '<div class="company-facility-list">'+
         (fs.length?fs.map(f=>'<article class="company-facility-row">'+
+          '<div class="company-facility-marker"><i></i></div>'+
           '<div class="company-facility-name"><b>'+esc(f.name)+'</b><span>'+esc(facilityRole(f))+' · '+esc(facilityLocation(f))+'</span></div>'+
-          '<div class="company-facility-staff"><b>'+employeeCount(f)+'</b><span>EMPLOYEES</span></div>'+
-          '<div class="company-facility-state">'+esc(String(f.status||'Active').toUpperCase())+'</div>'+
+          '<div class="company-facility-staff"><b>'+employeeCount(f)+'</b><span>STAFF</span></div>'+
+          '<div class="company-facility-state"><i></i>'+esc(String(f.status||'Active').toUpperCase())+'</div>'+
         '</article>').join(''):'<div class="company-facility-empty">Loading Company facilities from the live world…</div>')+
       '</div>'+
-      '<div class="company-command-footer"><span>Company-wide entity information remains visible here until you select another map entity.</span></div>';
+      '<div class="company-command-footer"><span>Company-wide entity information remains visible until another map entity is selected.</span><b>NATIONAL SCOPE</b></div>';
     window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY';
     window.__AGWORLD_ENTITY_COMMAND_SCOPE__='COMPANY';
     window.__AGWORLD_ENTITY_COMMAND_COMPANY_SUMMARY__={facilities:fs.length,employees,activeSites:active,provinces};
@@ -725,12 +730,14 @@
   style.textContent=
     '#entityInformationSection{position:absolute!important;overflow:hidden!important;padding:0!important;margin:0!important;box-sizing:border-box!important}'+
     '#entityInformationSection .farm-card{position:absolute!important;inset:0!important;left:0!important;right:0!important;bottom:0!important;top:0!important;width:100%!important;height:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:12px;box-sizing:border-box;overflow:hidden}'+
-    '#entityInformationSection .agworld-company-entity-card{display:flex!important;flex-direction:column;background:linear-gradient(145deg,#16252a 0%,#0c161a 58%,#0a1114 100%);border:1px solid rgba(122,224,145,.32);box-shadow:0 12px 28px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.06)}'+
-    '.company-command-card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:13px 16px 9px;border-bottom:1px solid rgba(255,255,255,.07)}'+
-    '.company-command-eyebrow{font-size:8px;letter-spacing:1.35px;font-weight:900;color:#75e084;margin-bottom:4px}.company-command-card-head h2{margin:0;font-size:20px;letter-spacing:.6px}.company-command-status{font-size:8px;font-weight:900;letter-spacing:1px;color:#75e084;border:1px solid rgba(117,224,132,.38);padding:5px 8px;border-radius:999px}'+
-    '.company-command-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:10px 16px}.company-command-kpis>div{padding:9px 10px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.025)}.company-command-kpis b,.company-command-kpis span{display:block}.company-command-kpis b{font-size:17px;color:#e9f6ec}.company-command-kpis span{font-size:7px;letter-spacing:.8px;color:#91a59a;margin-top:3px}'+
-    '.company-facility-list-head{display:flex;justify-content:space-between;gap:10px;padding:3px 16px 7px;font-size:8px;letter-spacing:.9px;color:#a8b8ad}.company-facility-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 16px 9px;overflow:auto;flex:1;align-content:start}.company-facility-row{display:grid;grid-template-columns:minmax(0,1fr) 58px auto;gap:8px;align-items:center;padding:8px 9px;border-radius:8px;background:rgba(5,13,16,.55);border:1px solid rgba(255,255,255,.055)}.company-facility-name{min-width:0}.company-facility-name b,.company-facility-name span{display:block}.company-facility-name b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-name span{font-size:7px;color:#8fa095;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-staff{text-align:center}.company-facility-staff b,.company-facility-staff span{display:block}.company-facility-staff b{font-size:12px;color:#dfeee2}.company-facility-staff span{font-size:6px;letter-spacing:.6px;color:#7f9588}.company-facility-state{font-size:7px;color:#75e084;font-weight:900}.company-facility-empty{padding:12px;font-size:9px;color:#94a39a}.company-command-footer{padding:7px 16px 10px;border-top:1px solid rgba(255,255,255,.055);font-size:8px;color:#84948b}'+
-    '@media(max-width:900px){.company-facility-list{grid-template-columns:1fr}.company-command-kpis{grid-template-columns:repeat(2,1fr)}}';
+    '#entityInformationSection .agworld-company-entity-card{display:flex!important;flex-direction:column;color:#edf6ef;background:radial-gradient(circle at 100% 0,rgba(73,132,91,.16),transparent 35%),linear-gradient(145deg,#17272b 0%,#0d171b 58%,#091013 100%);border:1px solid rgba(122,224,145,.34);box-shadow:0 14px 34px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.07)}'+
+    '#entityInformationSection .agworld-company-entity-card:before{content:"";display:block;height:4px;flex:0 0 4px;background:linear-gradient(90deg,#5ed879,#a9ee7c 42%,rgba(169,238,124,.12));box-shadow:0 0 18px rgba(94,216,121,.32)}'+
+    '.company-command-card-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}'+
+    '.company-command-title-block{min-width:0}.company-command-eyebrow{font-size:10px;line-height:1.2;letter-spacing:1.25px;font-weight:900;color:#8ee99d;margin-bottom:6px}.company-command-card-head h2{margin:0;font-size:25px;line-height:1;letter-spacing:.9px;color:#f3fbf5}.company-command-card-head .meta{margin-top:6px;font-size:11px;line-height:1.35;color:#a8bbb0}.company-command-status{display:flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10px;font-weight:900;letter-spacing:1px;color:#a9efb2;border:1px solid rgba(117,224,132,.42);background:rgba(117,224,132,.08);padding:7px 10px;border-radius:999px}.company-command-status i{width:7px;height:7px;border-radius:50%;background:#75e084;box-shadow:0 0 10px rgba(117,224,132,.9)}'+
+    '.company-command-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:12px 18px}.company-command-kpis>div{display:flex;align-items:center;gap:9px;min-width:0;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018))}.company-command-kpis b,.company-command-kpis span{display:block}.company-kpi-icon{width:27px;height:27px;flex:0 0 27px;display:flex!important;align-items:center;justify-content:center;border-radius:7px;background:rgba(117,224,132,.11);border:1px solid rgba(117,224,132,.16);color:#93e99e;font-size:14px!important}.company-command-kpis b{font-size:19px;line-height:1;color:#f1faf3}.company-command-kpis span:not(.company-kpi-icon){font-size:8px;line-height:1.2;letter-spacing:.7px;color:#a2b6a8;margin-top:4px}'+
+    '.company-facility-list-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 18px 8px}.company-facility-list-head div{min-width:0}.company-facility-list-head strong{display:block;font-size:11px;letter-spacing:1px;color:#dcebe0}.company-facility-list-head span{display:block;margin-top:3px;font-size:8px;letter-spacing:.8px;color:#82968b}.company-facility-list-head>b{flex:0 0 auto;font-size:9px;letter-spacing:.8px;color:#93e99e;background:rgba(117,224,132,.08);border:1px solid rgba(117,224,132,.17);padding:5px 7px;border-radius:6px}'+
+    '.company-facility-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 18px 10px;overflow:auto;flex:1;align-content:start}.company-facility-row{display:grid;grid-template-columns:12px minmax(0,1fr) 42px auto;gap:9px;align-items:center;min-height:54px;padding:9px 10px;border-radius:9px;background:linear-gradient(135deg,rgba(3,10,13,.66),rgba(20,38,40,.55));border:1px solid rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.company-facility-row:hover{border-color:rgba(117,224,132,.34);background:rgba(26,49,47,.58)}.company-facility-marker{display:flex;align-items:center;justify-content:center}.company-facility-marker i{width:7px;height:7px;border-radius:50%;background:#75e084;box-shadow:0 0 9px rgba(117,224,132,.55)}.company-facility-name{min-width:0}.company-facility-name b,.company-facility-name span{display:block}.company-facility-name b{font-size:12px;line-height:1.2;color:#eff8f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-name span{font-size:9px;line-height:1.3;color:#a0b3a7;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.company-facility-staff{text-align:center}.company-facility-staff b,.company-facility-staff span{display:block}.company-facility-staff b{font-size:15px;line-height:1;color:#e8f6eb}.company-facility-staff span{font-size:7px;letter-spacing:.7px;color:#82988b;margin-top:3px}.company-facility-state{display:flex;align-items:center;gap:5px;font-size:8px;letter-spacing:.55px;color:#93e99e;font-weight:900}.company-facility-state i{width:5px;height:5px;border-radius:50%;background:#75e084}.company-facility-empty{padding:14px;font-size:11px;color:#a0b2a8}.company-command-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 18px 12px;border-top:1px solid rgba(255,255,255,.06);font-size:9px;line-height:1.35;color:#91a59a}.company-command-footer>b{flex:0 0 auto;font-size:8px;letter-spacing:.8px;color:#6fdc82}'+
+    '@media(max-width:900px){.company-facility-list{grid-template-columns:1fr}.company-command-kpis{grid-template-columns:repeat(2,1fr)}.company-command-card-head h2{font-size:22px}}';
   document.head.appendChild(style);
   // ENTITY COMMAND CENTRE READABILITY SCALE
   // Bring summary, action controls and management tabs/content up to the same
