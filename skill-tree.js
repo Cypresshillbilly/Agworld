@@ -57,15 +57,16 @@
     const vals=SKILLS.map(s=>Number(totals[s.key])||0);
     const dynamicMax=company?Math.max(5,...vals.map(v=>Math.ceil(v/5)*5)):MAX;
     const companyLarge=company&&compact;
-    const w=companyLarge?360:(compact?280:360),
-      h=companyLarge?240:(compact?220:300),
-      cx=companyLarge?180:(compact?140:160),
-      cy=companyLarge?118:(compact?108:145),
-      r=companyLarge?114:(compact?76:104);
+    // Command Center Company radar gets a larger dedicated canvas.
+    const w=companyLarge?440:(compact?280:360),
+      h=companyLarge?280:(compact?220:300),
+      cx=companyLarge?220:(compact?140:160),
+      cy=companyLarge?136:(compact?108:145),
+      r=companyLarge?128:(compact?76:104);
     let grid='';
     for(let level=1;level<=5;level++){const rr=r*level/5;grid+='<polygon points="'+SKILLS.map((_,i)=>polar(cx,cy,rr,i).map(n=>n.toFixed(1)).join(',')).join(' ')+'"/>';}
     const axes=SKILLS.map((_,i)=>{const p=polar(cx,cy,r,i);return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>';}).join('');
-    const labels=SKILLS.map((s,i)=>{const p=polar(cx,cy,r+(compact?18:22),i),anchor=Math.abs(p[0]-cx)<8?'middle':p[0]<cx?'end':'start';return '<text x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" text-anchor="'+anchor+'">'+esc(s.short)+'</text>';}).join('');
+    const labels=SKILLS.map((s,i)=>{const p=polar(cx,cy,r+(companyLarge?28:(compact?18:22)),i),anchor=Math.abs(p[0]-cx)<8?'middle':p[0]<cx?'end':'start';const label=companyLarge?s.name:s.short;return '<text x="'+p[0].toFixed(1)+'" y="'+p[1].toFixed(1)+'" text-anchor="'+anchor+'">'+esc(label)+'</text>';}).join('');
     return '<svg class="ag-skill-radar-svg '+(company?'company-skill-radar-svg':'')+'" viewBox="0 0 '+w+' '+h+'" role="img" aria-label="'+(company?'Company combined skill profile':'Player skill profile')+'"><g class="ag-radar-grid">'+grid+'</g><g class="ag-radar-axes">'+axes+'</g><polygon class="ag-radar-fill" points="'+points(cx,cy,r,vals,dynamicMax)+'"></polygon><polyline class="ag-radar-outline" points="'+points(cx,cy,r,vals,dynamicMax)+'"></polyline><g class="ag-radar-points">'+vals.map((v,i)=>{const p=polar(cx,cy,r*v/Math.max(1,dynamicMax),i);return '<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="'+(compact?2.8:3.5)+'"></circle>';}).join('')+'</g><circle class="ag-radar-center" cx="'+cx+'" cy="'+cy+'" r="4"></circle><g class="ag-radar-labels">'+labels+'</g></svg>';
   }
   function profileMarkup(){
@@ -115,7 +116,9 @@
   function companyMarkup(data){
     const totals=data.totals||zero(), strongest=SKILLS.reduce((best,s)=>totals[s.key]>totals[best.key]?s:best,SKILLS[0]);
     const total=SKILLS.reduce((sum,s)=>sum+(Number(totals[s.key])||0),0);
-    return '<div class="company-skill-chart"><div class="company-skill-chart-head"><div><span>COMPANY CAPABILITY</span><b>COMBINED USER SKILLS</b></div></div><div class="company-skill-chart-main"><div class="company-skill-visual">'+radarSvg(totals,{id:'company',compact:true,company:true})+'</div></div></div>';
+    // The Command Center already provides context, so do not waste space on a
+    // second black heading box. Give the combined skill radar the full panel.
+    return '<div class="company-skill-chart company-skill-chart-expanded"><div class="company-skill-chart-main"><div class="company-skill-visual">'+radarSvg(totals,{id:'company',compact:true,company:true})+'</div></div></div>';
   }
   async function renderCompany(target){
     const host=target||document.getElementById('companySkillChartHost');if(!host)return false;
@@ -140,6 +143,12 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
   window.addEventListener('agworld:player-ready',()=>setTimeout(renderAll,60));
   window.addEventListener('agworld:mission-completed',()=>{companyCache.value=null;setTimeout(renderAll,120);});
+
+  // Command Center readability override: larger, brighter full-skill labels.
+  const companyRadarStyle=document.createElement('style');
+  companyRadarStyle.id='ag-company-radar-readability-v44';
+  companyRadarStyle.textContent='.company-skill-chart-expanded .ag-radar-labels text{fill:#e6f3e9!important;font-size:11px!important;font-weight:900!important;letter-spacing:.2px!important;paint-order:stroke!important;stroke:#0d171b!important;stroke-width:2.2px!important;stroke-linejoin:round!important}.company-skill-chart-expanded .ag-skill-radar-svg{overflow:visible!important}';
+  document.head.appendChild(companyRadarStyle);
   window.AG_WORLD_SKILLS={definitions:SKILLS,rewards:REWARDS,getCurrentTotals:currentTotals,getCompanyTotals:companyTotals,renderProfile,renderMissions,renderCompany,renderAll,radarSvg};
 
   // Profile windows and mission content are created dynamically. Only fill a
