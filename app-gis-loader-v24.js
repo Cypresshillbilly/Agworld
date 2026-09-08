@@ -3130,6 +3130,7 @@ async function saveDynamicEntity(step) {
   const before = existing ? JSON.parse(JSON.stringify(existing)) : null;
   const details = {
     ...(existing?.details || {}),
+    ...(existing ? {} : { demo: false }),
     ...dynamicDetailsFromForm(),
     updatedAt: new Date().toISOString(),
     workflowStep: step
@@ -3233,7 +3234,7 @@ window.AGWorldDynamicEntityAPI.create = async function(type, input) {
     status: input.status || 'Active',
     location_lat: lat,
     location_lng: lng,
-    details: { ...(input.details || {}), updatedAt: new Date().toISOString(), workflowStep: 3 },
+    details: { demo: false, ...(input.details || {}), updatedAt: new Date().toISOString(), workflowStep: 3 },
     updated_at: new Date().toISOString(),
     updated_by: user.id
   };
@@ -3257,6 +3258,35 @@ window.AGWorldDynamicEntityAPI.create = async function(type, input) {
   refreshMapVisibility();
   window.dispatchEvent(new CustomEvent('agworld:dynamic-layer-updated', { detail: { type, id: entity.id, source: 'controlled_population' } }));
   return entity;
+};
+
+// One-time administrative classifier for legacy records that existed before
+// the demo/user world-data split. It does not run automatically.
+window.AGWorldDynamicEntityAPI.snapshotExistingAsDemo = async function(type) {
+  const cfg = DYNAMIC_LAYER_CONFIG[type];
+  const db = getFarmDb();
+  const user = window.AGWorldBackend?.getUser?.();
+  if (!cfg || !db || !user) throw new Error('You must be signed in to classify existing records.');
+  const { data, error } = await db.from(cfg.table).select('id,details');
+  if (error) throw new Error(error.message || error.code || 'Unable to load existing records');
+
+  let marked = 0;
+  for (const row of (data || [])) {
+    const details = row.details && typeof row.details === 'object' ? row.details : {};
+    if (details.demo === true || details.seeded === true || String(row.id).startsWith('demo-') || String(row.id).startsWith('seed-')) continue;
+    const nextDetails = {
+      ...details,
+      demo: true,
+      demoBaselineAt: new Date().toISOString(),
+      demoBaselineReason: 'Legacy AG World testing dataset'
+    };
+    const { error: updateError } = await db.from(cfg.table)
+      .update({ details: nextDetails, updated_at: new Date().toISOString(), updated_by: user.id })
+      .eq('id', row.id);
+    if (updateError) throw new Error(updateError.message || updateError.code || 'Unable to classify record as demo');
+    marked++;
+  }
+  return { type, marked };
 };
 
 // Canonical relationship policy for the AG World game layer.
