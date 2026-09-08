@@ -3803,58 +3803,6 @@ window.AGWorldDynamicEntityAPI.create = async function(type, input) {
   return entity;
 };
 
-// Controlled reconciliation for seeded/system records. Unlike create(), this
-// intentionally updates an existing canonical entity so a corrected real-world
-// address and map position can be rolled out without duplicating the marker.
-window.AGWorldDynamicEntityAPI.reconcile = async function(type, input) {
-  const cfg = DYNAMIC_LAYER_CONFIG[type];
-  const db = getFarmDb();
-  const user = window.AGWorldBackend?.getUser?.();
-  if (!cfg || !db || !user) throw new Error('You must be signed in to reconcile this shared game-layer record.');
-
-  const id = String(input?.id || '');
-  const lat = Number(input?.lat), lng = Number(input?.lng);
-  if (!id || !input?.name || !Number.isFinite(lat) || !Number.isFinite(lng)) {
-    throw new Error('A stable id, name and valid map location are required.');
-  }
-
-  const array = dynamicArray(type);
-  const existing = array.find(item => String(item.id) === id || String(item.name).toLowerCase() === String(input.name).toLowerCase());
-  if (!existing) return window.AGWorldDynamicEntityAPI.create(type, input);
-
-  const details = {
-    ...(existing.details || {}),
-    ...(input.details || {}),
-    demo: false,
-    seeded: true,
-    reconciledAt: new Date().toISOString(),
-    workflowStep: 3
-  };
-  const row = {
-    id: String(existing.id),
-    name: String(input.name).trim(),
-    contact_name: input.contactName ?? existing.contactName ?? null,
-    contact_cell: input.contactCell ?? existing.contactCell ?? null,
-    contact_email: input.contactEmail ?? existing.contactEmail ?? null,
-    status: input.status || existing.status || 'Active',
-    location_lat: lat,
-    location_lng: lng,
-    details,
-    updated_at: new Date().toISOString(),
-    updated_by: user.id
-  };
-  const { error } = await db.from(cfg.table).update(row).eq('id', row.id);
-  if (error) throw new Error(error.message || error.code || 'Unable to reconcile shared game-layer record');
-
-  const entity = hydrateDynamicEntity(row, type);
-  const index = array.findIndex(item => String(item.id) === String(row.id));
-  if (index >= 0) array[index] = entity;
-  renderDynamicEntity(entity);
-  refreshMapVisibility();
-  window.dispatchEvent(new CustomEvent('agworld:dynamic-layer-updated', { detail: { type, id: entity.id, source: 'controlled-reconciliation' } }));
-  return entity;
-};
-
 // One-time administrative classifier for legacy records that existed before
 // the demo/user world-data split. It does not run automatically.
 window.AGWorldDynamicEntityAPI.snapshotExistingAsDemo = async function(type) {
