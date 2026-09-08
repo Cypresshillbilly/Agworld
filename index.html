@@ -196,4 +196,18 @@
 <script src="login-gate-bridge-v39.js?v=supabase-only-v41"></script>
 <script src="login-panel-layout-v40.js?v=20260906-login-layout-v2"></script>
 <script src="world-population-manager-v1.js?v=demo-baseline-v4-20260908-1315"></script>
+<div id="fleetTransactionModal" class="modal-overlay" hidden>
+  <div class="modal-card" style="max-width:620px">
+    <div class="modal-head"><div><span class="eyebrow">SALES & FLEET TRANSACTION</span><h2 id="fleetTransactionTitle">Sell Company Drones</h2></div><button id="closeFleetTransaction" type="button">×</button></div>
+    <div class="modal-body">
+      <div class="farm-info-hero"><span id="fleetTransactionEntityType">MARKET ENTITY</span><h3 id="fleetTransactionEntityName">Entity</h3><p id="fleetTransactionSummary">Record a drone sale and update market influence immediately.</p></div>
+      <label>Transaction Type<select id="fleetTransactionType"><option value="companySale">Sell Company Drones</option><option value="competitorSale">Record Competitor Drone Fleet</option></select></label>
+      <label id="fleetSupplierLabel">Supplying Company Facility<select id="fleetSupplier"></select></label>
+      <label>Number of Drones<input id="fleetDroneQuantity" type="number" min="1" step="1" value="1"></label>
+      <label>Notes (optional)<textarea id="fleetTransactionNotes" rows="3" placeholder="Sale reference, campaign or notes"></textarea></label>
+      <div id="fleetTransactionCurrent" class="farm-assets-status"></div>
+    </div>
+    <div class="farm-wizard-actions"><button id="saveFleetTransaction" class="save-farm" type="button">COMPLETE TRANSACTION</button></div>
+  </div>
+</div>
 </body></html>
