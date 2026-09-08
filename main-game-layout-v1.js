@@ -1516,4 +1516,28 @@
     '@media(max-width:1100px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:minmax(240px,66%) minmax(0,34%)!important}#entityInformationSection .agworld-company-entity-card .company-skill-chart-expanded .ag-skill-radar-svg{height:176px!important}}'+
     '@media(max-width:900px){#entityInformationSection #farmCard.farm-card.agworld-company-entity-card>.company-command-split>.company-command-right-pane{grid-template-columns:1fr!important}.company-command-facility-side{display:none!important}}';
   document.head.appendChild(style);
-})();
+
+
+/* AG World v46 — Company Command Center tablet presentation. */
+(()=>{
+  const FRAME='agworld-command-tablet-frame';
+  function syncTabletFrame(){
+    const section=document.getElementById('entityInformationSection');
+    const companyCard=section?.querySelector('#farmCard.agworld-company-entity-card');
+    if(section) section.classList.toggle(FRAME,!!companyCard);
+  }
+  syncTabletFrame();
+  const frameObserver=new MutationObserver(syncTabletFrame);
+  const section=document.getElementById('entityInformationSection');
+  if(section) frameObserver.observe(section,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  const style=document.createElement('style');
+  style.id='agworldCommandCenterTabletFrameV46';
+  style.textContent=
+    '#entityInformationSection.'+FRAME+'{position:relative!important;border-radius:18px!important;overflow:hidden!important;background:linear-gradient(135deg,#8f979d 0%,#424b52 7%,#151c21 14%,#0b151a 50%,#151c21 88%,#8f979d 100%)!important;box-shadow:0 14px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 0 rgba(0,0,0,.55)!important;isolation:isolate!important}'+
+    '#entityInformationSection.'+FRAME+'::before{content:"";position:absolute!important;inset:0!important;z-index:30!important;pointer-events:none!important;border:4px solid rgba(180,190,195,.76)!important;border-top-color:rgba(235,241,242,.88)!important;border-left-color:rgba(208,216,218,.82)!important;border-right-color:rgba(84,94,101,.92)!important;border-bottom-color:rgba(47,54,60,.98)!important;border-radius:18px!important;box-shadow:inset 0 0 0 1px rgba(12,18,22,.78),inset 0 2px 7px rgba(255,255,255,.13),0 0 0 1px rgba(8,12,15,.8)!important}'+
+    '#entityInformationSection.'+FRAME+'::after{content:"";position:absolute!important;top:8px!important;left:50%!important;transform:translateX(-50%)!important;width:62px!important;height:4px!important;border-radius:999px!important;background:linear-gradient(180deg,#10161a,#485158,#11181d)!important;box-shadow:0 1px 1px rgba(255,255,255,.16),inset 0 1px 2px rgba(0,0,0,.85)!important;z-index:31!important;pointer-events:none!important}'+
+    '#entityInformationSection.'+FRAME+' #entityCommandCentreHeading{left:4px!important;right:4px!important;top:4px!important;border-top-left-radius:13px!important;border-top-right-radius:13px!important}'+
+    '#entityInformationSection.'+FRAME+' #farmCard.agworld-company-entity-card{border-left:0!important;border-right:0!important;border-bottom:0!important;border-radius:0 0 14px 14px!important}'+
+    '@media(max-width:900px){#entityInformationSection.'+FRAME+'{border-radius:12px!important}#entityInformationSection.'+FRAME+'::before{border-radius:12px!important;border-width:3px!important}#entityInformationSection.'+FRAME+' #entityCommandCentreHeading{border-radius:9px 9px 0 0!important}}';
+  document.head.appendChild(style);
+})();\n})();
