@@ -383,6 +383,36 @@
   }
   window.__AGWORLD_ENTITY_COMMAND_DIAG__=entityCommandDiag;
 
+  function prepareEntityCommandCentreForSelection(entity){
+    const card=$('farmCard');
+    if(!card) return null;
+
+    // The diagnostic trace proves the V2 panel is successfully rendering into
+    // the visible host. The remaining failure is structural: restoring the old
+    // legacy Farm Card shell leaves empty summary columns ahead of the V2 host,
+    // pushing the correctly-rendered selected entity below the 170px Command
+    // Centre viewport. A selected entity therefore gets the Command Centre as
+    // its dedicated canvas; the startup Company view and legacy shell are not
+    // retained as spacer content.
+    card.innerHTML='';
+    card.classList.remove('agworld-company-entity-card');
+    card.classList.add('show','agworld-selected-entity-command');
+    delete card.dataset.entityCommandDefault;
+
+    if(window.AGWorldV2){
+      delete window.AGWorldV2.LiveFarmDetailBridge;
+      delete window.AGWorldV2.LiveDynamicEntityDetailBridge;
+    }
+
+    const host=document.createElement('div');
+    host.id='agworldV2FarmDetailHost';
+    host.hidden=false;
+    host.style.cssText='display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;';
+    card.appendChild(host);
+    entityCommandDiag('ENTITY COMMAND CANVAS PREPARED',{entityId:String(entity?.id||''),entityType:entity?.type||'',hostOnlyChild:card.children.length===1});
+    return host;
+  }
+
   function selectEntityScope(event){
     const entity=event?.detail?.entity||event?.detail?.farm||event?.detail;
     if(!entity) return;
@@ -391,18 +421,14 @@
     window.__AGWORLD_ENTITY_COMMAND_SCOPE__=String(entity.type||'entity').toUpperCase();
     window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY_THEN_ENTITY';
 
-    // The Company portfolio is startup content only. It must never remain in
-    // the Entity Command Centre after a user selects a Farm, Contractor,
-    // Competitor or Company Facility. Restore the canonical entity-card shell
-    // in this exact panel before the selected entity is rendered into it.
-    const restored=restoreEntityCommandTemplate();
-    entityCommandDiag('COMPANY CARD RESTORED',{restored,entityId:String(entity.id||''),entityType:entity.type||''});
+    // The Company portfolio is startup content only. On selection, give the
+    // selected entity the entire visible Entity Command Centre instead of
+    // restoring the old legacy shell as blank spacer columns.
+    const host=prepareEntityCommandCentreForSelection(entity);
+    entityCommandDiag('ENTITY COMMAND CENTRE PREPARED',{prepared:!!host,entityId:String(entity.id||''),entityType:entity.type||''});
 
-    // Some V2 listeners run before this layout listener. Farms open their V2
-    // card synchronously, so restoring the startup shell can replace that first
-    // render. Re-open from the canonical selection after restoration. Dynamic
-    // entities already defer their bridge, but this also makes the handoff
-    // deterministic for all entity types.
+    // Re-open from the canonical selection after the dedicated visible canvas
+    // has been prepared. This makes the handoff deterministic for all types.
     const isFarm=event.type==='agworld:farm-selected' || event?.detail?.farm;
     const delay=isFarm?0:180;
     entityCommandDiag('V2 HANDOFF SCHEDULED',{isFarm,delay,hasFarmOpen:typeof window.openV2FarmDetail==='function',hasDynamicOpen:typeof window.openV2DynamicEntityDetail==='function'});
