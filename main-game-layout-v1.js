@@ -417,6 +417,11 @@
     const card=$('farmCard');
     if(!card) return null;
 
+    // Preserve the original Farm Card action nodes before rebuilding the
+    // Command Centre. Moving the real DOM nodes (rather than recreating
+    // buttons) keeps all existing, proven click handlers intact.
+    const preservedActions=card.querySelector('#farmActions');
+
     card.innerHTML='';
     card.classList.remove('agworld-company-entity-card');
     card.classList.add('show','agworld-selected-entity-command');
@@ -439,6 +444,11 @@
       '<div class="agworld-entity-command-status">'+escEntityCommand(String(entity?.status||'active').toUpperCase())+'</div>'+
       '<div class="agworld-entity-command-summary-grid">'+metrics.map(([label,value])=>
         '<div><span>'+escEntityCommand(label)+'</span><b>'+escEntityCommand(value)+'</b></div>').join('')+'</div>';
+
+    if(preservedActions){
+      preservedActions.classList.add('agworld-entity-command-actions');
+      summary.appendChild(preservedActions);
+    }
 
     const management=document.createElement('section');
     management.className='agworld-entity-command-management';
