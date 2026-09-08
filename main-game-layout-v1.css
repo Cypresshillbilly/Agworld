@@ -420,6 +420,10 @@ html body .app-shell > #entityInformationSection::after{
   max-height:none!important;
 }
 #entityInformationSection #farmCard.agworld-selected-entity-command #agworldV2FarmDetailHost{
+  /* Override the legacy default that intentionally hides the V2 host. */
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
   width:100%!important;
   height:100%!important;
   max-height:100%!important;
