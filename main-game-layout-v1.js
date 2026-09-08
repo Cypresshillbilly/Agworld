@@ -964,3 +964,31 @@
     setTimeout(ensureMenuCommands,3500);
   });
 })();
+/* ENTITY COMMAND CENTRE HARD DARK FINISH v26 */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldEntityCommandHardDarkFinish';
+  style.textContent=
+    '#entityInformationSection,#entityInformationSection .farm-card{background:#081217!important;color:#dcebe1!important}'+
+    '#entityInformationSection .agworld-company-entity-card{background:radial-gradient(circle at 100% 0,rgba(73,132,91,.16),transparent 35%),linear-gradient(145deg,#101d22 0%,#091318 58%,#060d11 100%)!important;color:#edf6ef!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-card-head,'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis,'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-list-head,'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-list,'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-footer{background:transparent!important;color:#dcebe1!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-card-head{border-color:rgba(126,167,148,.18)!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis>div{background:linear-gradient(145deg,#122128 0%,#0b151a 100%)!important;border-color:rgba(126,167,148,.22)!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-row{background:linear-gradient(135deg,#0d181d 0%,#081116 100%)!important;border-color:rgba(126,167,148,.18)!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-row:hover{background:#122329!important;border-color:rgba(117,224,132,.42)!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-footer{border-color:rgba(126,167,148,.16)!important}'+
+    '#entityInformationSection .agworld-company-entity-card h1,#entityInformationSection .agworld-company-entity-card h2,#entityInformationSection .agworld-company-entity-card h3,#entityInformationSection .agworld-company-entity-card h4,#entityInformationSection .agworld-company-entity-card b{color:#edf8f0!important}'+
+    '#entityInformationSection .agworld-company-entity-card p,#entityInformationSection .agworld-company-entity-card span,#entityInformationSection .agworld-company-entity-card label{color:#aebfb5!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-eyebrow,#entityInformationSection .agworld-company-entity-card .company-command-status,#entityInformationSection .agworld-company-entity-card .company-facility-state{color:#8ee99d!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis b,#entityInformationSection .agworld-company-entity-card .company-facility-name b,#entityInformationSection .agworld-company-entity-card .company-facility-staff b{color:#f1faf3!important}'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card){background:linear-gradient(145deg,#101c21 0%,#0a1318 58%,#071015 100%)!important}'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card) .agworld-entity-command-shell,'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card) .agworld-entity-summary,'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card) .agworld-entity-command-actions,'+
+    '#entityInformationSection .farm-card:not(.agworld-company-entity-card) .agworld-entity-command-management{background:#0b151a!important;color:#dcebe1!important}';
+  document.head.appendChild(style);
+})();
