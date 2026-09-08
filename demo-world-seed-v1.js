@@ -19,6 +19,9 @@ function jitter(v,i,span){return v+Math.sin(i*12.9898)*span}
 function dist(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,h=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
 function farms(){const w=global.AG_WORLD_WORLD||{};const fs=global.__AG_WORLD_FARMS||w.getFarms?.()||[];return fs.map(f=>{const p=f.position||f.center||f;return {...f,lat:Number(p.lat),lng:Number(p.lng)}}).filter(f=>Number.isFinite(f.lat)&&Number.isFinite(f.lng))}
 async function seed(){
+ // Do not run 55 entity writes + relationship discovery on the interactive map load path.
+ // Seeding is now explicit and can be run from the console or a future admin action.
+ if(!global.AG_WORLD_RUN_DEMO_SEED) return;
  if(global.localStorage.getItem(SEED_KEY)) return;
  if(!global.AGWorldV2?.EntityService||!global.AGWorldV2?.EntityRepository||!global.AGWorldV2?.RelationshipService){setTimeout(seed,1000);return}
  const er=new global.AGWorldV2.EntityRepository(), es=new global.AGWorldV2.EntityService(er);
@@ -55,5 +58,5 @@ async function seed(){
  console.info('[AG World] Created 5 company facilities and 50 contractors through entity/relationship services.');
 }
 global.AGWorldDemoWorldSeed={run:seed,facilities};
-seed().catch(err=>console.error('[AG World] Demo world seed failed',err));
+global.AGWorldDemoWorldSeed={run:seed,facilities};
 })(window);
