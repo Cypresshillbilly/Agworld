@@ -145,6 +145,27 @@
     frame(territory,0,topH,leftStage,bottomH);
     frame(entity,leftStage,topH,shellW-leftStage,bottomH);
 
+    // The Entity Command card is the sole visual surface for the entire
+    // bottom-right allocation. Force it to occupy the exact geometry owned
+    // by entityInformationSection rather than retaining any legacy card size.
+    const entityCard=$('farmCard');
+    if(entity && entityCard){
+      important(entity,'overflow','hidden');
+      important(entityCard,'position','absolute');
+      important(entityCard,'left','0');
+      important(entityCard,'top','0');
+      important(entityCard,'right','0');
+      important(entityCard,'bottom','0');
+      important(entityCard,'width','100%');
+      important(entityCard,'height','100%');
+      important(entityCard,'min-height','100%');
+      important(entityCard,'max-width','none');
+      important(entityCard,'max-height','none');
+      important(entityCard,'margin','0');
+      important(entityCard,'box-sizing','border-box');
+      important(entityCard,'z-index','2');
+    }
+
     if(territory) important(territory,'z-index','999');
     if(entity) important(entity,'z-index','999');
 
@@ -337,7 +358,8 @@
 
   const style=document.createElement('style');
   style.textContent=
-    '#entityInformationSection .farm-card{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;bottom:auto!important;top:auto!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:12px;box-sizing:border-box;overflow:hidden}'+
+    '#entityInformationSection{position:absolute!important;overflow:hidden!important;padding:0!important;margin:0!important;box-sizing:border-box!important}'+
+    '#entityInformationSection .farm-card{position:absolute!important;inset:0!important;left:0!important;right:0!important;bottom:0!important;top:0!important;width:100%!important;height:100%!important;min-height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:12px;box-sizing:border-box;overflow:hidden}'+
     '#entityInformationSection .agworld-company-entity-card{display:flex!important;flex-direction:column;background:linear-gradient(145deg,#16252a 0%,#0c161a 58%,#0a1114 100%);border:1px solid rgba(122,224,145,.32);box-shadow:0 12px 28px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.06)}'+
     '.company-command-card-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:13px 16px 9px;border-bottom:1px solid rgba(255,255,255,.07)}'+
     '.company-command-eyebrow{font-size:8px;letter-spacing:1.35px;font-weight:900;color:#75e084;margin-bottom:4px}.company-command-card-head h2{margin:0;font-size:20px;letter-spacing:.6px}.company-command-status{font-size:8px;font-weight:900;letter-spacing:1px;color:#75e084;border:1px solid rgba(117,224,132,.38);padding:5px 8px;border-radius:999px}'+
