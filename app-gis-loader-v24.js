@@ -4378,6 +4378,22 @@ function selectDynamicEntity(entity, zoom = true) {
   setCardText('aiText', `${cfg.label} is an interconnected AG World game-layer entity. Relationships, activity, documents, media and notes are managed through the V2 Entity Engine.`);
   updateFleetTransactionAction(entity, entity.type);
 
+  // Dynamic entities must create the same canonical V2 Entity Engine host as
+  // Farms. Previously only selectFarm created this host, so a Contractor,
+  // Competitor or Company Facility selected directly from the map could stop
+  // at the legacy summary card and never expose the management functionality.
+  let v2Host = document.getElementById('agworldV2FarmDetailHost');
+  if (!v2Host) {
+    v2Host = document.createElement('div');
+    v2Host.id = 'agworldV2FarmDetailHost';
+    const actions = $('farmActions');
+    if (actions) $('farmCard').insertBefore(v2Host, actions);
+    else $('farmCard').appendChild(v2Host);
+  }
+  v2Host.hidden = false;
+  v2Host.style.cssText = 'display:block!important;visibility:visible!important;opacity:1!important;margin-top:10px;padding-top:10px;border-top:1px solid #dce5e8;font-size:9px;color:#60717a;';
+  v2Host.innerHTML = '<section class="agworld-v2-live-fallback" style="display:block;background:#f7fafb;border:1px solid #dce5e8;border-radius:6px;padding:8px;"><div style="font-size:8px;font-weight:800;letter-spacing:1px;color:#168aa0;margin-bottom:4px;">AG WORLD V2 ENTITY ENGINE</div><div style="font-size:8px;color:#60717a;">Connecting entity and relationship data…</div></section>';
+
   if (isDirectDiagnosticSelection) directMarkerDiagnostic('ENTITY CARD UPDATE COMPLETED');
 
   // This helper is intentionally the ONE direct-selection handoff. It is the
