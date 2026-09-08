@@ -3250,36 +3250,115 @@ window.AGWorldDynamicEntityAPI.create = async function(type, input) {
   return entity;
 };
 
+// Canonical relationship policy for the AG World game layer.
+// Relationships are governed by the entity pair, regardless of which entity is
+// stored as source or target.
+const AGWORLD_RELATIONSHIP_TYPE_ALIASES = {
+  farm: 'farm',
+  farms: 'farm',
+  contractor: 'contractor',
+  contractors: 'contractor',
+  competitor: 'competitor',
+  competitors: 'competitor',
+  companyfacility: 'companyFacility',
+  companyfacilities: 'companyFacility',
+  company_facility: 'companyFacility',
+  company_facilities: 'companyFacility',
+  company: 'companyFacility'
+};
+
+function canonicalRelationshipEntityType(type) {
+  const key = String(type || '').trim().replace(/[\s_-]+/g, '').toLowerCase();
+  return AGWORLD_RELATIONSHIP_TYPE_ALIASES[key] || String(type || '').trim();
+}
+
+function relationshipPairKey(a, b) {
+  return [canonicalRelationshipEntityType(a), canonicalRelationshipEntityType(b)].sort().join('|');
+}
+
+const AGWORLD_ALLOWED_RELATIONSHIP_PAIRS = new Set([
+  relationshipPairKey('farm', 'contractor'),
+  relationshipPairKey('farm', 'competitor'),
+  relationshipPairKey('farm', 'companyFacility'),
+  relationshipPairKey('contractor', 'competitor'),
+  relationshipPairKey('contractor', 'companyFacility'),
+  relationshipPairKey('competitor', 'competitor')
+]);
+
+function validateAGWorldRelationshipPair(sourceType, sourceId, targetType, targetId) {
+  const source = canonicalRelationshipEntityType(sourceType);
+  const target = canonicalRelationshipEntityType(targetType);
+
+  if (!source || !target) throw new Error('Both entities must have a valid entity type.');
+  if (String(sourceId) === String(targetId) && source === target) {
+    throw new Error('An entity cannot be linked to itself.');
+  }
+
+  const key = relationshipPairKey(source, target);
+  if (!AGWORLD_ALLOWED_RELATIONSHIP_PAIRS.has(key)) {
+    throw new Error('This relationship is not allowed by AG World relationship rules: ' + source + ' cannot be linked to ' + target + '.');
+  }
+  return { source, target, pairKey: key };
+}
+
+// Expose the policy so relationship UI and future workflows can use the exact
+// same rule set before submitting a relationship.
+window.AGWorldRelationshipPolicy = {
+  canonicalType: canonicalRelationshipEntityType,
+  isAllowed(sourceType, targetType) {
+    return AGWORLD_ALLOWED_RELATIONSHIP_PAIRS.has(relationshipPairKey(sourceType, targetType));
+  },
+  validate: validateAGWorldRelationshipPair,
+  allowedPairs: [
+    ['farm', 'contractor'],
+    ['farm', 'competitor'],
+    ['farm', 'companyFacility'],
+    ['contractor', 'competitor'],
+    ['contractor', 'companyFacility'],
+    ['competitor', 'competitor']
+  ]
+};
+
 window.AGWorldDynamicEntityAPI.createRelationship = async function(input) {
   const db = getFarmDb();
   const user = window.AGWorldBackend?.getUser?.();
   if (!db || !user) throw new Error('You must be signed in to create relationships.');
 
+  const sourceType = canonicalRelationshipEntityType(input.sourceEntityType || 'contractor');
+  const targetType = canonicalRelationshipEntityType(input.targetEntityType || 'farm');
+  validateAGWorldRelationshipPair(sourceType, input.sourceEntityId, targetType, input.targetEntityId);
+
   const row = {
     source_entity_id: String(input.sourceEntityId),
-    source_entity_type: input.sourceEntityType || 'contractor',
+    source_entity_type: sourceType,
     target_entity_id: String(input.targetEntityId),
-    target_entity_type: input.targetEntityType || 'farm',
-    relationship_type: input.relationshipType || 'serves',
+    target_entity_type: targetType,
+    relationship_type: input.relationshipType || 'linked',
     status: input.status || 'active',
     metadata: input.metadata || {},
     created_by: user.id
   };
 
-  // WORLD RULE: a Farm may belong to only one Contractor relationship.
-  // Enforce this at the canonical relationship creation boundary so every
-  // controlled/admin workflow follows the same rule.
-  if (row.source_entity_type === 'contractor' && row.target_entity_type === 'farm' && row.relationship_type === 'serves') {
-    const { data: assignedRows, error: assignedError } = await db.from('entity_relationships')
-      .select('id,source_entity_id')
-      .eq('target_entity_id', row.target_entity_id)
-      .eq('target_entity_type', 'farm')
-      .eq('source_entity_type', 'contractor')
-      .eq('relationship_type', 'serves')
-      .eq('status', 'active')
-      .limit(1);
+  // WORLD RULE: a Farm may have only one active Contractor, regardless of
+  // relationship direction or relationship label.
+  if (row.status === 'active' && relationshipPairKey(sourceType, targetType) === relationshipPairKey('farm', 'contractor')) {
+    const farmId = sourceType === 'farm' ? row.source_entity_id : row.target_entity_id;
+    const contractorId = sourceType === 'contractor' ? row.source_entity_id : row.target_entity_id;
+    const { data: activeRows, error: assignedError } = await db.from('entity_relationships')
+      .select('id,source_entity_id,source_entity_type,target_entity_id,target_entity_type')
+      .eq('status', 'active');
     if (assignedError) throw new Error(assignedError.message || assignedError.code || 'Unable to verify the Farm contractor assignment');
-    if (assignedRows && assignedRows.length && String(assignedRows[0].source_entity_id) !== row.source_entity_id) {
+
+    const conflict = (activeRows || []).find(existing => {
+      const a = canonicalRelationshipEntityType(existing.source_entity_type);
+      const b = canonicalRelationshipEntityType(existing.target_entity_type);
+      if (relationshipPairKey(a, b) !== relationshipPairKey('farm', 'contractor')) return false;
+      const existingFarmId = a === 'farm' ? String(existing.source_entity_id) : String(existing.target_entity_id);
+      const existingContractorId = a === 'contractor' ? String(existing.source_entity_id) : String(existing.target_entity_id);
+      return existingFarmId === String(farmId) && existingContractorId !== String(contractorId);
+    });
+
+    if (conflict) {
       throw new Error('This Farm is already linked to another Contractor. A Farm may only have one active Contractor.');
     }
   }
@@ -3298,7 +3377,6 @@ window.AGWorldDynamicEntityAPI.createRelationship = async function(input) {
   window.dispatchEvent(new CustomEvent('agworld:relationship-created', { detail: { relationship: data } }));
   return data;
 };
-
 // Repairs relationships created before the one-contractor-per-farm world rule.
 // Duplicate assignments are preserved as history but made inactive; the active
 // assignment retained is the geographically closest Contractor where distance
