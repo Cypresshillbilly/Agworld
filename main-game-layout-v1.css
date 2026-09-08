@@ -516,3 +516,22 @@ html body .app-shell > #entityInformationSection::after{
   color:#fff!important;
 }
 .agworld-entity-command-summary #farmActions.agworld-entity-command-actions button[hidden]{display:none!important}
+
+
+/* Final visibility guard for Entity Command Centre operational controls.
+   This intentionally overrides legacy Farm Card hiding rules. */
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions,
+.agworld-entity-command-summary .agworld-entity-command-fallback-actions{
+  display:flex!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+  z-index:20!important;
+}
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions[hidden],
+.agworld-entity-command-summary .agworld-entity-command-fallback-actions[hidden]{
+  display:flex!important;
+}
