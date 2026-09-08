@@ -374,9 +374,19 @@
     if(renderCompanyCard() && facilities().length) return;
     if(companyCardActive) setTimeout(waitForFacilities,700);
   }
+  function entityCommandDiag(stage, extra){
+    const d=window.__AGWORLD_ENTITY_COMMAND_DIAGNOSTIC__||(window.__AGWORLD_ENTITY_COMMAND_DIAGNOSTIC__={events:[]});
+    const card=$('farmCard'), host=$('agworldV2FarmDetailHost');
+    const snapshot={time:new Date().toISOString(),stage,...(extra||{}),card:!!card,cardConnected:!!card?.isConnected,companyCard:!!card?.classList?.contains('agworld-company-entity-card'),host:!!host,hostConnected:!!host?.isConnected,hostParent:host?.parentElement?.id||null,hostHTML:host?host.innerHTML.slice(0,220):''};
+    d.events.push(snapshot); if(d.events.length>40)d.events.shift(); d.last=snapshot;
+    return snapshot;
+  }
+  window.__AGWORLD_ENTITY_COMMAND_DIAG__=entityCommandDiag;
+
   function selectEntityScope(event){
     const entity=event?.detail?.entity||event?.detail?.farm||event?.detail;
     if(!entity) return;
+    entityCommandDiag('SELECTION RECEIVED',{eventType:event.type,entityId:String(entity.id||''),entityName:entity.name||'',entityType:entity.type||''});
     companyCardActive=false;
     window.__AGWORLD_ENTITY_COMMAND_SCOPE__=String(entity.type||'entity').toUpperCase();
     window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY_THEN_ENTITY';
@@ -385,7 +395,8 @@
     // the Entity Command Centre after a user selects a Farm, Contractor,
     // Competitor or Company Facility. Restore the canonical entity-card shell
     // in this exact panel before the selected entity is rendered into it.
-    restoreEntityCommandTemplate();
+    const restored=restoreEntityCommandTemplate();
+    entityCommandDiag('COMPANY CARD RESTORED',{restored,entityId:String(entity.id||''),entityType:entity.type||''});
 
     // Some V2 listeners run before this layout listener. Farms open their V2
     // card synchronously, so restoring the startup shell can replace that first
@@ -394,9 +405,12 @@
     // deterministic for all entity types.
     const isFarm=event.type==='agworld:farm-selected' || event?.detail?.farm;
     const delay=isFarm?0:180;
+    entityCommandDiag('V2 HANDOFF SCHEDULED',{isFarm,delay,hasFarmOpen:typeof window.openV2FarmDetail==='function',hasDynamicOpen:typeof window.openV2DynamicEntityDetail==='function'});
     setTimeout(()=>{
+      entityCommandDiag('V2 HANDOFF EXECUTING',{isFarm,entityId:String(entity.id||''),entityType:entity.type||''});
       if(isFarm && typeof window.openV2FarmDetail==='function') window.openV2FarmDetail(entity);
       else if(!isFarm && typeof window.openV2DynamicEntityDetail==='function') window.openV2DynamicEntityDetail(entity);
+      setTimeout(()=>entityCommandDiag('V2 HANDOFF POSTCHECK',{isFarm,entityId:String(entity.id||'')}),60);
     },delay);
   }
   window.addEventListener('agworld:farm-selected',selectEntityScope);
