@@ -18,7 +18,7 @@
     if(!heading){
       heading=document.createElement('div');
       heading.id='entityCommandCentreHeading';
-      heading.innerHTML='<span class="entity-command-centre-mark"></span><span>ENTITY COMMAND CENTRE</span><small>LIVE ENTITY MANAGEMENT</small>';
+      heading.innerHTML='<span>COMMAND CENTER</span>';
       entitySection.insertBefore(heading,entitySection.firstChild);
     }
     return heading;
@@ -835,10 +835,9 @@
   const style=document.createElement('style');
   style.textContent=
     '#entityInformationSection{position:absolute!important;overflow:hidden!important;padding:0!important;margin:0!important;box-sizing:border-box!important;background:linear-gradient(180deg,#0b151a 0%,#071015 100%);border:1px solid rgba(119,171,147,.22);border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}'+
-    '#entityCommandCentreHeading{position:absolute!important;left:0!important;right:0!important;top:0!important;height:34px!important;z-index:6!important;display:flex!important;align-items:center!important;gap:9px!important;padding:0 16px!important;box-sizing:border-box!important;background:linear-gradient(90deg,#101f25 0%,#0b161b 72%,#0e211d 100%);border-bottom:1px solid rgba(117,224,132,.2);color:#eef8f1;font-size:14px!important;font-weight:900!important;letter-spacing:1.35px!important;line-height:1!important;text-transform:uppercase!important;box-shadow:0 5px 16px rgba(0,0,0,.18)}'+
-    '#entityCommandCentreHeading .entity-command-centre-mark{width:8px;height:8px;border-radius:50%;background:#75e084;box-shadow:0 0 11px rgba(117,224,132,.8);flex:0 0 auto}'+
-    '#entityCommandCentreHeading small{margin-left:auto;font-size:8px!important;letter-spacing:1px!important;color:#89a99a;font-weight:800!important;white-space:nowrap}'+
-    '#entityInformationSection .farm-card{position:absolute!important;inset:auto!important;left:0!important;right:0!important;bottom:0!important;top:34px!important;width:100%!important;height:calc(100% - 34px)!important;min-height:calc(100% - 34px)!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0 0 12px 12px;box-sizing:border-box;overflow:hidden}'+
+    '#entityCommandCentreHeading{position:absolute!important;left:0!important;right:0!important;top:0!important;height:38px!important;z-index:6!important;display:flex!important;align-items:center!important;padding:0 16px!important;box-sizing:border-box!important;background:linear-gradient(90deg,#101f25 0%,#0b161b 72%,#0e211d 100%);border-bottom:1px solid rgba(117,224,132,.2);color:#eef8f1;font-family:inherit!important;font-size:20px!important;font-weight:800!important;letter-spacing:2px!important;line-height:1!important;text-transform:uppercase!important;box-shadow:0 5px 16px rgba(0,0,0,.18)}'+
+    '#entityCommandCentreHeading .entity-command-centre-mark,#entityCommandCentreHeading small{display:none!important}'+
+    '#entityInformationSection .farm-card{position:absolute!important;inset:auto!important;left:0!important;right:0!important;bottom:0!important;top:38px!important;width:100%!important;height:calc(100% - 38px)!important;min-height:calc(100% - 38px)!important;max-width:none!important;max-height:none!important;margin:0!important;border-radius:0 0 12px 12px;box-sizing:border-box;overflow:hidden}'+
     '#entityInformationSection .agworld-company-entity-card{display:flex!important;flex-direction:column;color:#edf6ef;background:radial-gradient(circle at 100% 0,rgba(73,132,91,.16),transparent 35%),linear-gradient(145deg,#17272b 0%,#0d171b 58%,#091013 100%);border:1px solid rgba(122,224,145,.34);box-shadow:0 14px 34px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.07)}'+
     '#entityInformationSection .agworld-company-entity-card:before{content:"";display:block;height:4px;flex:0 0 4px;background:linear-gradient(90deg,#5ed879,#a9ee7c 42%,rgba(169,238,124,.12));box-shadow:0 0 18px rgba(94,216,121,.32)}'+
     '.company-command-card-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.08)}'+
