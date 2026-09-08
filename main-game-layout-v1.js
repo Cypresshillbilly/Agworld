@@ -500,7 +500,12 @@
       document.getElementById('fleetHistoryAction')?.click();
     };
 
-    actions.append(update,fleet,sales);
+    // Only Farms and Contractors participate in the sales/fleet commercial
+    // workflows. Competitors and Company Facilities keep the common entity
+    // update action but do not expose sales controls.
+    const commercialEntity=String(entity?.type||'')==='farm' || String(entity?.type||'')==='contractor';
+    actions.appendChild(update);
+    if(commercialEntity) actions.append(fleet,sales);
     summary.appendChild(actions);
     return actions;
   }
