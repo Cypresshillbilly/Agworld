@@ -95,7 +95,24 @@ function renderEntityCommandDiagnostic(){
     '<div class="entity-command-tabs">'+expected.map((t,i)=>'<span class="'+(coverage[i]?'ok':'bad')+'">'+t+'</span>').join('')+'</div>'+
     '<small>Rendered: '+(d.renderedAt?new Date(d.renderedAt).toLocaleTimeString():'waiting for live render')+' · Active management tab: '+esc(active)+'</small>';
 }
-function render(){const d=diag();renderEntityCommandDiagnostic();$('connectionState').textContent=opener()?'CONNECTED TO AG WORLD TAB':'STANDALONE MODE';$('connectionState').style.color=opener()?'var(--green)':'var(--amber)';$('appStatus').textContent=d.w.AG_WORLD_WORLD?'LIVE':'LIMITED';$('mapStatus').textContent=d.checks[1].items[0][1]?'READY':'MISSING';$('entityTotal').textContent=d.counts.total;$('relationshipTotal').textContent=d.rels.length;$('eventTotal').textContent=d.events.length;$('errorTotal').textContent=errors.length;
+function renderEntitySelectionDiagnostic(){
+  const el=$('entitySelectionDiagnostic'); if(!el)return;
+  const w=root(),doc=w.document,d=w.__AGWORLD_ENTITY_COMMAND_DIAGNOSTIC__||{};
+  const card=doc?.getElementById('farmCard'),host=doc?.getElementById('agworldV2FarmDetailHost');
+  const dyn=w.AGWorldV2?.LiveDynamicEntityDetailBridge, farm=w.AGWorldV2?.LiveFarmDetailBridge;
+  const events=Array.isArray(d.events)?d.events:[];
+  const selected=events.slice().reverse().find(x=>x.entityId)||d.last||{};
+  const checks=[
+    ['Selected entity ID',selected.entityId||'NONE'],['Selected entity type',selected.entityType||'NONE'],['Current command scope',w.__AGWORLD_ENTITY_COMMAND_SCOPE__||'NONE'],['Startup mode',w.__AGWORLD_ENTITY_COMMAND_STARTUP__||'NONE'],
+    ['Entity card connected',!!card?.isConnected],['Company card still active',!!card?.classList?.contains('agworld-company-entity-card')],['V2 host exists',!!host],['V2 host connected',!!host?.isConnected],['V2 host parent',host?.parentElement?.id||'NONE'],['V2 panel visible in host',!!host?.querySelector('.agworld-v2-detail-panel')],
+    ['Dynamic bridge installed',!!dyn],['Dynamic bridge uses visible host',!!dyn&&dyn.__host===host&&!!dyn.__host?.isConnected],['Farm bridge installed',!!farm],['Farm bridge uses visible host',!!farm&&farm.__host===host&&!!farm.__host?.isConnected]
+  ];
+  const status=events.length?'LIVE TRACE CAPTURED':'WAITING FOR ENTITY SELECTION';
+  const rows=checks.map(([k,v])=>{const good=v===true||typeof v==='string'&&v!=='NONE';const bad=v===false||v==='NONE';return '<div class="check"><span>'+esc(k)+'</span><b class="'+(good?'ok':bad?'bad':'warning')+'">'+esc(String(typeof v==='boolean'?(v?'PASS':'FAIL'):v))+'</b></div>'}).join('');
+  const trace=events.slice(-14).reverse().map(e=>'<div class="check"><span>'+esc(new Date(e.time).toLocaleTimeString())+' · '+esc(e.stage)+'</span><b class="'+(String(e.stage).includes('ERROR')?'bad':e.panel?'ok':'warning')+'">'+esc((e.entityType||'')+' '+(e.entityName||e.entityId||''))+'</b></div>').join('')||'<div class="check"><span>No map-click trace captured yet.</span><b class="warning">WAITING</b></div>';
+  el.innerHTML='<div class="entity-command-status '+(events.length?'warn':'warn')+'">'+status+'</div><div class="entity-command-grid">'+rows+'</div><div style="margin-top:12px"><span class="eyebrow">LATEST HANDOFF EVENTS</span><div class="checks">'+trace+'</div></div>';
+}
+function render(){const d=diag();renderEntityCommandDiagnostic();renderEntitySelectionDiagnostic();$('connectionState').textContent=opener()?'CONNECTED TO AG WORLD TAB':'STANDALONE MODE';$('connectionState').style.color=opener()?'var(--green)':'var(--amber)';$('appStatus').textContent=d.w.AG_WORLD_WORLD?'LIVE':'LIMITED';$('mapStatus').textContent=d.checks[1].items[0][1]?'READY':'MISSING';$('entityTotal').textContent=d.counts.total;$('relationshipTotal').textContent=d.rels.length;$('eventTotal').textContent=d.events.length;$('errorTotal').textContent=errors.length;
 $('diagnosticPanels').innerHTML=d.checks.map((p,i)=>'<article class="panel" data-state="'+p.state+'" data-filter="'+p.state+'"><div class="panel-head" data-toggle="'+i+'"><div><span class="eyebrow">DIAGNOSTIC '+String(i+1).padStart(2,'0')+'</span><h2>'+p.name+'</h2></div><span class="badge '+p.state+'">'+p.state.toUpperCase()+'</span></div><div class="panel-body"><div class="checks">'+p.items.map(([k,v])=>'<div class="check"><span>'+k+'</span><b class="'+(v===false||v==='No map'||v==='Unavailable'?'bad':v==='Check manually'||v==='Not exposed'?'warning':'ok')+'">'+String(v)+'</b></div>').join('')+'</div></div></article>').join('');
 document.querySelectorAll('[data-toggle]').forEach(el=>el.onclick=()=>el.closest('.panel').classList.toggle('collapsed'));renderErrors();renderStorage();syncPopulationControls();syncFleetControls()}
 function renderErrors(){$('errorLog').textContent=errors.length?errors.map(e=>'['+e.time+'] '+e.type+'\n'+e.message).join('\n\n'):'No errors captured.'}
