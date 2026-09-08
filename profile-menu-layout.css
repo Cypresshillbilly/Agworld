@@ -575,3 +575,39 @@ html body.ag-premium-mode .sidebar .nav .ag-menu-logout:hover{
   background:rgba(158,64,54,.18)!important;
   color:#ffe3de!important;
 }
+
+
+/* Final menu readability pass: preserve the finished geometry while making
+   every navigation command materially easier to read. */
+html body.ag-profile-mode .sidebar .nav,
+html body.ag-game-mode .sidebar .nav,
+html body.ag-premium-mode .sidebar .nav{
+  gap:3px!important;
+  padding:3px 0!important;
+}
+html body.ag-profile-mode .sidebar .nav button,
+html body.ag-game-mode .sidebar .nav button,
+html body.ag-premium-mode .sidebar .nav button{
+  min-height:30px!important;
+  padding:8px 10px!important;
+  font:900 10px/1.15 Arial,sans-serif!important;
+  letter-spacing:.28px!important;
+  color:#c8d6da!important;
+  text-shadow:0 1px 0 rgba(0,0,0,.32)!important;
+}
+html body.ag-profile-mode .sidebar .nav button:hover,
+html body.ag-profile-mode .sidebar .nav button.active,
+html body.ag-game-mode .sidebar .nav button:hover,
+html body.ag-game-mode .sidebar .nav button.active,
+html body.ag-premium-mode .sidebar .nav button:hover,
+html body.ag-premium-mode .sidebar .nav button.active{
+  color:#ffffff!important;
+  font-weight:900!important;
+}
+html body.ag-profile-mode .sidebar .nav .ag-menu-logout,
+html body.ag-game-mode .sidebar .nav .ag-menu-logout,
+html body.ag-premium-mode .sidebar .nav .ag-menu-logout{
+  flex-basis:32px!important;
+  min-height:32px!important;
+  font-size:10px!important;
+}
