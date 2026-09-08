@@ -71,3 +71,215 @@ html body.ag-profile-mode .bottom{height:18%!important}
  html body.ag-profile-mode .missions .mission-skill-chip b{font-size:11px!important}
  html body.ag-profile-mode .missions .mission-skill-chip span,html body.ag-profile-mode .missions .mission-skill-chip strong{font-size:8px!important}
 }
+
+
+/* AG WORLD — Final Game Sidebar: logo + complete player avatar card. */
+html body.ag-game-mode .sidebar,
+html body.ag-premium-mode .sidebar{
+  display:flex!important;
+  flex-direction:column!important;
+  padding:10px 12px 12px!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,#18262e 0%,#101a20 100%)!important;
+  border-right:1px solid rgba(120,159,171,.22)!important;
+}
+
+/* Use the real AG World artwork rather than text in the previously empty top area. */
+html body.ag-game-mode .sidebar .brand,
+html body.ag-premium-mode .sidebar .brand{
+  order:1!important;
+  display:block!important;
+  width:100%!important;
+  height:88px!important;
+  min-height:88px!important;
+  flex:0 0 88px!important;
+  margin:0 0 8px!important;
+  padding:2px!important;
+  background-image:url('/Agworld/assets/Logo.png?v=20260903')!important;
+  background-repeat:no-repeat!important;
+  background-position:center!important;
+  background-size:contain!important;
+  font-size:0!important;
+  color:transparent!important;
+  overflow:hidden!important;
+}
+html body.ag-game-mode .sidebar .brand small,
+html body.ag-game-mode .sidebar .brand:before,
+html body.ag-premium-mode .sidebar .brand small,
+html body.ag-premium-mode .sidebar .brand:before{display:none!important}
+
+/* Final player avatar portion: portrait/initial, identity, role, level and live progress. */
+html body.ag-game-mode .sidebar .menu-user,
+html body.ag-premium-mode .sidebar .menu-user{
+  order:2!important;
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:58px minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto 8px auto!important;
+  column-gap:10px!important;
+  align-items:center!important;
+  width:100%!important;
+  min-height:116px!important;
+  flex:0 0 116px!important;
+  margin:0 0 9px!important;
+  padding:9px!important;
+  border:1px solid rgba(124,157,169,.24)!important;
+  border-radius:10px!important;
+  background:linear-gradient(145deg,rgba(52,75,86,.78),rgba(20,34,42,.96))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 5px 14px rgba(0,0,0,.16)!important;
+  overflow:hidden!important;
+}
+html body.ag-game-mode .sidebar .menu-user-avatar,
+html body.ag-premium-mode .sidebar .menu-user-avatar{
+  grid-column:1!important;
+  grid-row:1 / span 5!important;
+  align-self:center!important;
+  justify-self:center!important;
+  width:58px!important;
+  height:58px!important;
+  margin:0!important;
+  border-radius:50%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  overflow:hidden!important;
+  background:
+    linear-gradient(145deg,rgba(104,143,158,.22),rgba(27,47,57,.9)),
+    var(--ag-avatar-image,none)!important;
+  background-size:cover!important;
+  background-position:center!important;
+  border:2px solid rgba(181,211,219,.76)!important;
+  box-shadow:0 0 0 3px rgba(90,182,161,.08),0 5px 12px rgba(0,0,0,.24)!important;
+}
+html body.ag-game-mode .sidebar .menu-user-avatar span,
+html body.ag-premium-mode .sidebar .menu-user-avatar span{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  height:100%!important;
+  color:#f4fbfd!important;
+  font:900 23px/1 Arial,sans-serif!important;
+  text-shadow:0 2px 5px rgba(0,0,0,.35)!important;
+}
+html body.ag-game-mode .sidebar .menu-user-name,
+html body.ag-premium-mode .sidebar .menu-user-name{
+  grid-column:2!important;grid-row:1!important;
+  width:100%!important;min-width:0!important;
+  margin:0!important;
+  color:#f1f7f8!important;
+  font:900 12px/1.08 Arial,sans-serif!important;
+  letter-spacing:.45px!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body.ag-game-mode .sidebar .menu-user-role,
+html body.ag-premium-mode .sidebar .menu-user-role{
+  grid-column:2!important;grid-row:2!important;
+  width:100%!important;min-width:0!important;
+  margin:3px 0 0!important;
+  color:#9fb8c1!important;
+  font:800 7px/1.15 Arial,sans-serif!important;
+  letter-spacing:.72px!important;
+  white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+html body.ag-game-mode .sidebar .menu-user-level,
+html body.ag-premium-mode .sidebar .menu-user-level{
+  grid-column:2!important;grid-row:3!important;
+  margin:5px 0 5px!important;
+  color:#9de2a7!important;
+  font:900 9px/1 Arial,sans-serif!important;
+  letter-spacing:1px!important;
+}
+html body.ag-game-mode .sidebar .menu-user-progress-title,
+html body.ag-premium-mode .sidebar .menu-user-progress-title{display:none!important}
+html body.ag-game-mode .sidebar .menu-user-xp,
+html body.ag-premium-mode .sidebar .menu-user-xp{
+  grid-column:2!important;grid-row:4!important;
+  display:block!important;
+  width:100%!important;height:7px!important;
+  margin:0!important;
+  border-radius:999px!important;
+  overflow:hidden!important;
+  background:#0a1419!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+}
+html body.ag-game-mode .sidebar .menu-user-xp span,
+html body.ag-premium-mode .sidebar .menu-user-xp span{
+  display:block!important;height:100%!important;
+  border-radius:inherit!important;
+  background:linear-gradient(90deg,#5ed879,#a9ee7c)!important;
+  box-shadow:0 0 10px rgba(94,216,121,.35)!important;
+}
+html body.ag-game-mode .sidebar .menu-user-xptext,
+html body.ag-premium-mode .sidebar .menu-user-xptext{
+  grid-column:2!important;grid-row:5!important;
+  display:flex!important;justify-content:space-between!important;align-items:center!important;
+  gap:5px!important;margin:4px 0 0!important;width:100%!important;min-width:0!important;
+  color:#8fa6ae!important;font:800 6.5px/1 Arial,sans-serif!important;
+}
+html body.ag-game-mode .sidebar .menu-user-xptext span,
+html body.ag-premium-mode .sidebar .menu-user-xptext span{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html body.ag-game-mode .sidebar .menu-user-xptext b,
+html body.ag-premium-mode .sidebar .menu-user-xptext b{color:#b8efc0!important;font-size:7px!important}
+
+/* Navigation begins only after the complete player card and keeps Log Out at the bottom. */
+html body.ag-game-mode .sidebar .nav,
+html body.ag-premium-mode .sidebar .nav{
+  order:3!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:1px 0!important;
+  gap:3px!important;
+  overflow:hidden!important;
+}
+html body.ag-game-mode .sidebar .nav button,
+html body.ag-premium-mode .sidebar .nav button{
+  flex:1 1 0!important;
+  min-height:28px!important;
+  margin:0!important;
+  padding:7px 9px!important;
+  border:0!important;
+  border-radius:6px!important;
+  background:transparent!important;
+  color:#b8c8ce!important;
+  text-align:left!important;
+  font:800 9px/1.05 Arial,sans-serif!important;
+  letter-spacing:.32px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+html body.ag-game-mode .sidebar .nav button:hover,
+html body.ag-game-mode .sidebar .nav button.active,
+html body.ag-premium-mode .sidebar .nav button:hover,
+html body.ag-premium-mode .sidebar .nav button.active{
+  background:linear-gradient(90deg,#405762,#2b3c45)!important;
+  color:#fff!important;
+}
+html body.ag-game-mode .sidebar .nav .ag-menu-logout,
+html body.ag-premium-mode .sidebar .nav .ag-menu-logout{
+  margin-top:auto!important;
+  flex:0 0 30px!important;
+  min-height:30px!important;
+  color:#f2c1bb!important;
+  border-top:1px solid rgba(255,255,255,.08)!important;
+  border-radius:6px!important;
+}
+html body.ag-game-mode .sidebar .nav .ag-menu-logout:hover,
+html body.ag-premium-mode .sidebar .nav .ag-menu-logout:hover{
+  background:rgba(158,64,54,.18)!important;
+  color:#ffe3de!important;
+}
+
+/* Retire the duplicate legacy profile block below the navigation. */
+html body.ag-game-mode .sidebar > .profile,
+html body.ag-premium-mode .sidebar > .profile{display:none!important}
+
+@media(max-width:1100px){
+  html body.ag-game-mode .sidebar .brand,html body.ag-premium-mode .sidebar .brand{height:76px!important;min-height:76px!important;flex-basis:76px!important}
+  html body.ag-game-mode .sidebar .menu-user,html body.ag-premium-mode .sidebar .menu-user{min-height:108px!important;flex-basis:108px!important;padding:8px!important;grid-template-columns:52px minmax(0,1fr)!important}
+  html body.ag-game-mode .sidebar .menu-user-avatar,html body.ag-premium-mode .sidebar .menu-user-avatar{width:52px!important;height:52px!important}
+}
