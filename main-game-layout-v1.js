@@ -1371,3 +1371,35 @@
     '#entityInformationSection .farm-card{top:46px!important;height:calc(100% - 46px)!important;min-height:calc(100% - 46px)!important}';
   document.head.appendChild(style);
 })();
+
+
+/* AG World v39 Command Center exact Territory Stats heading match. */
+(function(){
+  function syncHeading(){
+    const section=document.getElementById('entityInformationSection');
+    if(!section) return false;
+    let heading=document.getElementById('entityCommandCentreHeading');
+    if(!heading){
+      heading=document.createElement('div');
+      heading.id='entityCommandCentreHeading';
+      section.insertBefore(heading,section.firstChild);
+    }
+    heading.className='agworld-command-center-heading-exact';
+    heading.innerHTML='<span class="agworld-command-center-label-exact">COMMAND CENTER</span><span class="agworld-command-center-live-exact"><i></i> LIVE</span>';
+    return true;
+  }
+  const style=document.createElement('style');
+  style.id='agworldCommandCenterExactTerritoryMatchV39';
+  style.textContent=
+    '#entityInformationSection{position:absolute!important;overflow:hidden!important;background:radial-gradient(circle at 100% 0,rgba(73,132,91,.14),transparent 35%),linear-gradient(145deg,#101d22 0%,#0a1519 100%)!important;border:1px solid rgba(126,167,148,.16)!important;border-radius:12px!important}'+
+    '#entityInformationSection:before{content:""!important;display:block!important;position:absolute!important;left:0!important;right:0!important;top:0!important;z-index:12!important;height:4px!important;background:linear-gradient(90deg,#5ed879,#a9ee7c 42%,rgba(169,238,124,.10))!important;box-shadow:0 0 18px rgba(94,216,121,.26)!important;pointer-events:none!important}'+
+    '#entityInformationSection>#entityCommandCentreHeading.agworld-command-center-heading-exact{position:absolute!important;left:0!important;right:0!important;top:4px!important;height:46px!important;min-height:46px!important;z-index:11!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;padding:0 16px!important;margin:0!important;box-sizing:border-box!important;background:linear-gradient(180deg,rgba(16,29,34,.98),rgba(9,19,24,.96))!important;border:0!important;border-bottom:1px solid rgba(126,167,148,.18)!important;border-radius:0!important;box-shadow:0 8px 18px rgba(0,0,0,.14)!important;color:#edf8f0!important;text-transform:uppercase!important}'+
+    '#entityCommandCentreHeading .agworld-command-center-label-exact{font-family:inherit!important;font-size:16px!important;line-height:1!important;letter-spacing:1.6px!important;font-weight:900!important;color:#edf8f0!important;text-transform:uppercase!important}'+
+    '#entityCommandCentreHeading .agworld-command-center-live-exact{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important;padding:6px 8px!important;border:1px solid rgba(117,224,132,.24)!important;border-radius:999px!important;background:rgba(117,224,132,.07)!important;color:#a9efb2!important;font-size:8px!important;font-weight:900!important;letter-spacing:1px!important;line-height:1!important}'+
+    '#entityCommandCentreHeading .agworld-command-center-live-exact i{display:block!important;width:6px!important;height:6px!important;border-radius:50%!important;background:#75e084!important;box-shadow:0 0 10px rgba(117,224,132,.9)!important}'+
+    '#entityInformationSection .farm-card{top:50px!important;height:calc(100% - 50px)!important;min-height:calc(100% - 50px)!important}';
+  document.head.appendChild(style);
+  syncHeading();
+  const observer=new MutationObserver(syncHeading);
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
