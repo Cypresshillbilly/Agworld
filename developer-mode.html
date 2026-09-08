@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AG World · Developer Mode</title>
-<link rel="stylesheet" href="developer-mode.css?v=20260908-1">
+<link rel="stylesheet" href="developer-mode.css?v=20260908-2">
 </head>
 <body>
 <header class="dev-head">
@@ -30,7 +30,18 @@
     <button id="collapseAll">COLLAPSE ALL</button>
   </section>
 
-  <div id="diagnosticPanels" class="diagnostic-grid"></div>
+  <section class="panel full developer-population">
+  <div class="panel-title"><div><span class="eyebrow">MOVED FROM LIVE MAP</span><h2>CONTROLLED WORLD POPULATION</h2><p>Create the approved demo entities only from Developer Mode. Nothing runs automatically when AG World starts.</p></div></div>
+  <div id="populationStatus" class="population-status">Waiting for connection to the AG World tab…</div>
+  <div class="population-actions">
+    <button id="populationRun" type="button" disabled>CREATE 5 FACILITIES + 50 CONTRACTORS</button>
+    <button id="populationRepair" type="button" disabled>CHECK & REPAIR FARM ASSIGNMENTS</button>
+    <button id="populationDemo" type="button" disabled>MARK CURRENT COMPETITORS AS DEMO</button>
+  </div>
+  <small id="populationNote">Facilities: Ballito · Bothaville · Upington · Lichtenburg · Brits</small>
+</section>
+
+<div id="diagnosticPanels" class="diagnostic-grid"></div>
 
   <section class="panel full">
     <div class="panel-title"><div><span class="eyebrow">CAPTURED RUNTIME OUTPUT</span><h2>ERROR & EVENT LOG</h2></div><button id="clearErrors">CLEAR</button></div>
@@ -42,6 +53,6 @@
     <div id="storageState" class="kv"></div>
   </section>
 </main>
-<script src="developer-mode.js?v=20260908-1"></script>
+<script src="developer-mode.js?v=20260908-2"></script>
 </body>
 </html>
