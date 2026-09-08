@@ -2673,6 +2673,11 @@ function openEditFarm(farm) {
   $('farmCreateModal').classList.add('show');
 }
 
+
+// Expose the canonical legacy Farm Card editor so the Entity Command Centre can
+// invoke the exact same proven create/edit wizard without duplicating it.
+window.openEditFarm = openEditFarm;
+
 function startBoundary() {
   if (!map) return;
   creatingFarm = true;
