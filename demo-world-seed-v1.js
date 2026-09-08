@@ -71,16 +71,38 @@ async function seed(){
  for(let i=0;i<createdContractors.length;i++){
   progress('relationships',i,createdContractors.length,'Linking contractor '+(i+1)+' of '+createdContractors.length+' to farms within 300 km…');
   const c=createdContractors[i],cp={lat:Number(c.lat),lng:Number(c.lng)};
-  const nearby=fs.map(f=>({f,d:dist(cp,f)})).filter(x=>x.d<=300).sort((a,b)=>a.d-b.d).slice(0,4);
-  if(!nearby.length) throw new Error('Generated contractor '+c.name+' has no farm within 300 km; population stopped before creating invalid relationships.');
-  for(const {f,d} of nearby){
-   await global.AGWorldDynamicEntityAPI.createRelationship({
-    sourceEntityId:c.id,sourceEntityType:'contractor',targetEntityId:f.id,targetEntityType:'farm',
-    relationshipType:'serves',status:'active',
-    metadata:{distanceKm:Math.round(d*10)/10,relationshipStatus:'active',seeded:true}
-   });
-   relationshipCount++;
+  // Prefer the Contractor's anchor Farm, then the nearest Farms. Every Farm
+  // may have only one active Contractor, so conflicts are skipped rather than
+  // creating a shared assignment.
+  const anchor=fs[i%fs.length];
+  const nearby=fs.map(f=>({f,d:dist(cp,f)}))
+    .filter(x=>x.d<=300)
+    .sort((a,b)=>a.d-b.d);
+  const ordered=[];
+  const anchorDistance=dist(cp,anchor);
+  if(anchorDistance<=300) ordered.push({f:anchor,d:anchorDistance});
+  nearby.forEach(item=>{if(!ordered.some(x=>String(x.f.id)===String(item.f.id))) ordered.push(item);});
+
+  if(!ordered.length) throw new Error('Generated contractor '+c.name+' has no farm within 300 km; population stopped before creating invalid relationships.');
+
+  let linked=false;
+  for(const {f,d} of ordered){
+   try{
+    await global.AGWorldDynamicEntityAPI.createRelationship({
+      sourceEntityId:c.id,sourceEntityType:'contractor',targetEntityId:f.id,targetEntityType:'farm',
+      relationshipType:'serves',status:'active',
+      metadata:{distanceKm:Math.round(d*10)/10,relationshipStatus:'active',seeded:true}
+    });
+    relationshipCount++;
+    linked=true;
+    // One unique Farm assignment per generated Contractor is sufficient for
+    // initial population and guarantees that no Farm is shared.
+    break;
+   }catch(err){
+    if(!/already linked to another Contractor/i.test(String(err?.message||err))) throw err;
+   }
   }
+  if(!linked) throw new Error('No unassigned Farm within 300 km is available for '+c.name+'. A Farm may only be linked to one Contractor.');
  }
  progress('relationships',50,50,'Relationships complete. Refreshing GIS control…');
  global.localStorage.setItem(SEED_KEY,new Date().toISOString());
