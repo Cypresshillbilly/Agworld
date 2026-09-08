@@ -56,7 +56,12 @@
   function radarSvg(totals,{id='agSkillRadar',compact=false,company=false}={}){
     const vals=SKILLS.map(s=>Number(totals[s.key])||0);
     const dynamicMax=company?Math.max(5,...vals.map(v=>Math.ceil(v/5)*5)):MAX;
-    const w=compact?280:360,h=compact?220:300,cx=compact?140:160,cy=compact?108:145,r=compact?76:104;
+    const companyLarge=company&&compact;
+    const w=companyLarge?360:(compact?280:360),
+      h=companyLarge?240:(compact?220:300),
+      cx=companyLarge?180:(compact?140:160),
+      cy=companyLarge?118:(compact?108:145),
+      r=companyLarge?114:(compact?76:104);
     let grid='';
     for(let level=1;level<=5;level++){const rr=r*level/5;grid+='<polygon points="'+SKILLS.map((_,i)=>polar(cx,cy,rr,i).map(n=>n.toFixed(1)).join(',')).join(' ')+'"/>';}
     const axes=SKILLS.map((_,i)=>{const p=polar(cx,cy,r,i);return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>';}).join('');
@@ -165,7 +170,7 @@
     '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head{padding:5px 7px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head span{font-size:7px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-skill-chart-head b{font-size:9px!important;letter-spacing:.75px!important}'+
-    '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-skill-radar-svg{height:148px!important;max-height:148px!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-skill-radar-svg{height:170px!important;max-height:170px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-skill-visual .ag-radar-labels text{font-size:7px!important;font-weight:900!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-command-stats-pane .company-command-pane-title span{font-size:7px!important}'+
     '#entityInformationSection .agworld-company-entity-card .company-command-stats-pane .company-command-pane-title b{font-size:10px!important}'+
