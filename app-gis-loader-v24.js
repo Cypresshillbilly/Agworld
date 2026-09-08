@@ -4773,16 +4773,66 @@ window.openFleetManagement = (type,id) => openFleetManagement(type,id);
 window.AGWorldFleetUI = {
   openTransaction: window.openFleetTransaction,
   openManagement: window.openFleetManagement,
+  selected(){
+    const current=window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+    if(current && (current.entityType==='contractor'||current.entityType==='farm')) return {type:current.entityType,id:String(current.entityId),name:current.name||''};
+    const currentFarm=window.__AGWORLD_RUNTIME_FARM_SELECTION_V2__;
+    if(currentFarm?.farmId) return {type:'farm',id:String(currentFarm.farmId),name:currentFarm.name||''};
+    if(selected?.id) return {type:'farm',id:String(selected.id),name:selected.name||''};
+    return null;
+  },
   ensureQuickActions(type,id){
     const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
     if(!entity) throw new Error('Selected Farm or Contractor is no longer available.');
     updateFleetTransactionAction(entity,type);
-    return {entity,type,quickActions:!!document.getElementById('fleetQuickActions')};
+    const quick=document.getElementById('fleetQuickActions');
+    const actions=document.getElementById('farmActions');
+    return {
+      entity:{id:String(entity.id),name:entity.name||''},
+      type,
+      host:!!actions,
+      quickActions:!!quick,
+      sellButton:!!document.getElementById('fleetQuickSell'),
+      historyButton:!!document.getElementById('fleetQuickHistory')
+    };
   },
-  selected(){
-    const current=window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
-    if(current && (current.entityType==='contractor'||current.entityType==='farm')) return {type:current.entityType,id:String(current.entityId),name:current.name||''};
-    if(selected?.id) return {type:'farm',id:String(selected.id),name:selected.name||''};
-    return null;
+  health(options={}){
+    const repair=options.repair!==false;
+    const current=this.selected();
+    let repaired=false, repairError='';
+    if(repair && current){
+      try {
+        const entity=salesEntityList(current.type).find(e=>String(e.id)===String(current.id));
+        if(entity){
+          updateFleetTransactionAction(entity,current.type);
+          repaired=true;
+        }
+      } catch(error) {
+        repairError=String(error?.message||error);
+      }
+    }
+    const actions=document.getElementById('farmActions');
+    const quick=document.getElementById('fleetQuickActions');
+    const sell=document.getElementById('fleetQuickSell');
+    const history=document.getElementById('fleetQuickHistory');
+    const card=document.getElementById('farmCard');
+    const visible=node=>!!(node && node.isConnected && node.hidden!==true && getComputedStyle(node).display!=='none' && getComputedStyle(node).visibility!=='hidden');
+    const result={
+      selected:current,
+      eligible:!!current,
+      card:!!card,
+      host:!!actions,
+      quickActions:!!quick,
+      sellButton:!!sell,
+      historyButton:!!history,
+      quickVisible:visible(quick),
+      sellVisible:visible(sell),
+      historyVisible:visible(history),
+      repaired,
+      repairError,
+      healthy:!!(current && actions && quick && sell && history && visible(quick) && visible(sell) && visible(history))
+    };
+    window.__AGWORLD_FLEET_UI_HEALTH__={...result,checkedAt:Date.now()};
+    return result;
   }
 };
