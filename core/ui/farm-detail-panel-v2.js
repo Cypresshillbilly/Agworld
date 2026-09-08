@@ -15,7 +15,7 @@
     // entity-engine capabilities without opening a second competing card.
     tabs() {
       return [
-        ['details', 'Entity Details'],
+        ['details', 'Farm Details'],
         ['intelligence', 'Intelligence'],
         ['lifecycle', 'Lifecycle'],
         ['spatial', 'Map & Location'],
@@ -29,7 +29,7 @@
 
     open(entity) {
       this.entity = entity;
-      this.activeTab = 'relationships';
+      this.activeTab = 'details';
       this.render();
     }
 
@@ -48,10 +48,56 @@
       }
     }
 
+    renderFarmIntelligence(target) {
+      const farm = this.entity;
+      const data = farm.metadata || {};
+      const crops = Array.isArray(data.crops) ? data.crops : (data.crops ? [data.crops] : []);
+      const snapshot = [
+        ['Owner', data.owner || 'Not recorded'],
+        ['Opportunity', data.opportunityScore !== undefined && data.opportunityScore !== null && data.opportunityScore !== '' ? String(data.opportunityScore) : 'Not scored'],
+        ['Crops', crops.length ? crops.join(', ') : 'Not recorded'],
+        ['Last service', data.lastService || 'Not recorded']
+      ];
+
+      target.innerHTML =
+        '<div class="agworld-farm-intelligence-head">' +
+          '<div><strong>FARM INTELLIGENCE</strong><p>Live commercial and relationship intelligence for this farm.</p></div>' +
+          '<div class="agworld-farm-intelligence-actions">' +
+            '<button type="button" data-farm-intel-action="activity">Log activity</button>' +
+            '<button type="button" data-farm-intel-action="note">Add intelligence note</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="agworld-farm-intelligence-snapshot">' +
+          snapshot.map(([label,value]) => '<div><span>' + esc(label) + '</span><b>' + esc(value) + '</b></div>').join('') +
+        '</div>' +
+        '<div class="agworld-farm-intelligence-metrics"></div>';
+
+      const metricsTarget = target.querySelector('.agworld-farm-intelligence-metrics');
+      this.renderMetrics(metricsTarget);
+
+      target.querySelector('[data-farm-intel-action="activity"]')?.addEventListener('click', () => {
+        this.activeTab = 'activity';
+        this.render();
+        this.container.querySelector('[data-intel-action="add"]')?.click();
+      });
+      target.querySelector('[data-farm-intel-action="note"]')?.addEventListener('click', () => {
+        this.activeTab = 'notes';
+        this.render();
+        this.container.querySelector('[data-intel-action="add"]')?.click();
+      });
+    }
+
     renderContent() {
+      const target = this.container.querySelector('.agworld-v2-detail-content');
+      if (!target) return;
+
+      if (this.activeTab === 'intelligence') {
+        this.renderFarmIntelligence(target);
+        return;
+      }
+
       if (this.activeTab !== 'details') return super.renderContent();
 
-      const target = this.container.querySelector('.agworld-v2-detail-content');
       const farm = this.entity;
       const data = farm.metadata || {};
       const rows = [
@@ -64,9 +110,11 @@
         ['Opportunity score', data.opportunityScore]
       ].filter(([, value]) => value !== null && value !== undefined && value !== '');
 
-      target.innerHTML = rows.length
-        ? '<dl>' + rows.map(([label,value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl>'
-        : '<p>No farm details have been added yet.</p>';
+      target.innerHTML =
+        '<div class="agworld-farm-details-toolbar"><strong>FARM INFORMATION</strong><span>Use UPDATE ENTITY INFO to change the canonical farm record.</span></div>' +
+        (rows.length
+          ? '<dl>' + rows.map(([label,value]) => '<dt>' + esc(label) + '</dt><dd>' + esc(value) + '</dd>').join('') + '</dl>'
+          : '<p>No farm details have been added yet.</p>');
     }
   }
 
@@ -91,6 +139,20 @@
       #agworldV2FarmDetailHost .agworld-v2-detail-content dl{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin:0}
       #agworldV2FarmDetailHost .agworld-v2-detail-content dt{font-weight:700;color:#63747c}
       #agworldV2FarmDetailHost .agworld-v2-detail-content dd{margin:0;text-align:right;color:#26343d}
+      #agworldV2FarmDetailHost .agworld-farm-details-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #dce7e9}
+      #agworldV2FarmDetailHost .agworld-farm-details-toolbar strong{font-size:10px;letter-spacing:.55px;color:#36515a}
+      #agworldV2FarmDetailHost .agworld-farm-details-toolbar span{font-size:8px;color:#819198;text-align:right}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:9px}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-head strong{display:block;font-size:11px;letter-spacing:.6px;color:#36515a}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-head p{margin:3px 0 0;font-size:8px;color:#667780}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-actions button{width:auto;margin:0;padding:5px 7px;background:#168aa0;color:#fff;border:1px solid #168aa0;border-radius:4px;font-size:8px;font-weight:700}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:10px}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot>div{padding:7px;border:1px solid #dce7e9;border-radius:5px;background:#fff;min-width:0}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot span,#agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot b{display:block}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot span{font-size:7px;letter-spacing:.35px;color:#819198;text-transform:uppercase}
+      #agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot b{margin-top:3px;font-size:9px;color:#26343d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      @media(max-width:760px){#agworldV2FarmDetailHost .agworld-farm-intelligence-snapshot{grid-template-columns:repeat(2,minmax(0,1fr))}#agworldV2FarmDetailHost .agworld-farm-intelligence-head{flex-direction:column}.agworld-farm-intelligence-actions{justify-content:flex-start!important}}
       #agworldV2FarmDetailHost .agworld-intelligence-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px}
       #agworldV2FarmDetailHost .agworld-intelligence-toolbar strong{font-size:9px;letter-spacing:.5px;color:#36515a}
       #agworldV2FarmDetailHost .agworld-intelligence-toolbar button,#agworldV2FarmDetailHost .agworld-intelligence-metrics>button,#agworldV2FarmDetailHost .agworld-intelligence-form button,#agworldV2FarmDetailHost .agworld-intelligence-add button{width:auto;margin:0;padding:5px 8px;background:#168aa0;color:#fff;border:1px solid #168aa0;border-radius:4px;font-size:8px;font-weight:700}
