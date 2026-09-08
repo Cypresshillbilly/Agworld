@@ -1169,3 +1169,77 @@
     '@media(max-width:900px){#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{flex-direction:column!important;overflow:auto!important}#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane,#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{flex:0 0 auto!important;width:100%!important;max-width:100%!important;height:auto!important}}';
   document.head.appendChild(style);
 })();
+
+
+/* COMPANY COMMAND CENTRE GEOMETRY ENFORCER v31 */
+(function(){
+  /*
+   * The live screenshot proves the problem is not the individual 50% panes:
+   * a legacy rule is shrinking/anchoring the split container itself. Enforce
+   * the geometry from the actual card bounds after every Company render.
+   */
+  function forceCompanyGeometry(){
+    const card=document.querySelector('#entityInformationSection #farmCard.agworld-company-entity-card');
+    if(!card) return false;
+    const head=card.querySelector(':scope > .company-command-card-head');
+    const split=card.querySelector(':scope > .company-command-split');
+    const stats=split?.querySelector(':scope > .company-command-stats-pane');
+    const facilities=split?.querySelector(':scope > .company-command-facilities-pane');
+    if(!head||!split||!stats||!facilities) return false;
+
+    const top=Math.max(0,Math.round(head.offsetTop+head.offsetHeight));
+    card.style.setProperty('position','relative','important');
+    card.style.setProperty('display','block','important');
+    card.style.setProperty('width','100%','important');
+    card.style.setProperty('padding','0','important');
+
+    head.style.setProperty('position','absolute','important');
+    head.style.setProperty('left','0','important');
+    head.style.setProperty('right','0','important');
+    head.style.setProperty('top','0','important');
+    head.style.setProperty('width','100%','important');
+    head.style.setProperty('box-sizing','border-box','important');
+
+    split.style.setProperty('position','absolute','important');
+    split.style.setProperty('display','flex','important');
+    split.style.setProperty('flex-direction','row','important');
+    split.style.setProperty('left','0','important');
+    split.style.setProperty('right','0','important');
+    split.style.setProperty('top',top+'px','important');
+    split.style.setProperty('bottom','0','important');
+    split.style.setProperty('width','100%','important');
+    split.style.setProperty('height','auto','important');
+    split.style.setProperty('margin','0','important');
+    split.style.setProperty('padding','0','important');
+    split.style.setProperty('overflow','hidden','important');
+    split.style.setProperty('box-sizing','border-box','important');
+
+    [stats,facilities].forEach((pane,i)=>{
+      pane.style.setProperty('position','relative','important');
+      pane.style.setProperty('display','flex','important');
+      pane.style.setProperty('flex-direction','column','important');
+      pane.style.setProperty('flex','0 0 50%','important');
+      pane.style.setProperty('width','50%','important');
+      pane.style.setProperty('max-width','50%','important');
+      pane.style.setProperty('min-width','0','important');
+      pane.style.setProperty('height','100%','important');
+      pane.style.setProperty('left','auto','important');
+      pane.style.setProperty('right','auto','important');
+      pane.style.setProperty('top','auto','important');
+      pane.style.setProperty('bottom','auto','important');
+      pane.style.setProperty('margin','0','important');
+      pane.style.setProperty('order',String(i),'important');
+      pane.style.setProperty('box-sizing','border-box','important');
+    });
+
+    return true;
+  }
+
+  function queue(){ requestAnimationFrame(()=>requestAnimationFrame(forceCompanyGeometry)); }
+  window.addEventListener('load',queue);
+  window.addEventListener('resize',queue);
+  document.addEventListener('agworld:company-card-rendered',queue);
+  new MutationObserver(queue).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  setInterval(forceCompanyGeometry,750);
+  queue();
+})();
