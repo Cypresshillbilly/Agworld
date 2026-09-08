@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AG World · Developer Mode</title>
-<link rel="stylesheet" href="developer-mode.css?v=20260908-2">
+<link rel="stylesheet" href="developer-mode.css?v=20260908-3">
 </head>
 <body>
 <header class="dev-head">
@@ -41,6 +41,18 @@
   <small id="populationNote">Facilities: Ballito · Bothaville · Upington · Lichtenburg · Brits</small>
 </section>
 
+<section class="panel full developer-fleet">
+  <div class="panel-title"><div><span class="eyebrow">LIVE GAMEPLAY UI TEST</span><h2>SALES & FLEET CONTROL TEST</h2><p>Use this panel to verify that the selected Farm or Contractor has working Fleet controls and that both modals can be opened directly.</p></div></div>
+  <div id="fleetDevStatus" class="population-status">Waiting for the AG World Fleet system…</div>
+  <div class="population-actions">
+    <button id="fleetCheck" type="button">CHECK FLEET SYSTEM</button>
+    <button id="fleetReassert" type="button" disabled>REASSERT FLEET BUTTONS</button>
+    <button id="fleetOpenSell" type="button" disabled>OPEN SELL / MANAGE FLEET</button>
+    <button id="fleetOpenHistory" type="button" disabled>OPEN SALES HISTORY</button>
+  </div>
+  <small id="fleetDevNote">Select a Farm or Contractor in the AG World tab, then return here and run the test.</small>
+</section>
+
 <div id="diagnosticPanels" class="diagnostic-grid"></div>
 
   <section class="panel full">
@@ -53,6 +65,6 @@
     <div id="storageState" class="kv"></div>
   </section>
 </main>
-<script src="developer-mode.js?v=20260908-2"></script>
+<script src="developer-mode.js?v=20260908-3"></script>
 </body>
 </html>
