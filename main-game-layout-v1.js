@@ -1519,14 +1519,14 @@
 })();
 
 
-/* AG World v48 Command Center tablet frame — visual-only, stable layout safe. */
+/* AG World v49 Command Center tablet frame — stronger visual-only bezel. */
 (function(){
   const style=document.createElement('style');
-  style.id='agworldCommandCenterTabletFrameV48';
+  style.id='agworldCommandCenterTabletFrameV49';
   style.textContent=
     /* Visual treatment only: no sizing, grid, DOM or positioning rules are changed. */
-    '#entityInformationSection{isolation:isolate!important;border-radius:18px!important;box-shadow:0 0 0 1px rgba(210,224,228,.34),0 0 0 3px rgba(82,98,105,.95),0 0 0 5px rgba(20,29,34,.96),0 0 0 7px rgba(72,86,92,.72),0 12px 26px rgba(0,0,0,.34)!important}'+
-    '#entityInformationSection:after{content:""!important;position:absolute!important;inset:0!important;z-index:30!important;pointer-events:none!important;border-radius:18px!important;border:4px solid rgba(88,103,109,.96)!important;box-sizing:border-box!important;box-shadow:inset 1px 1px 0 rgba(255,255,255,.22),inset -1px -1px 0 rgba(0,0,0,.58),inset 0 0 0 1px rgba(190,204,208,.18),inset 0 0 14px rgba(0,0,0,.20)!important}'+
-    '#entityInformationSection .farm-card{border-radius:12px!important}';
+    '#entityInformationSection{isolation:isolate!important;border-radius:22px!important;overflow:hidden!important;outline:1px solid rgba(238,245,247,.42)!important;outline-offset:3px!important;box-shadow:0 0 0 2px rgba(186,198,202,.72),0 0 0 4px rgba(73,84,91,.98),0 0 0 7px rgba(24,32,37,.98),0 0 0 10px rgba(93,106,112,.92),0 0 0 12px rgba(20,26,30,.92),0 16px 34px rgba(0,0,0,.48),0 3px 8px rgba(255,255,255,.10)!important}'+
+    '#entityInformationSection:after{content:""!important;position:absolute!important;inset:0!important;z-index:30!important;pointer-events:none!important;border-radius:22px!important;box-sizing:border-box!important;background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(255,255,255,0) 16%,rgba(0,0,0,0) 72%,rgba(0,0,0,.32)),linear-gradient(90deg,rgba(166,178,182,.26),rgba(255,255,255,.08) 12%,rgba(0,0,0,.10) 50%,rgba(255,255,255,.07) 86%,rgba(50,60,66,.34))!important;border:6px solid rgba(69,82,88,.96)!important;box-shadow:inset 2px 2px 0 rgba(255,255,255,.30),inset -2px -2px 0 rgba(0,0,0,.72),inset 0 0 0 2px rgba(176,190,194,.20),inset 0 0 20px rgba(0,0,0,.32)!important}'+
+    '#entityInformationSection .farm-card{border-radius:15px!important;box-shadow:inset 0 0 0 1px rgba(200,215,219,.12)!important}';
   document.head.appendChild(style);
 })();
