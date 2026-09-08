@@ -474,20 +474,16 @@
             '<div><span>ACTIVE FOOTPRINT</span><b>'+active+' / '+fs.length+' SITES LIVE</b></div>'+
           '</div>'+
         '</section>'+
-        '<section class="company-command-facilities-pane" aria-label="Company facilities">'+
-          '<div class="company-facilities-header"><div><span>COMPANY FACILITIES</span><b>'+fs.length+' SITES</b></div><em>CLICK A SITE TO FOCUS MAP</em></div>'+
-          '<div class="company-facility-list">'+
-            (fs.length?fs.map(f=>'<article class="company-facility-row" data-company-facility-id="'+esc(f.id||'')+'" tabindex="0" role="button" aria-label="Open '+esc(f.name)+' on map">'+
-              '<div class="company-facility-marker"><i></i></div>'+
-              '<div class="company-facility-name"><b>'+esc(f.name)+'</b><span>'+esc(facilityRole(f))+' · '+esc(facilityLocation(f))+'</span></div>'+
-              '<div class="company-facility-staff"><b>'+employeeCount(f)+'</b><span>STAFF</span></div>'+
-              '<div class="company-facility-open"><span>FOCUS</span>⌖</div>'+
-            '</article>').join(''):'<div class="company-facility-empty">Loading Company facilities from the live world…</div>')+
-          '</div>'+
+        '<section class="company-command-facilities-pane company-command-skills-pane" aria-label="Combined Company skills">'+
+          '<div id="companySkillChartHost" aria-live="polite"></div>'+
         '</section>'+
       '</div>';
 
     bindCompanyFacilityRows(fs);
+    // The right half of the Command Center is now Company Skill Intelligence.
+    // It uses the exact same five skills as every player and aggregates all
+    // completed mission rewards across Company users.
+    if(window.AG_WORLD_SKILLS?.renderCompany) setTimeout(()=>window.AG_WORLD_SKILLS.renderCompany(document.getElementById('companySkillChartHost')),0);
     window.__AGWORLD_ENTITY_COMMAND_STARTUP__='THE_COMPANY';
     window.__AGWORLD_ENTITY_COMMAND_SCOPE__='COMPANY';
     window.__AGWORLD_ENTITY_COMMAND_COMPANY_SUMMARY__={facilities:fs.length,employees,activeSites:active,provinces};
