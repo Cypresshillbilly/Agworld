@@ -318,3 +318,129 @@ global.AGWorldCompanyFacilityCommand={
 };
 queue();
 })(window);
+
+
+/* COMPANY CARD INDEPENDENT SCROLL v1 */
+(function(){
+'use strict';
+const cardSelector='#farmCard.agworld-company-entity-card';
+
+function directPanelForRows(rows,card){
+  if(!rows.length) return null;
+  let node=rows[0].parentElement;
+  const allCount=n=>[...n.querySelectorAll('.company-facility-row[data-company-facility-id]')].length;
+  while(node && node!==card){
+    const parent=node.parentElement;
+    if(parent && parent!==card){
+      const own=allCount(node);
+      const parentCount=allCount(parent);
+      if(own===rows.length && parentCount===rows.length && [...parent.children].length>=2) return node;
+    }
+    node=node.parentElement;
+  }
+  return rows[0].parentElement;
+}
+
+function findStatsPanel(layout,facilityPanel){
+  const siblings=[...layout.children].filter(el=>el!==facilityPanel);
+  const direct=siblings.find(el=>!el.querySelector('.company-facility-row[data-company-facility-id]'));
+  if(direct) return direct;
+  return [...layout.children].find(el=>el!==facilityPanel)||null;
+}
+
+function fitStats(panel){
+  if(!panel || panel.clientHeight<20) return;
+  panel.style.setProperty('overflow','hidden','important');
+  panel.style.setProperty('overscroll-behavior','contain','important');
+  panel.style.setProperty('scrollbar-width','none','important');
+  panel.style.setProperty('zoom','1','important');
+
+  const content=panel.firstElementChild || panel;
+  if(content===panel) return;
+
+  // Only compact when needed. Zoom changes the rendered layout size, preventing
+  // a stats scrollbar while keeping every stat visible.
+  requestAnimationFrame(()=>{
+    const available=panel.clientHeight;
+    const required=content.scrollHeight;
+    if(!available || !required) return;
+    if(required<=available+2){
+      content.style.removeProperty('zoom');
+      return;
+    }
+    const scale=Math.max(0.72,Math.min(1,(available-2)/required));
+    content.style.setProperty('zoom',String(scale),'important');
+  });
+}
+
+function apply(){
+  const card=document.querySelector(cardSelector);
+  if(!card) return false;
+  const rows=[...card.querySelectorAll('.company-facility-row[data-company-facility-id]')];
+  if(!rows.length) return false;
+
+  const facilityPanel=directPanelForRows(rows,card);
+  if(!facilityPanel) return false;
+  const layout=facilityPanel.parentElement;
+  const statsPanel=findStatsPanel(layout,facilityPanel);
+  if(!layout || !statsPanel) return false;
+
+  card.dataset.companyIndependentScroll='true';
+  layout.classList.add('agworld-company-command-split-layout');
+  statsPanel.classList.add('agworld-company-stats-fixed');
+  facilityPanel.classList.add('agworld-company-facilities-scroll');
+
+  [
+    [layout,'display','grid'],
+    [layout,'grid-template-columns','minmax(0,1fr) minmax(0,1fr)'],
+    [layout,'grid-template-rows','minmax(0,1fr)'],
+    [layout,'height','100%'],
+    [layout,'min-height','0'],
+    [layout,'overflow','hidden'],
+    [layout,'align-items','stretch'],
+    [statsPanel,'height','100%'],
+    [statsPanel,'min-height','0'],
+    [statsPanel,'min-width','0'],
+    [statsPanel,'overflow','hidden'],
+    [facilityPanel,'height','100%'],
+    [facilityPanel,'min-height','0'],
+    [facilityPanel,'min-width','0'],
+    [facilityPanel,'overflow-y','auto'],
+    [facilityPanel,'overflow-x','hidden'],
+    [facilityPanel,'overscroll-behavior','contain']
+  ].forEach(([el,prop,val])=>el.style.setProperty(prop,val,'important'));
+
+  // Make the facilities side the only independently scrollable column.
+  [...statsPanel.querySelectorAll('*')].forEach(el=>{
+    if(el===facilityPanel || el.querySelector?.('.company-facility-row[data-company-facility-id]')) return;
+    const cs=getComputedStyle(el);
+    if(cs.overflowY==='auto'||cs.overflowY==='scroll') el.style.setProperty('overflow-y','visible','important');
+  });
+
+  fitStats(statsPanel);
+  return true;
+}
+
+let queued=false;
+function queue(){
+  if(queued) return;
+  queued=true;
+  requestAnimationFrame(()=>{queued=false;apply();});
+}
+
+const style=document.createElement('style');
+style.id='agworldCompanyIndependentScrollV1';
+style.textContent=
+'#entityInformationSection #farmCard.agworld-company-entity-card .agworld-company-command-split-layout{height:100%!important;min-height:0!important;overflow:hidden!important}'+
+'#entityInformationSection #farmCard.agworld-company-entity-card .agworld-company-stats-fixed{overflow:hidden!important;scrollbar-width:none!important}'+
+'#entityInformationSection #farmCard.agworld-company-entity-card .agworld-company-stats-fixed::-webkit-scrollbar{display:none!important}'+
+'#entityInformationSection #farmCard.agworld-company-entity-card .agworld-company-facilities-scroll{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-gutter:stable!important}';
+document.head.appendChild(style);
+
+new MutationObserver(queue).observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('load',()=>{queue();setTimeout(queue,250);setTimeout(queue,900);setTimeout(queue,2200);});
+window.addEventListener('resize',queue);
+window.addEventListener('agworld:entity-updated',queue);
+queue();
+window.AGWorldCompanyCardLayout={apply};
+})();
