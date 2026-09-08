@@ -1163,6 +1163,26 @@
 ;
 
 
+
+/* COMPANY COMMAND CENTER EXACT 50/50 FINAL SPLIT v34 */
+(function(){
+  /*
+   * The Company card has one physical content area. Lock that area to a true
+   * two-track grid so the statistics and facilities panes each own exactly
+   * half of the Command Center width, regardless of their internal content.
+   */
+  const style=document.createElement('style');
+  style.id='agworldCompanyCommandExactSplitV34';
+  style.textContent=
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important;column-gap:0!important;row-gap:0!important;align-items:stretch!important;justify-items:stretch!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;box-sizing:border-box!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane{grid-column:1!important;grid-row:1!important;display:flex!important;flex-direction:column!important;width:100%!important;max-width:none!important;min-width:0!important;height:100%!important;min-height:0!important;margin:0!important;box-sizing:border-box!important;overflow:hidden!important;border-right:1px solid rgba(117,224,132,.22)!important}'+
+    '#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{grid-column:2!important;grid-row:1!important;display:flex!important;flex-direction:column!important;width:100%!important;max-width:none!important;min-width:0!important;height:100%!important;min-height:0!important;margin:0!important;box-sizing:border-box!important;overflow:hidden!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-command-kpis,#entityInformationSection .agworld-company-entity-card .company-stats-summary{flex:0 0 auto!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important}'+
+    '#entityInformationSection .agworld-company-entity-card .company-facility-list{flex:1 1 0!important;min-height:0!important;overflow:auto!important}'+
+    '@media(max-width:900px){#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split{display:flex!important;flex-direction:column!important;height:auto!important;min-height:100%!important;overflow:auto!important}#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-stats-pane,#entityInformationSection .farm-card.agworld-company-entity-card>.company-command-split>.company-command-facilities-pane{width:100%!important;height:auto!important;min-height:0!important;max-width:100%!important}}';
+  document.head.appendChild(style);
+})();
+
 /* COMPANY COMMAND CENTRE FULL AREA v32 */
 (function(){
   const style=document.createElement('style');
