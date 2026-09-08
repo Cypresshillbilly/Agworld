@@ -18,6 +18,7 @@ const services=['Spraying','Mapping & Survey','Crop Scouting','Variable Rate App
 function jitter(v,i,span){return v+Math.sin(i*12.9898)*span}
 function dist(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,h=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
 function farms(){const w=global.AG_WORLD_WORLD||{};const fs=global.__AG_WORLD_FARMS||w.getFarms?.()||[];return fs.map(f=>{const p=f.position||f.center||f;return {...f,lat:Number(p.lat),lng:Number(p.lng)}}).filter(f=>Number.isFinite(f.lat)&&Number.isFinite(f.lng))}
+function progress(stage,current,total,message){global.dispatchEvent(new CustomEvent('agworld:demo-world-seed-progress',{detail:{stage,current,total,message}}));}
 async function seed(){
  // Do not run 55 entity writes + relationship discovery on the interactive map load path.
  // Seeding is now explicit and can be run from the console or a future admin action.
@@ -25,24 +26,31 @@ async function seed(){
  if(!global.AGWorldV2?.EntityService||!global.AGWorldV2?.EntityRepository||!global.AGWorldV2?.RelationshipRepository){throw new Error('Entity/relationship creation services are not ready');}
  const er=new global.AGWorldV2.EntityRepository(), es=new global.AGWorldV2.EntityService(er);
  const rr=new global.AGWorldV2.RelationshipRepository();
+ progress('preparing',0,1,'Loading existing entities and relationships…');
  const existing=await er.list({});
  const createdFacilities=[];
- for(const f of facilities){
+ for(let fi=0;fi<facilities.length;fi++){
+   const f=facilities[fi];
+   progress('facilities',fi,facilities.length,'Creating or verifying '+f.name+'…');
    let e=existing.find(x=>x.type==='company_facility'&&x.name===f.name);
    if(!e)e=await es.create({type:'company_facility',name:f.name,description:'Company '+f.type+' located at the centre of '+f.town+'.',status:'active',geometry:{type:'Point',coordinates:[f.lng,f.lat]},metadata:{town:f.town,province:f.province,facilityType:f.type,address:f.town+', '+f.province,seeded:true}});
    createdFacilities.push(e);
  }
  const createdContractors=[];
+ progress('facilities',facilities.length,facilities.length,'Company facilities complete.');
  for(let i=0;i<50;i++){
+   progress('contractors',i,50,'Creating or verifying contractor '+(i+1)+' of 50…');
    const b=bases[i%bases.length],lat=jitter(b[0],i,1.35),lng=jitter(b[1],i+50,1.55);
    const name=names[i%names.length]+' '+['Aerial Services','Drone Solutions','Agri Operations','Precision Aviation','Crop Services'][i%5]+' '+(i+1);
    let e=existing.find(x=>x.type==='contractor'&&x.name===name);
    if(!e)e=await es.create({type:'contractor',name,description:'Fictional agricultural drone contractor serving regional farms.',status:i%7===0?'prospect':'active',geometry:{type:'Point',coordinates:[lng,lat]},metadata:{contactPerson:['Thabo','Pieter','Lerato','Johan','Nomsa'][i%5]+' '+surnames[i%surnames.length],services:[services[i%services.length],services[(i+2)%services.length]],equipment:{drones:1+i%4,primaryPlatform:i%3===0?'Competitor Agricultural Drone':'Company Agricultural Drone'},employees:3+i%18,operatingCapacity:(80+i*7)+' hectares/day',control:i%3===0?'competitor':i%5===0?'neutral':'company',seeded:true}});
    createdContractors.push(e);
  }
+ progress('contractors',50,50,'Contractors complete. Building farm relationships…');
  const fs=farms();
  const rels=await rr.list();
  for(let i=0;i<createdContractors.length;i++){
+   progress('relationships',i,createdContractors.length,'Linking contractor '+(i+1)+' of '+createdContractors.length+' to farms within 300 km…');
    const c=createdContractors[i],coords=c.geometry?.coordinates||[],cp={lat:coords[1],lng:coords[0]};
    const nearby=fs.map(f=>({f,d:dist(cp,f)})).filter(x=>x.d<=300).sort((a,b)=>a.d-b.d).slice(0,Math.max(1,Math.min(4,fs.length)));
    for(const {f,d} of nearby){
@@ -50,11 +58,13 @@ async function seed(){
      if(!exists) await rr.create({sourceEntityId:c.id,relationshipType:'serves',targetEntityId:f.id,status:'active',metadata:{distanceKm:Math.round(d*10)/10,relationshipStatus:'active',seeded:true}});
    }
  }
+ progress('relationships',createdContractors.length,createdContractors.length,'Relationships complete. Refreshing GIS control…');
  global.localStorage.setItem(SEED_KEY,new Date().toISOString());
  global.dispatchEvent(new CustomEvent('agworld:demo-world-seeded',{detail:{facilities:createdFacilities.length,contractors:createdContractors.length}}));
  global.dispatchEvent(new CustomEvent('agworld:entity-updated',{detail:{reason:'demo-world-seed'}}));
  if(typeof global.refreshTerritoryControl==='function') global.refreshTerritoryControl();
  console.info('[AG World] Created 5 company facilities and 50 contractors through entity/relationship services.');
+ return {facilities:createdFacilities.length,contractors:createdContractors.length,relationships:rels.length};
 }
 global.AGWorldDemoWorldSeed={run:seed,facilities};
 })(window);
