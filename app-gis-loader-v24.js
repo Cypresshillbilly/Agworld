@@ -4774,12 +4774,21 @@ window.AGWorldFleetUI = {
   openTransaction: window.openFleetTransaction,
   openManagement: window.openFleetManagement,
   selected(){
-    const current=window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
-    if(current && (current.entityType==='contractor'||current.entityType==='farm')) return {type:current.entityType,id:String(current.entityId),name:current.name||''};
-    const currentFarm=window.__AGWORLD_RUNTIME_FARM_SELECTION_V2__;
-    if(currentFarm?.farmId) return {type:'farm',id:String(currentFarm.farmId),name:currentFarm.name||''};
-    if(selected?.id) return {type:'farm',id:String(selected.id),name:selected.name||''};
-    return null;
+    // The Developer Mode runs in a separate tab and reads the live AG World
+    // window. Always resolve the MOST RECENT canonical selection. Previously a
+    // stale contractor selection could win over a newer Farm selection, leaving
+    // the Fleet diagnostic disconnected from the entity visible on screen.
+    const candidates=[];
+    const dynamic=window.__AGWORLD_RUNTIME_DYNAMIC_ENTITY_SELECTION_V2__;
+    if(dynamic && (dynamic.entityType==='contractor'||dynamic.entityType==='farm')) candidates.push({type:dynamic.entityType,id:String(dynamic.entityId),name:dynamic.name||'',timestamp:Number(dynamic.timestamp||0)});
+    const farmSignal=window.__AGWORLD_RUNTIME_FARM_SELECTION_V2__;
+    if(farmSignal?.farmId) candidates.push({type:'farm',id:String(farmSignal.farmId),name:farmSignal.name||'',timestamp:Number(farmSignal.timestamp||0)});
+    const fleetState=window.__AGWORLD_FLEET_UI_STATE__;
+    if(fleetState && (fleetState.entityType==='contractor'||fleetState.entityType==='farm') && fleetState.entityId!=null) candidates.push({type:fleetState.entityType,id:String(fleetState.entityId),name:fleetState.entityName||'',timestamp:Number(fleetState.updatedAt||0)});
+    if(selected?.id) candidates.push({type:'farm',id:String(selected.id),name:selected.name||'',timestamp:Number(farmSignal?.timestamp||0)});
+    candidates.sort((a,b)=>b.timestamp-a.timestamp);
+    const latest=candidates[0];
+    return latest?{type:latest.type,id:latest.id,name:latest.name||''}:null;
   },
   ensureQuickActions(type,id){
     const entity=salesEntityList(type).find(e=>String(e.id)===String(id));
