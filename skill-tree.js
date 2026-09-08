@@ -4,25 +4,29 @@
 (()=>{
   const SKILLS=[
     {key:'technical',name:'TECHNICAL',short:'TECH',icon:'⚙'},
-    {key:'operational',name:'OPERATIONAL',short:'OPS',icon:'◈'},
+    {key:'operations',name:'OPERATIONS',short:'OPS',icon:'◈'},
     {key:'product',name:'PRODUCT',short:'PRODUCT',icon:'✦'},
-    {key:'management',name:'MANAGEMENT',short:'MGMT',icon:'◆'},
-    {key:'people',name:'PEOPLE',short:'PEOPLE',icon:'●'}
+    {key:'sales',name:'SALES',short:'SALES',icon:'↗'},
+    {key:'compliance',name:'COMPLIANCE',short:'COMPLY',icon:'✓'}
   ];
   const MAX=25;
   const REWARDS={
-    'c1-welcome':{management:1,people:1},
-    'c1-hr':{people:2,management:1},
-    'c1-documents':{management:1,operational:1},
-    'c1-safety':{technical:2,operational:1},
-    'c1-company-training':{product:2,management:1},
-    'c1-briefing':{people:1,operational:1},
-    'c2-profile':{management:1,people:1},
-    'c2-explore':{operational:2,product:1},
-    'c2-survey':{technical:2,operational:1},
-    'c2-create':{operational:2,technical:1},
+    // Company foundation: governance and people-facing work now contribute
+    // to Compliance and Sales instead of the retired Management/People axes.
+    'c1-welcome':{compliance:1,sales:1},
+    'c1-hr':{sales:2,compliance:1},
+    'c1-documents':{compliance:2,operations:1},
+    'c1-safety':{technical:2,compliance:1},
+    'c1-company-training':{product:2,compliance:1},
+    'c1-briefing':{sales:1,operations:1},
+
+    // Game actions.
+    'c2-profile':{sales:1,compliance:1},
+    'c2-explore':{operations:2,product:1},
+    'c2-survey':{technical:2,operations:1},
+    'c2-create':{operations:2,technical:1},
     'c2-assets':{product:2,technical:1},
-    'c2-intelligence':{product:2,management:1}
+    'c2-intelligence':{product:2,compliance:1}
   };
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const zero=()=>Object.fromEntries(SKILLS.map(s=>[s.key,0]));
@@ -61,7 +65,7 @@
   }
   function profileMarkup(){
     const totals=currentTotals(), vals=SKILLS.map(s=>totals[s.key]), total=vals.reduce((a,b)=>a+b,0);
-    return '<section class="ag-skill-tree"><div class="ag-skill-tree-head"><div><span>PLAYER DEVELOPMENT</span><h3>SKILL PROFILE</h3></div><div class="ag-skill-total"><b>'+total+' ★</b><small>TOTAL SKILL STARS</small></div></div><div class="ag-radar-wrap"><div class="ag-radar-chart">'+radarSvg(totals,{id:'profile'})+'</div><div class="ag-radar-stats">'+SKILLS.map(s=>'<div class="ag-radar-stat"><span class="ag-radar-icon">'+s.icon+'</span><div><b>'+s.name+'</b><strong>'+totals[s.key]+' <em>★</em></strong><small>LEVEL '+totals[s.key]+' / '+MAX+'</small></div></div>').join('')+'</div></div><div class="ag-skill-tree-note">Your profile uses the same five skill categories that feed the Company capability profile.</div></section>';
+    return '<section class="ag-skill-tree"><div class="ag-skill-tree-head"><div><span>PLAYER DEVELOPMENT</span><h3>SKILL PROFILE</h3></div><div class="ag-skill-total"><b>'+total+' ★</b><small>TOTAL SKILL STARS</small></div></div><div class="ag-radar-wrap"><div class="ag-radar-chart">'+radarSvg(totals,{id:'profile'})+'</div><div class="ag-radar-stats">'+SKILLS.map(s=>'<div class="ag-radar-stat"><span class="ag-radar-icon">'+s.icon+'</span><div><b>'+s.name+'</b><strong>'+totals[s.key]+' <em>★</em></strong><small>LEVEL '+totals[s.key]+' / '+MAX+'</small></div></div>').join('')+'</div></div><div class="ag-skill-tree-note">Technical, Operations, Product, Sales and Compliance use the same scoring model across your profile and Company capability.</div></section>';
   }
   function missionMarkup(){
     const totals=currentTotals(), total=Object.values(totals).reduce((a,b)=>a+b,0);
