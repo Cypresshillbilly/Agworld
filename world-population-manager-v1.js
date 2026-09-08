@@ -12,19 +12,21 @@ function make(){
     <p>Create the 5 approved Company Facilities and 50 fictional Contractors only when you explicitly start the process. Nothing runs automatically during map startup.</p>
     <div class="wpm-status" data-status>Checking the live creation services…</div>
     <div class="wpm-actions"><button type="button" data-run disabled>CREATE 5 FACILITIES + 50 CONTRACTORS</button></div>
+    <div class="wpm-actions wpm-repair"><button type="button" data-repair disabled>CHECK & REPAIR FARM ASSIGNMENTS</button></div>
     <small data-note>Facilities: Ballito · Bothaville · Upington · Lichtenburg · Brits</small>
   `;
   document.body.appendChild(box);
-  const status=box.querySelector('[data-status]'), run=box.querySelector('[data-run]'), note=box.querySelector('[data-note]');
+  const status=box.querySelector('[data-status]'), run=box.querySelector('[data-run]'), repair=box.querySelector('[data-repair]'), note=box.querySelector('[data-note]');
   box.querySelector('[data-close]').onclick=()=>box.remove();
 
-  const ready=()=>window.AGWorldDemoWorldSeed?.run && window.AGWorldDynamicEntityAPI?.create && window.AGWorldDynamicEntityAPI?.createRelationship;
+  const ready=()=>window.AGWorldDemoWorldSeed?.run && window.AGWorldDynamicEntityAPI?.create && window.AGWorldDynamicEntityAPI?.createRelationship && window.AGWorldDynamicEntityAPI?.repairUniqueContractorFarmAssignments;
   let tries=0;
   const check=()=>{
     if(ready()){
       status.textContent='SYSTEM STABLE · Creation services ready. The map remains idle until you press the button.';
       status.className='wpm-status ready';
       run.disabled=false;
+      repair.disabled=false;
       return;
     }
     if(++tries<40) return setTimeout(check,250);
@@ -38,6 +40,46 @@ function make(){
     const pct=d.total?Math.round((d.current/d.total)*100):0;
     status.textContent=(d.message||'Working…')+' '+(d.total?'('+pct+'%)':'');
   });
+
+  repair.onclick=async()=>{
+    if(!ready()) return;
+    repair.disabled=true;
+    run.disabled=true;
+    repair.textContent='CHECKING ASSIGNMENTS…';
+    try{
+      const preview=await window.AGWorldDynamicEntityAPI.repairUniqueContractorFarmAssignments({preview:true});
+      if(!preview.conflictingFarms){
+        status.textContent='CHECK COMPLETE · '+preview.farmsChecked+' Farm assignments checked. No duplicate active Contractor assignments were found.';
+        status.className='wpm-status ready';
+        repair.textContent='ASSIGNMENTS ALREADY VALID';
+        run.disabled=false;
+        return;
+      }
+      const message=preview.conflictingFarms+' Farms have duplicate active Contractor assignments. '+preview.duplicateRelationships+' duplicate relationship'+(preview.duplicateRelationships===1?'':'s')+' will be made inactive, keeping one active Contractor per Farm. Continue?';
+      if(!confirm(message)){
+        status.textContent='REPAIR CANCELLED · No relationships were changed.';
+        status.className='wpm-status';
+        repair.textContent='CHECK & REPAIR FARM ASSIGNMENTS';
+        repair.disabled=false;
+        run.disabled=false;
+        return;
+      }
+      repair.textContent='REPAIRING…';
+      const result=await window.AGWorldDynamicEntityAPI.repairUniqueContractorFarmAssignments();
+      status.textContent='REPAIR COMPLETE · '+result.conflictingFarms+' Farms reconciled · '+result.deactivated.length+' duplicate assignment'+(result.deactivated.length===1?'':'s')+' made inactive.';
+      status.className='wpm-status ready';
+      repair.textContent='ASSIGNMENTS REPAIRED';
+      note.textContent='Historical duplicate relationships were retained as inactive records. Every Farm now has at most one active Contractor.';
+      run.disabled=false;
+    }catch(err){
+      console.error('[AG World] Contractor assignment repair failed',err);
+      status.textContent='REPAIR FAILED · '+(err?.message||'Unknown error')+'. No automatic retry ran.';
+      status.className='wpm-status error';
+      repair.disabled=false;
+      repair.textContent='RETRY ASSIGNMENT REPAIR';
+      run.disabled=false;
+    }
+  };
 
   run.onclick=async()=>{
     if(!ready()) return;
@@ -72,6 +114,8 @@ style.textContent=`
 #worldPopulationManager .wpm-status.error{border-left:3px solid #ff7670;color:#ffd0ce}
 #worldPopulationManager .wpm-actions button{width:100%;border:1px solid rgba(157,204,56,.55);background:#9dcc38;color:#10170e;border-radius:8px;padding:11px;font-weight:900;font-size:10px;letter-spacing:.7px;cursor:pointer}
 #worldPopulationManager .wpm-actions button:disabled{opacity:.55;cursor:not-allowed}
+#worldPopulationManager .wpm-repair{margin-top:8px}
+#worldPopulationManager .wpm-repair button{background:transparent;color:#cfe4c4;border-color:rgba(101,216,117,.3)}
 #worldPopulationManager small{display:block;margin-top:10px;color:#91a19a;line-height:1.45}
 `;
 document.head.appendChild(style);
