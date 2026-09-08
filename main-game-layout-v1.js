@@ -300,6 +300,16 @@
     if(!card) return false;
     captureEntityCommandTemplate();
     if(entityCommandTemplate) card.innerHTML=entityCommandTemplate;
+
+    // Replacing innerHTML destroys the old V2 host. Any bridge that captured
+    // that detached node must be discarded before the selected entity renders,
+    // otherwise it successfully renders into an invisible, detached element and
+    // leaves the visible Entity Command Centre as the empty legacy shell.
+    if(window.AGWorldV2){
+      delete window.AGWorldV2.LiveFarmDetailBridge;
+      delete window.AGWorldV2.LiveDynamicEntityDetailBridge;
+    }
+
     card.classList.remove('agworld-company-entity-card');
     delete card.dataset.entityCommandDefault;
     card.classList.add('show');
