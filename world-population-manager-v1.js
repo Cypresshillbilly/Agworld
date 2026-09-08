@@ -13,13 +13,14 @@ function make(){
     <div class="wpm-status" data-status>Checking the live creation services…</div>
     <div class="wpm-actions"><button type="button" data-run disabled>CREATE 5 FACILITIES + 50 CONTRACTORS</button></div>
     <div class="wpm-actions wpm-repair"><button type="button" data-repair disabled>CHECK & REPAIR FARM ASSIGNMENTS</button></div>
+    <div class="wpm-actions wpm-repair"><button type="button" data-demo-snapshot disabled>MARK CURRENT COMPETITORS AS DEMO</button></div>
     <small data-note>Facilities: Ballito · Bothaville · Upington · Lichtenburg · Brits</small>
   `;
   document.body.appendChild(box);
-  const status=box.querySelector('[data-status]'), run=box.querySelector('[data-run]'), repair=box.querySelector('[data-repair]'), note=box.querySelector('[data-note]');
+  const status=box.querySelector('[data-status]'), run=box.querySelector('[data-run]'), repair=box.querySelector('[data-repair]'), demoSnapshot=box.querySelector('[data-demo-snapshot]'), note=box.querySelector('[data-note]');
   box.querySelector('[data-close]').onclick=()=>box.remove();
 
-  const ready=()=>window.AGWorldDemoWorldSeed?.run && window.AGWorldDynamicEntityAPI?.create && window.AGWorldDynamicEntityAPI?.createRelationship && window.AGWorldDynamicEntityAPI?.repairUniqueContractorFarmAssignments;
+  const ready=()=>window.AGWorldDemoWorldSeed?.run && window.AGWorldDynamicEntityAPI?.create && window.AGWorldDynamicEntityAPI?.createRelationship && window.AGWorldDynamicEntityAPI?.repairUniqueContractorFarmAssignments && window.AGWorldDynamicEntityAPI?.snapshotExistingAsDemo;
   let tries=0;
   const check=()=>{
     if(ready()){
@@ -27,6 +28,7 @@ function make(){
       status.className='wpm-status ready';
       run.disabled=false;
       repair.disabled=false;
+      demoSnapshot.disabled=false;
       return;
     }
     if(++tries<40) return setTimeout(check,250);
@@ -40,6 +42,26 @@ function make(){
     const pct=d.total?Math.round((d.current/d.total)*100):0;
     status.textContent=(d.message||'Working…')+' '+(d.total?'('+pct+'%)':'');
   });
+
+  demoSnapshot.onclick=async()=>{
+    if(!ready()) return;
+    if(!confirm('Mark all currently existing Competitor records as DEMO data? This preserves them for testing, but they will be excluded when AG World switches to USER-CREATED world mode.')) return;
+    demoSnapshot.disabled=true;
+    demoSnapshot.textContent='MARKING DEMO BASELINE…';
+    try{
+      const result=await window.AGWorldDynamicEntityAPI.snapshotExistingAsDemo('competitor');
+      status.textContent='DEMO BASELINE CAPTURED · '+result.marked+' existing Competitor record'+(result.marked===1?'':'s')+' marked as demo data.';
+      status.className='wpm-status ready';
+      demoSnapshot.textContent='COMPETITOR DEMO BASELINE SAVED';
+      note.textContent='Current Farms and seeded Contractors are already demo records. Current Competitors are now explicitly classified as demo. Future user-created entities are saved as live.';
+    }catch(err){
+      console.error('[AG World] Demo baseline capture failed',err);
+      status.textContent='DEMO BASELINE FAILED · '+(err?.message||'Unknown error');
+      status.className='wpm-status error';
+      demoSnapshot.disabled=false;
+      demoSnapshot.textContent='RETRY DEMO BASELINE';
+    }
+  };
 
   repair.onclick=async()=>{
     if(!ready()) return;
