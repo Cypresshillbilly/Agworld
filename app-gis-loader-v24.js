@@ -2125,8 +2125,12 @@ function showFarmWizardStep(step) {
   farmWizardStep = step;
   document.querySelectorAll('.farm-wizard-step').forEach(el => el.hidden = Number(el.dataset.step) !== step);
   const progress = $('farmWizardProgress'), title = $('farmWizardTitle');
-  if (progress) progress.textContent = `STEP ${step} OF 3`;
-  if (title) title.textContent = step === 1 ? 'SELECT FARM BOUNDARY' : step === 2 ? 'CAPTURE FARM INFORMATION' : 'SELECT FARM ASSETS';
+  if (progress) progress.textContent = `STEP ${step} OF 4`;
+  if (title) title.textContent = step === 1 ? 'SELECT FARM BOUNDARY' : step === 2 ? 'CAPTURE FARM INFORMATION' : step === 3 ? 'SELECT FARM ASSETS' : 'DRONE OWNERSHIP & PURCHASES';
+}
+function farmDronePortfolioFromForm() {
+  const rows=[...document.querySelectorAll('#farmDronePortfolio [data-drone-row]')];
+  return rows.map(row=>({supplierType:row.dataset.supplierType,supplierId:row.dataset.supplierId,supplierName:row.dataset.supplierName,quantity:Math.max(0,Number(row.querySelector('input')?.value||0))})).filter(item=>item.quantity>0);
 }
 function selectedFarmChecklist(name) {
   return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(input => input.value);
@@ -2191,6 +2195,7 @@ function wizardBaseFarm() {
     objects,
     assets: checklistAssets.map(asset => ({ ...asset })),
     equipmentSelections,
+    dronePortfolio: farmDronePortfolioFromForm().length ? farmDronePortfolioFromForm() : (existing?.dronePortfolio || []),
     crops: cropSelections,
     drones: hasOurDrone ? 1 : 0,
     tractors: hasTractor ? 1 : 0,
@@ -2310,6 +2315,7 @@ function openEditFarm(farm) {
   newBoundary = (farm.boundary || []).map(p => ({ lat: Number(p.lat), lng: Number(p.lng) }));
   draftObjects = JSON.parse(JSON.stringify(farm.objects || []));
   syncFarmChecklistUI(farm);
+  renderDronePortfolio('farmDronePortfolio', farm.dronePortfolio || []);
   $('newFarmCountry').value = farm.country || '';
   $('newFarmProvince').value = farm.province || '';
   $('newFarmMunicipality').value = farm.municipality || '';
@@ -2964,7 +2970,7 @@ const saveAssetsButton = $('saveAssetsStep');
 if (saveAssetsButton) saveAssetsButton.onclick = async event => {
   event?.preventDefault?.();
   event?.stopPropagation?.();
-  try { await saveFarmWizardStep(3); }
+  try { const saved = await saveFarmWizardStep(3); if (saved) { const farm=farms.find(item=>String(item.id)===String(editingFarmId||farmWizardDraftId)); renderDronePortfolio('farmDronePortfolio', farm?.dronePortfolio || []); showFarmWizardStep(4); toast('Farm assets saved · continue with drone ownership'); } }
   catch (error) { console.error('SAVE FARM ASSETS failed', error); toast('Farm assets save failed: ' + (error?.message || 'Unknown error')); }
 };
 
@@ -2975,7 +2981,7 @@ async function finishFarmWizard() {
   const button = $('saveFarm');
   if (button) { button.disabled = true; button.textContent = 'SAVING FARM…'; }
   try {
-    const saved = await saveFarmWizardStep(3);
+    const saved = await saveFarmWizardStep(4);
     if (!saved) return false;
 
     const id = editingFarmId || farmWizardDraftId;
@@ -2987,6 +2993,8 @@ async function finishFarmWizard() {
     try { saveLocal(); } catch (error) { console.warn('Farm local save failed', error); }
     try { addFarm(farm); } catch (error) { console.warn('Farm redraw failed', error); }
     try { refreshMapVisibility(); } catch (error) { console.warn('Farm visibility refresh failed', error); }
+
+    await syncDronePurchaseRelationships('farm', farm.id, farm.dronePortfolio || []);
 
     const patch = {
       id:farm.id,
