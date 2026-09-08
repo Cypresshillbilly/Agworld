@@ -18,7 +18,7 @@
     if(!heading){
       heading=document.createElement('div');
       heading.id='entityCommandCentreHeading';
-      heading.innerHTML='<span>COMMAND CENTER</span>';
+      heading.innerHTML='<span class="agworld-command-center-label">COMMAND CENTER</span><span class="agworld-command-center-live"><i></i> LIVE</span>';
       entitySection.insertBefore(heading,entitySection.firstChild);
     }
     return heading;
@@ -1355,5 +1355,19 @@
     '#territoryInfoPanel .territory-national-right .territory-info-grid .territory-national-scope{grid-column:1 / -1!important;background:linear-gradient(90deg,rgba(57,125,75,.15),rgba(13,26,31,.88))!important;border-color:rgba(117,224,132,.22)!important}'+
     '#territoryInfoPanel .territory-national-right .territory-info-grid .territory-national-scope strong{font-size:14px!important;letter-spacing:1.2px!important;color:#a8f0b2!important}'+
     '@media(max-width:900px){#territoryInfoPanel .territory-national-layout{grid-template-columns:1fr!important;overflow:auto!important}#territoryInfoPanel .territory-national-left{border-right:0!important;border-bottom:1px solid rgba(126,167,148,.22)!important}#territoryInfoPanel .territory-national-right{min-height:240px!important}}';
+  document.head.appendChild(style);
+})();
+
+
+/* AG World v38 Command Center heading matches Territory Stats. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldCommandCenterHeadingTerritoryMatch';
+  style.textContent=
+    '#entityCommandCentreHeading{position:absolute!important;left:0!important;right:0!important;top:0!important;height:46px!important;min-height:46px!important;z-index:8!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;padding:0 16px!important;box-sizing:border-box!important;background:linear-gradient(180deg,rgba(16,29,34,.98),rgba(9,19,24,.96))!important;border-bottom:1px solid rgba(126,167,148,.18)!important;box-shadow:0 8px 18px rgba(0,0,0,.14)!important;color:#edf8f0!important;font-family:inherit!important;text-transform:uppercase!important}'+
+    '#entityCommandCentreHeading .agworld-command-center-label{font-size:16px!important;line-height:1!important;letter-spacing:1.6px!important;font-weight:900!important;color:#edf8f0!important;text-transform:uppercase!important;font-family:inherit!important}'+
+    '#entityCommandCentreHeading .agworld-command-center-live{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important;padding:6px 8px!important;border:1px solid rgba(117,224,132,.24)!important;border-radius:999px!important;background:rgba(117,224,132,.07)!important;color:#a9efb2!important;font-size:8px!important;font-weight:900!important;letter-spacing:1px!important;line-height:1!important}'+
+    '#entityCommandCentreHeading .agworld-command-center-live i{display:block!important;width:6px!important;height:6px!important;border-radius:50%!important;background:#75e084!important;box-shadow:0 0 10px rgba(117,224,132,.9)!important}'+
+    '#entityInformationSection .farm-card{top:46px!important;height:calc(100% - 46px)!important;min-height:calc(100% - 46px)!important}';
   document.head.appendChild(style);
 })();
