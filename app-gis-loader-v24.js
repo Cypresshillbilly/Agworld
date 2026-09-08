@@ -295,15 +295,69 @@ function territoryFarmSet(territory) {
   return [];
 }
 
+function territoryContractorSet(territory) {
+  const world = window.AG_WORLD_WORLD || {};
+  const contractorList = Array.isArray(window.__AG_WORLD_CONTRACTORS)
+    ? window.__AG_WORLD_CONTRACTORS
+    : (world.getContractors?.() || []);
+  const level = territory.level || 'province';
+  const assigned = contractor => {
+    const p = contractor?.position || contractor?.center || contractor;
+    const municipality = municipalities.find(m => pointInPolygon({ lat: Number(p?.lat), lng: Number(p?.lng) }, m.boundary));
+    const town = towns.find(t => pointInPolygon({ lat: Number(p?.lat), lng: Number(p?.lng) }, t.boundary));
+    const province = territories.find(t => pointInPolygon({ lat: Number(p?.lat), lng: Number(p?.lng) }, t.boundary));
+    return {
+      municipalityId: contractor?.municipalityId || contractor?.details?.municipalityId || municipality?.id,
+      townId: contractor?.townId || contractor?.details?.townId || town?.id,
+      territoryId: contractor?.territoryId || contractor?.details?.territoryId || province?.id || municipality?.parentId
+    };
+  };
+  if (level === 'country') return contractorList.slice();
+  return contractorList.filter(contractor => {
+    const geo = assigned(contractor);
+    if (level === 'town') return geo.townId === territory.id;
+    if (level === 'municipality') return geo.municipalityId === territory.id;
+    if (level === 'province') return geo.territoryId === territory.id;
+    return false;
+  });
+}
+
+function contractorAssetControl(contractor) {
+  // Contractors use exactly the same commercial control test as farms:
+  // company drone = company control, competitor drone = competitor control.
+  return farmAssetControl(contractor);
+}
+
 function calculateTerritoryControl(territory) {
   const territoryFarms = territoryFarmSet(territory);
-  const total = territoryFarms.length;
-  const company = territoryFarms.filter(f => farmAssetControl(f) === 'company').length;
-  const competitor = territoryFarms.filter(f => farmAssetControl(f) === 'competitor').length;
+  const territoryContractors = territoryContractorSet(territory);
+  const combined = [...territoryFarms, ...territoryContractors];
+
+  const farmCompany = territoryFarms.filter(f => farmAssetControl(f) === 'company').length;
+  const farmCompetitor = territoryFarms.filter(f => farmAssetControl(f) === 'competitor').length;
+  const contractorCompany = territoryContractors.filter(c => contractorAssetControl(c) === 'company').length;
+  const contractorCompetitor = territoryContractors.filter(c => contractorAssetControl(c) === 'competitor').length;
+
+  const total = combined.length;
+  const company = farmCompany + contractorCompany;
+  const competitor = farmCompetitor + contractorCompetitor;
   const neutral = total - company - competitor;
   const control = total ? Math.round((company / total) * 1000) / 10 : 0;
   const enemyControl = total ? Math.round((competitor / total) * 1000) / 10 : 0;
-  return { total, company, competitor, neutral, control, enemyControl };
+
+  return {
+    total, company, competitor, neutral, control, enemyControl,
+    farms: {
+      total: territoryFarms.length, company: farmCompany, competitor: farmCompetitor,
+      neutral: territoryFarms.length - farmCompany - farmCompetitor,
+      control: territoryFarms.length ? Math.round(farmCompany / territoryFarms.length * 1000) / 10 : 0
+    },
+    contractors: {
+      total: territoryContractors.length, company: contractorCompany, competitor: contractorCompetitor,
+      neutral: territoryContractors.length - contractorCompany - contractorCompetitor,
+      control: territoryContractors.length ? Math.round(contractorCompany / territoryContractors.length * 1000) / 10 : 0
+    }
+  };
 }
 
 function territoryControlStyle(territory) {
@@ -367,6 +421,7 @@ function territoryGameSummary(territory) {
   const game = calculateTerritoryControl(territory);
   return {
     farms: territoryFarmSet(territory),
+    contractors: territoryContractorSet(territory),
     ...game
   };
 }
