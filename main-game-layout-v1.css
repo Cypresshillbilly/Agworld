@@ -477,3 +477,42 @@ html body .app-shell > #entityInformationSection::after{
 #entityInformationSection #farmCard.agworld-selected-entity-command .agworld-v2-detail-panel{
   width:100%!important;height:100%!important;min-height:0!important;
 }
+
+
+/* Preserve and reposition the real, existing Farm Card action controls.
+   These are moved into the selected entity summary so their original event
+   listeners continue to work exactly as before. */
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+  align-items:center!important;
+  margin:9px 0 0!important;
+  padding:8px 0 0!important;
+  border-top:1px solid #d5e1e3!important;
+  background:transparent!important;
+}
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions button{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  min-height:28px!important;
+  margin:0!important;
+  padding:6px 9px!important;
+  border-radius:6px!important;
+  border:1px solid #b9cbd0!important;
+  background:#fff!important;
+  color:#29464f!important;
+  font-size:8px!important;
+  font-weight:900!important;
+  letter-spacing:.35px!important;
+  box-shadow:0 2px 5px rgba(25,50,58,.08)!important;
+}
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions button:first-child,
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions .save-farm{
+  background:linear-gradient(135deg,#167d90,#145d6b)!important;
+  border-color:#145d6b!important;
+  color:#fff!important;
+}
+.agworld-entity-command-summary #farmActions.agworld-entity-command-actions button[hidden]{display:none!important}
