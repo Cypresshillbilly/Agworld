@@ -443,3 +443,37 @@ html body .app-shell > #entityInformationSection::after{
   min-height:100%!important;
   height:auto!important;
 }
+
+
+/* SELECTED ENTITY COMMAND CENTRE — permanent 50/50 summary + management layout */
+#entityInformationSection #farmCard.agworld-selected-entity-command{
+  display:block!important;
+  width:100%!important;height:calc(var(--ag-bottom-h) - 28px)!important;
+  max-height:calc(var(--ag-bottom-h) - 28px)!important;
+  overflow:hidden!important;padding:0!important;background:transparent!important;
+}
+#entityInformationSection #farmCard.agworld-selected-entity-command .agworld-entity-command-shell{
+  height:100%;width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  background:#fff;border:1px solid #d7e1e3;border-radius:8px;overflow:hidden;
+}
+.agworld-entity-command-summary{
+  min-width:0;padding:11px 15px;background:linear-gradient(145deg,#f7fafb,#edf3f4);
+  border-right:1px solid #d4e0e2;overflow:auto;
+}
+.agworld-entity-command-eyebrow{font-size:8px;font-weight:900;letter-spacing:1.2px;color:#168291;margin-bottom:4px}
+.agworld-entity-command-summary h2{margin:0;font-size:20px;line-height:1.05;color:#1d3037;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agworld-entity-command-status{display:inline-block;margin-top:6px;padding:3px 7px;border-radius:999px;border:1px solid #8ac6a1;color:#2c8250;background:#f2faf4;font-size:8px;font-weight:900;letter-spacing:.7px}
+.agworld-entity-command-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
+.agworld-entity-command-summary-grid>div{min-width:0;padding:6px 7px;border:1px solid #dce6e8;border-radius:6px;background:rgba(255,255,255,.72)}
+.agworld-entity-command-summary-grid span{display:block;font-size:7px;font-weight:900;letter-spacing:.65px;color:#71828a}
+.agworld-entity-command-summary-grid b{display:block;margin-top:2px;font-size:10px;color:#23353c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agworld-entity-command-management{min-width:0;min-height:0;display:flex;flex-direction:column;background:#fff;overflow:hidden}
+.agworld-entity-management-label{padding:6px 10px 4px;font-size:7px;font-weight:900;letter-spacing:1.1px;color:#71838a;background:#fff}
+#entityInformationSection #farmCard.agworld-selected-entity-command #agworldV2FarmDetailHost{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  flex:1;min-height:0!important;height:auto!important;max-height:none!important;
+  margin:0!important;padding:0!important;border:0!important;overflow:hidden!important;
+}
+#entityInformationSection #farmCard.agworld-selected-entity-command .agworld-v2-detail-panel{
+  width:100%!important;height:100%!important;min-height:0!important;
+}
