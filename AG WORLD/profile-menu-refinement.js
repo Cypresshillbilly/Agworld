@@ -6,9 +6,15 @@ const css=`
 /* Final layout contract:
    SIDEBAR: official AG World logo → navigation → logout.
    MISSIONS: player avatar/profile + level/XP → My Missions / Mission Control. */
+
+/* Reserve enough horizontal space for the official logo. */
+body.ag-profile-mode .app-shell,.app-shell{
+  grid-template-columns:154px 145px minmax(0,1fr)!important;
+}
 body.ag-profile-mode .sidebar,.app-shell .sidebar{
-  padding:6px 7px 5px!important;box-sizing:border-box!important;
+  padding:6px 5px 5px!important;box-sizing:border-box!important;
   overflow:hidden!important;display:flex!important;flex-direction:column!important;
+  width:154px!important;min-width:154px!important;
 }
 body.ag-profile-mode .sidebar .menu-user,.app-shell .sidebar .menu-user{display:none!important}
 body.ag-profile-mode .sidebar .profile,.app-shell .sidebar .profile{display:none!important}
@@ -16,11 +22,11 @@ body.ag-profile-mode .sidebar .profile,.app-shell .sidebar .profile{display:none
 /* Official AG World logo remains at the top of the grey sidebar. */
 body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{
   order:1!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  width:100%!important;height:82px!important;min-height:82px!important;flex:0 0 82px!important;
-  margin:0 0 3px!important;padding:3px 0!important;box-sizing:border-box!important;overflow:visible!important;
+  width:100%!important;height:106px!important;min-height:106px!important;flex:0 0 106px!important;
+  margin:0 0 3px!important;padding:4px 0 5px!important;box-sizing:border-box!important;overflow:visible!important;
 }
 body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{
-  display:block!important;width:min(98%,280px)!important;height:78px!important;max-width:none!important;max-height:none!important;
+  display:block!important;width:min(100%,300px)!important;height:98px!important;max-width:none!important;max-height:none!important;
   object-fit:contain!important;object-position:center!important;filter:drop-shadow(0 3px 5px rgba(0,0,0,.28))!important;
 }
 
@@ -89,8 +95,10 @@ body.ag-profile-mode .map-area .ag-world-map-logo,.app-shell .map-area .ag-world
 body.ag-profile-mode .bottom{height:23%!important}
 
 @media(min-width:1500px){
-  body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{height:96px!important;min-height:96px!important;flex-basis:96px!important}
-  body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{height:92px!important}
+  body.ag-profile-mode .app-shell,.app-shell{grid-template-columns:174px 158px minmax(0,1fr)!important}
+  body.ag-profile-mode .sidebar,.app-shell .sidebar{width:174px!important;min-width:174px!important}
+  body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{height:118px!important;min-height:118px!important;flex-basis:118px!important}
+  body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{height:110px!important}
   body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{height:16px!important;min-height:16px!important;flex-basis:16px!important;font-size:6px!important}
   body.ag-profile-mode .missions .ag-player-mission-profile,.app-shell .missions .ag-player-mission-profile{min-height:108px!important;grid-template-columns:74px minmax(0,1fr)!important}
   body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-avatar,.app-shell .missions .ag-player-mission-profile .ag-player-avatar{width:72px!important;height:72px!important;min-width:72px!important;min-height:72px!important;font-size:29px!important}
