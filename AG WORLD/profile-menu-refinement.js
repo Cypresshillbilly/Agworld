@@ -3,23 +3,25 @@
 const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=menu-logo-official-v2';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
-/* Sidebar contract: BRAND → PLAYER PROFILE/XP → NAVIGATION → LOGOUT. */
+/* Sidebar contract: PLAYER PROFILE/XP → NAVIGATION → LOGOUT.
+   The official AG World logo now lives in Mission Control above the My Missions heading. */
 body.ag-profile-mode .sidebar,.app-shell .sidebar{
-  padding:4px 7px 5px!important;box-sizing:border-box!important;
+  padding:5px 7px 5px!important;box-sizing:border-box!important;
   overflow:hidden!important;display:flex!important;flex-direction:column!important;
 }
-body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{
-  order:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  width:100%!important;height:70px!important;min-height:70px!important;flex:0 0 70px!important;
-  margin:0!important;padding:0!important;background:none!important;border:0!important;box-sizing:border-box!important;
-}
-body.ag-profile-mode .sidebar .brand .ag-world-menu-logo,.app-shell .sidebar .brand .ag-world-menu-logo{
-  display:block!important;width:112%!important;height:66px!important;max-width:none!important;max-height:none!important;
-  object-fit:contain!important;object-position:center!important;margin:0 auto!important;transform:none!important;
-}
-body.ag-profile-mode .sidebar .brand:before,body.ag-profile-mode .sidebar .brand small,
-.app-shell .sidebar .brand:before,.app-shell .sidebar .brand small{display:none!important}
+body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{display:none!important}
 body.ag-profile-mode .sidebar .menu-user,.app-shell .sidebar .menu-user{display:none!important}
+
+/* Mission Control brand: logo sits above the My Missions heading, outside the grey player menu. */
+body.ag-profile-mode .missions .ag-world-missions-brand,.app-shell .missions .ag-world-missions-brand{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;height:50px!important;min-height:50px!important;margin:0 0 2px!important;padding:2px 0!important;
+  box-sizing:border-box!important;overflow:visible!important;
+}
+body.ag-profile-mode .missions .ag-world-missions-logo,.app-shell .missions .ag-world-missions-logo{
+  display:block!important;width:min(92%,210px)!important;height:46px!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;object-position:center!important;
+}
 
 /* Official dedicated player card. */
 #agPlayerMenuCard{
@@ -77,8 +79,6 @@ body.ag-profile-mode .map-area .ag-world-map-logo,.app-shell .map-area .ag-world
 body.ag-profile-mode .bottom{height:23%!important}
 
 @media(min-width:1500px){
-  body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{height:76px!important;min-height:76px!important;flex-basis:76px!important}
-  body.ag-profile-mode .sidebar .brand .ag-world-menu-logo,.app-shell .sidebar .brand .ag-world-menu-logo{height:72px!important;width:116%!important}
   #agPlayerMenuCard{grid-template-columns:48px minmax(0,1fr)!important;height:72px!important;min-height:72px!important;flex-basis:72px!important}
   #agPlayerMenuCard .ag-player-avatar{width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;font-size:18px!important}
   #agPlayerMenuCard .ag-player-name{font-size:9px!important}
@@ -97,13 +97,33 @@ function playerData(){
  const pct=Math.max(0,Math.min(100,Math.round((xp/next)*100)));
  return {name,level,chapter,xp,next,pct,initial:(name.trim().charAt(0)||'P').toUpperCase()};
 }
-function ensureBrand(s){
- let b=s.querySelector('.brand');
- if(!b){b=document.createElement('div');b.className='brand'}
- let logo=b.querySelector('.ag-world-menu-logo');
- if(!logo){logo=document.createElement('img');logo.className='ag-world-menu-logo';logo.alt='AG World';logo.decoding='async';logo.loading='eager';b.replaceChildren(logo)}
+function ensureMissionsBrand(){
+ const missions=document.querySelector('.missions');if(!missions)return null;
+ let brand=missions.querySelector('#agWorldMissionsBrand');
+ if(!brand){
+   brand=document.createElement('div');
+   brand.id='agWorldMissionsBrand';
+   brand.className='ag-world-missions-brand';
+   brand.setAttribute('aria-label','AG World');
+ }
+ let logo=brand.querySelector('.ag-world-missions-logo');
+ if(!logo){
+   logo=document.createElement('img');
+   logo.className='ag-world-missions-logo';
+   logo.alt='AG World';
+   logo.decoding='async';
+   logo.loading='eager';
+   brand.replaceChildren(logo);
+ }
  logo.src=LOGO_SRC;
- return b;
+ // Keep the logo above whichever mission heading is currently rendered.
+ const heading=missions.querySelector('h1,.missions-title,.mission-title');
+ if(heading){
+   if(brand.nextElementSibling!==heading)heading.insertAdjacentElement('beforebegin',brand);
+ }else if(missions.firstElementChild!==brand){
+   missions.prepend(brand);
+ }
+ return brand;
 }
 function playerCardHTML(d){
  return '<div class="ag-player-avatar" aria-hidden="true">'+d.initial+'</div><div class="ag-player-summary"><strong class="ag-player-name">'+d.name+'</strong><span class="ag-player-role">AG WORLD PLAYER</span><span class="ag-player-level">Level '+d.level+' · Chapter '+d.chapter+'</span><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' / '+d.next.toLocaleString()+' XP</b><b>'+d.pct+'%</b></span></div>';
@@ -116,14 +136,14 @@ function ensurePlayerCard(s){
 }
 function correctSidebar(){
  const s=document.querySelector('.sidebar');if(!s)return;
- s.querySelectorAll('.menu-user,.profile').forEach(el=>el.remove());
- const b=ensureBrand(s);
+ // The sidebar intentionally starts with the player profile. Remove legacy and current sidebar logo blocks.
+ s.querySelectorAll('.brand,.menu-user,.profile').forEach(el=>el.remove());
  const card=ensurePlayerCard(s);
  const nav=s.querySelector('.nav');
- // Deterministic DOM order on every repair: logo first, player second, navigation third.
- if(s.firstElementChild!==b)s.prepend(b);
- if(b.nextElementSibling!==card)b.insertAdjacentElement('afterend',card);
+ // Deterministic DOM order: player profile first, navigation second.
+ if(s.firstElementChild!==card)s.prepend(card);
  if(nav && card.nextElementSibling!==nav)card.insertAdjacentElement('afterend',nav);
+ ensureMissionsBrand();
  document.querySelectorAll('.map-area .ag-world-map-logo').forEach(el=>el.remove());
 }
 function refreshPlayerUI(){
@@ -136,14 +156,14 @@ function start(){
  const observer=new MutationObserver(()=>{
   installStyles();
   const s=document.querySelector('.sidebar');if(!s)return;
-  const good=!!(s.querySelector('.brand .ag-world-menu-logo')&&s.querySelector('#agPlayerMenuCard'));
+  const good=!!(s.querySelector('#agPlayerMenuCard')&&document.querySelector('.missions #agWorldMissionsBrand .ag-world-missions-logo'));
   if(!good)correctSidebar();
  });
  /* Important: watch descendants because game-view-mode changes sidebar.innerHTML. The callback is inert once final markup exists, so it cannot loop. */
  observer.observe(document.body,{childList:true,subtree:true});
  // Defensive health check: later game modules are not allowed to remove the
  // profile block or its style rules after the sidebar has been normalised.
- setInterval(()=>{installStyles();correctSidebar();refreshPlayerUI();},1200);
+ setInterval(()=>{installStyles();correctSidebar();ensureMissionsBrand();refreshPlayerUI();},1200);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
