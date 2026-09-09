@@ -1,9 +1,9 @@
 /* AG WORLD — Profile menu. Profile Summary ALWAYS stays to the right of the avatar. */
 (()=>{
-const LOGO_SRC='/Agworld/assets/Logo.png?v=20260903';
+const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=menu-logo-v1';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
-body.ag-profile-mode .sidebar{width:20%!important;padding:10px 14px 12px!important;box-sizing:border-box!important}
+body.ag-profile-mode .sidebar{width:20%!important;padding:10px 14px 12px!important;box-sizing:border-box!important;position:fixed!important;top:0!important;bottom:0!important;left:0!important;height:100vh!important;overflow-y:auto!important;overflow-x:hidden!important;display:flex!important;flex-direction:column!important}
 body.ag-profile-mode .missions{left:20%!important;width:23%!important;box-sizing:border-box!important}
 body.ag-profile-mode .map-area{left:43%!important;box-sizing:border-box!important}
 body.ag-profile-mode .sidebar .brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:145px!important;margin:0 0 8px!important;padding:4px 2px!important;background:none!important;border:0!important;box-sizing:border-box!important;overflow:hidden!important;font-size:0!important}
@@ -17,10 +17,13 @@ body.ag-profile-mode .sidebar .profile .ag-profile-summary{grid-area:summary!imp
 body.ag-profile-mode .sidebar .profile .ag-profile-summary strong{display:block!important;margin:0 0 5px!important;padding:0!important;color:#eef3f5!important;font:900 15px/1.2 Arial,sans-serif!important;letter-spacing:.5px!important;white-space:nowrap!important}
 body.ag-profile-mode .sidebar .profile .ag-profile-summary span{display:block!important;margin:0!important;padding:0!important;color:#aebfc6!important;font:700 10px/1.5 Arial,sans-serif!important;white-space:nowrap!important}
 body.ag-profile-mode .sidebar .profile>strong,body.ag-profile-mode .sidebar .profile>.ag-profile-summary-text{display:none!important}
-body.ag-profile-mode .sidebar .nav{display:flex!important;flex-direction:column!important;padding:5px 1px!important;gap:6px!important;margin-top:0!important}
+body.ag-profile-mode .sidebar .nav{display:flex!important;flex-direction:column!important;padding:5px 1px!important;gap:6px!important;margin-top:0!important;flex:0 0 auto!important}
 body.ag-profile-mode .sidebar .nav button{width:100%!important;min-height:48px!important;padding:12px 13px!important;font:700 15px/1.2 Arial,sans-serif!important;letter-spacing:.2px!important;white-space:nowrap!important;box-sizing:border-box!important}
 body.ag-profile-mode .map-area .ag-world-map-logo{display:none!important}
 body.ag-profile-mode .bottom{height:18%!important}
+body.ag-profile-mode .sidebar::-webkit-scrollbar{width:7px}
+body.ag-profile-mode .sidebar .nav button:last-child{margin-bottom:12px!important}
+
 @media(max-width:1100px){body.ag-profile-mode .sidebar .brand{height:125px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:120px!important}body.ag-profile-mode .sidebar .profile{grid-template-columns:72px minmax(0,1fr)!important;min-height:92px!important}body.ag-profile-mode .sidebar .profile .ag-profile-avatar{width:72px!important;height:72px!important;min-width:72px!important;min-height:72px!important;font-size:26px!important}}
 @media(max-width:900px){body.ag-profile-mode .sidebar{width:24%!important}body.ag-profile-mode .missions{left:24%!important;width:26%!important}body.ag-profile-mode .map-area{left:50%!important}body.ag-profile-mode .sidebar .brand{height:105px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:100px!important}body.ag-profile-mode .sidebar .profile{grid-template-columns:60px minmax(0,1fr)!important;min-height:78px!important;column-gap:9px!important}body.ag-profile-mode .sidebar .profile .ag-profile-avatar{width:60px!important;height:60px!important;min-width:60px!important;min-height:60px!important;font-size:22px!important}body.ag-profile-mode .sidebar .profile .ag-profile-summary strong{font-size:12px!important}body.ag-profile-mode .sidebar .profile .ag-profile-summary span{font-size:8.5px!important}body.ag-profile-mode .sidebar .nav button{font-size:13px!important;min-height:44px!important;padding:10px!important}}
 `;
