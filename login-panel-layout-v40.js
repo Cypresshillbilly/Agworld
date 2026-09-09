@@ -11,7 +11,7 @@
       brand.innerHTML='';
       const img=document.createElement('img');
       img.className='ag-official-gamechanger-logo';
-      img.src='assets/branding/game-changer/horizontal/game_changer_horizontal_dark.png';
+      img.src='brand/game-changer/HORIZONTAL/SVG/GameChanger_Horizontal_Dark_v1.2.svg';
       img.alt='GAME CHANGER';
       brand.appendChild(img);
     }
