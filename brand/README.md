@@ -7,7 +7,6 @@ This folder is the canonical source of truth for AgWorld branding used by the Ag
 Store and use these exact transparent PNG master files:
 
 - `AgWorld_Primary_Horizontal.png`
-- `AgWorld_Horizontal_Light.png`
 - `AgWorld_Horizontal_Dark.png`
 - `AgWorld_Stacked_Vertical.png`
 - `AgWorld_AW_Icon.png`
