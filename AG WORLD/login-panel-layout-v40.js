@@ -1,10 +1,9 @@
 // AG World canonical login presentation v42
 // Canonical background: approved clean AgWorld login v1.3.
 // The gate uses layered CSS backgrounds so the page remains visible while the
-// v1.3 binary is being deployed; once v1.3 exists it automatically sits above
-// the temporary v2 fallback without any code change.
+// approved v1.3 binary sits above the temporary fallback.
 (()=>{
-  const BG='assets/ag_world_login_v1.3.png?v=agworld-login-bg-v1.3-20260909';
+  const BG='assets/backround%20v1.3.png?v=agworld-login-bg-v1.3-20260909-2040';
   const BG_FALLBACK='assets/ag_world_login_v2.jpg?v=agworld-login-bg-fallback-20260909';
   const AG_LOGO='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=agworld-brand-v1.3-20260909';
   const GC_LOGO='brand/game-changer/OFFICIAL/GameChanger_Official_Horizontal_Dark.svg?v=gc-official-20260909';
