@@ -115,5 +115,12 @@
 }
 `;
   document.head.appendChild(style);
+
+  // This file is intentionally loaded before ag-auth.js. Watch for the login
+  // gate so the canonical presentation is applied in the same render cycle as
+  // gate creation, preventing the legacy screen from flashing first.
+  const observer=new MutationObserver(()=>install());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
   install();
+  setTimeout(()=>observer.disconnect(),15000);
 })();
