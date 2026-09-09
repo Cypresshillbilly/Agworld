@@ -304,4 +304,18 @@ html,body{visibility:hidden}
   observer.observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('load',ensureDeveloperModeButton);
 })();
-</script><script src="main-game-layout-v1.js?v=command-center-tablet-frame-v49-20260908-2015"></script></body></html>
+</script><script src="main-game-layout-v1.js?v=command-center-tablet-frame-v49-20260908-2015"></script><script>
+(function(){
+  function apply(){
+    const p=window.AGWorldPlayer;if(!p)return;
+    const name=(p.display_name||'PLAYER').toUpperCase(),level=Number(p.level||1),xp=Number(p.xp||0),chapter=Number(p.chapter||1),next=Math.max(1000,Math.ceil((xp+1)/1000)*1000),pct=Math.min(100,Math.round(xp/next*100));
+    const set=(q,v)=>document.querySelectorAll(q).forEach(e=>e.textContent=v);
+    set('.menu-user-avatar span',name.charAt(0)||'P');set('.menu-user-name',name);set('.menu-user-role','AG WORLD PLAYER');set('.menu-user-level','LEVEL '+level);set('.menu-user-xptext span',xp.toLocaleString()+' / '+next.toLocaleString()+' XP');set('.menu-user-xptext b',pct+'%');
+    document.querySelectorAll('.menu-user-xp span,.xpbar span,.profile-xpbar span').forEach(e=>e.style.width=pct+'%');
+    set('.missions .eyebrow','AG WORLD PLAYER · CHAPTER '+chapter);set('.missions .level','Level '+level+' · '+xp.toLocaleString()+' / '+next.toLocaleString()+' XP');
+    set('.bottom .user-avatar',name.charAt(0)||'P');set('.bottom .user-identity strong',name);set('.bottom .user-identity span','AG WORLD PLAYER');set('.bottom .user-identity small',p.company_facility_id?'ASSIGNED FACILITY':'NO FACILITY ASSIGNED');set('.bottom .user-level strong','LEVEL '+level);set('.bottom .profile-xptext span:first-child',xp.toLocaleString()+' / '+next.toLocaleString()+' XP');set('.bottom .profile-xptext span:last-child',pct+'%');
+    if(level===1&&xp===0){document.querySelectorAll('.bottom .user-territory b').forEach(e=>e.textContent=e.textContent==='#2'||e.textContent==='#11'?'—':'0%');const badges=document.querySelector('.bottom .badges');if(badges)badges.innerHTML='';}
+  }
+  window.addEventListener('agworld:player-profile',apply);document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));setInterval(apply,1000);
+})();
+</script></body></html>
