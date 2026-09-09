@@ -16,3 +16,7 @@ This directory is the canonical source of truth for the Game Changer brand packa
 
 ## Canonical use
 Use files from this directory for all future Game Changer product, web, presentation and marketing work. The legacy `assets/branding/game-changer/` directory is retained for compatibility until all v1.2 raster and master derivatives have been regenerated and migrated.
+
+
+## Derivative build
+PNG transparent and JPG derivatives are generated from the canonical SVG masters by the repository brand build workflow.
