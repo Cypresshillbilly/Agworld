@@ -40,7 +40,7 @@
     const b=document.createElement('button');
     b.type='button';
     b.dataset.companyLogin='1';
-    b.textContent='JOIN THE COMPANY / SIGN IN';
+    b.textContent='JOIN THE COMPANY / CREATE ACCOUNT';
     b.style.cssText='width:100%;height:42px;margin-top:10px;border-radius:8px;border:1px solid rgba(207,224,92,.55);background:rgba(207,232,91,.08);color:#dbe99c;font-weight:900;letter-spacing:1px;cursor:pointer';
     b.onclick=()=>{
       const a=document.querySelector('#agAuth button');
@@ -54,7 +54,7 @@
     form.addEventListener('submit',e=>{
       e.preventDefault();
       const err=form.querySelector('.ag-login-error');
-      if(err) err.textContent='PLEASE USE JOIN THE COMPANY / SIGN IN';
+      if(err) err.textContent='PLEASE USE JOIN THE COMPANY / CREATE ACCOUNT';
     },true);
   }
 
