@@ -31,17 +31,22 @@
     panel.classList.remove('ag-login-panel-wide');
 
     // Restore the official Game Changer logo on the LEFT of the login form.
-    // Remove every legacy/injected Game Changer image and rebuild this slot from
-    // the one approved master. This prevents a cached or hot-reload survivor
-    // from continuing to display an obsolete logo.
-    panel.querySelectorAll('.gc-login-brand,.ag-official-gamechanger-logo,.legacy-gamechanger-logo').forEach(node=>node.remove());
-    const gc=document.createElement('div');
-    gc.className='gc-login-brand';
-    const gcImg=document.createElement('img');
+    // Keep installation idempotent: the MutationObserver must not trigger an
+    // endless remove/recreate DOM loop.
+    panel.querySelectorAll('.ag-official-gamechanger-logo,.legacy-gamechanger-logo').forEach(node=>node.remove());
+    let gc=panel.querySelector('.gc-login-brand');
+    if(!gc){
+      gc=document.createElement('div');
+      gc.className='gc-login-brand';
+      panel.insertBefore(gc,panel.firstChild);
+    }
+    let gcImg=gc.querySelector('img');
+    if(!gcImg){
+      gcImg=document.createElement('img');
+      gc.appendChild(gcImg);
+    }
     gcImg.src=GC_LOGO;
     gcImg.alt='Game Changer';
-    gc.appendChild(gcImg);
-    panel.insertBefore(gc,panel.firstChild);
 
     // Remove only obsolete AgWorld artwork from inside the panel. The official
     // AgWorld mark belongs at the top centre of the page.
@@ -60,8 +65,10 @@
     if(logo.getAttribute('src')!==AG_LOGO) logo.setAttribute('src',AG_LOGO);
   }
 
-  const old=document.getElementById('agworld-canonical-login-v42');
-  if(old) old.remove();
+  ['agworld-canonical-login-v41','agworld-canonical-login-v42','agworld-canonical-login-v43'].forEach(id=>{
+    const old=document.getElementById(id);
+    if(old) old.remove();
+  });
   const style=document.createElement('style');
   style.id='agworld-canonical-login-v43';
   style.textContent=`
@@ -121,8 +128,15 @@
   // This file is intentionally loaded before ag-auth.js. Watch for the login
   // gate so the canonical presentation is applied in the same render cycle as
   // gate creation, preventing the legacy screen from flashing first.
-  const observer=new MutationObserver(()=>install());
+  // One-shot readiness observer. Once the auth script creates the gate and
+  // panel, install the presentation and disconnect immediately.
+  const observer=new MutationObserver(()=>{
+    if(document.getElementById('ag-login-gate')){
+      install();
+      observer.disconnect();
+    }
+  });
   observer.observe(document.documentElement,{childList:true,subtree:true});
   install();
-  setTimeout(()=>observer.disconnect(),15000);
+  if(document.getElementById('ag-login-gate')) observer.disconnect();
 })();
