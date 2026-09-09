@@ -18,8 +18,9 @@
     if(!db) return;
     const {data:{user}}=await db.auth.getUser();
 
-    if(user){
-      // Supabase is authoritative. Keep only compatibility state derived from it.
+    if(user && window.__AGWORLD_EXPLICIT_AUTH__===true){
+      // Mirror Supabase identity only after an explicit sign-in on this page.
+      // A persisted browser session is not permission to bypass the login screen.
       sessionStorage.setItem('gamechanger.authenticated','1');
       sessionStorage.setItem('gamechanger.role','agriculture_sales');
       sessionStorage.setItem('gamechanger.username',user.user_metadata?.display_name||user.email||'PLAYER');
@@ -68,6 +69,8 @@
       lastUserId=id;
       await enforce();
     }
+    // Never turn a persisted Supabase session into an automatic AG World login.
+    if(user && window.__AGWORLD_EXPLICIT_AUTH__!==true) legacySessionKeys();
     if(!user){
       // A gate may have been removed by legacy code. Restore authentication boundary.
       const gate=document.getElementById('ag-login-gate');
