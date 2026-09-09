@@ -1,0 +1,88 @@
+name: Build Game Changer Brand Derivatives
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'brand/game-changer/**'
+      - '.github/workflows/build-game-changer-brand.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: "!contains(github.event.head_commit.message, '[skip gc brand build]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install render dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y librsvg2-bin imagemagick
+
+      - name: Build PNG transparent and JPG derivatives
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          render() {
+            local src="$1"
+            local png="$2"
+            local jpg="$3"
+            local bg="$4"
+            local tmp
+            tmp="$(mktemp --suffix=.svg)"
+
+            # Remove the full-canvas background rectangle for transparent PNG output.
+            sed -E 's#<rect width="[0-9]+" height="[0-9]+" fill="(#[0-9A-Fa-f]+|#fff|#FFF|white)"/>##g' "$src" > "$tmp"
+
+            mkdir -p "$(dirname "$png")" "$(dirname "$jpg")"
+
+            rsvg-convert --keep-aspect-ratio --width 2400 "$tmp" -o "$png"
+            rsvg-convert --keep-aspect-ratio --width 2400 "$src" -o "$jpg.png"
+            magick "$jpg.png" -background "$bg" -alpha remove -alpha off -quality 94 "$jpg"
+            rm -f "$tmp" "$jpg.png"
+          }
+
+          render brand/game-changer/PRIMARY/SVG/GameChanger_Primary_Dark_v1.2.svg \
+            brand/game-changer/PRIMARY/PNG_Transparent/GameChanger_Primary_Dark_v1.2.png \
+            brand/game-changer/PRIMARY/JPG/GameChanger_Primary_Dark_v1.2.jpg '#090b08'
+
+          render brand/game-changer/PRIMARY/SVG/GameChanger_Primary_White_v1.2.svg \
+            brand/game-changer/PRIMARY/PNG_Transparent/GameChanger_Primary_White_v1.2.png \
+            brand/game-changer/PRIMARY/JPG/GameChanger_Primary_White_v1.2.jpg '#ffffff'
+
+          render brand/game-changer/HORIZONTAL/SVG/GameChanger_Horizontal_Dark_v1.2.svg \
+            brand/game-changer/HORIZONTAL/PNG_Transparent/GameChanger_Horizontal_Dark_v1.2.png \
+            brand/game-changer/HORIZONTAL/JPG/GameChanger_Horizontal_Dark_v1.2.jpg '#090b08'
+
+          render brand/game-changer/HORIZONTAL/SVG/GameChanger_Horizontal_White_v1.2.svg \
+            brand/game-changer/HORIZONTAL/PNG_Transparent/GameChanger_Horizontal_White_v1.2.png \
+            brand/game-changer/HORIZONTAL/JPG/GameChanger_Horizontal_White_v1.2.jpg '#ffffff'
+
+          render brand/game-changer/STACKED/SVG/GameChanger_Stacked_White_v1.2.svg \
+            brand/game-changer/STACKED/PNG_Transparent/GameChanger_Stacked_White_v1.2.png \
+            brand/game-changer/STACKED/JPG/GameChanger_Stacked_White_v1.2.jpg '#ffffff'
+
+          render brand/game-changer/ICON/SVG/GameChanger_Icon_Dark.svg \
+            brand/game-changer/ICON/PNG_Transparent/GameChanger_Icon_Dark_v1.2.png \
+            brand/game-changer/ICON/JPG/GameChanger_Icon_Dark_v1.2.jpg '#090b08'
+
+          render brand/game-changer/ICON/SVG/GameChanger_Icon_White.svg \
+            brand/game-changer/ICON/PNG_Transparent/GameChanger_Icon_White_v1.2.png \
+            brand/game-changer/ICON/JPG/GameChanger_Icon_White_v1.2.jpg '#ffffff'
+
+      - name: Commit generated derivatives
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add brand/game-changer
+          if git diff --cached --quiet; then
+            echo "No derivative changes to commit"
+          else
+            git commit -m "brand(game-changer): generate v1.2 raster derivatives [skip gc brand build]"
+            git push
+          fi
