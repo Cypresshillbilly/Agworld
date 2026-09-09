@@ -48,12 +48,44 @@
     gcImg.src=GC_LOGO;
     gcImg.alt='Game Changer';
 
+    // Compact left action stack: Game Changer brand above, both primary actions
+    // directly underneath. This keeps the panel clear of the large AgWorld logo.
+    let actions=gc.querySelector('.gc-login-actions');
+    if(!actions){
+      actions=document.createElement('div');
+      actions.className='gc-login-actions';
+      gc.appendChild(actions);
+    }
+
     // Remove only obsolete AgWorld artwork from inside the panel. The official
     // AgWorld mark belongs at the top centre of the page.
     panel.querySelectorAll('.agworld-login-logo,.ag-official-gamechanger-logo,.ag-login-wide,.ag-login-logo-side').forEach(node=>node.remove());
 
     const form=panel.querySelector('.ag-login-form');
-    if(form && form.parentElement!==panel) panel.appendChild(form);
+    if(form){
+      if(!form.id) form.id='ag-login-form-canonical';
+      const enter=form.querySelector('.ag-login-button');
+      if(enter && enter.parentElement!==actions){
+        enter.setAttribute('form',form.id);
+        actions.appendChild(enter);
+      }
+
+      // The account button is injected shortly afterwards by login-gate-bridge.
+      // Observe only this form and disconnect as soon as that one button is moved.
+      const moveCreate=()=>{
+        const create=form.querySelector('[data-company-login]');
+        if(!create) return false;
+        if(create.parentElement!==actions) actions.appendChild(create);
+        return true;
+      };
+      if(!moveCreate()){
+        const actionObserver=new MutationObserver(()=>{
+          if(moveCreate()) actionObserver.disconnect();
+        });
+        actionObserver.observe(form,{childList:true});
+      }
+      if(form.parentElement!==panel) panel.appendChild(form);
+    }
 
     let logo=gate.querySelector('.ag-login-official-logo');
     if(!logo){
@@ -83,27 +115,41 @@
 }
 #ag-login-gate .ag-login-panel,
 #ag-login-gate .ag-login-panel.ag-login-panel-wide{
-  position:absolute!important;z-index:3!important;left:50%!important;top:58%!important;
+  position:absolute!important;z-index:3!important;left:50%!important;top:61%!important;
   transform:translate(-50%,-50%)!important;width:min(690px,calc(100vw - 36px))!important;
-  max-width:690px!important;min-height:0!important;padding:24px 28px!important;
+  max-width:690px!important;min-height:0!important;padding:17px 24px!important;
   box-sizing:border-box!important;overflow:visible!important;border-radius:15px!important;
   border:1px solid rgba(207,224,92,.72)!important;
   background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78))!important;
   box-shadow:0 18px 55px rgba(0,0,0,.6)!important;backdrop-filter:blur(6px)!important;
-  display:flex!important;align-items:center!important;gap:28px!important;
+  display:flex!important;align-items:stretch!important;gap:22px!important;
 }
 #ag-login-gate .gc-login-brand{
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  flex:0 0 42%!important;margin:0!important;padding:8px 12px!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
+  flex:0 0 38%!important;margin:0!important;padding:4px 20px 4px 4px!important;
   border-right:1px solid rgba(207,224,92,.22)!important;
 }
 #ag-login-gate .gc-login-brand img{
-  display:block!important;width:100%!important;max-width:250px!important;height:auto!important;
-  max-height:150px!important;object-fit:contain!important;
+  display:block!important;width:100%!important;max-width:230px!important;height:auto!important;
+  max-height:76px!important;object-fit:contain!important;margin:0 0 8px!important;
+}
+#ag-login-gate .gc-login-actions{
+  display:grid!important;grid-template-columns:1fr!important;gap:8px!important;
+  width:100%!important;margin-top:auto!important;
+}
+#ag-login-gate .gc-login-actions .ag-login-button,
+#ag-login-gate .gc-login-actions [data-company-login]{
+  width:100%!important;height:38px!important;min-height:38px!important;margin:0!important;
+  box-sizing:border-box!important;border-radius:7px!important;font-size:9px!important;
+  letter-spacing:1px!important;
 }
 #ag-login-gate .ag-login-form{
   display:block!important;flex:1 1 auto!important;width:auto!important;max-width:none!important;margin:0!important;
 }
+#ag-login-gate .ag-input-wrap{margin-bottom:8px!important}
+#ag-login-gate .ag-input-wrap input{height:39px!important}
+#ag-login-gate .ag-remember{margin:1px 0 6px!important}
+#ag-login-gate .ag-login-error{min-height:0!important;margin-top:4px!important}
 #ag-login-gate .ag-login-wide,
 #ag-login-gate .ag-login-logo-side,
 #ag-login-gate .agworld-login-logo{display:none!important}
@@ -120,7 +166,7 @@
     border-right:0!important;border-bottom:1px solid rgba(207,224,92,.22)!important;
     padding:0 0 14px!important;margin:0 0 14px!important;
   }
-  #ag-login-gate .gc-login-brand img{max-width:210px!important;max-height:110px!important}
+  #ag-login-gate .gc-login-brand img{max-width:210px!important;max-height:78px!important}
 }
 `;
   document.head.appendChild(style);
