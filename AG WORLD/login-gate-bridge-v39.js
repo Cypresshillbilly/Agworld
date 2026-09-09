@@ -43,9 +43,15 @@
     b.textContent='JOIN THE COMPANY / CREATE ACCOUNT';
     b.style.cssText='width:100%;height:42px;margin-top:10px;border-radius:8px;border:1px solid rgba(207,224,92,.55);background:rgba(207,232,91,.08);color:#dbe99c;font-weight:900;letter-spacing:1px;cursor:pointer';
     b.onclick=()=>{
-      const a=document.querySelector('#agAuth button');
-      if(!a) return;
-      a.click();
+      // Always open the account-creation boundary directly. A persisted
+      // Supabase identity must not turn this button into the previous user's
+      // profile menu after a page refresh.
+      if(window.AGWorldBackend?.openAccountCreation){
+        window.AGWorldBackend.openAccountCreation();
+      }else{
+        const a=document.querySelector('#agAuth button');
+        if(a) a.click();
+      }
       setTimeout(()=>{const m=document.getElementById('agAuthModal');if(m)m.style.zIndex='200000'},50);
     };
     form.appendChild(b);
