@@ -80,6 +80,13 @@
     window.AGWorldPlayer=profile;
     window.dispatchEvent(new CustomEvent('agworld:player-profile',{detail:profile}));
 
+    // Keep the legacy Game Changer identity bridge in sync with the authenticated
+    // Ag World player so existing screens stop presenting a previous user's name.
+    sessionStorage.setItem('gamechanger.username',profile.display_name);
+    sessionStorage.setItem('gamechanger.level',String(profile.level));
+    sessionStorage.setItem('gamechanger.xp',String(profile.xp));
+    sessionStorage.setItem('gamechanger.chapter',String(profile.chapter));
+
     // Update existing static/demo profile text in-place without requiring every
     // legacy screen to be rewritten at once.
     const name=profile.display_name;
