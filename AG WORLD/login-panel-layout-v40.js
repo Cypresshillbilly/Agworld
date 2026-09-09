@@ -55,14 +55,14 @@
 #ag-login-gate .ag-login-wide{
   min-height:300px;
   display:grid;
-  grid-template-columns:40% 60%;
+  grid-template-columns:48% 52%;
 }
 #ag-login-gate .ag-login-logo-side{
   position:relative;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:42px 48px;
+  padding:28px 30px;
   background:
     radial-gradient(circle at 28% 50%,rgba(194,222,64,.13),transparent 38%),
     linear-gradient(135deg,rgba(15,27,18,.96),rgba(5,10,8,.96));
@@ -84,7 +84,7 @@
 #ag-login-gate .ag-official-gamechanger-logo{
   display:block;
   width:100%;
-  max-width:355px;
+  max-width:430px;
   aspect-ratio:1200/520;
   height:auto;
   object-fit:contain;
