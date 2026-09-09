@@ -11,7 +11,18 @@
     if(!gate) return;
 
     const art=gate.querySelector('.ag-login-art');
-    if(art && art.getAttribute('src')!==BG) art.setAttribute('src',BG);
+    if(art){
+      if(art.getAttribute('src')!==BG) art.setAttribute('src',BG);
+      art.onerror=()=>{
+        // Temporary deployment safety only: if the canonical binary has not yet
+        // reached the repository, keep the login screen usable rather than blank.
+        // The canonical v1.3 asset automatically wins as soon as it exists.
+        if(!art.dataset.agworldBgFallback){
+          art.dataset.agworldBgFallback='1';
+          art.setAttribute('src','assets/ag_world_login_v2.jpg');
+        }
+      };
+    }
 
     const panel=gate.querySelector('.ag-login-panel');
     if(!panel) return;
