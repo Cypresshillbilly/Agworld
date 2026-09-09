@@ -10,7 +10,7 @@
     // Always enforce the canonical runtime asset. Do not preserve a previously
     // injected legacy image node: an old node can survive hot reloads and keep
     // displaying an obsolete logo even after the script has been updated.
-    const canonicalLogo='brand/game-changer/OFFICIAL/GameChanger_Official_Horizontal_Dark.svg?v=gc-canonical-20260909-1952';
+    const canonicalLogo='../GAME%20CHANGER/BRAND/OFFICIAL/Game_Changer_Primary_Horizontal_Dark.png?v=gc-brand-master-20260909-2007';
     let img=brand.querySelector('img.ag-official-gamechanger-logo');
     if(!img){
       brand.innerHTML='';
