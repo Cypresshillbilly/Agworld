@@ -126,12 +126,12 @@
 }
 #ag-login-gate .gc-login-brand{
   display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
-  flex:0 0 38%!important;margin:0!important;padding:4px 20px 4px 4px!important;
+  flex:0 0 40%!important;margin:0!important;padding:4px 20px 4px 4px!important;
   border-right:1px solid rgba(207,224,92,.22)!important;
 }
 #ag-login-gate .gc-login-brand img{
-  display:block!important;width:100%!important;max-width:230px!important;height:auto!important;
-  max-height:76px!important;object-fit:contain!important;margin:0 0 8px!important;
+  display:block!important;width:100%!important;max-width:255px!important;height:auto!important;
+  max-height:88px!important;object-fit:contain!important;margin:0 0 8px!important;
 }
 #ag-login-gate .gc-login-actions{
   display:grid!important;grid-template-columns:1fr!important;gap:8px!important;
@@ -140,8 +140,8 @@
 #ag-login-gate .gc-login-actions .ag-login-button,
 #ag-login-gate .gc-login-actions [data-company-login]{
   width:100%!important;height:38px!important;min-height:38px!important;margin:0!important;
-  box-sizing:border-box!important;border-radius:7px!important;font-size:9px!important;
-  letter-spacing:1px!important;
+  box-sizing:border-box!important;border-radius:7px!important;font-size:11px!important;
+  letter-spacing:1.1px!important;font-weight:900!important;
 }
 #ag-login-gate .ag-login-form{
   display:block!important;flex:1 1 auto!important;width:auto!important;max-width:none!important;margin:0!important;
@@ -166,7 +166,7 @@
     border-right:0!important;border-bottom:1px solid rgba(207,224,92,.22)!important;
     padding:0 0 14px!important;margin:0 0 14px!important;
   }
-  #ag-login-gate .gc-login-brand img{max-width:210px!important;max-height:78px!important}
+  #ag-login-gate .gc-login-brand img{max-width:235px!important;max-height:88px!important}
 }
 `;
   document.head.appendChild(style);
