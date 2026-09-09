@@ -236,8 +236,20 @@
     if(!master){
       const active=sessionStorage.getItem(SESSION)==='1' && !!sessionStorage.getItem(ROLE);
       if(active){
+        // A refresh is still an authenticated page load. Remove the boot shield
+        // as well as revealing the document; otherwise the background shield
+        // remains above the entire game and makes the application look blank.
         window.__AGWORLD_EXPLICIT_AUTH__=true;
         reveal();
+        const shield=document.getElementById('ag-login-boot-shield');
+        if(shield) shield.remove();
+
+        // Re-emit the authenticated lifecycle event on refresh so the game shell,
+        // player profile and menu modules initialise exactly as they do after a
+        // fresh sign-in.
+        const username=sessionStorage.getItem(USER)||'PLAYER';
+        const role=sessionStorage.getItem(ROLE)||'agriculture_sales';
+        requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role,restored:true}})));
         return;
       }
       window.__AGWORLD_EXPLICIT_AUTH__=false;
