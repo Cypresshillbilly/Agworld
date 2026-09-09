@@ -1,4 +1,4 @@
-// AG World canonical login presentation v42
+// AG World canonical login presentation v43
 // Canonical background: approved clean AgWorld login v1.3.
 // The gate uses layered CSS backgrounds so the page remains visible while the
 // approved v1.3 binary sits above the temporary fallback.
@@ -6,7 +6,9 @@
   const BG='assets/backround%20v1.3.png?v=agworld-login-bg-v1.3-20260909-2040';
   const BG_FALLBACK='assets/ag_world_login_v2.jpg?v=agworld-login-bg-fallback-20260909';
   const AG_LOGO='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=agworld-brand-v1.3-20260909';
-  const GC_LOGO='brand/game-changer/OFFICIAL/GameChanger_Official_Horizontal_Dark.svg?v=gc-official-20260909';
+  // Single canonical Game Changer asset. This is the approved uploaded PNG master;
+  // do not fall back to legacy SVGs or previously injected artwork.
+  const GC_LOGO='../GAME%20CHANGER/BRAND/OFFICIAL/Game_Changer_Primary_Horizontal_Dark.png?v=gc-approved-master-20260909-2100';
 
   function install(){
     const gate=document.getElementById('ag-login-gate');
@@ -29,16 +31,17 @@
     panel.classList.remove('ag-login-panel-wide');
 
     // Restore the official Game Changer logo on the LEFT of the login form.
-    let gc=panel.querySelector('.gc-login-brand');
-    if(!gc){
-      gc=document.createElement('div');
-      gc.className='gc-login-brand';
-      gc.innerHTML='<img src="'+GC_LOGO+'" alt="Game Changer">';
-      panel.insertBefore(gc,panel.firstChild);
-    } else {
-      const img=gc.querySelector('img');
-      if(img) img.setAttribute('src',GC_LOGO);
-    }
+    // Remove every legacy/injected Game Changer image and rebuild this slot from
+    // the one approved master. This prevents a cached or hot-reload survivor
+    // from continuing to display an obsolete logo.
+    panel.querySelectorAll('.gc-login-brand,.ag-official-gamechanger-logo,.legacy-gamechanger-logo').forEach(node=>node.remove());
+    const gc=document.createElement('div');
+    gc.className='gc-login-brand';
+    const gcImg=document.createElement('img');
+    gcImg.src=GC_LOGO;
+    gcImg.alt='Game Changer';
+    gc.appendChild(gcImg);
+    panel.insertBefore(gc,panel.firstChild);
 
     // Remove only obsolete AgWorld artwork from inside the panel. The official
     // AgWorld mark belongs at the top centre of the page.
@@ -57,18 +60,18 @@
     if(logo.getAttribute('src')!==AG_LOGO) logo.setAttribute('src',AG_LOGO);
   }
 
-  const old=document.getElementById('agworld-canonical-login-v41');
+  const old=document.getElementById('agworld-canonical-login-v42');
   if(old) old.remove();
   const style=document.createElement('style');
-  style.id='agworld-canonical-login-v42';
+  style.id='agworld-canonical-login-v43';
   style.textContent=`
 #ag-login-gate{position:fixed!important;inset:0!important;overflow:hidden!important;background-color:#070a09!important}
 #ag-login-gate .ag-login-art{display:none!important}
 #ag-login-gate .ag-login-official-logo{
   position:absolute!important;z-index:2!important;left:50%!important;
-  top:clamp(24px,6vh,76px)!important;transform:translateX(-50%)!important;
-  width:min(560px,calc(100vw - 72px))!important;height:auto!important;
-  max-height:27vh!important;object-fit:contain!important;background:transparent!important;
+  top:clamp(18px,4.5vh,60px)!important;transform:translateX(-50%)!important;
+  width:min(900px,calc(100vw - 72px))!important;height:auto!important;
+  max-height:40vh!important;object-fit:contain!important;background:transparent!important;
   filter:drop-shadow(0 8px 22px rgba(0,0,0,.55))!important;pointer-events:none!important;
 }
 #ag-login-gate .ag-login-panel,
