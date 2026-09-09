@@ -11,7 +11,7 @@
       brand.innerHTML='';
       const img=document.createElement('img');
       img.className='ag-official-gamechanger-logo';
-      img.src='assets/branding/game-changer/horizontal/game_changer_horizontal_dark.svg';
+      img.src='assets/branding/game-changer/horizontal/game_changer_horizontal_dark.png';
       img.alt='GAME CHANGER';
       brand.appendChild(img);
     }
@@ -80,6 +80,7 @@
   display:block;
   width:100%;
   max-width:355px;
+  aspect-ratio:1200/520;
   height:auto;
   object-fit:contain;
   background:transparent;
