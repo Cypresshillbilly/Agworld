@@ -136,8 +136,8 @@
     const shellW=shell.clientWidth||1280;
     const bottomH=Math.round(shellH*(210/820));
     const topH=shellH-bottomH;
-    const sidebarW=Math.round(shellW*(180/1280));
-    const missionsW=Math.round(shellW*(285/1280));
+    const sidebarW=Math.round(shellW*(215/1280));
+    const missionsW=Math.round(shellW*(250/1280));
     const leftStage=sidebarW+missionsW;
     const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
     const frame=(el,left,top,width,height)=>{
