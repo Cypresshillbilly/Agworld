@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "description": "Core AG World farm record contract. Production records must be supplied from an approved agricultural database/GIS source.",
+  "required": ["id", "name", "center", "boundary", "status"],
+  "fields": {
+    "id": "persistent farm identifier",
+    "name": "farm display name",
+    "region": "province/district/assigned territory",
+    "status": "Unknown | Prospect | Engaged | Customer | Drone installed | Service controlled | Strategic",
+    "owner": "farmer/owner display name",
+    "center": "latitude/longitude",
+    "boundary": "persistent farm polygon",
+    "crops": "crop types and, in production, field polygons/history",
+    "livestock": "livestock records or representative count",
+    "tractors": "machinery asset count/records",
+    "drones": "company drone asset count/records",
+    "annualHarvest": "harvest information",
+    "lastService": "latest service date",
+    "opportunityScore": "explainable configurable opportunity score",
+    "contacts": "farmer/customer contacts",
+    "infrastructure": "buildings, dams, irrigation and other infrastructure",
+    "serviceHistory": "service/maintenance/repair history",
+    "salesHistory": "sales/opportunity/relationship history",
+    "audit": "historical changes and provenance"
+  },
+  "visualisationRule": "The database defines what exists; the visualisation engine decides how it is rendered at each zoom level."
+}

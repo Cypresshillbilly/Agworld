@@ -1,0 +1,292 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AG World</title><link rel="stylesheet" href="styles.css?v=mapstatus-20260906"><link rel="stylesheet" href="profile-menu-layout.css?v=menu-large-type-v7-20260908-1950"><link rel="stylesheet" href="main-game-layout-v1.css?v=command-center-skills-height-v13-20260908-1735"><style>html,body{visibility:hidden}</style></head><body><main class="app-shell"><aside class="sidebar"><div class="brand"><img class="brand-logo" src="brand/logos/PNG_Transparent/AgWorld_Horizontal_Monochrome_White.png" alt="AgWorld"></div><div class="menu-user"><div class="menu-user-avatar" aria-label="User profile picture"><span>N</span></div><div class="menu-user-name">NICO VAN ROOYEN</div><div class="menu-user-role">SALES REPRESENTATIVE</div><div class="menu-user-level">LEVEL 7</div><div class="menu-user-xp"><span></span></div><div class="menu-user-xptext"><span>6,820 / 10,000 XP</span><b>68%</b></div></div><nav class="nav"><button class="active" data-view="map">◉ TERRITORY MAP</button><button data-view="missions">◆ MISSIONS</button><button data-view="training">◇ TRAINING</button><button data-view="leaderboard">★ LEADERBOARD</button><button id="worldEventsNavBtn" data-view="world-events">◈ WORLD EVENTS</button><button id="developerModeBtn" type="button">⚙ DEVELOPER MODE ↗</button><button data-view="profile">● MY PROFILE</button></nav><div class="profile"><strong>SALES REPRESENTATIVE</strong>Level 7 · Territory 03<br><span style="color:#7e969f">Connected</span></div></aside><section class="missions"><div class="eyebrow">Sales Rep · Territory 03</div><h1>MISSION CONTROL</h1><div class="level">Level 7 · 6,820 / 10,000 XP</div><div class="xpbar"><span></span></div><div class="xptext"><span>Current XP</span><span>68%</span></div><div class="section-title">Assigned missions</div></section><section class="map-area"><div class="map-header"><div><div class="map-title">SOUTH AFRICA · AGRICULTURAL TERRITORY</div><div id="zoomStage" class="zoom-stage">ZOOM 1 · NATIONAL OVERVIEW</div></div><div class="map-tools"><button id="nationalBtn">NATIONAL</button><button id="satelliteBtn">SATELLITE</button><button id="importBtn">IMPORT DATA</button><button id="exportBtn">EXPORT DATA</button><button id="createFarmBtn">+ CREATE FARM</button><button id="createContractorBtn">+ CONTRACTOR</button><button id="createCompetitorBtn">+ COMPETITOR</button><button id="createCompanyFacilityBtn">+ COMPANY FACILITY</button><button id="resetBtn">RESET</button><input id="datasetFile" type="file" accept=".json,.geojson,.csv" hidden></div></div><div id="map" class="map"></div><div id="mapStatus" class="map-status">Loading agricultural map…</div><div id="farmCard" class="farm-card"><h2 id="farmName">Farm</h2><div id="farmMeta" class="meta"></div><div class="stats"><div class="stat"><b id="farmDrones">—</b><span>DRONES</span></div><div class="stat"><b id="farmTractors">—</b><span>TRACTORS</span></div><div class="stat"><b id="farmCrops">—</b><span>CROPS</span></div><div class="stat"><b id="farmScore">—</b><span>OPPORTUNITY</span></div></div><div class="farm-extra"><div><span>LIVESTOCK</span><b id="farmLivestock">—</b></div><div><span>HARVEST</span><b id="farmHarvest">—</b></div><div><span>LAST SERVICE</span><b id="farmService">—</b></div></div><p id="farmDetailText" class="farm-detail-text"></p><div id="agworldV2FarmDetailHost" aria-live="polite"><div class="agworld-v2-placeholder"><strong>AG WORLD V2 ENTITY ENGINE</strong><span>Preparing connected entity data…</span></div></div><div id="farmActions" class="farm-actions"><button id="farm3d" type="button">UPDATE FARM DETAILS</button><button id="fleetTransactionAction" class="save-farm" type="button" hidden>🚁 SELL / MANAGE FLEET</button><button id="fleetHistoryAction" type="button" hidden>📊 SALES HISTORY & FLEET</button><button id="farmHistoryBtn" type="button">FARM HISTORY</button></div></div></section><section class="bottom user-profile-section"><div class="user-profile-heading"><div><div class="profile-eyebrow">AG WORLD · EMPLOYEE PROFILE</div><h2>USER PROFILE</h2></div><div class="profile-status">● CONNECTED</div></div><div class="user-profile-grid"><div class="user-identity"><div class="user-avatar">N</div><div><strong>NICO</strong><span>SALES REPRESENTATIVE</span><small>Territory 03</small></div></div><div class="user-level"><div class="profile-label">PROGRESSION</div><strong>LEVEL 7</strong><div class="profile-xpbar"><span></span></div><div class="profile-xptext"><span>6,820 / 10,000 XP</span><span>68%</span></div></div><div class="user-territory"><div class="profile-label">TERRITORY</div><div><b>74%</b><span>Controlled</span></div><div><b>#2</b><span>Regional position</span></div><div><b>#11</b><span>National position</span></div></div><div class="user-achievements"><div class="profile-label">ACHIEVEMENTS</div><div class="badges"><div class="badge" title="Territory">◆</div><div class="badge" title="Customer">★</div><div class="badge" title="Training">◇</div><div class="badge" title="Sales">●</div></div></div></div></section><div id="toast" class="toast"></div><div id="dynamicEntityModal" class="farm3d-modal"><div class="farm3d-window farm-create-window"><div class="farm3d-head"><div><strong id="dynamicEntityModalTitle">CREATE CONTRACTOR</strong><span id="dynamicEntityModalSubtitle">Shared dynamic game-layer record</span></div><button id="closeDynamicEntity">×</button></div><div class="farm-wizard">
+<div class="farm-wizard-progress"><span id="dynamicEntityProgress">STEP 1 OF 4</span><strong id="dynamicEntityStepTitle">SELECT LOCATION</strong></div>
+<section class="dynamic-entity-step" data-dynamic-step="1"><div class="farm-info-hero"><span>STEP 1 · MAP LOCATION</span><h3 id="dynamicLocationHeading">Place the Contractor</h3><p>Choose the exact location on the shared AG World map. This location becomes visible to every authenticated player.</p></div><div id="dynamicLocationStatus" class="farm-assets-status">No location selected.</div><div class="farm-wizard-actions"><button id="dynamicSelectLocation" type="button">SELECT LOCATION ON MAP</button><button id="dynamicSaveLocation" type="button">SAVE & CONTINUE →</button></div></section>
+<section class="dynamic-entity-step farm-info-step" data-dynamic-step="2" hidden><div class="farm-info-hero"><span id="dynamicInfoEyebrow">STEP 2 · CONTRACTOR INTELLIGENCE</span><h3 id="dynamicInfoHeading">Capture Contractor Information</h3><p id="dynamicInfoDescription">Create the shared company record used by the live map and future gameplay systems.</p></div><div class="farm-info-grid">
+<label>Country<input id="dynamicCountry" placeholder="e.g. South Africa"></label><label>Province<input id="dynamicProvince" placeholder="e.g. KwaZulu-Natal"></label><label>Municipality<input id="dynamicMunicipality" placeholder="Local municipality"></label><label>Nearest Town<input id="dynamicNearestTown" placeholder="Nearest town"></label><label id="dynamicNameLabel">Contractor Name<input id="dynamicName" placeholder="Business name"></label><label>Status<select id="dynamicStatus"><option>Active</option><option>Prospect</option><option>Inactive</option></select></label>
+<label id="dynamicContactLabel">Primary Contact<input id="dynamicContactName" placeholder="Contact person"></label><label>Contact Cell<input id="dynamicContactCell" placeholder="+27 …"></label><label>Contact Email<input id="dynamicContactEmail" type="email" placeholder="contact@example.com"></label>
+<label class="farm-info-wide" id="dynamicWebsiteWrap">Website<input id="dynamicWebsite" placeholder="Optional website"></label><label class="farm-info-wide">Notes<textarea id="dynamicNotes" rows="3" placeholder="Important intelligence and relationship notes"></textarea></label></div><div class="farm-wizard-actions"><button id="dynamicSaveInfo" type="button">SAVE RECORD</button><button id="dynamicNextInfo" type="button">SAVE & CONTINUE →</button></div></section>
+<section class="dynamic-entity-step farm-assets-step" data-dynamic-step="3" hidden><div class="farm-info-hero farm-assets-hero"><span id="dynamicStep3Eyebrow">STEP 3 · SERVICES & CAPABILITY</span><h3 id="dynamicStep3Heading">Complete the Record</h3><p id="dynamicStep3Description">Select every item that applies. These selections are stored in the shared game layer.</p></div><div id="dynamicChecklist" class="farm-checklist-grid"></div><div class="farm-wizard-actions farm-assets-actions"><button id="dynamicNextAssets" class="save-farm" type="button">SAVE & CONTINUE →</button></div></section>
+<section class="dynamic-entity-step farm-assets-step" data-dynamic-step="4" hidden><div class="farm-info-hero farm-assets-hero"><span>STEP 4 · DRONE OWNERSHIP & PURCHASES</span><h3>Record Drone Sources</h3><p>Record how many drones this entity has from each Company Facility and each Competitor. Multiple drone sources are allowed.</p></div><div id="dynamicDronePortfolio" class="farm-checklist-grid"></div><div class="farm-wizard-actions farm-assets-actions"><button id="dynamicFinish" class="save-farm" type="button">SAVE & FINISH</button></div></section>
+</div></div></div><div id="farmCreateModal" class="farm3d-modal"><div class="farm3d-window farm-create-window"><div class="farm3d-head"><div><strong>CREATE / EDIT FARM</strong><span>Boundary → place objects → save record</span></div><button id="closeCreateFarm">×</button></div><div class="farm-wizard">
+<div class="farm-wizard-progress"><span id="farmWizardProgress">STEP 1 OF 4</span><strong id="farmWizardTitle">SELECT FARM BOUNDARY</strong></div>
+<section class="farm-wizard-step" data-step="1">
+<h3>Step 1. Select boundary on the map</h3><p>Click <b>SELECT BOUNDARY</b>, then click at least three points around the farm on the map. When finished, click <b>FINISH BOUNDARY</b>.</p>
+<button id="startBoundary">SELECT BOUNDARY</button><button id="finishBoundary">FINISH BOUNDARY</button><button id="clearBoundary">CLEAR</button>
+<div id="boundaryStatus">No boundary selected.</div>
+<div class="farm-wizard-actions"><button id="saveBoundaryStep">SAVE BOUNDARY</button><button id="nextBoundaryStep">SAVE & NEXT →</button></div>
+</section>
+<section class="farm-wizard-step farm-info-step" data-step="2" hidden>
+<div class="farm-info-hero"><span>STEP 2 · FARM INTELLIGENCE</span><h3>Capture Farm Information</h3><p>Build the core farm record that will be shared across the AG World company database.</p></div>
+<div class="farm-info-grid">
+<label>Country<input id="newFarmCountry" placeholder="e.g. South Africa"></label>
+<label>Province<input id="newFarmProvince" placeholder="e.g. KwaZulu-Natal"></label>
+<label>Municipality<input id="newFarmMunicipality" placeholder="Local municipality"></label>
+<label>DJI Region<input id="newFarmDjiRegion" placeholder="DJI operational region"></label>
+<label>Nearest Town<input id="newFarmNearestTown" placeholder="Nearest town"></label>
+<label>Farm Name<input id="newFarmName" placeholder="e.g. Van Rooyen Farm"></label>
+<label>Farm Owner<input id="newFarmOwner" placeholder="Owner / farmer name"></label>
+<label>Farm Owner Cell<input id="newFarmOwnerCell" placeholder="+27 …"></label>
+<label>Farm Owner Email<input id="newFarmOwnerEmail" type="email" placeholder="owner@example.com"></label>
+<label>Accounts Manager<input id="newFarmAccountsManager" placeholder="Account manager name"></label>
+<label>Accounts Manager Cell<input id="newFarmAccountsManagerCell" placeholder="+27 …"></label>
+<label>Accounts Manager Email<input id="newFarmAccountsManagerEmail" type="email" placeholder="manager@example.com"></label>
+<label>Crops on Farm<textarea id="newFarmCropsOnFarm" rows="2" placeholder="Crop types and notes"></textarea></label>
+<label>Equipment on Farm<textarea id="newFarmEquipmentOnFarm" rows="2" placeholder="Tractors, implements, drones, etc."></textarea></label>
+<label>Equipment Status<input id="newFarmEquipmentStatus" placeholder="Operational / needs service / etc."></label>
+<label>Status<select id="newFarmStatus"><option>Prospect</option><option>Opportunity</option><option>Engaged</option><option>Customer</option></select></label>
+<label>Annual Harvest<input id="newFarmHarvest" placeholder="Optional"></label>
+<label>Last Service<input id="newFarmService" placeholder="Optional"></label>
+<label class="farm-info-wide">Notes<textarea id="newFarmNotes" rows="3" placeholder="Important farm information"></textarea></label>
+</div>
+<input id="newFarmRegion" type="hidden">
+<div class="farm-wizard-actions"><button id="saveInfoStep">SAVE FARM INFORMATION</button><button id="nextInfoStep">SAVE & CONTINUE →</button></div>
+</section>
+<section class="farm-wizard-step farm-assets-step" data-step="3" hidden>
+<div class="farm-info-hero farm-assets-hero">
+<span>STEP 3 · FARM ASSETS & CROPS</span>
+<h3>Complete the Farm Record</h3>
+<p>Select every item that applies to this farm. These selections become part of the shared Farms database and drive farm intelligence and Company control.</p>
+</div>
+
+<div class="farm-checklist-grid">
+  <section class="farm-checklist-card">
+    <div class="farm-checklist-heading">
+      <span>01 · EQUIPMENT & SERVICES</span>
+      <strong>Select all that apply</strong>
+    </div>
+    <label class="farm-check-option"><input type="checkbox" name="farmEquipment" value="our-drone"><span class="check-icon">✦</span><span><b>Our Drone</b><small>AG World / Company drone present</small></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmEquipment" value="competitor-drone"><span class="check-icon">◇</span><span><b>Competitor Drone</b><small>Competitor drone activity recorded</small></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmEquipment" value="tractor-sprayer"><span class="check-icon">▣</span><span><b>Tractor / Sprayer</b><small>Ground equipment recorded</small></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmEquipment" value="aerial-services"><span class="check-icon">☁</span><span><b>Aerial Services</b><small>Aerial agricultural services used</small></span></label>
+  </section>
+
+  </section>
+<section class="farm-wizard-step farm-assets-step" data-step="4" hidden>
+<div class="farm-info-hero farm-assets-hero"><span>STEP 4 · DRONE OWNERSHIP & PURCHASES</span><h3>Record Drone Sources</h3><p>Enter the number of Company drones purchased from each Company Facility and Competitor drones linked to each Competitor. Multiple suppliers are allowed.</p></div>
+<div id="farmDronePortfolio" class="farm-checklist-grid"></div>
+<div class="farm-wizard-actions farm-assets-actions"><button id="saveFarm" class="save-farm" type="button">SAVE & FINISH</button></div>
+</section><section class="farm-checklist-card">
+    <div class="farm-checklist-heading">
+      <span>02 · CROPS ON FARM</span>
+      <strong>Select all crops that apply</strong>
+    </div>
+    <label class="farm-check-option"><input type="checkbox" name="farmCropType" value="Maize"><span class="check-icon">🌽</span><span><b>Maize</b></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmCropType" value="Wheat"><span class="check-icon">🌾</span><span><b>Wheat</b></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmCropType" value="Canola"><span class="check-icon">✿</span><span><b>Canola</b></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmCropType" value="Vegetables"><span class="check-icon">▦</span><span><b>Vegetables</b></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmCropType" value="Orchard"><span class="check-icon">♣</span><span><b>Orchard</b></span></label>
+    <label class="farm-check-option"><input type="checkbox" name="farmCropType" value="Sugar Cane"><span class="check-icon">║</span><span><b>Sugar Cane</b></span></label>
+  </section>
+</div>
+
+<div id="objectStatus" class="farm-assets-status">Select the equipment and crops present on this farm.</div>
+<div class="farm-wizard-actions farm-assets-actions"><button id="saveFarm" class="save-farm">SAVE & FINISH FARM</button></div>
+</section>
+</div></div></div><div id="farm3dModal" class="farm3d-modal"><div class="farm3d-window"><div class="farm3d-head"><div><strong id="sceneTitle">FARM 3D</strong><span id="sceneMeta"></span></div><button id="close3d">×</button></div><div id="farmScene" class="farm-scene"></div><div class="farm3d-footer"><span id="sceneSummary"></span><button id="close3dBottom">CLOSE</button></div></div></div></main><style>
+.farm-info-step{max-height:72vh;overflow:auto;padding:2px}
+.farm-info-hero{padding:18px 20px;margin-bottom:14px;border:1px solid rgba(157,204,56,.28);border-radius:14px;background:linear-gradient(135deg,rgba(17,38,25,.95),rgba(8,18,22,.94));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.farm-info-hero span{font-size:10px;letter-spacing:1.7px;color:#9dcc38;font-weight:900}
+.farm-info-hero h3{margin:7px 0 5px;font-size:23px;color:#f3f6ef}
+.farm-info-hero p{margin:0;color:#aab7ae;font-size:12px}
+.farm-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.farm-info-grid label{display:flex;flex-direction:column;gap:6px;font-size:10px;letter-spacing:.55px;font-weight:800;color:#9fac9f;text-transform:uppercase}
+.farm-info-grid input,.farm-info-grid textarea,.farm-info-grid select{width:100%;box-sizing:border-box;background:#101b20;color:#edf3ed;border:1px solid rgba(129,157,143,.28);border-radius:8px;padding:10px;font:12px/1.35 inherit;outline:none}
+.farm-info-grid input:focus,.farm-info-grid textarea:focus,.farm-info-grid select:focus{border-color:#9dcc38;box-shadow:0 0 0 2px rgba(157,204,56,.12)}
+.farm-info-wide{grid-column:1/-1}
+.farm-assets-step{padding:2px}
+.farm-assets-hero{margin-bottom:14px}
+.farm-checklist-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.farm-checklist-card{border:1px solid rgba(129,157,143,.28);border-radius:14px;background:linear-gradient(145deg,rgba(15,28,32,.98),rgba(8,18,22,.98));padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}
+.farm-checklist-heading{display:flex;flex-direction:column;gap:3px;padding-bottom:12px;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+.farm-checklist-heading span{font-size:10px;letter-spacing:1.5px;font-weight:900;color:#9dcc38}
+.farm-checklist-heading strong{font-size:15px;color:#edf3ed}
+.farm-check-option{display:flex!important;align-items:center;gap:11px;padding:11px 9px!important;margin:6px 0;border:1px solid transparent;border-radius:10px;cursor:pointer;transition:.18s;background:rgba(255,255,255,.025)}
+.farm-check-option:hover{border-color:rgba(157,204,56,.35);background:rgba(157,204,56,.06)}
+.farm-check-option input{width:18px!important;height:18px!important;accent-color:#9dcc38;flex:0 0 auto;padding:0!important}
+.farm-check-option .check-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:rgba(157,204,56,.11);border:1px solid rgba(157,204,56,.2);font-size:14px}
+.farm-check-option span:last-child{display:flex;flex-direction:column;gap:2px;text-transform:none;letter-spacing:0;color:#edf3ed}
+.farm-check-option b{font-size:13px}
+.farm-check-option small{font-size:10px;color:#91a19a;font-weight:500}
+.farm-assets-status{margin-top:12px;padding:10px 12px;border-radius:9px;background:rgba(157,204,56,.07);border:1px solid rgba(157,204,56,.18);font-size:11px;color:#b9c8bc}
+.farm-assets-actions{margin-top:16px}
+.farm-assets-actions .save-farm{width:100%;font-size:13px;letter-spacing:.8px}
+
+/* Game windows are always the top interaction layer. The create-farm form
+   must fit inside the viewport and scroll internally rather than being cut
+   off below the bottom of the screen. */
+.farm3d-modal{position:fixed!important;inset:0!important;z-index:10000!important;display:none;align-items:center;justify-content:center;padding:clamp(12px,2vh,28px);box-sizing:border-box;overflow:hidden}
+.farm3d-modal.show{display:flex!important}
+.farm-create-window{width:min(1180px,96vw)!important;max-width:1180px!important;max-height:calc(100vh - 24px)!important;height:auto!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}
+.farm-create-window .farm3d-head{flex:0 0 auto;position:relative;z-index:2}
+.farm-create-window .farm-wizard{flex:1 1 auto;min-height:0;overflow:auto;padding:18px 20px 24px;box-sizing:border-box}
+.farm-create-window .farm-wizard-step{min-height:0}
+.farm-info-step{max-height:none!important;overflow:visible!important;padding:2px 2px 10px!important}
+.farm-info-step .farm-wizard-actions{position:sticky;bottom:0;z-index:3;margin-top:18px;padding:14px 0 4px;background:linear-gradient(to bottom,rgba(10,18,22,0),rgba(10,18,22,.96) 28%,rgba(10,18,22,.99));display:flex;gap:10px}
+.farm-info-step .farm-wizard-actions button{flex:1}
+@media(max-width:900px){.farm-info-grid,.farm-checklist-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.farm3d-modal{padding:8px}.farm-create-window{width:100%!important;max-height:calc(100vh - 16px)!important}.farm-create-window .farm-wizard{padding:14px}.farm-info-grid,.farm-checklist-grid{grid-template-columns:1fr}.farm-info-step .farm-wizard-actions{flex-direction:column}}
+</style><script src="https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js"></script><script src="core/role-config.js?v=master-architecture-v1"></script><script src="core/bootstrap.js?v=playable-loop-v1"></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1"></script><script src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1"></script><script src="api-bridge.js?v=20260902"></script><script src="config-gis-v4.js"></script>
+<script src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305"></script>
+<script src="app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425"></script>
+<script src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045"></script>
+<script src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818"></script><script src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907"></script><script src="farm-zoom-visual.js?v=manual-only-farm-visual-v2"></script><script src="game-hud.js?v=20260903-dupfix"></script><script src="game-view-mode.js?v=20260906-live-player-shell-v45"></script><script src="menu-map-navigation.js?v=20260903"></script><script src="ag-auth.js?v=supabase-direct-login-v42"></script><script src="user-profile-modal.js?v=20260912"></script><script src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745"></script><script src="province-boundaries.js?v=20260904"></script><script src="game-map-filters-v2.js?v=demo-farm-cleanup-v1"></script><script src="menu-settings-logout.js?v=20260910"></script>
+<script src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1"></script>
+<script src="territory-missions-v26.js?v=20260906-stable-v26"></script>
+<script src="player-progression-v27.js?v=20260906-live-profile-missions-v47"></script>
+<script src="interactive-onboarding-v28.js?v=20260906-interactive-onboarding-v1"></script>
+<!-- Chapter mission sidebar renderer temporarily disabled for stability -->
+<script src="interactive-field-learning-v29.js?v=20260906-interactive-field-learning-v1"></script>
+<script src="precise-chapter2-v30.js?v=20260906-precise-chapter2-v1"></script>
+<script src="stateful-chapter2-v31.js?v=20260906-stateful-chapter2-v1"></script>
+<script src="chapter2-director-career-v32.js?v=20260906-chapter2-director-career-v1"></script>
+<script src="chapter3-campaign-v33.js?v=20260906-chapter3-campaign-v1"></script>
+<script src="chapter3-verification-v34.js?v=20260906-chapter3-verification-v1"></script>
+<script src="territory-control-dashboard-v35.js?v=20260906-territory-control-dashboard-v1"></script>
+<script src="territory-control-unified-v1.js?v=farms-contractors-control-v2-20260908-1045"></script>
+<script src="company-command-centre-v36.js?v=20260907-shared-contribution-test-v1"></script>
+<style id="agworld-territory-info-style">
+#territoryInfoPanel{position:absolute;right:22px;top:92px;width:330px;z-index:1200;background:rgba(10,18,22,.96);border:1px solid rgba(142,181,101,.42);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.45);padding:18px;color:#f4f7f1;backdrop-filter:blur(14px);display:none}
+#territoryInfoPanel.show{display:block}
+.territory-info-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:13px}
+.territory-info-level{font-size:10px;letter-spacing:1.5px;color:#9db0a0;font-weight:800}
+.territory-info-name{font-size:22px;line-height:1.1;font-weight:800;margin-top:4px}
+.territory-info-close{border:0;background:transparent;color:#d7e2d9;font-size:26px;line-height:22px;cursor:pointer;padding:0}
+.territory-info-control{display:flex;align-items:center;gap:15px;padding:16px 0 10px}
+.territory-info-control-value{font-size:48px;line-height:.95;font-weight:900;color:#65d875;letter-spacing:-2px}
+.territory-info-control-title{font-size:11px;letter-spacing:1px;font-weight:800;color:#b7c4b9}
+.territory-info-status{font-size:12px;font-weight:800;margin-top:4px;letter-spacing:.5px}
+.territory-info-status-controlled,.territory-info-status-dominating,.territory-info-status-strong{color:#65d875}
+.territory-info-status-contested,.territory-info-status-entering{color:#d8df65}
+.territory-info-status-enemy{color:#ff7670}
+.territory-info-status-neutral{color:#a7b1b6}
+.territory-info-progress{height:10px;width:100%;border-radius:999px;overflow:hidden;background:#394249;display:flex;margin:4px 0 9px}
+.territory-info-progress-company{height:100%;background:#39c96b}
+.territory-info-progress-enemy{height:100%;background:#e6534d}
+.territory-info-progress-neutral{height:100%;background:#768089}
+.territory-info-legend{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:#c7d0c9;margin-bottom:16px}
+.territory-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.territory-info-grid div{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 7px;text-align:center}
+.territory-info-grid strong{display:block;font-size:20px;color:#fff}
+.territory-info-grid span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.45px;color:#9eaca2;margin-top:3px}
+.territory-info-footer{font-size:11px;line-height:1.4;color:#b4beb5;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.09)}
+@media(max-width:700px){#territoryInfoPanel{left:12px;right:12px;top:auto;bottom:18px;width:auto}.territory-info-name{font-size:19px}}
+</style>
+<div id="territoryInfoPanel" aria-live="polite"></div>
+
+<script src="core/entities/entity.schema.js"></script>
+<script src="core/entities/entity-types.js"></script>
+<script src="core/entities/entity.repository.js?v=api-base-v1-20260908-1130"></script>
+<script src="core/entities/entity.service.js?v=entity-service-v1-20260908-1130"></script>
+<script src="core/entities/farm.entity.js"></script>
+<script src="core/relationships/relationship.schema.js"></script>
+<script src="core/relationships/relationship.repository.js?v=relationship-manager-v30-20260907-1349"></script>
+<script src="core/relationships/entity-interaction-engine-v1.js?v=entity-interaction-v1-20260907-2155"></script>
+<script src="core/events/world-event-consequence-engine-v1.js?v=world-events-v1-20260907-2210"></script>
+<script src="world-events-management-v1.js?v=world-events-ui-v1-20260907-2225"></script>
+<script src="core/ui/entity-detail-panel-v2.js?v=management-tabs-only-v2-20260908-1545"></script>
+<script src="core/ui/farm-detail-panel-v2.js?v=farm-details-canonical-v4-20260908-1456"></script>
+<script src="relationship-network-canonical-v2.js?v=relationship-diagnostics-hidden-20260907-2015"></script>
+<script>
+  // V2.8 is wired directly to the GIS loader's canonical agworld:farm-selected
+  // event. No window.selectFarm wrapper is used because the live selector is
+  // module-scoped inside app-gis-loader-v24.js.
+</script>
+<script src="shared-backend-v37.js?v=20260906-shared-backend-v4"></script>
+<script src="shared-farm-world-v38.js?v=shared-cache-v4-20260907"></script>
+<script src="login-gate-bridge-v39.js?v=supabase-only-v41"></script>
+<script src="login-panel-layout-v40.js?v=20260906-login-layout-v2"></script>
+<style id="fleetModalVisibilityFix">
+  /* Fleet modals must be true application overlays, not normal document content. */
+  .modal-overlay[hidden]{display:none!important}
+  .modal-overlay{
+    position:fixed!important;
+    inset:0!important;
+    z-index:2147483000!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    padding:24px!important;
+    box-sizing:border-box!important;
+    background:rgba(3,12,16,.72)!important;
+    backdrop-filter:blur(3px)!important;
+    overflow:auto!important;
+  }
+  .modal-overlay .modal-card{
+    display:block!important;
+    position:relative!important;
+    width:min(100%,820px)!important;
+    max-height:calc(100vh - 48px)!important;
+    overflow:auto!important;
+    background:#102028!important;
+    color:#eef6f7!important;
+    border:1px solid rgba(108,196,183,.35)!important;
+    border-radius:12px!important;
+    box-shadow:0 24px 80px rgba(0,0,0,.55)!important;
+  }
+  .modal-overlay .modal-head{
+    display:flex!important;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    gap:16px!important;
+    padding:20px 24px 14px!important;
+    border-bottom:1px solid rgba(255,255,255,.08)!important;
+  }
+  .modal-overlay .modal-body{padding:20px 24px 24px!important}
+  .modal-overlay .modal-head button{
+    flex:0 0 auto!important;
+    min-width:38px!important;
+    min-height:38px!important;
+    cursor:pointer!important;
+  }
+</style>
+<div id="fleetTransactionModal" class="modal-overlay" hidden>
+  <div class="modal-card" style="max-width:620px">
+    <div class="modal-head"><div><span class="eyebrow">SALES & FLEET TRANSACTION</span><h2 id="fleetTransactionTitle">Sell Company Drones</h2></div><button id="closeFleetTransaction" type="button">×</button></div>
+    <div class="modal-body">
+      <div class="farm-info-hero"><span id="fleetTransactionEntityType">MARKET ENTITY</span><h3 id="fleetTransactionEntityName">Entity</h3><p id="fleetTransactionSummary">Record a drone sale and update market influence immediately.</p></div>
+      <label>Transaction Type<select id="fleetTransactionType"><option value="companySale">Sell Company Drones</option><option value="competitorSale">Record Competitor Drone Fleet</option></select></label>
+      <label id="fleetSupplierLabel">Supplying Company Facility<select id="fleetSupplier"></select></label>
+      <label>Number of Drones<input id="fleetDroneQuantity" type="number" min="1" step="1" value="1"></label>
+      <label>Notes (optional)<textarea id="fleetTransactionNotes" rows="3" placeholder="Sale reference, campaign or notes"></textarea></label>
+      <div id="fleetTransactionCurrent" class="farm-assets-status"></div>
+    </div>
+    <div class="farm-wizard-actions"><button id="saveFleetTransaction" class="save-farm" type="button">COMPLETE TRANSACTION</button></div>
+  </div>
+</div>
+<div id="fleetManagementModal" class="modal-overlay" hidden>
+  <div class="modal-card" style="max-width:820px">
+    <div class="modal-head"><div><span class="eyebrow">SALES HISTORY & FLEET MANAGEMENT</span><h2 id="fleetManagementTitle">Fleet Portfolio</h2></div><button id="closeFleetManagement" type="button">×</button></div>
+    <div class="modal-body">
+      <div id="fleetManagementSummary" class="farm-info-hero"></div>
+      <h3>Current Drone Portfolio</h3><div id="fleetPortfolioRows" class="farm-checklist-grid"></div>
+      <h3>Sales & Fleet History</h3><div id="fleetHistoryRows" class="farm-checklist-grid"></div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  function openDeveloperMode(){ window.open('developer-mode.html','agworldDeveloperMode'); }
+  function ensureDeveloperModeButton(){
+    const nav=document.querySelector('.sidebar .nav') || document.querySelector('.nav');
+    if(!nav) return false;
+    let btn=document.getElementById('developerModeBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='developerModeBtn';
+      btn.type='button';
+      btn.textContent='⚙ DEVELOPER MODE ↗';
+      const profile=nav.querySelector('[data-view="profile"]');
+      if(profile) nav.insertBefore(btn,profile); else nav.appendChild(btn);
+    }
+    btn.onclick=openDeveloperMode;
+    btn.style.display='';
+    btn.style.visibility='visible';
+    btn.style.opacity='1';
+    return true;
+  }
+  ensureDeveloperModeButton();
+  const observer=new MutationObserver(()=>ensureDeveloperModeButton());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('load',ensureDeveloperModeButton);
+})();
+</script><script src="main-game-layout-v1.js?v=command-center-tablet-frame-v49-20260908-2015"></script></body></html>

@@ -1,0 +1,597 @@
+{
+  "schemaVersion": 3,
+  "note": "Country → Province → Municipality → Town → Farm hierarchy. Municipal and town geometry is loaded live from published GIS feature layers and parent relationships are resolved spatially.",
+  "hierarchy": [
+    "country",
+    "province",
+    "municipality",
+    "town"
+  ],
+  "countries": [
+    {
+      "id": "ag-country-south-africa",
+      "code": "ZA",
+      "name": "South Africa",
+      "level": "country",
+      "parentId": null,
+      "status": "Active",
+      "control": 100,
+      "owner": "Ag World",
+      "description": "National Ag World territory containing all provincial territories.",
+      "center": {
+        "lat": -30.5595,
+        "lng": 22.9375
+      },
+      "boundary": [
+        {
+          "lat": -26.85,
+          "lng": 32.89
+        },
+        {
+          "lat": -27.15,
+          "lng": 32.7
+        },
+        {
+          "lat": -27.55,
+          "lng": 32.58
+        },
+        {
+          "lat": -28.05,
+          "lng": 32.3
+        },
+        {
+          "lat": -28.65,
+          "lng": 32.05
+        },
+        {
+          "lat": -29.3,
+          "lng": 31.85
+        },
+        {
+          "lat": -30.1,
+          "lng": 31.65
+        },
+        {
+          "lat": -30.85,
+          "lng": 31.1
+        },
+        {
+          "lat": -31.55,
+          "lng": 30.75
+        },
+        {
+          "lat": -32.15,
+          "lng": 29.95
+        },
+        {
+          "lat": -32.65,
+          "lng": 28.55
+        },
+        {
+          "lat": -33.1,
+          "lng": 27.05
+        },
+        {
+          "lat": -33.55,
+          "lng": 26.05
+        },
+        {
+          "lat": -34.05,
+          "lng": 24.9
+        },
+        {
+          "lat": -34.35,
+          "lng": 23.45
+        },
+        {
+          "lat": -34.55,
+          "lng": 22.1
+        },
+        {
+          "lat": -34.72,
+          "lng": 20.9
+        },
+        {
+          "lat": -34.55,
+          "lng": 19.85
+        },
+        {
+          "lat": -34.35,
+          "lng": 19.05
+        },
+        {
+          "lat": -34.15,
+          "lng": 18.25
+        },
+        {
+          "lat": -33.8,
+          "lng": 17.55
+        },
+        {
+          "lat": -33.15,
+          "lng": 17
+        },
+        {
+          "lat": -32.3,
+          "lng": 17
+        },
+        {
+          "lat": -31.45,
+          "lng": 17.15
+        },
+        {
+          "lat": -30.55,
+          "lng": 17.3
+        },
+        {
+          "lat": -29.65,
+          "lng": 17.55
+        },
+        {
+          "lat": -28.75,
+          "lng": 17.85
+        },
+        {
+          "lat": -27.85,
+          "lng": 17.95
+        },
+        {
+          "lat": -26.95,
+          "lng": 18.25
+        },
+        {
+          "lat": -26.25,
+          "lng": 18.65
+        },
+        {
+          "lat": -25.55,
+          "lng": 19.2
+        },
+        {
+          "lat": -24.85,
+          "lng": 20.1
+        },
+        {
+          "lat": -24.55,
+          "lng": 21.1
+        },
+        {
+          "lat": -24.4,
+          "lng": 22.2
+        },
+        {
+          "lat": -24.55,
+          "lng": 23.25
+        },
+        {
+          "lat": -24.75,
+          "lng": 24.4
+        },
+        {
+          "lat": -25.05,
+          "lng": 25.55
+        },
+        {
+          "lat": -25.35,
+          "lng": 26.65
+        },
+        {
+          "lat": -25.7,
+          "lng": 27.7
+        },
+        {
+          "lat": -25.55,
+          "lng": 28.6
+        },
+        {
+          "lat": -25.25,
+          "lng": 29.4
+        },
+        {
+          "lat": -24.9,
+          "lng": 30.15
+        },
+        {
+          "lat": -24.55,
+          "lng": 31.05
+        },
+        {
+          "lat": -24.95,
+          "lng": 31.75
+        },
+        {
+          "lat": -25.55,
+          "lng": 32.05
+        },
+        {
+          "lat": -26.1,
+          "lng": 32.55
+        },
+        {
+          "lat": -26.85,
+          "lng": 32.89
+        }
+      ],
+      "provinceIds": [
+        "ag-territory-01-eastern-cape",
+        "ag-territory-02-free-state",
+        "ag-territory-03-gauteng",
+        "ag-territory-04-kwazulu-natal",
+        "ag-territory-05-limpopo",
+        "ag-territory-06-mpumalanga",
+        "ag-territory-07-northern-cape",
+        "ag-territory-08-north-west",
+        "ag-territory-09-western-cape"
+      ]
+    }
+  ],
+  "territories": [
+    {
+      "id": "ag-territory-01-eastern-cape",
+      "code": "01",
+      "name": "Eastern Cape Agricultural Territory",
+      "regionLabel": "Eastern Cape",
+      "regions": [
+        "Eastern Cape"
+      ],
+      "status": "Active",
+      "control": 42,
+      "owner": "Unassigned",
+      "description": "Ag World Eastern Cape provincial territory.",
+      "center": {
+        "lat": -32,
+        "lng": 25.6
+      },
+      "boundary": [
+        {
+          "lat": -29.2,
+          "lng": 21.8
+        },
+        {
+          "lat": -29.2,
+          "lng": 29.400000000000002
+        },
+        {
+          "lat": -34.8,
+          "lng": 29.400000000000002
+        },
+        {
+          "lat": -34.8,
+          "lng": 21.8
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-02-free-state",
+      "code": "02",
+      "name": "Free State Agricultural Territory",
+      "regionLabel": "Free State",
+      "regions": [
+        "Free State"
+      ],
+      "status": "Active",
+      "control": 72,
+      "owner": "Unassigned",
+      "description": "Ag World Free State provincial territory.",
+      "center": {
+        "lat": -28.5,
+        "lng": 26.8
+      },
+      "boundary": [
+        {
+          "lat": -26.6,
+          "lng": 23.8
+        },
+        {
+          "lat": -26.6,
+          "lng": 29.8
+        },
+        {
+          "lat": -30.4,
+          "lng": 29.8
+        },
+        {
+          "lat": -30.4,
+          "lng": 23.8
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-03-gauteng",
+      "code": "03",
+      "name": "Gauteng Agricultural Territory",
+      "regionLabel": "Gauteng",
+      "regions": [
+        "Gauteng"
+      ],
+      "status": "Active",
+      "control": 65,
+      "owner": "Unassigned",
+      "description": "Ag World Gauteng provincial territory.",
+      "center": {
+        "lat": -26.1,
+        "lng": 28.1
+      },
+      "boundary": [
+        {
+          "lat": -25.3,
+          "lng": 26.700000000000003
+        },
+        {
+          "lat": -25.3,
+          "lng": 29.5
+        },
+        {
+          "lat": -26.900000000000002,
+          "lng": 29.5
+        },
+        {
+          "lat": -26.900000000000002,
+          "lng": 26.700000000000003
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-04-kwazulu-natal",
+      "code": "04",
+      "name": "KwaZulu-Natal Agricultural Territory",
+      "regionLabel": "KwaZulu-Natal",
+      "regions": [
+        "KwaZulu-Natal"
+      ],
+      "status": "Active",
+      "control": 74,
+      "owner": "Nico van Rooyen",
+      "description": "Ag World KwaZulu-Natal provincial territory.",
+      "center": {
+        "lat": -28.7,
+        "lng": 30.7
+      },
+      "boundary": [
+        {
+          "lat": -26.5,
+          "lng": 28.599999999999998
+        },
+        {
+          "lat": -26.5,
+          "lng": 32.8
+        },
+        {
+          "lat": -30.9,
+          "lng": 32.8
+        },
+        {
+          "lat": -30.9,
+          "lng": 28.599999999999998
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-05-limpopo",
+      "code": "05",
+      "name": "Limpopo Agricultural Territory",
+      "regionLabel": "Limpopo",
+      "regions": [
+        "Limpopo"
+      ],
+      "status": "Active",
+      "control": 58,
+      "owner": "Unassigned",
+      "description": "Ag World Limpopo provincial territory.",
+      "center": {
+        "lat": -23.8,
+        "lng": 29.8
+      },
+      "boundary": [
+        {
+          "lat": -21.8,
+          "lng": 26.7
+        },
+        {
+          "lat": -21.8,
+          "lng": 32.9
+        },
+        {
+          "lat": -25.8,
+          "lng": 32.9
+        },
+        {
+          "lat": -25.8,
+          "lng": 26.7
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-06-mpumalanga",
+      "code": "06",
+      "name": "Mpumalanga Agricultural Territory",
+      "regionLabel": "Mpumalanga",
+      "regions": [
+        "Mpumalanga"
+      ],
+      "status": "Active",
+      "control": 55,
+      "owner": "Unassigned",
+      "description": "Ag World Mpumalanga provincial territory.",
+      "center": {
+        "lat": -25.4,
+        "lng": 30.9
+      },
+      "boundary": [
+        {
+          "lat": -23.7,
+          "lng": 28.9
+        },
+        {
+          "lat": -23.7,
+          "lng": 32.9
+        },
+        {
+          "lat": -27.099999999999998,
+          "lng": 32.9
+        },
+        {
+          "lat": -27.099999999999998,
+          "lng": 28.9
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-07-northern-cape",
+      "code": "07",
+      "name": "Northern Cape Agricultural Territory",
+      "regionLabel": "Northern Cape",
+      "regions": [
+        "Northern Cape"
+      ],
+      "status": "Active",
+      "control": 38,
+      "owner": "Unassigned",
+      "description": "Ag World Northern Cape provincial territory.",
+      "center": {
+        "lat": -29,
+        "lng": 21.5
+      },
+      "boundary": [
+        {
+          "lat": -23.8,
+          "lng": 15.8
+        },
+        {
+          "lat": -23.8,
+          "lng": 27.2
+        },
+        {
+          "lat": -34.2,
+          "lng": 27.2
+        },
+        {
+          "lat": -34.2,
+          "lng": 15.8
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-08-north-west",
+      "code": "08",
+      "name": "North West Agricultural Territory",
+      "regionLabel": "North West",
+      "regions": [
+        "North West"
+      ],
+      "status": "Active",
+      "control": 49,
+      "owner": "Unassigned",
+      "description": "Ag World North West provincial territory.",
+      "center": {
+        "lat": -26.7,
+        "lng": 25.8
+      },
+      "boundary": [
+        {
+          "lat": -24.7,
+          "lng": 22.8
+        },
+        {
+          "lat": -24.7,
+          "lng": 28.8
+        },
+        {
+          "lat": -28.7,
+          "lng": 28.8
+        },
+        {
+          "lat": -28.7,
+          "lng": 22.8
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    },
+    {
+      "id": "ag-territory-09-western-cape",
+      "code": "09",
+      "name": "Western Cape Agricultural Territory",
+      "regionLabel": "Western Cape",
+      "regions": [
+        "Western Cape"
+      ],
+      "status": "Active",
+      "control": 61,
+      "owner": "Unassigned",
+      "description": "Ag World Western Cape provincial territory.",
+      "center": {
+        "lat": -33.3,
+        "lng": 19.8
+      },
+      "boundary": [
+        {
+          "lat": -30.799999999999997,
+          "lng": 16
+        },
+        {
+          "lat": -30.799999999999997,
+          "lng": 23.6
+        },
+        {
+          "lat": -35.8,
+          "lng": 23.6
+        },
+        {
+          "lat": -35.8,
+          "lng": 16
+        }
+      ],
+      "parentId": "ag-country-south-africa",
+      "level": "province",
+      "municipalityIds": [],
+      "townIds": []
+    }
+  ],
+  "municipalities": [],
+  "towns": [],
+  "spatialSources": {
+    "municipalities": {
+      "provider": "Municipal Demarcation Board / DLRRD National Spatial Data",
+      "format": "GeoJSON from published feature service",
+      "url": "https://nspdr.dlrrd.gov.za/server/rest/services/NationalDatasets/MunicipalDemarcationBoard/MapServer/3",
+      "level": "municipality"
+    },
+    "towns": {
+      "provider": "AfriGIS / Surveyor General via Western Cape GIS",
+      "format": "GeoJSON from published feature service",
+      "url": "https://gis.westerncape.gov.za/server2/rest/services/SpatialDataWarehouse/AfriGIS_Boundaries/MapServer/9",
+      "level": "town"
+    }
+  }
+}
