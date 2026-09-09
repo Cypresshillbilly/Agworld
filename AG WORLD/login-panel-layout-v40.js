@@ -1,4 +1,4 @@
-// AG World canonical login presentation v43
+// AG World canonical login presentation v44
 // Canonical background: approved clean AgWorld login v1.3.
 // The gate uses layered CSS backgrounds so the page remains visible while the
 // approved v1.3 binary sits above the temporary fallback.
@@ -97,12 +97,12 @@
     if(logo.getAttribute('src')!==AG_LOGO) logo.setAttribute('src',AG_LOGO);
   }
 
-  ['agworld-canonical-login-v41','agworld-canonical-login-v42','agworld-canonical-login-v43'].forEach(id=>{
+  ['agworld-canonical-login-v41','agworld-canonical-login-v42','agworld-canonical-login-v43','agworld-canonical-login-v44'].forEach(id=>{
     const old=document.getElementById(id);
     if(old) old.remove();
   });
   const style=document.createElement('style');
-  style.id='agworld-canonical-login-v43';
+  style.id='agworld-canonical-login-v44';
   style.textContent=`
 #ag-login-gate{position:fixed!important;inset:0!important;overflow:hidden!important;background-color:#070a09!important}
 #ag-login-gate .ag-login-art{display:none!important}
@@ -115,9 +115,9 @@
 }
 #ag-login-gate .ag-login-panel,
 #ag-login-gate .ag-login-panel.ag-login-panel-wide{
-  position:absolute!important;z-index:3!important;left:50%!important;top:61%!important;
-  transform:translate(-50%,-50%)!important;width:min(690px,calc(100vw - 36px))!important;
-  max-width:690px!important;min-height:0!important;padding:17px 24px!important;
+  position:absolute!important;z-index:3!important;left:50%!important;top:63%!important;
+  transform:translate(-50%,-50%)!important;width:min(742px,calc(100vw - 36px))!important;
+  max-width:742px!important;min-height:0!important;padding:19px 26px!important;
   box-sizing:border-box!important;overflow:visible!important;border-radius:15px!important;
   border:1px solid rgba(207,224,92,.72)!important;
   background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78))!important;
@@ -126,12 +126,12 @@
 }
 #ag-login-gate .gc-login-brand{
   display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-start!important;
-  flex:0 0 40%!important;margin:0!important;padding:4px 20px 4px 4px!important;
+  flex:0 0 42%!important;margin:0!important;padding:3px 22px 3px 3px!important;
   border-right:1px solid rgba(207,224,92,.22)!important;
 }
 #ag-login-gate .gc-login-brand img{
-  display:block!important;width:100%!important;max-width:255px!important;height:auto!important;
-  max-height:88px!important;object-fit:contain!important;margin:0 0 8px!important;
+  display:block!important;width:100%!important;max-width:310px!important;height:auto!important;
+  max-height:108px!important;object-fit:contain!important;margin:0 0 8px!important;
 }
 #ag-login-gate .gc-login-actions{
   display:grid!important;grid-template-columns:1fr!important;gap:8px!important;
@@ -166,7 +166,7 @@
     border-right:0!important;border-bottom:1px solid rgba(207,224,92,.22)!important;
     padding:0 0 14px!important;margin:0 0 14px!important;
   }
-  #ag-login-gate .gc-login-brand img{max-width:235px!important;max-height:88px!important}
+  #ag-login-gate .gc-login-brand img{max-width:250px!important;max-height:94px!important}
 }
 `;
   document.head.appendChild(style);
