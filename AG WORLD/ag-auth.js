@@ -21,6 +21,12 @@
   const REMEMBER_USER = 'gamechanger.master.remembered.username';
   const REMEMBER_PASS = 'gamechanger.master.remembered.password';
   const REMEMBER_FLAG = 'gamechanger.master.remembered.enabled';
+  // Ag World Remember Me is intentionally scoped to this login only.
+  // It restores the credentials into the login boundary after refresh/logout
+  // when the user explicitly opted in.
+  const AG_REMEMBER_USER = 'agworld.remembered.email';
+  const AG_REMEMBER_PASS = 'agworld.remembered.password';
+  const AG_REMEMBER_FLAG = 'agworld.remembered.enabled';
 
   async function sha256(text){
     const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
@@ -65,20 +71,51 @@
     const password=gate.querySelector('#agPassword');
     const remember=gate.querySelector('#agRemember');
 
-    // Restore Master Admin credentials only when this browser/profile has
-    // explicitly been told to remember them. This makes the desktop shortcut
-    // reopen with the last remembered credentials already filled in.
-    if(master){
-      try{
+    // Restore credentials only when this browser/profile has explicitly
+    // been told to remember them.
+    try{
+      if(master){
         const remembered=localStorage.getItem(REMEMBER_FLAG)==='1';
         if(remembered){
           username.value=localStorage.getItem(REMEMBER_USER)||'';
           password.value=localStorage.getItem(REMEMBER_PASS)||'';
           remember.checked=!!(username.value||password.value);
         }
-      }catch(err){
-        console.warn('Unable to restore remembered Master Admin credentials',err);
+      }else{
+        const remembered=localStorage.getItem(AG_REMEMBER_FLAG)==='1';
+        if(remembered){
+          username.value=localStorage.getItem(AG_REMEMBER_USER)||'';
+          password.value=localStorage.getItem(AG_REMEMBER_PASS)||'';
+          remember.checked=!!(username.value||password.value);
+        }
       }
+    }catch(err){
+      console.warn('Unable to restore remembered login credentials',err);
+    }
+
+    // Persist Ag World credentials as soon as Remember Me is explicitly checked,
+    // and keep the remembered values current while the user types. This means a
+    // refresh before pressing Enter still restores the credentials.
+    const persistAgRemember=()=>{
+      if(master) return;
+      try{
+        if(remember.checked){
+          localStorage.setItem(AG_REMEMBER_FLAG,'1');
+          localStorage.setItem(AG_REMEMBER_USER,username.value);
+          localStorage.setItem(AG_REMEMBER_PASS,password.value);
+        }else{
+          localStorage.removeItem(AG_REMEMBER_FLAG);
+          localStorage.removeItem(AG_REMEMBER_USER);
+          localStorage.removeItem(AG_REMEMBER_PASS);
+        }
+      }catch(err){
+        console.warn('Unable to save remembered Ag World credentials',err);
+      }
+    };
+    if(!master){
+      remember.addEventListener('change',persistAgRemember);
+      username.addEventListener('input',persistAgRemember);
+      password.addEventListener('input',persistAgRemember);
     }
 
     // Login fields are ordinary inputs. Do not clear, lock, reset or mutate them
@@ -111,7 +148,19 @@
           sessionStorage.setItem('gamechanger.authenticated','1');
           sessionStorage.setItem('gamechanger.role','agriculture_sales');
           sessionStorage.setItem('gamechanger.username',displayName);
-          if(remember.checked)localStorage.setItem('agworld.remembered.email',email);
+          if(remember.checked){
+            try{
+              localStorage.setItem(AG_REMEMBER_FLAG,'1');
+              localStorage.setItem(AG_REMEMBER_USER,email);
+              localStorage.setItem(AG_REMEMBER_PASS,pass);
+            }catch(err){ console.warn('Unable to save remembered Ag World credentials',err); }
+          }else{
+            try{
+              localStorage.removeItem(AG_REMEMBER_FLAG);
+              localStorage.removeItem(AG_REMEMBER_USER);
+              localStorage.removeItem(AG_REMEMBER_PASS);
+            }catch(err){ console.warn('Unable to clear remembered Ag World credentials',err); }
+          }
           gate.remove();
           reveal();
           window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
