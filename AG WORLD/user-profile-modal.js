@@ -1,32 +1,34 @@
 /* AG WORLD — clickable user profile window. */
 (()=>{
-  const USER={
-    fullName:'Nico van Rooyen',
-    username:'Admin',
-    role:'Sales Representative',
-    territory:'Territory 03',
-    level:7,
-    xp:6820,
-    xpNext:10000,
-    territoryControl:74,
-    regionalRank:2,
-    nationalRank:11,
-    controlledFarms:18,
-    opportunities:14,
-    droneFleet:27,
-    achievements:[
-      {icon:'♙',name:'First Meeting',status:'Earned'},
-      {icon:'◈',name:'Opportunity Finder',status:'Earned'},
-      {icon:'♛',name:'Presentation Pro',status:'Earned'},
-      {icon:'⚒',name:'Proposal Pro',status:'Earned'},
-      {icon:'▣',name:'Top Performer',status:'Locked'}
-    ],
-    nextReward:'DJI Mavic 3 — Sales Certification',
-    rewardXp:750
+  const DEFAULT_USER={
+    username:'Player',
+    role:'AG World Player',
+    territory:'Assigned Facility',
+    level:1,
+    xp:0,
+    xpNext:1000,
+    territoryControl:0,
+    regionalRank:'—',
+    nationalRank:'—',
+    controlledFarms:0,
+    opportunities:0,
+    droneFleet:0,
+    achievements:[],
+    nextReward:'First field achievement',
+    rewardXp:1000
   };
+  function getUser(){
+    const p=window.AGWorldPlayer||{};
+    const name=p.display_name||sessionStorage.getItem('gamechanger.username')||'Player';
+    const level=Number(p.level||sessionStorage.getItem('gamechanger.level')||1);
+    const xp=Number(p.xp||sessionStorage.getItem('gamechanger.xp')||0);
+    const chapter=Number(p.chapter||sessionStorage.getItem('gamechanger.chapter')||1);
+    return {...DEFAULT_USER,fullName:name,username:name,level,xp,territory:p.company_facility_id?'Company Facility':'Assigned Facility',chapter};
+  }
 
   function install(){
     if(document.getElementById('ag-user-profile-modal-style')) return;
+    const USER=getUser();
     const style=document.createElement('style');
     style.id='ag-user-profile-modal-style';
     style.textContent=`
@@ -65,6 +67,20 @@
         <div class="ag-user-profile-footer"><strong>Next reward:</strong> ${USER.nextReward} · ${USER.rewardXp} XP to go</div>
       </div></div>`;
     document.body.appendChild(modal);
+
+    window.addEventListener('agworld:player-profile',()=>{
+      const u=getUser();
+      const avatar=modal.querySelector('.ag-user-profile-avatar');
+      const title=modal.querySelector('.ag-user-profile-identity h2');
+      const progression=modal.querySelectorAll('.ag-user-profile-card')[1];
+      if(avatar) avatar.textContent=(u.fullName.trim().charAt(0)||'P').toUpperCase();
+      if(title) title.textContent=u.fullName;
+      if(progression){
+        const ps=progression.querySelectorAll('p');
+        if(ps[0]) ps[0].innerHTML='Level <span>'+u.level+'</span>';
+        if(ps[1]) ps[1].textContent=u.xp.toLocaleString()+' / '+u.xpNext.toLocaleString()+' XP';
+      }
+    });
 
     const close=()=>modal.classList.remove('open');
     modal.querySelector('.ag-user-profile-close').addEventListener('click',close);
