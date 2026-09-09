@@ -28,8 +28,8 @@ jobs:
         env:
           GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
-          printf 'window.AG_WORLD_CONFIG = { GOOGLE_MAPS_API_KEY: %s };\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > config.js
-          sed -i 's/config.js?v=20260902/config.js?v=20260903-mapfix/' index.html
+          printf 'window.AG_WORLD_CONFIG = { GOOGLE_MAPS_API_KEY: %s };\n' "$(printf '%s' "$GOOGLE_MAPS_API_KEY" | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > 'AG WORLD/config.js'
+          sed -i 's/config.js?v=20260902/config.js?v=20260903-mapfix/' 'AG WORLD/index.html'
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -37,7 +37,7 @@ jobs:
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: AG WORLD
 
       - name: Deploy to Pages
         id: deployment
