@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
 <title id="title">GAME CHANGER</title>
-<desc id="desc">GAME CHANGER — DOMINATE THE TERRITORY — Build relationships. Drive sales. WIN THE FUTURE.</desc>
+<desc id="desc">GAME CHANGER — WORKFLOWS REIMAGINED</desc>
 <defs>
   <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#f7f7f5"/><stop offset=".18" stop-color="#bfc2bd"/>
@@ -38,9 +38,8 @@
   <text x="0" y="95" font-family="Arial, Helvetica, sans-serif" font-size="102" font-weight="900" letter-spacing="2" fill="url(#metal)" filter="url(#rough)">GAME</text>
   <text x="0" y="205" font-family="Arial, Helvetica, sans-serif" font-size="102" font-weight="900" letter-spacing="0" fill="url(#green)" filter="url(#rough)">CHANGER</text>
   <line x1="0" y1="245" x2="70" y2="245" stroke="#8fbd27" stroke-width="6"/>
-  <text x="88" y="258" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="700" letter-spacing="6" fill="#f4f5f2">DOMINATE THE TERRITORY</text>
+  <text x="88" y="258" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="700" letter-spacing="6" fill="#f4f5f2">WORKFLOWS REIMAGINED</text>
   <line x1="690" y1="245" x2="760" y2="245" stroke="#8fbd27" stroke-width="6"/>
-  <text x="0" y="320" font-family="Arial, Helvetica, sans-serif" font-size="25" fill="#f4f5f2">Build relationships. Drive sales. </text>
-  <text x="515" y="320" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="800" fill="#9acb25">WIN THE FUTURE.</text>
+  
 </g>
 </svg>
