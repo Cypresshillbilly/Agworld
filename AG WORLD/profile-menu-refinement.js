@@ -35,12 +35,33 @@ function correctSidebar(){
  let logo=b.querySelector('.ag-world-menu-logo');if(!logo){logo=document.createElement('img');logo.className='ag-world-menu-logo';logo.alt='AG World';logo.decoding='async';logo.loading='eager';b.replaceChildren(logo)}
  logo.src=LOGO_SRC;
  let p=s.querySelector('.profile');if(!p){p=document.createElement('div');p.className='profile'}
- p.innerHTML='<div class="ag-profile-avatar" aria-hidden="true">N</div><div class="ag-profile-summary"><strong>NICO VAN ROOYEN</strong><span>SALES REPRESENTATIVE</span><span>Level 7 · Territory 03</span></div>';
+ const player=window.AGWorldPlayer||{};
+ const name=(player.display_name||sessionStorage.getItem('gamechanger.username')||'PLAYER').toUpperCase();
+ const level=Number(player.level||sessionStorage.getItem('gamechanger.level')||1);
+ const initial=(name.trim().charAt(0)||'P').toUpperCase();
+ p.innerHTML='<div class="ag-profile-avatar" aria-hidden="true">'+initial+'</div><div class="ag-profile-summary"><strong>'+name+'</strong><span>AG WORLD PLAYER</span><span>Level '+level+' · Chapter '+Number(player.chapter||sessionStorage.getItem('gamechanger.chapter')||1)+'</span></div>';
  b.insertAdjacentElement('afterend',p);
  document.querySelectorAll('.map-area .ag-world-map-logo').forEach(el=>el.remove());
 }
+function refreshPlayerUI(){
+ const s=document.querySelector('.sidebar .profile');
+ if(!s) return;
+ const player=window.AGWorldPlayer||{};
+ const name=(player.display_name||sessionStorage.getItem('gamechanger.username')||'PLAYER').toUpperCase();
+ const level=Number(player.level||sessionStorage.getItem('gamechanger.level')||1);
+ const chapter=Number(player.chapter||sessionStorage.getItem('gamechanger.chapter')||1);
+ const initial=(name.trim().charAt(0)||'P').toUpperCase();
+ const avatar=s.querySelector('.ag-profile-avatar');
+ const strong=s.querySelector('.ag-profile-summary strong');
+ const spans=s.querySelectorAll('.ag-profile-summary span');
+ if(avatar) avatar.textContent=initial;
+ if(strong) strong.textContent=name;
+ if(spans[0]) spans[0].textContent='AG WORLD PLAYER';
+ if(spans[1]) spans[1].textContent='Level '+level+' · Chapter '+chapter;
+}
 function start(){
  installStyles();correctSidebar();
+ window.addEventListener('agworld:player-profile',refreshPlayerUI);
  const observer=new MutationObserver(()=>{
   const s=document.querySelector('.sidebar');if(!s)return;
   const good=!!(s.querySelector('.brand .ag-world-menu-logo')&&s.querySelector('.profile .ag-profile-avatar')&&s.querySelector('.profile .ag-profile-summary'));
