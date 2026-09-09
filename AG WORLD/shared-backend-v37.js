@@ -55,9 +55,46 @@
     return e;
   }
 
-  function openGame(currentUser,name){
+  async function loadPlayer(currentUser){
+    if(!db||!currentUser) return null;
+    const {data,error}=await db.from('ag_players')
+      .select('id,display_name,company_facility_id,level,xp,chapter')
+      .eq('id',currentUser.id)
+      .maybeSingle();
+    if(error){
+      console.warn('Unable to load AG World player profile',error);
+      return null;
+    }
+    return data||null;
+  }
+
+  function applyPlayerProfile(player,currentUser){
+    const profile={
+      id:player?.id||currentUser?.id||null,
+      display_name:player?.display_name||currentUser?.user_metadata?.display_name||currentUser?.email||'PLAYER',
+      company_facility_id:player?.company_facility_id||currentUser?.user_metadata?.company_facility_id||null,
+      level:Number(player?.level||1),
+      xp:Number(player?.xp||0),
+      chapter:Number(player?.chapter||1)
+    };
+    window.AGWorldPlayer=profile;
+    window.dispatchEvent(new CustomEvent('agworld:player-profile',{detail:profile}));
+
+    // Update existing static/demo profile text in-place without requiring every
+    // legacy screen to be rewritten at once.
+    const name=profile.display_name;
+    document.querySelectorAll('[data-ag-player-name]').forEach(el=>el.textContent=name);
+    document.querySelectorAll('[data-ag-player-level]').forEach(el=>el.textContent='LEVEL '+profile.level);
+    document.querySelectorAll('[data-ag-player-xp]').forEach(el=>el.textContent=profile.xp+' XP');
+    document.querySelectorAll('[data-ag-player-chapter]').forEach(el=>el.textContent='CHAPTER '+profile.chapter);
+    return profile;
+  }
+
+  async function openGame(currentUser,name){
     user=currentUser;
-    const displayName=name||currentUser?.user_metadata?.display_name||currentUser?.email||'PLAYER';
+    const player=await loadPlayer(currentUser);
+    const profile=applyPlayerProfile(player,currentUser);
+    const displayName=name||profile.display_name;
     window.__AGWORLD_EXPLICIT_AUTH__=true;
     sessionStorage.setItem('gamechanger.authenticated','1');
     sessionStorage.setItem('gamechanger.role','agriculture_sales');
@@ -180,7 +217,7 @@
         // immediately, even when email confirmation is required.
         if(data.session){
           await ensurePlayer(created);
-          openGame(created,n);
+          await openGame(created,n);
           return;
         }
         msg('Account created and linked to your Company Facility. Check your email to confirm it, then return and sign in.');
@@ -221,7 +258,7 @@
         if(error){msg(error.message);return;}
         if(!data?.user){msg('Unable to sign in. Please try again.');return;}
         await ensurePlayer(data.user);
-        openGame(data.user);
+        await openGame(data.user);
       }catch(err){
         console.error(err);
         msg(err?.message||'Unable to sign in. Please try again.');
@@ -297,6 +334,16 @@
 #agAuthModal small{display:block;color:#cfd8cf;margin-top:10px;text-align:center}
 `;
   document.head.appendChild(st);
-  window.AGWorldBackend={sync,getUser:()=>user,openAccountCreation:()=>login('create')};
+  window.AGWorldBackend={
+    sync,
+    getUser:()=>user,
+    getPlayer:()=>window.AGWorldPlayer||null,
+    refreshPlayer:async()=>{
+      if(!user) return null;
+      const player=await loadPlayer(user);
+      return applyPlayerProfile(player,user);
+    },
+    openAccountCreation:()=>login('create')
+  };
   init().catch(err=>{console.error('AG World backend failed to initialise',err);render();});
 })();
