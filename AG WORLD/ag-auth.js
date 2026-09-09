@@ -48,7 +48,7 @@
     const title=master?'MASTER PLATFORM ACCESS':'DOMINATE THE TERRITORY';
     const line=master?'Authorised access to the GAME CHANGER platform.':'Build relationships. Drive sales. WIN THE FUTURE.';
     gate.innerHTML=(master?'':'<img class="ag-login-art" src="'+loginImage()+'" alt="" aria-hidden="true">')+
-      '<div class="ag-login-panel"><div class="gc-login-brand"><strong>GAME <span>CHANGER</span></strong><small>'+title+'</small><em>'+line+'</em></div>'+
+      '<div class="ag-login-panel"><img class="agworld-login-logo" src="brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png" alt="AgWorld">'+
       '<form class="ag-login-form" autocomplete="off" data-lpignore="true" data-1p-ignore="true">'+
       '<input type="text" name="ag-world-decoy-user" autocomplete="username" tabindex="-1" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0">'+
       '<input type="password" name="ag-world-decoy-pass" autocomplete="current-password" tabindex="-1" aria-hidden="true" style="position:absolute;left:-10000px;opacity:0">'+
