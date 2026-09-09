@@ -7,7 +7,7 @@ This is a static web application, so it can be hosted directly from the reposito
 1. Open the repository Settings in GitHub.
 2. Open **Pages**.
 3. Select **Deploy from a branch**.
-4. Select `main` and `/ (root)`.
+4. The repository uses a GitHub Actions deployment workflow that publishes the `AG WORLD/` application folder as the site artifact. Do not deploy the repository root.
 5. Save.
 6. GitHub will provide the Pages URL after the deployment completes.
 
