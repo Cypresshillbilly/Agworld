@@ -107,6 +107,7 @@
           if(authError){error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';return;}
           if(!data?.user){error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';return;}
           const displayName=data.user.user_metadata?.display_name||email;
+          window.__AGWORLD_EXPLICIT_AUTH__=true;
           sessionStorage.setItem('gamechanger.authenticated','1');
           sessionStorage.setItem('gamechanger.role','agriculture_sales');
           sessionStorage.setItem('gamechanger.username',displayName);
@@ -154,14 +155,20 @@
   }
 
   function install(){
+    if(!master){
+      // AG World must always start at the login boundary after a browser refresh.
+      // A persisted browser/Supabase session must never silently reopen the game
+      // as the last player (for example Clint).
+      window.__AGWORLD_EXPLICIT_AUTH__=false;
+      sessionStorage.removeItem(SESSION);
+      sessionStorage.removeItem(ROLE);
+      sessionStorage.removeItem(USER);
+      showGate();
+      return;
+    }
     const ok=sessionStorage.getItem(SESSION)==='1';
     const role=sessionStorage.getItem(ROLE);
-    if(ok&&role){
-      if(master){reveal();return;}
-      if(role==='agriculture_sales' && page()==='index.html'){reveal();return;}
-      if(role==='agriculture_administrator' && page()==='admin.html'){reveal();return;}
-      sessionStorage.removeItem(SESSION);sessionStorage.removeItem(ROLE);sessionStorage.removeItem(USER);
-    }
+    if(ok&&role){reveal();return;}
     showGate();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
