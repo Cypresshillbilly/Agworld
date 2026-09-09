@@ -7,14 +7,19 @@
     const form=panel?.querySelector('.ag-login-form');
     if(!gate||!panel||!brand||!form)return;
 
-    if(!brand.querySelector('img.ag-official-gamechanger-logo')){
+    // Always enforce the canonical runtime asset. Do not preserve a previously
+    // injected legacy image node: an old node can survive hot reloads and keep
+    // displaying an obsolete logo even after the script has been updated.
+    const canonicalLogo='brand/game-changer/OFFICIAL/GameChanger_Official_Horizontal_Dark.svg?v=gc-canonical-20260909-1952';
+    let img=brand.querySelector('img.ag-official-gamechanger-logo');
+    if(!img){
       brand.innerHTML='';
-      const img=document.createElement('img');
+      img=document.createElement('img');
       img.className='ag-official-gamechanger-logo';
-      img.src='brand/game-changer/OFFICIAL/GameChanger_Official_Horizontal_Dark.svg?v=official-gamechanger-v1';
       img.alt='GAME CHANGER';
       brand.appendChild(img);
     }
+    if(img.getAttribute('src')!==canonicalLogo) img.setAttribute('src',canonicalLogo);
 
     if(!panel.querySelector('.ag-login-wide')){
       const wide=document.createElement('div');
