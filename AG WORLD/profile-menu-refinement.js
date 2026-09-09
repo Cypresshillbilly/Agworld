@@ -3,29 +3,30 @@
 const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=menu-logo-v1';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
-body.ag-profile-mode .sidebar{width:20%!important;padding:10px 14px 12px!important;box-sizing:border-box!important;position:fixed!important;top:0!important;bottom:0!important;left:0!important;height:100vh!important;overflow-y:auto!important;overflow-x:hidden!important;display:flex!important;flex-direction:column!important}
-body.ag-profile-mode .missions{left:20%!important;width:23%!important;box-sizing:border-box!important}
-body.ag-profile-mode .map-area{left:43%!important;box-sizing:border-box!important}
-body.ag-profile-mode .sidebar .brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:145px!important;margin:0 0 8px!important;padding:4px 2px!important;background:none!important;border:0!important;box-sizing:border-box!important;overflow:hidden!important;font-size:0!important}
-body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{display:block!important;width:100%!important;height:auto!important;max-width:310px!important;max-height:140px!important;object-fit:contain!important;object-position:center!important;margin:0 auto!important}
-body.ag-profile-mode .sidebar .brand:before,body.ag-profile-mode .sidebar .brand small{display:none!important}
-body.ag-profile-mode .sidebar .menu-user{display:none!important}
-body.ag-profile-mode .sidebar .profile{display:grid!important;grid-template-columns:82px minmax(0,1fr)!important;grid-template-rows:1fr!important;grid-template-areas:'avatar summary'!important;align-items:center!important;column-gap:12px!important;width:100%!important;min-height:102px!important;margin:0 0 12px!important;padding:9px 7px!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;border-top:1px solid #30444f!important;border-bottom:1px solid #30444f!important;box-sizing:border-box!important;text-align:left!important;order:0!important;overflow:hidden!important}
-body.ag-profile-mode .sidebar .profile:before{display:none!important;content:none!important}
-body.ag-profile-mode .sidebar .profile .ag-profile-avatar{grid-area:avatar!important;display:flex!important;align-items:center!important;justify-content:center!important;width:82px!important;height:82px!important;min-width:82px!important;min-height:82px!important;border-radius:50%!important;background:#344b56!important;border:2px solid #9eb1b8!important;color:#fff!important;font:900 30px Arial,sans-serif!important;box-sizing:border-box!important}
-body.ag-profile-mode .sidebar .profile .ag-profile-summary{grid-area:summary!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;min-width:0!important;width:auto!important;max-width:100%!important;text-align:left!important;overflow:hidden!important}
-body.ag-profile-mode .sidebar .profile .ag-profile-summary strong{display:block!important;margin:0 0 5px!important;padding:0!important;color:#eef3f5!important;font:900 15px/1.2 Arial,sans-serif!important;letter-spacing:.5px!important;white-space:nowrap!important}
-body.ag-profile-mode .sidebar .profile .ag-profile-summary span{display:block!important;margin:0!important;padding:0!important;color:#aebfc6!important;font:700 10px/1.5 Arial,sans-serif!important;white-space:nowrap!important}
-body.ag-profile-mode .sidebar .profile>strong,body.ag-profile-mode .sidebar .profile>.ag-profile-summary-text{display:none!important}
-body.ag-profile-mode .sidebar .nav{display:flex!important;flex-direction:column!important;padding:5px 1px!important;gap:6px!important;margin-top:0!important;flex:0 0 auto!important}
-body.ag-profile-mode .sidebar .nav button{width:100%!important;min-height:48px!important;padding:12px 13px!important;font:700 15px/1.2 Arial,sans-serif!important;letter-spacing:.2px!important;white-space:nowrap!important;box-sizing:border-box!important}
-body.ag-profile-mode .map-area .ag-world-map-logo{display:none!important}
-body.ag-profile-mode .bottom{height:18%!important}
-body.ag-profile-mode .sidebar::-webkit-scrollbar{width:7px}
-body.ag-profile-mode .sidebar .nav button:last-child{margin-bottom:12px!important}
+/* Final compact sidebar profile layout. Geometry is owned by main-game-layout-v1. */
+body.ag-profile-mode .sidebar,.app-shell .sidebar{padding:6px 8px 8px!important;box-sizing:border-box!important;overflow-y:auto!important;overflow-x:hidden!important;display:flex!important;flex-direction:column!important}
+body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:62px!important;min-height:62px!important;margin:0 0 4px!important;padding:2px!important;background:none!important;border:0!important;box-sizing:border-box!important;overflow:hidden!important;font-size:0!important;flex:0 0 62px!important}
+body.ag-profile-mode .sidebar .brand .ag-world-menu-logo,.app-shell .sidebar .brand .ag-world-menu-logo{display:block!important;width:100%!important;height:auto!important;max-width:205px!important;max-height:56px!important;object-fit:contain!important;object-position:center!important;margin:0 auto!important}
+body.ag-profile-mode .sidebar .brand:before,body.ag-profile-mode .sidebar .brand small,.app-shell .sidebar .brand:before,.app-shell .sidebar .brand small{display:none!important}
+body.ag-profile-mode .sidebar .menu-user,.app-shell .sidebar .menu-user{display:none!important}
 
-@media(max-width:1100px){body.ag-profile-mode .sidebar .brand{height:125px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:120px!important}body.ag-profile-mode .sidebar .profile{grid-template-columns:72px minmax(0,1fr)!important;min-height:92px!important}body.ag-profile-mode .sidebar .profile .ag-profile-avatar{width:72px!important;height:72px!important;min-width:72px!important;min-height:72px!important;font-size:26px!important}}
-@media(max-width:900px){body.ag-profile-mode .sidebar{width:24%!important}body.ag-profile-mode .missions{left:24%!important;width:26%!important}body.ag-profile-mode .map-area{left:50%!important}body.ag-profile-mode .sidebar .brand{height:105px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo{max-height:100px!important}body.ag-profile-mode .sidebar .profile{grid-template-columns:60px minmax(0,1fr)!important;min-height:78px!important;column-gap:9px!important}body.ag-profile-mode .sidebar .profile .ag-profile-avatar{width:60px!important;height:60px!important;min-width:60px!important;min-height:60px!important;font-size:22px!important}body.ag-profile-mode .sidebar .profile .ag-profile-summary strong{font-size:12px!important}body.ag-profile-mode .sidebar .profile .ag-profile-summary span{font-size:8.5px!important}body.ag-profile-mode .sidebar .nav button{font-size:13px!important;min-height:44px!important;padding:10px!important}}
+/* Avatar and player summary are deliberately part of the normal flow directly under the logo. */
+body.ag-profile-mode .sidebar .profile,.app-shell .sidebar .profile{display:grid!important;visibility:visible!important;opacity:1!important;grid-template-columns:46px minmax(0,1fr)!important;grid-template-rows:1fr!important;grid-template-areas:'avatar summary'!important;align-items:center!important;column-gap:7px!important;width:100%!important;min-height:58px!important;height:58px!important;margin:0 0 5px!important;padding:5px 2px!important;position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;border-top:1px solid #30444f!important;border-bottom:1px solid #30444f!important;box-sizing:border-box!important;text-align:left!important;order:0!important;flex:0 0 58px!important;overflow:hidden!important}
+body.ag-profile-mode .sidebar .profile:before,.app-shell .sidebar .profile:before{display:none!important;content:none!important}
+body.ag-profile-mode .sidebar .profile .ag-profile-avatar,.app-shell .sidebar .profile .ag-profile-avatar{grid-area:avatar!important;display:flex!important;align-items:center!important;justify-content:center!important;width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;border-radius:50%!important;background:#344b56!important;border:2px solid #9eb1b8!important;color:#fff!important;font:900 18px Arial,sans-serif!important;box-sizing:border-box!important}
+body.ag-profile-mode .sidebar .profile .ag-profile-summary,.app-shell .sidebar .profile .ag-profile-summary{grid-area:summary!important;display:flex!important;visibility:visible!important;flex-direction:column!important;justify-content:center!important;align-items:flex-start!important;min-width:0!important;width:auto!important;max-width:100%!important;text-align:left!important;overflow:hidden!important}
+body.ag-profile-mode .sidebar .profile .ag-profile-summary strong,.app-shell .sidebar .profile .ag-profile-summary strong{display:block!important;margin:0 0 2px!important;padding:0!important;color:#eef3f5!important;font:900 9px/1.15 Arial,sans-serif!important;letter-spacing:.2px!important;white-space:nowrap!important}
+body.ag-profile-mode .sidebar .profile .ag-profile-summary span,.app-shell .sidebar .profile .ag-profile-summary span{display:block!important;margin:0!important;padding:0!important;color:#aebfc6!important;font:700 6.5px/1.35 Arial,sans-serif!important;white-space:nowrap!important}
+body.ag-profile-mode .sidebar .profile>strong,body.ag-profile-mode .sidebar .profile>.ag-profile-summary-text,.app-shell .sidebar .profile>strong,.app-shell .sidebar .profile>.ag-profile-summary-text{display:none!important}
+
+body.ag-profile-mode .sidebar .nav,.app-shell .sidebar .nav{display:flex!important;flex-direction:column!important;padding:1px 0 6px!important;gap:2px!important;margin-top:0!important;flex:0 0 auto!important}
+body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{width:100%!important;min-height:24px!important;padding:5px 7px!important;font:700 7px/1.1 Arial,sans-serif!important;letter-spacing:.1px!important;white-space:nowrap!important;box-sizing:border-box!important}
+body.ag-profile-mode .sidebar .nav button:last-child,.app-shell .sidebar .nav button:last-child{margin-bottom:4px!important}
+body.ag-profile-mode .map-area .ag-world-map-logo,.app-shell .map-area .ag-world-map-logo{display:none!important}
+body.ag-profile-mode .bottom{height:23%!important}
+body.ag-profile-mode .sidebar::-webkit-scrollbar,.app-shell .sidebar::-webkit-scrollbar{width:5px}
+
+@media(min-width:1500px){body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{height:68px!important;min-height:68px!important;flex-basis:68px!important}body.ag-profile-mode .sidebar .brand .ag-world-menu-logo,.app-shell .sidebar .brand .ag-world-menu-logo{max-height:62px!important}body.ag-profile-mode .sidebar .profile,.app-shell .sidebar .profile{grid-template-columns:50px minmax(0,1fr)!important;height:62px!important;min-height:62px!important;flex-basis:62px!important}body.ag-profile-mode .sidebar .profile .ag-profile-avatar,.app-shell .sidebar .profile .ag-profile-avatar{width:50px!important;height:50px!important;min-width:50px!important;min-height:50px!important;font-size:20px!important}}
 `;
 function installStyles(){let s=document.getElementById(STYLE_ID);if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}if(s.textContent!==css)s.textContent=css}
 function correctSidebar(){
@@ -66,12 +67,16 @@ function start(){
  installStyles();correctSidebar();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
  const observer=new MutationObserver(()=>{
+  installStyles();
   const s=document.querySelector('.sidebar');if(!s)return;
   const good=!!(s.querySelector('.brand .ag-world-menu-logo')&&s.querySelector('.profile .ag-profile-avatar')&&s.querySelector('.profile .ag-profile-summary'));
   if(!good)correctSidebar();
  });
  /* Important: watch descendants because game-view-mode changes sidebar.innerHTML. The callback is inert once final markup exists, so it cannot loop. */
  observer.observe(document.body,{childList:true,subtree:true});
+ // Defensive health check: later game modules are not allowed to remove the
+ // profile block or its style rules after the sidebar has been normalised.
+ setInterval(()=>{installStyles();correctSidebar();refreshPlayerUI();},1200);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
