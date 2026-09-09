@@ -234,13 +234,13 @@
 
   function install(){
     if(!master){
-      // AG World must always start at the login boundary after a browser refresh.
-      // A persisted browser/Supabase session must never silently reopen the game
-      // as the last player (for example Clint).
+      const active=sessionStorage.getItem(SESSION)==='1' && !!sessionStorage.getItem(ROLE);
+      if(active){
+        window.__AGWORLD_EXPLICIT_AUTH__=true;
+        reveal();
+        return;
+      }
       window.__AGWORLD_EXPLICIT_AUTH__=false;
-      sessionStorage.removeItem(SESSION);
-      sessionStorage.removeItem(ROLE);
-      sessionStorage.removeItem(USER);
       showGate();
       return;
     }
