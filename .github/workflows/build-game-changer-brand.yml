@@ -37,7 +37,13 @@ jobs:
             tmp="$(mktemp --suffix=.svg)"
 
             # Remove the full-canvas background rectangle for transparent PNG output.
-            sed -E 's#<rect width="[0-9]+" height="[0-9]+" fill="(#[0-9A-Fa-f]+|#fff|#FFF|white)"/>##g' "$src" > "$tmp"
+            python3 - "$src" "$tmp" <<'PY'
+import re, sys
+src, dst = sys.argv[1], sys.argv[2]
+data = open(src, encoding='utf-8').read()
+data = re.sub(r'<rect width="[0-9]+" height="[0-9]+" fill="(?:#[0-9A-Fa-f]+|white)"/>', '', data, flags=re.I)
+open(dst, 'w', encoding='utf-8').write(data)
+PY
 
             mkdir -p "$(dirname "$png")" "$(dirname "$jpg")"
 
