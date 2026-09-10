@@ -180,7 +180,7 @@
       important(territoryDrawer,'position','absolute');
       important(territoryDrawer,'left','auto');
       important(territoryDrawer,'top','74px');
-      important(territoryDrawer,'right','14px');
+      important(territoryDrawer,'right','0');
       important(territoryDrawer,'bottom','14px');
       important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round((shellW-leftStage)*0.235)))+'px');
       important(territoryDrawer,'height','auto');
@@ -308,13 +308,16 @@
       filter:none!important;
     }
 
-    /* TERRITORY STATS — tall, narrow strategic side panel on the left. */
+    /* TERRITORY STATS — anchored flush to the FAR RIGHT.
+       The narrow handle stays at the outer screen edge and the panel opens LEFT. */
     .ag-territory-drawer{
       width:clamp(228px,23.5%,272px);
       height:auto;
       display:flex;
+      flex-direction:row-reverse;
       align-items:stretch;
       transition:transform .28s ease,width .28s ease;
+      transform-origin:right center;
       filter:none!important;
     }
     .ag-territory-drawer #territoryStatsDrawerContent{
@@ -340,10 +343,10 @@
       max-height:none!important;
       overflow:auto;
     }
-    .ag-territory-drawer #territoryStatsToggle{width:28px;flex:0 0 28px;border:1px solid rgba(142,181,101,.48);border-right:0;border-radius:10px 0 0 10px;background:#10252c;color:#dce9df;cursor:pointer;padding:7px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .ag-territory-drawer #territoryStatsToggle{width:28px;flex:0 0 28px;border:1px solid rgba(142,181,101,.48);border-left:0;border-radius:0 10px 10px 0;background:#10252c;color:#dce9df;cursor:pointer;padding:7px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
     .ag-territory-toggle-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;font-weight:900;letter-spacing:1px}
     .ag-territory-toggle-arrow{font-size:22px;line-height:1;transition:transform .25s ease}
-    .ag-territory-drawer.collapsed{width:28px}
+    .ag-territory-drawer.collapsed{width:28px!important;right:0!important;left:auto!important}
     .ag-territory-drawer.collapsed #territoryStatsDrawerContent{display:none}
     .ag-territory-drawer.collapsed #territoryStatsToggle{border-right:1px solid rgba(142,181,101,.48);border-radius:10px}
     .ag-territory-drawer.collapsed .ag-territory-toggle-arrow{transform:rotate(180deg)}
