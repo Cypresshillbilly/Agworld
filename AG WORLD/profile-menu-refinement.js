@@ -345,6 +345,8 @@ html body.ag-profile-mode .missions .mission{
 html body.ag-profile-mode .missions .mission.ag-landing-mission{
   display:block!important;
   margin:10px 10px 9px!important;
+  position:relative!important;
+  z-index:5!important;
 }
 html body.ag-profile-mode .missions{
   position:relative!important;
@@ -813,7 +815,11 @@ function start(){
    const hasBrand=!!sidebar.querySelector('.brand .brand-logo');
    const hasMission=!!document.querySelector('.missions #agPlayerMissionProfile');
    const hasAdvisor=!!document.querySelector('#agAdvisorBay');
-   if(hasBrand&&hasMission&&hasAdvisor){
+   const missionCards=Array.from(document.querySelectorAll('.missions .mission'));
+   const hasLandingMission=!!document.querySelector('.missions .mission.ag-landing-mission');
+   // Mission data can arrive after the Advisor Bay. In that case the Bay already
+   // exists, but we still must run the landing-card selection once the cards appear.
+   if(hasBrand&&hasMission&&hasAdvisor&&(!missionCards.length||hasLandingMission)){
     syncAdvisorBayGeometry();
     return;
    }
