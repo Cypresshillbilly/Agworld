@@ -1687,3 +1687,345 @@ html body.ag-premium-mode .missions:before{
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
 })();
+
+
+/* ==========================================================================
+   AG WORLD — UX/UI REFINEMENT SYSTEM v31
+   Implements the agreed product-design pass:
+   1) fixed intelligence-column hierarchy
+   2) stronger readable typography
+   3) current objective as the primary action hierarchy
+   4) distinct advisor identities
+   5) grouped strategic navigation
+   6) restrained tactical micro-interactions
+   ========================================================================== */
+(()=>{
+  const STYLE_ID='agworld-ux-ui-refinement-v31';
+
+  const css=`
+:root{
+  --ag-v31-ink:#f7fbf9;
+  --ag-v31-soft:#c8d9d7;
+  --ag-v31-muted:#91a9a8;
+  --ag-v31-command:#c2e95d;
+  --ag-v31-teal:#1d7d82;
+  --ag-v31-green:#72b84a;
+  --ag-v31-navy:#102b36;
+  --ag-v31-gap:8px;
+  --ag-v31-panel-radius:14px;
+}
+
+/* ------------------------------------------------------------------------
+   INTELLIGENCE COLUMN
+   The Advisor Bay remains the fixed lower boundary. The three information
+   cards above it remain normal-flow cards with deliberate density contrast.
+   ------------------------------------------------------------------------ */
+html body.ag-profile-mode .missions #agPlayerMissionProfile,
+html body.ag-game-mode .missions #agPlayerMissionProfile,
+html body.ag-premium-mode .missions #agPlayerMissionProfile{
+  border-radius:var(--ag-v31-panel-radius)!important;
+  padding:12px!important;
+}
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-game-mode .missions #agMissionSkillProfile,
+html body.ag-premium-mode .missions #agMissionSkillProfile{
+  border-radius:var(--ag-v31-panel-radius)!important;
+  padding:10px 12px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard,
+html body.ag-premium-mode .missions #agLandingMissionCard{
+  border-radius:var(--ag-v31-panel-radius)!important;
+  padding:12px 14px!important;
+}
+
+/* PLAYER — compact identity card, but never miniature text. */
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-kicker,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-kicker,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-kicker{
+  font-size:8.5px!important;line-height:1.2!important;letter-spacing:1.25px!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-name,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-name,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-name{
+  font-size:17px!important;line-height:1.12!important;letter-spacing:.02em!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-role,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-role,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-role{
+  font-size:9px!important;line-height:1.45!important;letter-spacing:.04em!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-chapter,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-chapter,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-chapter{
+  font-size:8px!important;line-height:1.1!important;padding:4px 8px!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-text,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-text,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-xp-text{
+  font-size:8px!important;line-height:1.45!important;
+}
+
+/* SKILL PROFILE — comfortable title hierarchy and readable discipline rows. */
+html body.ag-profile-mode .missions .ag-mission-skill-head span,
+html body.ag-game-mode .missions .ag-mission-skill-head span,
+html body.ag-premium-mode .missions .ag-mission-skill-head span{
+  font-size:8.5px!important;line-height:1.3!important;letter-spacing:1.05px!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head b,
+html body.ag-game-mode .missions .ag-mission-skill-head b,
+html body.ag-premium-mode .missions .ag-mission-skill-head b{
+  font-size:15px!important;line-height:1.15!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div,
+html body.ag-game-mode .missions .ag-mission-skill-list>div,
+html body.ag-premium-mode .missions .ag-mission-skill-list>div{
+  font-size:8.5px!important;line-height:1.25!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div b,
+html body.ag-game-mode .missions .ag-mission-skill-list>div b,
+html body.ag-premium-mode .missions .ag-mission-skill-list>div b{
+  font-size:10px!important;
+}
+
+/* ------------------------------------------------------------------------
+   CURRENT / NEXT MISSION
+   The state and objective lead. The action remains obvious without becoming
+   the dominant visual object.
+   ------------------------------------------------------------------------ */
+html body.ag-profile-mode .missions #agLandingMissionCard .ag-mission-state,
+html body.ag-game-mode .missions #agLandingMissionCard .ag-mission-state,
+html body.ag-premium-mode .missions #agLandingMissionCard .ag-mission-state{
+  display:flex!important;align-items:center!important;gap:6px!important;
+  margin:0 0 4px!important;color:var(--ag-v31-command)!important;
+  font-size:8px!important;line-height:1.2!important;font-weight:900!important;
+  letter-spacing:1.15px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .ag-mission-state::before,
+html body.ag-game-mode .missions #agLandingMissionCard .ag-mission-state::before,
+html body.ag-premium-mode .missions #agLandingMissionCard .ag-mission-state::before{
+  content:""!important;width:7px!important;height:7px!important;border-radius:50%!important;
+  flex:0 0 7px!important;background:var(--ag-v31-green)!important;
+  box-shadow:0 0 0 3px rgba(114,184,74,.10),0 0 12px rgba(194,233,93,.36)!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard strong,
+html body.ag-game-mode .missions #agLandingMissionCard strong,
+html body.ag-premium-mode .missions #agLandingMissionCard strong{
+  font-size:16px!important;line-height:1.18!important;letter-spacing:.01em!important;
+  margin-top:2px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard p,
+html body.ag-game-mode .missions #agLandingMissionCard p,
+html body.ag-premium-mode .missions #agLandingMissionCard p{
+  font-size:9.5px!important;line-height:1.5!important;margin:6px 0!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .reward,
+html body.ag-game-mode .missions #agLandingMissionCard .reward,
+html body.ag-premium-mode .missions #agLandingMissionCard .reward{
+  font-size:8px!important;line-height:1.1!important;padding:5px 8px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard button,
+html body.ag-game-mode .missions #agLandingMissionCard button,
+html body.ag-premium-mode .missions #agLandingMissionCard button{
+  float:right!important;min-height:28px!important;margin-top:-2px!important;
+  font-size:8px!important;padding:6px 9px!important;box-shadow:none!important;
+}
+
+/* ------------------------------------------------------------------------
+   ADVISOR BAY
+   Each discipline gets a recognisable role marker and visual accent while the
+   established 2-over-3 geometry and fixed Command Center alignment remain.
+   ------------------------------------------------------------------------ */
+html body.ag-profile-mode .missions #agAdvisorBay,
+html body.ag-game-mode .missions #agAdvisorBay,
+html body.ag-premium-mode .missions #agAdvisorBay{
+  padding:10px!important;border-radius:var(--ag-v31-panel-radius)!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor{
+  position:relative!important;isolation:isolate!important;overflow:hidden!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor::before,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor::before,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor::before{
+  content:""!important;position:absolute!important;left:0!important;right:0!important;top:0!important;
+  height:3px!important;opacity:.9!important;z-index:1!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="compliance"]::before,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor[data-advisor="compliance"]::before,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor[data-advisor="compliance"]::before{background:#5bb7c5!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"]::before,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"]::before,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"]::before{background:#c2e95d!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="product"]::before,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor[data-advisor="product"]::before,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor[data-advisor="product"]::before{background:#59a9d8!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="operations"]::before,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor[data-advisor="operations"]::before,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor[data-advisor="operations"]::before{background:#d6b85d!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="technical"]::before,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor[data-advisor="technical"]::before,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor[data-advisor="technical"]::before{background:#a98ae8!important}
+
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-role,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-role,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-role{
+  position:absolute!important;right:5px!important;top:6px!important;z-index:3!important;
+  width:17px!important;height:17px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  border-radius:50%!important;background:rgba(4,18,23,.72)!important;border:1px solid rgba(210,239,235,.18)!important;
+  color:#eaf7ef!important;font-size:9px!important;line-height:1!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"] .ag-advisor-role,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"] .ag-advisor-role,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"] .ag-advisor-role{color:#e3f58e!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="compliance"] .hair{border-radius:4px!important;width:26px!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="sales"] .hair{width:32px!important;height:8px!important;border-radius:12px 12px 3px 3px!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="product"] .hair{width:24px!important;border-radius:50%!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="operations"] .body{border-radius:7px 7px 15px 15px!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor[data-advisor="technical"] .body{border-radius:18px 18px 6px 6px!important}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-label,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-label,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-label{
+  font-size:8.2px!important;line-height:1.15!important;letter-spacing:.06em!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor:focus-visible,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor:focus-visible,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor:focus-visible{
+  outline:2px solid var(--ag-v31-command)!important;outline-offset:2px!important;
+}
+
+/* ------------------------------------------------------------------------
+   STRATEGIC NAVIGATION GROUPS
+   Preserves existing elements and click handlers. Group labels are integrated
+   into the first destination of each section, so no wrapper can be destroyed
+   by the existing navigation normaliser.
+   ------------------------------------------------------------------------ */
+.app-shell .sidebar .nav button[data-ag-nav-group-first="true"]{
+  position:relative!important;margin-top:10px!important;padding-top:13px!important;
+  min-height:36px!important;height:36px!important;overflow:visible!important;
+}
+.app-shell .sidebar .nav button[data-ag-nav-group-first="true"]::before{
+  content:attr(data-ag-nav-title)!important;position:absolute!important;left:7px!important;top:3px!important;
+  color:#7f9997!important;font-size:6.5px!important;line-height:1!important;font-weight:900!important;
+  letter-spacing:1.2px!important;pointer-events:none!important;
+}
+.app-shell .sidebar .nav button[data-ag-nav-group="command"]{border-left:2px solid rgba(194,233,93,.48)!important}
+.app-shell .sidebar .nav button[data-ag-nav-group="business"]{border-left:2px solid rgba(29,125,130,.52)!important}
+.app-shell .sidebar .nav button[data-ag-nav-group="intelligence"]{border-left:2px solid rgba(112,169,207,.50)!important}
+.app-shell .sidebar .nav button[data-ag-nav-group="system"]{border-left:2px solid rgba(154,171,169,.40)!important}
+
+/* Restrained tactical motion. */
+@keyframes ag-v31-advisor-idle{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-2px)}}
+@keyframes ag-v31-objective-pulse{0%,100%{opacity:.62;transform:scale(.92)}50%{opacity:1;transform:scale(1.08)}}
+html body:not(.ag-reduce-motion) .missions #agAdvisorBay .ag-advisor:not(:hover):not(.is-active) .ag-advisor-icon{
+  animation:ag-v31-advisor-idle 3.8s ease-in-out infinite!important;
+}
+html body:not(.ag-reduce-motion) .missions #agLandingMissionCard .ag-mission-state::before{
+  animation:ag-v31-objective-pulse 2.6s ease-in-out infinite!important;
+}
+@media (prefers-reduced-motion:reduce){
+  html body .missions #agAdvisorBay .ag-advisor-icon,
+  html body .missions #agLandingMissionCard .ag-mission-state::before{animation:none!important}
+}
+`;
+
+  function install(){
+    let style=document.getElementById(STYLE_ID);
+    if(!style){style=document.createElement('style');style.id=STYLE_ID;document.head.appendChild(style)}
+    if(style.textContent!==css)style.textContent=css;
+  }
+
+  const roleMeta={
+    compliance:{symbol:'⚖',title:'COMPLIANCE ADVISOR'},
+    sales:{symbol:'★',title:'SALES COMMANDER'},
+    product:{symbol:'◆',title:'PRODUCT STRATEGIST'},
+    operations:{symbol:'◈',title:'OPERATIONS DIRECTOR'},
+    technical:{symbol:'⚙',title:'TECHNICAL SPECIALIST'}
+  };
+
+  function decorateMission(){
+    const card=document.getElementById('agLandingMissionCard');
+    if(!card)return;
+    let state=card.querySelector('.ag-mission-state');
+    if(!state){
+      state=document.createElement('div');
+      state.className='ag-mission-state';
+      state.setAttribute('aria-live','polite');
+      const tag=card.querySelector('.tag');
+      if(tag)card.insertBefore(state,tag);else card.prepend(state);
+    }
+    const status=(card.dataset.status||'').toLowerCase();
+    const text=/current|active|in.progress/.test(status)?'CURRENT OBJECTIVE':'NEXT AVAILABLE MISSION';
+    state.textContent=text;
+  }
+
+  function decorateAdvisors(){
+    document.querySelectorAll('#agAdvisorBay .ag-advisor').forEach(button=>{
+      const id=button.dataset.advisor;
+      const meta=roleMeta[id];
+      if(!meta)return;
+      button.setAttribute('title',meta.title);
+      button.setAttribute('aria-label','Open '+meta.title);
+      let badge=button.querySelector('.ag-advisor-role');
+      if(!badge){
+        badge=document.createElement('span');
+        badge.className='ag-advisor-role';
+        badge.setAttribute('aria-hidden','true');
+        button.appendChild(badge);
+      }
+      badge.textContent=meta.symbol;
+    });
+  }
+
+  function groupNavigation(){
+    const nav=document.querySelector('.app-shell .sidebar .nav');
+    if(!nav)return;
+    const buttons=[...nav.querySelectorAll('button')];
+    buttons.forEach(button=>{
+      delete button.dataset.agNavGroupFirst;
+      delete button.dataset.agNavTitle;
+      const label=(button.getAttribute('data-ag-menu-label')||button.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      let group='system',title='SYSTEM';
+      if(/missions|territory campaigns/.test(label)){group='command';title='COMMAND'}
+      else if(/sales funnel|client list|sales products|after sales/.test(label)){group='business';title='BUSINESS'}
+      else if(/ai assistant|territory graphics/.test(label)){group='intelligence';title='INTELLIGENCE'}
+      button.dataset.agNavGroup=group;
+      button.dataset.agNavTitle=title;
+    });
+    const order=['command','business','intelligence','system'];
+    order.forEach(group=>{
+      const first=buttons.find(button=>button.dataset.agNavGroup===group);
+      if(first)first.dataset.agNavGroupFirst='true';
+    });
+  }
+
+  let queued=false;
+  function apply(){
+    queued=false;
+    install();
+    decorateMission();
+    decorateAdvisors();
+    groupNavigation();
+  }
+  function queue(){
+    if(queued)return;
+    queued=true;
+    requestAnimationFrame(apply);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',queue,{once:true});
+  else queue();
+
+  const observer=new MutationObserver(queue);
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('agworld:mission-completed',queue);
+  window.addEventListener('agworld:player-ready',queue);
+  window.addEventListener('agworld:advisor-selected',queue);
+})();
