@@ -7,6 +7,28 @@
   const GUIDE_ID='agWorldSystemGuide';
   const AUDIO_ID='agWorldGuideAudio';
   let welcomeTimer=null;
+  const GUIDE_LIBRARY={
+    welcome:{
+      title:'Welcome to AgWorld.',
+      copy:'I’m your System Guide. I’ll help you understand your missions, your territory and the systems that shape your progress. This player view is your command point. Take a moment to orient yourself, then enter AgWorld when you’re ready to operate on the full map.',
+      audioSrc:'https://storage.googleapis.com/adm--audio-playback--7d--public/mcp-preview/30bcb615-a24a-425b-a9ac-1987e511764e.mp3'
+    },
+    player:{
+      title:'Your Player View.',
+      copy:'Your profile, missions and territory intelligence are brought together here, while the live AgWorld map remains directly beneath the surface. The Command Center gives you a quick operational overview. Use this screen to assess your position before moving into the full game environment.',
+      audioSrc:'https://storage.googleapis.com/adm--audio-playback--7d--public/mcp-preview/fa082a66-d8bd-40a2-b59b-e30b900468a3.mp3'
+    },
+    mission:{
+      title:'Mission Briefing.',
+      copy:'This is where I’ll give you the context behind your objective, explain what matters and point you toward the next decision. Mission briefings will change as your objectives change, so listen carefully before committing resources or moving to the next stage.',
+      audioSrc:'https://storage.googleapis.com/adm--audio-playback--7d--public/mcp-preview/d0d8bc7b-1623-4691-86ef-5dfefb67f98d.mp3'
+    },
+    game:{
+      title:'Entering AgWorld.',
+      copy:'The full territory is now your operational space. Explore the map, inspect the live intelligence around you and use the Command Center as your heads-up display. I’ll remain available whenever you need a briefing or a reminder of what matters next.',
+      audioSrc:'https://storage.googleapis.com/adm--audio-playback--7d--public/mcp-preview/cc3ee80b-d7a5-43e0-9077-eee34a6f6d8c.mp3'
+    }
+  };
 
   const css=`
 #${GUIDE_ID}{position:fixed;left:0;top:0;right:auto;bottom:auto;z-index:2147482000;display:none;align-items:flex-end;gap:12px;pointer-events:none;font-family:Arial,Helvetica,sans-serif}
@@ -29,6 +51,9 @@
 .ag-guide-body{padding:13px 14px 14px}
 .ag-guide-title{margin:0;color:#F4F3ED;font-size:18px;line-height:1.05;letter-spacing:.2px}
 .ag-guide-copy{margin:7px 0 12px;color:#D9DAD5;font-size:11px;line-height:1.5}
+.ag-guide-nav{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 11px}
+.ag-guide-nav button{border:1px solid rgba(244,243,237,.11);border-radius:999px;background:rgba(244,243,237,.045);color:#D9DAD5;padding:5px 8px;font-size:7px;font-weight:900;letter-spacing:.65px;cursor:pointer}
+.ag-guide-nav button.active{border-color:rgba(184,230,32,.5);background:rgba(184,230,32,.12);color:#B8E620}
 .ag-guide-controls{display:flex;align-items:center;gap:7px}
 .ag-guide-play{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:0 12px;border:1px solid rgba(184,230,32,.52);border-radius:8px;background:#0D6A38;color:#F4F3ED;font-size:8px;font-weight:900;letter-spacing:.8px;cursor:pointer}
 .ag-guide-play:hover{background:#0b5a31}
@@ -70,7 +95,13 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         </div>
         <div class="ag-guide-body">
           <h2 class="ag-guide-title">Welcome to AgWorld.</h2>
-          <p class="ag-guide-copy">Your interactive guide is ready. Welcome briefings, mission introductions and future system updates will appear here without changing the AgWorld map or game layer.</p>
+          <p class="ag-guide-copy"></p>
+          <div class="ag-guide-nav" aria-label="Guide sections">
+            <button type="button" data-guide-section="welcome">WELCOME</button>
+            <button type="button" data-guide-section="player">PLAYER VIEW</button>
+            <button type="button" data-guide-section="mission">MISSIONS</button>
+            <button type="button" data-guide-section="game">AGWORLD</button>
+          </div>
           <div class="ag-guide-controls">
             <button class="ag-guide-play" type="button"><span>▶</span><span>PLAY BRIEFING</span></button>
             <button class="ag-guide-minimise" type="button">MINIMISE</button>
@@ -107,53 +138,70 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       reopen.style.right='auto';
       reopen.style.bottom='auto';
     };
-    const show=()=>{placeGuide();root.classList.add('show');reopen.classList.remove('show');};
-    const hide=()=>{root.classList.remove('show');reopen.classList.add('show');};
-    root.querySelector('.ag-guide-hologram').addEventListener('click',show);
+    root.querySelector('.ag-guide-hologram').addEventListener('click',showGuide);
     window.addEventListener('resize',placeGuide);
     window.addEventListener('agworld:game-mode-changed',()=>setTimeout(placeGuide,80));
-    root.querySelector('.ag-guide-close').addEventListener('click',hide);
-    root.querySelector('.ag-guide-minimise').addEventListener('click',hide);
-    reopen.addEventListener('click',show);
+    root.querySelector('.ag-guide-close').addEventListener('click',hideGuide);
+    root.querySelector('.ag-guide-minimise').addEventListener('click',hideGuide);
+    reopen.addEventListener('click',showGuide);
+
+    let currentSection='welcome';
+    const playButton=root.querySelector('.ag-guide-play');
+
+    const setSection=(key,{show=true,autoplay=false}={})=>{
+      const section=GUIDE_LIBRARY[key]||GUIDE_LIBRARY.welcome;
+      currentSection=GUIDE_LIBRARY[key]?key:'welcome';
+      window.speechSynthesis?.cancel();
+      audio.pause();
+      audio.currentTime=0;
+      root.querySelector('.ag-guide-title').textContent=section.title;
+      root.querySelector('.ag-guide-copy').textContent=section.copy;
+      if(section.audioSrc){
+        audio.src=section.audioSrc;
+        window.AG_WORLD_GUIDE_AUDIO_SRC=section.audioSrc;
+      }
+      root.querySelectorAll('[data-guide-section]').forEach(btn=>{
+        btn.classList.toggle('active',btn.dataset.guideSection===currentSection);
+      });
+      playButton.lastElementChild.textContent='PLAY BRIEFING';
+      if(show) showGuide();
+      if(autoplay) setTimeout(()=>playButton.click(),80);
+    };
+
+    const showGuide=()=>{placeGuide();root.classList.add('show');reopen.classList.remove('show');};
+    const hideGuide=()=>{root.classList.remove('show');reopen.classList.add('show');};
+
+    root.querySelectorAll('[data-guide-section]').forEach(btn=>{
+      btn.addEventListener('click',()=>setSection(btn.dataset.guideSection));
+    });
 
     root.querySelector('.ag-guide-play').addEventListener('click',async()=>{
       const src=audio.getAttribute('src')||window.AG_WORLD_GUIDE_AUDIO_SRC;
       if(!src){
-        // Temporary browser-speech fallback until the recorded voice asset is wired in.
-        if(!('speechSynthesis' in window)){
-          root.querySelector('.ag-guide-copy').textContent='The briefing voice file is not connected yet.';
-          return;
-        }
-        const play=root.querySelector('.ag-guide-play');
-        const copy=root.querySelector('.ag-guide-copy').textContent;
-        if(window.speechSynthesis.speaking){
-          window.speechSynthesis.cancel();
-          play.lastElementChild.textContent='PLAY BRIEFING';
-          return;
-        }
-        const utterance=new SpeechSynthesisUtterance('Welcome to AgWorld. '+copy);
-        utterance.rate=.96;
-        utterance.pitch=.98;
-        utterance.onend=()=>{play.lastElementChild.textContent='PLAY BRIEFING';};
-        utterance.onerror=()=>{play.lastElementChild.textContent='PLAY BRIEFING';};
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-        play.lastElementChild.textContent='STOP BRIEFING';
+        root.querySelector('.ag-guide-copy').textContent='This briefing is not connected to an AI voice track yet.';
         return;
       }
       if(audio.paused){
-        try{await audio.play();root.querySelector('.ag-guide-play').lastElementChild.textContent='PAUSE BRIEFING';}
-        catch(err){root.querySelector('.ag-guide-copy').textContent='Audio is ready but the browser blocked playback. Click PLAY BRIEFING again.';}
+        try{
+          await audio.play();
+          playButton.lastElementChild.textContent='PAUSE BRIEFING';
+        }catch(err){
+          root.querySelector('.ag-guide-copy').textContent='Click PLAY BRIEFING again to start the AI voice.';
+          playButton.lastElementChild.textContent='PLAY BRIEFING';
+        }
       }else{
-        audio.pause();root.querySelector('.ag-guide-play').lastElementChild.textContent='PLAY BRIEFING';
+        audio.pause();
+        playButton.lastElementChild.textContent='PLAY BRIEFING';
       }
     });
 
     audio.addEventListener('ended',()=>{const b=root.querySelector('.ag-guide-play');if(b) b.lastElementChild.textContent='PLAY BRIEFING';});
 
+    setSection('welcome',{show:false});
     window.AG_WORLD_GUIDE={
-      show,
-      hide,
+      show:showGuide,
+      hide:hideGuide,
+      select(section,options){setSection(section,options||{});},
       setAudioSource(src){
         if(!src) return false;
         audio.src=src;
@@ -167,7 +215,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
           audio.src=audioSrc;
           window.AG_WORLD_GUIDE_AUDIO_SRC=audioSrc;
         }
-        if(show) root.classList.add('show');
+        if(show) showGuide();
       },
       briefMission({title,copy,audioSrc}={}){
         if(title) root.querySelector('.ag-guide-title').textContent=title;
@@ -176,8 +224,10 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
           audio.src=audioSrc;
           window.AG_WORLD_GUIDE_AUDIO_SRC=audioSrc;
         }
-        show();
+        showGuide();
       },
+      sections:GUIDE_LIBRARY,
+      current(){return currentSection;},
       stopBriefing(){
         window.speechSynthesis?.cancel();
         audio.pause();
@@ -205,8 +255,18 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
 
     window.addEventListener('agworld:ui-shell-ready',syncVisibility);
     window.addEventListener('load',syncVisibility);
-    new MutationObserver(syncVisibility).observe(document.body,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(()=>{
+      syncVisibility();
+      if(document.body.classList.contains('ag-full-game-mode') && window.AG_WORLD_GUIDE?.current?.()!=='game'){
+        window.AG_WORLD_GUIDE.select('game',{show:true,autoplay:false});
+      }
+    }).observe(document.body,{attributes:true,attributeFilter:['class']});
+
     syncVisibility();
+    if((document.body.classList.contains('ag-profile-mode')||document.body.classList.contains('ag-game-mode')) && !sessionStorage.getItem(STATE_KEY)){
+      sessionStorage.setItem(STATE_KEY,'1');
+      setTimeout(()=>window.AG_WORLD_GUIDE?.select('welcome',{show:true,autoplay:false}),250);
+    }
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
