@@ -389,7 +389,7 @@ body .missions{
 
     /* Last safety calculation preserves the protected Bay even if late CSS
        changes alter a card's intrinsic box sizing. */
-    const missionMax=Math.max(MIN_MISSION_H,bayTop-gap-missionTop);
+    const missionMax=Math.max(0,bayTop-gap-missionTop);
     missionH=Math.min(missionH,missionMax);
 
     setGeometry(missions,{
