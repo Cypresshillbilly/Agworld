@@ -1488,6 +1488,37 @@
 })();
 
 
+/* AG World v37 Territory Stats vertical side-panel composition. */
+(function(){
+  const style=document.createElement('style');
+  style.id='agworldTerritoryStatsVerticalComposition';
+  style.textContent=
+    /* The tall drawer is a vertical composition, not the former horizontal dashboard. */
+    '#territoryInfoPanel.agworld-territory-command-panel{overflow:hidden!important}'+
+    '#territoryInfoPanel .territory-national-layout{display:flex!important;flex-direction:column!important;height:100%!important;min-height:100%!important;overflow:hidden!important}'+
+    '#territoryInfoPanel .territory-national-left{display:flex!important;flex-direction:column!important;flex:0 0 auto!important;border-right:0!important;border-bottom:1px solid rgba(126,167,148,.20)!important}'+
+    '#territoryInfoPanel .territory-national-right{display:flex!important;flex:1 1 auto!important;min-height:0!important;padding:10px 12px 12px!important;overflow:hidden!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-header{margin:12px 14px 0!important;padding-bottom:9px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-name{font-size:14px!important;line-height:1.15!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-control{margin:9px 14px 0!important;padding:11px 12px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-control-value{font-size:34px!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-progress{margin:8px 14px 0!important}'+
+    '#territoryInfoPanel .territory-national-left .territory-info-legend{margin:8px 14px 12px!important;display:grid!important;grid-template-columns:1fr!important;gap:5px!important;white-space:normal!important;font-size:8px!important}'+
+    /* Use the full vertical space for five stacked, high-legibility stat tiles. */
+    '#territoryInfoPanel .territory-national-right .territory-info-grid{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(5,minmax(0,1fr))!important;gap:8px!important;width:100%!important;height:100%!important;margin:0!important;padding:0!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid>div{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;min-width:0!important;min-height:0!important;padding:10px 12px!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid strong{font-size:24px!important;line-height:1!important;flex:0 0 auto!important}'+
+    '#territoryInfoPanel .territory-national-right .territory-info-grid span{margin:0!important;text-align:right!important;font-size:8px!important;line-height:1.2!important;letter-spacing:1px!important;max-width:58%!important}'+
+    '#territoryInfoPanel .territory-national-scope{background:linear-gradient(145deg,rgba(39,104,62,.32),rgba(12,27,20,.92))!important;border-color:rgba(126,224,145,.30)!important}'+
+    /* Selected territory layouts inherit the same vertical rhythm. */
+    '#territoryInfoPanel:not(:has(.territory-national-layout)) .territory-info-grid{grid-template-columns:1fr!important;grid-template-rows:none!important;gap:8px!important;margin:10px 12px 14px!important}'+
+    '#territoryInfoPanel:not(:has(.territory-national-layout)) .territory-info-grid>div{display:flex!important;align-items:center!important;justify-content:space-between!important;padding:11px 12px!important}'+
+    '#territoryInfoPanel:not(:has(.territory-national-layout)) .territory-info-grid strong{font-size:23px!important}'+
+    '#territoryInfoPanel:not(:has(.territory-national-layout)) .territory-info-grid span{margin-top:0!important;text-align:right!important;max-width:60%!important}';
+  document.head.appendChild(style);
+})();
+
+
 /* AG World v36 National Territory two-column layout. */
 (function(){
   const style=document.createElement('style');
