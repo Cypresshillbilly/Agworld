@@ -118,6 +118,42 @@ body.ag-profile-mode .bottom{height:23%!important}
   body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{height:24px!important;min-height:24px!important;flex-basis:24px!important;font-size:8.4px!important}
   body.ag-profile-mode .missions .ag-player-mission-profile,.app-shell .missions .ag-player-mission-profile{min-height:108px!important;grid-template-columns:74px minmax(0,1fr)!important}
   body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-avatar,.app-shell .missions .ag-player-mission-profile .ag-player-avatar{width:72px!important;height:72px!important;min-width:72px!important;min-height:72px!important;font-size:29px!important}
+/* === AGWORLD HERO IDENTITY CARD — FINAL VISUAL PASS === */
+html body.ag-profile-mode .sidebar .brand,html body.ag-game-mode .sidebar .brand,html body.ag-premium-mode .sidebar .brand,html body.ag-profile-mode .app-shell .sidebar .brand{
+  height:var(--ag-hero-header-h)!important;min-height:var(--ag-hero-header-h)!important;flex-basis:var(--ag-hero-header-h)!important;
+  margin:0!important;padding:8px 6px 10px!important;overflow:visible!important;background:none!important;background-image:none!important;position:relative!important;z-index:10!important;
+}
+html body.ag-profile-mode .sidebar .brand .brand-logo,html body.ag-game-mode .sidebar .brand .brand-logo,html body.ag-premium-mode .sidebar .brand .brand-logo,html body.ag-profile-mode .app-shell .sidebar .brand .brand-logo{
+  display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;object-position:center center!important;visibility:visible!important;opacity:1!important;clip-path:none!important;transform:none!important;
+  filter:drop-shadow(0 5px 10px rgba(0,0,0,.32))!important;
+}
+html body.ag-profile-mode .missions .ag-player-mission-profile,html body.ag-game-mode .missions .ag-player-mission-profile,html body.ag-profile-mode .app-shell .missions .ag-player-mission-profile{
+  display:block!important;width:calc(100% - 12px)!important;height:var(--ag-hero-header-h)!important;min-height:var(--ag-hero-header-h)!important;margin:0 6px 10px!important;padding:8px!important;
+  overflow:visible!important;border:1px solid rgba(170,207,214,.42)!important;border-radius:16px!important;
+  background:radial-gradient(circle at 87% 10%,rgba(189,228,77,.17),transparent 34%),radial-gradient(circle at 8% 92%,rgba(52,166,181,.18),transparent 38%),linear-gradient(145deg,#193943 0%,#102933 48%,#0a1d26 100%)!important;
+  box-shadow:0 14px 26px rgba(0,0,0,.30),inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.28)!important;position:relative!important;isolation:isolate!important;
+}
+html body.ag-profile-mode .missions .ag-player-mission-profile:before,html body.ag-game-mode .missions .ag-player-mission-profile:before{content:""!important;position:absolute!important;inset:5px!important;border-radius:12px!important;border:1px solid rgba(188,231,90,.12)!important;pointer-events:none!important;z-index:-1!important}
+html body.ag-profile-mode .missions .ag-player-identity,html body.ag-game-mode .missions .ag-player-identity{display:grid!important;grid-template-columns:74px minmax(0,1fr)!important;gap:10px!important;align-items:center!important;width:100%!important;height:100%!important}
+html body.ag-profile-mode .missions .ag-player-avatar-frame,html body.ag-game-mode .missions .ag-player-avatar-frame{width:70px!important;height:70px!important;align-self:center!important;justify-self:center!important;border-radius:50%!important;padding:4px!important;box-sizing:border-box!important;position:relative!important;background:linear-gradient(145deg,#d7f06a,#6c9b32 38%,#4ab2bb 76%,#1b3742)!important;box-shadow:0 0 0 2px rgba(7,20,26,.8),0 8px 18px rgba(0,0,0,.34),0 0 18px rgba(183,225,81,.18)!important}
+html body.ag-profile-mode .missions .ag-player-avatar,html body.ag-game-mode .missions .ag-player-avatar{width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;border:0!important;outline:0!important;border-radius:50%!important;background:radial-gradient(circle at 35% 28%,#87a9b2 0%,#426773 28%,#1a3642 58%,#091b24 82%)!important;color:#f7fbf0!important;font:900 32px/1 Arial,sans-serif!important;letter-spacing:-1px!important;text-shadow:0 3px 8px rgba(0,0,0,.72)!important}
+html body.ag-profile-mode .missions .ag-player-online-dot,html body.ag-game-mode .missions .ag-player-online-dot{position:absolute!important;right:2px!important;bottom:4px!important;width:13px!important;height:13px!important;border-radius:50%!important;background:#bde950!important;border:2px solid #10262f!important;box-shadow:0 0 10px rgba(189,233,80,.75)!important}
+html body.ag-profile-mode .missions .ag-player-summary,html body.ag-game-mode .missions .ag-player-summary{display:flex!important;min-width:0!important;height:100%!important;justify-content:center!important;gap:3px!important}
+html body.ag-profile-mode .missions .ag-player-kicker,html body.ag-game-mode .missions .ag-player-kicker{display:block!important;color:#c5ea68!important;font:900 7px/1 Arial,sans-serif!important;letter-spacing:1.35px!important}
+html body.ag-profile-mode .missions .ag-player-name,html body.ag-game-mode .missions .ag-player-name{display:block!important;color:#f7fbf8!important;font:900 15px/1.05 Arial,sans-serif!important;letter-spacing:.55px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html body.ag-profile-mode .missions .ag-player-role,html body.ag-game-mode .missions .ag-player-role{display:block!important;color:#8fb0b8!important;font:800 6.5px/1.15 Arial,sans-serif!important;letter-spacing:.75px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+html body.ag-profile-mode .missions .ag-player-meta,html body.ag-game-mode .missions .ag-player-meta{display:flex!important;gap:5px!important;align-items:center!important}
+html body.ag-profile-mode .missions .ag-player-level,html body.ag-game-mode .missions .ag-player-level,html body.ag-profile-mode .missions .ag-player-chapter,html body.ag-game-mode .missions .ag-player-chapter{display:inline-flex!important;width:auto!important;align-items:center!important;padding:3px 6px!important;border-radius:999px!important;font:900 7px/1 Arial,sans-serif!important;letter-spacing:.55px!important;white-space:nowrap!important}
+html body.ag-profile-mode .missions .ag-player-level,html body.ag-game-mode .missions .ag-player-level{color:#11251c!important;background:#c4e85a!important;box-shadow:0 2px 6px rgba(190,232,90,.18)!important}
+html body.ag-profile-mode .missions .ag-player-chapter,html body.ag-game-mode .missions .ag-player-chapter{color:#b9d9df!important;background:rgba(98,158,171,.18)!important;border:1px solid rgba(117,183,196,.25)!important}
+html body.ag-profile-mode .missions .ag-player-xp-label,html body.ag-game-mode .missions .ag-player-xp-label{display:flex!important;justify-content:space-between!important;align-items:center!important;color:#8ea8af!important;font:900 6px/1 Arial,sans-serif!important;letter-spacing:.7px!important}
+html body.ag-profile-mode .missions .ag-player-xp-label b,html body.ag-game-mode .missions .ag-player-xp-label b{color:#d7f27a!important;font-size:7px!important}
+html body.ag-profile-mode .missions .ag-player-xp-track,html body.ag-game-mode .missions .ag-player-xp-track{display:block!important;width:100%!important;height:7px!important;margin:0!important;border:1px solid rgba(167,203,210,.22)!important;background:#07141a!important;box-shadow:inset 0 2px 4px rgba(0,0,0,.62)!important}
+html body.ag-profile-mode .missions .ag-player-xp-fill,html body.ag-game-mode .missions .ag-player-xp-fill{background:linear-gradient(90deg,#6e9e2f,#c8ee5d 65%,#e4f7a1)!important;box-shadow:0 0 12px rgba(196,236,90,.52)!important}
+html body.ag-profile-mode .missions .ag-player-xp-text,html body.ag-game-mode .missions .ag-player-xp-text{display:flex!important;justify-content:space-between!important;gap:5px!important;color:#7f9aa2!important;font:800 5.8px/1 Arial,sans-serif!important;letter-spacing:.25px!important}
+html body.ag-profile-mode .missions .ag-player-xp-text b,html body.ag-game-mode .missions .ag-player-xp-text b{color:#a9bdc3!important;font-weight:800!important}
+
 }
 `;
 function installStyles(){let s=document.getElementById(STYLE_ID);if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}if(s.textContent!==css)s.textContent=css}
@@ -166,7 +202,7 @@ function ensureSidebarBrand(s){
  return brand;
 }
 function playerCardHTML(d){
- return '<div class="ag-player-avatar" aria-hidden="true">'+d.initial+'</div><div class="ag-player-summary"><strong class="ag-player-name">'+d.name+'</strong><span class="ag-player-role">AG WORLD PLAYER</span><span class="ag-player-level">Level '+d.level+' · Chapter '+d.chapter+'</span><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' / '+d.next.toLocaleString()+' XP</b><b>'+d.pct+'%</b></span></div>';
+ return '<div class="ag-player-identity"><div class="ag-player-avatar-frame"><div class="ag-player-avatar" aria-hidden="true">'+d.initial+'</div><span class="ag-player-online-dot"></span></div><div class="ag-player-summary"><span class="ag-player-kicker">ACTIVE PLAYER</span><strong class="ag-player-name">'+d.name+'</strong><span class="ag-player-role">AGWORLD FIELD COMMANDER</span><div class="ag-player-meta"><span class="ag-player-level">LVL '+d.level+'</span><span class="ag-player-chapter">CH '+d.chapter+'</span></div><div class="ag-player-xp-label"><span>PROGRESS</span><b>'+d.pct+'%</b></div><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' XP</b><b>NEXT '+d.next.toLocaleString()+'</b></span></div></div>';
 }
 const SIDEBAR_MENU=[
  ['profile','Profile'],
