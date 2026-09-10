@@ -221,8 +221,10 @@
   function purgeLegacySurfaces(){
     // These belonged to superseded dashboard layers and must never sit above
     // the canonical Sales Game shell.
-    ['agControlDashboardButton','agCompanyCommandButton','agControlDashboard','agCompanyCommand']
-      .forEach(id=>document.getElementById(id)?.remove());
+    [
+      'agControlDashboardButton','agCompanyCommandButton','agControlDashboard','agCompanyCommand',
+      'agMenuCompanyCommands','agMenuCompanyControl'
+    ].forEach(id=>document.getElementById(id)?.remove());
     document.querySelectorAll('.ag-db-box,.ag-cc-box').forEach(el=>el.closest('#agControlDashboard,#agCompanyCommand')?.remove());
   }
 
@@ -987,21 +989,10 @@
 (function(){
   const legacyControls=new Map();
 
+  // Canonical Sales Game menu bridge: Company Commands and Company Control
+  // were superseded by the bottom Command Center and Territory Stats. Keep only
+  // Territory Graphics here; do not recreate obsolete menu layers.
   const COMMANDS=[
-    {
-      id:'agMenuCompanyCommands',
-      label:'◈ COMPANY COMMANDS',
-      match:/company commands?/i,
-      selectors:['#agCompanyCommandButton','[data-company-command]','[data-action="company-command"]'],
-      open:()=>window.AGWorldCompany?.open?.()
-    },
-    {
-      id:'agMenuCompanyControl',
-      label:'◉ COMPANY CONTROL',
-      match:/company control/i,
-      selectors:['#agControlDashboardButton','[data-company-control]','[data-action="company-control"]'],
-      open:()=>window.AGWorldControlDashboard?.open?.()
-    },
     {
       id:'agMenuTerritoryGraphics',
       label:'◇ TERRITORY GRAPHICS',
