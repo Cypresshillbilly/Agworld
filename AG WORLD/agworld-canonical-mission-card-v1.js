@@ -273,19 +273,6 @@
     window.addEventListener('agworld:player-ready',queue);
     window.addEventListener('agworld:canonical-mission-action',queue);
 
-    const observer=new MutationObserver(mutations=>{
-      for(const mutation of mutations){
-        if(mutation.type==='childList'){
-          const missions=document.querySelector('.missions');
-          if(missions&&(mutation.target===missions||missions.contains(mutation.target)||mutation.target.contains?.(missions))){
-            queue();
-            break;
-          }
-        }
-      }
-    });
-    observer.observe(document.documentElement,{childList:true,subtree:true});
-
     setInterval(()=>{
       const card=document.getElementById(CARD_ID);
       if(!card||!card.isConnected||!card.closest('.missions'))queue();
