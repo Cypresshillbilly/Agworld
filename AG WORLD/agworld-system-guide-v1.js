@@ -42,7 +42,7 @@
 .ag-guide-ring{position:absolute;left:50%;bottom:7px;width:122px;height:24px;transform:translateX(-50%);border:1px solid rgba(184,230,32,.58);border-radius:50%;box-shadow:0 0 20px rgba(184,230,32,.22);animation:agGuidePulse 2.2s ease-in-out infinite}
 .ag-guide-ring:before{content:'';position:absolute;inset:5px 12px;border:1px solid rgba(13,106,56,.78);border-radius:50%}
 .ag-guide-label{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);white-space:nowrap;color:#F4F3ED;font-size:8px;font-weight:900;letter-spacing:1.3px;text-shadow:0 2px 7px rgba(0,0,0,.7)}
-.ag-guide-card{width:min(360px,calc(100vw - 190px));pointer-events:auto;border:1px solid rgba(184,230,32,.32);border-radius:14px;background:linear-gradient(145deg,rgba(11,44,32,.97),rgba(7,28,22,.97));color:#F4F3ED;box-shadow:0 20px 46px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08);overflow:hidden;transform-origin:bottom right}
+.ag-guide-card{width:min(360px,calc(100vw - 190px));pointer-events:auto;transition:opacity .2s ease,transform .24s ease;border:1px solid rgba(184,230,32,.32);border-radius:14px;background:linear-gradient(145deg,rgba(11,44,32,.97),rgba(7,28,22,.97));color:#F4F3ED;box-shadow:0 20px 46px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08);overflow:hidden;transform-origin:bottom right}
 .ag-guide-card-head{display:flex;align-items:center;justify-content:space-between;padding:11px 13px 9px;border-bottom:1px solid rgba(244,243,237,.08)}
 .ag-guide-eyebrow{color:#B8E620;font-size:8px;font-weight:900;letter-spacing:1.4px}
 .ag-guide-status{display:inline-flex;align-items:center;gap:5px;color:#D9DAD5;font-size:7px;font-weight:800;letter-spacing:.8px}
@@ -66,6 +66,9 @@
 .ag-guide-play:hover{background:#0b5a31}
 .ag-guide-minimise{margin-left:auto;border:0;background:transparent;color:#D9DAD5;font-size:8px;font-weight:800;letter-spacing:.5px;cursor:pointer}
 .ag-guide-reopen{position:fixed;right:18px;bottom:18px;z-index:2147481999;display:none;width:42px;height:42px;border-radius:50%;border:1px solid rgba(184,230,32,.55);background:#0B2C20;color:#B8E620;box-shadow:0 10px 25px rgba(0,0,0,.28),0 0 18px rgba(184,230,32,.16);font-size:17px;cursor:pointer}
+#${GUIDE_ID}.avatar-only .ag-guide-card{display:none}
+#${GUIDE_ID}.avatar-only{pointer-events:none}
+#${GUIDE_ID}.avatar-only .ag-guide-hologram{pointer-events:auto}
 .ag-guide-reopen.show{display:block}
 /* Guide sits in the open map space below the territory summary and alongside the My Missions pull-tab. */
 /* The System Guide belongs in the upper-left open space of the live map, directly beneath the map controls. It is positioned from the actual map rectangle in JS, so it remains correct in both Player View and full-screen AgWorld mode. */
@@ -98,7 +101,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
             <div class="ag-guide-eyebrow">AGWORLD SYSTEM GUIDE</div>
             <div class="ag-guide-status"><i></i><span>LINK ACTIVE</span></div>
           </div>
-          <button class="ag-guide-close" type="button" aria-label="Close">×</button>
+          <button class="ag-guide-close" type="button" aria-label="Close conversation bubble">×</button>
         </div>
         <div class="ag-guide-body">
           <h2 class="ag-guide-title">Welcome to AgWorld.</h2>
@@ -151,14 +154,19 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       reopen.style.right='auto';
       reopen.style.bottom='auto';
     };
-    const showGuide=()=>{placeGuide();root.classList.add('show');reopen.classList.remove('show');};
-    const hideGuide=()=>{root.classList.remove('show');reopen.classList.add('show');};
-    root.querySelector('.ag-guide-hologram').addEventListener('click',showGuide);
+    const openFullGuide=()=>{placeGuide();root.classList.remove('avatar-only');root.classList.add('show');reopen.classList.remove('show');};
+    const showAvatarOnly=()=>{placeGuide();root.classList.add('show','avatar-only');reopen.classList.remove('show');};
+    const collapseGuide=()=>{root.classList.remove('show','avatar-only');reopen.classList.add('show');};
+    root.querySelector('.ag-guide-hologram').addEventListener('click',()=>{
+      if(root.classList.contains('avatar-only')) openFullGuide();
+    });
     window.addEventListener('resize',placeGuide);
     window.addEventListener('agworld:game-mode-changed',()=>setTimeout(placeGuide,80));
-    root.querySelector('.ag-guide-close').addEventListener('click',hideGuide);
-    root.querySelector('.ag-guide-minimise').addEventListener('click',hideGuide);
-    reopen.addEventListener('click',showGuide);
+    // Three-layer interaction:
+    // 1) collapsed icon -> 2) avatar-only -> 3) avatar + conversation bubble.
+    root.querySelector('.ag-guide-close').addEventListener('click',showAvatarOnly);
+    root.querySelector('.ag-guide-minimise').addEventListener('click',collapseGuide);
+    reopen.addEventListener('click',showAvatarOnly);
 
     const GUIDE_SEQUENCE=['welcome','player','mission','game'];
     let currentSection='welcome';
@@ -195,7 +203,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       previousButton.disabled=sequenceIndex===0;
       nextButton.textContent=sequenceIndex===GUIDE_SEQUENCE.length-1?'FINISH':'NEXT';
       resetPlaybackUI();
-      if(show) showGuide();
+      if(show) openFullGuide();
       if(autoplay) setTimeout(()=>playButton.click(),80);
     };
 
@@ -210,7 +218,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     nextButton.addEventListener('click',()=>{
       const index=GUIDE_SEQUENCE.indexOf(currentSection);
       if(index>=GUIDE_SEQUENCE.length-1){
-        hideGuide();
+        showAvatarOnly();
         return;
       }
       setSection(GUIDE_SEQUENCE[index+1]);
@@ -250,8 +258,9 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
 
     setSection('welcome',{show:false});
     window.AG_WORLD_GUIDE={
-      show:showGuide,
-      hide:hideGuide,
+      show:openFullGuide,
+      showAvatar:showAvatarOnly,
+      hide:collapseGuide,
       select(section,options){setSection(section,options||{});},
       setAudioSource(src){
         if(!src) return false;
@@ -266,7 +275,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
           audio.src=audioSrc;
           window.AG_WORLD_GUIDE_AUDIO_SRC=audioSrc;
         }
-        if(show) showGuide();
+        if(show) openFullGuide();
       },
       briefMission({title,copy,audioSrc}={}){
         if(title) root.querySelector('.ag-guide-title').textContent=title;
@@ -300,8 +309,8 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
                    document.body.classList.contains('ag-game-mode') ||
                    document.body.classList.contains('ag-full-game-mode');
       const guide=window.AG_WORLD_GUIDE;
-      if(active && guide) guide.show();
-      else root.classList.remove('show');
+      if(active && guide && !reopen.classList.contains('show')) guide.showAvatar();
+      else if(!active) root.classList.remove('show','avatar-only');
     };
 
     window.addEventListener('agworld:ui-shell-ready',syncVisibility);
