@@ -318,6 +318,155 @@
     rgba(244,243,237,.04)!important;
 }
 
+
+/* ABSOLUTE VISUAL FAMILY LOCK — match the approved Player / Skill / Mission cards.
+   This intentionally uses the exact teal surface construction already approved
+   on the left, rather than the saturated Growth Green treatment. */
+:root{
+  --ag-approved-card-1:#1a4650;
+  --ag-approved-card-2:#123640;
+  --ag-approved-card-3:#0d2831;
+  --ag-approved-border:rgba(81,157,124,.48);
+  --ag-approved-text:#f6fbf7;
+  --ag-approved-muted:#c8d7d3;
+}
+
+/* TERRITORY STATS: same teal floating card, not a green dashboard slab. */
+#territoryStatsDrawer,
+#territoryStatsDrawer.ag-territory-drawer,
+#territoryStatsDrawerContent{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:14px!important;
+}
+#territoryInfoPanel,
+#territoryInfoPanel.show,
+#territoryInfoPanel.agworld-territory-command-panel{
+  background:linear-gradient(145deg,var(--ag-approved-card-1),var(--ag-approved-card-2) 62%,var(--ag-approved-card-3))!important;
+  border:1px solid var(--ag-approved-border)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  box-shadow:0 10px 22px rgba(13,40,47,.18),inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+#territoryInfoPanel .agworld-territory-stats-heading,
+#territoryInfoPanel .territory-info-header{
+  background:transparent!important;
+  border-radius:0!important;
+  border-bottom:1px solid rgba(176,210,198,.16)!important;
+}
+#territoryInfoPanel .territory-info-grid>div,
+#territoryInfoPanel .territory-national-scope,
+#territoryInfoPanel .territory-info-empty,
+#territoryInfoPanel .territory-info-control,
+#territoryInfoPanel .territory-info-footer{
+  background:rgba(255,255,255,.055)!important;
+  border:1px solid rgba(176,210,198,.16)!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;
+}
+#territoryStatsToggle{
+  background:linear-gradient(145deg,var(--ag-approved-card-1),var(--ag-approved-card-2) 62%,var(--ag-approved-card-3))!important;
+  border:1px solid var(--ag-approved-border)!important;
+  border-radius:12px!important;
+  color:var(--ag-approved-text)!important;
+  box-shadow:0 10px 22px rgba(13,40,47,.15),inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+#territoryInfoPanel .territory-info-level,
+#territoryInfoPanel .territory-info-footer,
+#territoryInfoPanel .territory-info-grid span{color:var(--ag-approved-muted)!important}
+#territoryInfoPanel .territory-info-name,
+#territoryInfoPanel .territory-info-grid strong{color:#fff!important}
+#territoryInfoPanel .territory-info-control-value,
+#territoryStatsToggle .ag-territory-toggle-arrow{color:#c2e95d!important}
+
+/* COMMAND CENTER: remove the full-width dark slab. The warm-white field is
+   the stage; heading and command content are separate rounded floating cards. */
+#entityInformationSection,
+#entityInformationSection.bottom-game-panel,
+#entityInformationSection.entity-game-panel{
+  background:#F4F3ED!important;
+  border:0!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:8px!important;
+}
+#entityCommandCentreHeading,
+#entityInformationSection>#entityCommandCentreHeading,
+#entityInformationSection>#entityCommandCentreHeading.agworld-command-center-heading-exact{
+  flex:0 0 auto!important;
+  width:100%!important;
+  min-height:38px!important;
+  height:38px!important;
+  margin:0!important;
+  padding:0 14px!important;
+  box-sizing:border-box!important;
+  background:linear-gradient(145deg,var(--ag-approved-card-1),var(--ag-approved-card-2) 62%,var(--ag-approved-card-3))!important;
+  border:1px solid var(--ag-approved-border)!important;
+  border-radius:14px!important;
+  color:var(--ag-approved-text)!important;
+  box-shadow:0 10px 22px rgba(13,40,47,.15),inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+#entityCommandCentreHeading .agworld-command-center-label,
+#entityCommandCentreHeading .agworld-command-center-label-exact{color:#fff!important}
+#entityCommandCentreHeading .agworld-command-center-live,
+#entityCommandCentreHeading .agworld-command-center-live-exact{
+  background:rgba(194,233,93,.10)!important;
+  border:1px solid rgba(194,233,93,.22)!important;
+  border-radius:999px!important;
+  color:#c2e95d!important;
+}
+
+/* The actual command surface is one rounded teal card sitting inside the white
+   stage — never edge-to-edge, never square. */
+#entityInformationSection #farmCard,
+#entityInformationSection #farmCard.farm-card,
+#entityInformationSection .farm-card,
+#entityInformationSection .agworld-company-entity-card,
+#entityInformationSection .agworld-entity-command-interface{
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  background:linear-gradient(145deg,var(--ag-approved-card-1),var(--ag-approved-card-2) 62%,var(--ag-approved-card-3))!important;
+  border:1px solid var(--ag-approved-border)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  box-shadow:0 10px 22px rgba(13,40,47,.15),inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+#entityInformationSection #farmCard .company-command-split,
+#entityInformationSection .agworld-company-entity-card .company-command-split{
+  background:transparent!important;
+}
+#entityInformationSection .company-command-stats-pane,
+#entityInformationSection .company-command-right-pane,
+#entityInformationSection .company-command-facility-side,
+#entityInformationSection .company-command-skills-pane,
+#entityInformationSection .company-skill-chart-expanded,
+#entityInformationSection .company-skill-chart-main,
+#entityInformationSection .company-skill-visual,
+#entityInformationSection .company-command-kpis>div,
+#entityInformationSection .company-stats-summary>div,
+#entityInformationSection .company-facility-row,
+#entityInformationSection #farmCard .stats,
+#entityInformationSection #farmCard .stat,
+#entityInformationSection #farmCard .farm-extra,
+#entityInformationSection #farmCard .farm-extra>div{
+  background:rgba(255,255,255,.055)!important;
+  border:1px solid rgba(176,210,198,.16)!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;
+}
+#entityInformationSection .company-skill-chart,
+#entityInformationSection .company-skill-chart-expanded,
+#entityInformationSection .company-skill-chart-main,
+#entityInformationSection .company-skill-visual{
+  background:radial-gradient(circle at 50% 45%,rgba(194,233,93,.10),rgba(20,54,62,.20) 58%,rgba(7,25,32,.35))!important;
+}
+
 `;
   function installStyle(){
     document.getElementById(STYLE_ID)?.remove();
