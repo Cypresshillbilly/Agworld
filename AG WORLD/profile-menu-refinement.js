@@ -1,6 +1,6 @@
 /* AG WORLD — Profile menu. Profile Summary ALWAYS stays to the right of the avatar. */
 (()=>{
-const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=menu-logo-official-v2';
+const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Stacked_Vertical.png?v=menu-logo-stacked-readable-v3';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
 :root{--ag-hero-header-h:170px;}
@@ -154,6 +154,107 @@ html body.ag-profile-mode .missions .ag-player-xp-fill,html body.ag-game-mode .m
 html body.ag-profile-mode .missions .ag-player-xp-text,html body.ag-game-mode .missions .ag-player-xp-text{display:flex!important;justify-content:space-between!important;gap:5px!important;color:#7f9aa2!important;font:800 5.8px/1 Arial,sans-serif!important;letter-spacing:.25px!important}
 html body.ag-profile-mode .missions .ag-player-xp-text b,html body.ag-game-mode .missions .ag-player-xp-text b{color:#a9bdc3!important;font-weight:800!important}
 
+/* === AGWORLD MISSION BAR — PREMIUM DRAWER + BRAND SURFACES === */
+html body.ag-profile-mode .missions{
+  background:radial-gradient(circle at 92% 6%,rgba(189,233,80,.13),transparent 26%),radial-gradient(circle at 8% 78%,rgba(67,174,185,.16),transparent 35%),linear-gradient(155deg,#193943 0%,#112d37 48%,#0b2029 100%)!important;
+  border-right:1px solid rgba(138,181,190,.32)!important;
+  box-shadow:12px 0 32px rgba(3,14,18,.18),inset -1px 0 rgba(255,255,255,.06)!important;
+  overflow:visible!important;
+  transition:transform .34s cubic-bezier(.22,.72,.18,1)!important;
+}
+html body.ag-profile-mode .missions:before{
+  content:"MY MISSIONS  •  MISSION CONTROL"!important;
+  position:relative!important;z-index:2!important;
+  display:block!important;margin:0!important;padding:15px 16px 11px!important;
+  color:#eaf3ef!important;border-bottom:1px solid rgba(184,219,224,.16)!important;
+  background:linear-gradient(180deg,rgba(6,20,27,.32),rgba(6,20,27,0))!important;
+  font:900 10px/1 Arial,sans-serif!important;letter-spacing:1.25px!important;
+  cursor:pointer!important;
+}
+html body.ag-profile-mode .missions.ag-missions-collapsed{transform:translateX(calc(-100% + 30px))!important;box-shadow:none!important}
+html body.ag-profile-mode .missions .ag-missions-drawer-handle{
+  position:absolute!important;right:-34px!important;top:184px!important;width:34px!important;height:72px!important;
+  border:1px solid rgba(161,204,210,.34)!important;border-left:0!important;border-radius:0 12px 12px 0!important;
+  background:linear-gradient(180deg,#173842,#0b222b)!important;color:#d8f4e2!important;
+  box-shadow:8px 8px 20px rgba(0,0,0,.22)!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  cursor:pointer!important;z-index:60!important;font:900 9px/1 Arial,sans-serif!important;letter-spacing:.6px!important;
+}
+html body.ag-profile-mode .missions .ag-missions-drawer-handle span{display:block!important;transform:rotate(-90deg)!important;white-space:nowrap!important}
+html body.ag-profile-mode .missions .ag-missions-drawer-handle:after{content:"‹"!important;position:absolute!important;bottom:7px!important;font-size:16px!important;color:#bfe85b!important;transform:none!important}
+html body.ag-profile-mode .missions.ag-missions-collapsed .ag-missions-drawer-handle:after{content:"›"!important}
+
+/* Premium player card sits naturally on the same mission-bar material. */
+html body.ag-profile-mode .missions .ag-player-mission-profile{
+  margin:10px 10px 11px!important;width:calc(100% - 20px)!important;
+}
+
+/* Skill profile: dark command card with AgWorld lime/teal radar treatment. */
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-profile-mode .missions .ag-mission-skill-profile{
+  margin:9px 10px 12px!important;padding:11px!important;border-radius:14px!important;
+  background:linear-gradient(145deg,rgba(22,55,64,.98),rgba(10,29,37,.98))!important;
+  border:1px solid rgba(132,190,197,.28)!important;
+  box-shadow:0 12px 22px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.07)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head{
+  display:flex!important;align-items:flex-start!important;justify-content:space-between!important;
+  padding-bottom:8px!important;margin-bottom:8px!important;border-bottom:1px solid rgba(184,220,224,.13)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head span{
+  display:block!important;color:#91b9c0!important;font:900 6.5px/1 Arial,sans-serif!important;letter-spacing:1.05px!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head b{
+  display:block!important;margin-top:4px!important;color:#f4fbf5!important;font:900 12px/1 Arial,sans-serif!important;letter-spacing:.55px!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head>strong{
+  min-width:32px!important;height:32px!important;border-radius:10px!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  color:#dff58a!important;background:linear-gradient(145deg,rgba(190,232,90,.18),rgba(79,142,57,.18))!important;border:1px solid rgba(190,232,90,.28)!important;
+  font:900 10px/1 Arial,sans-serif!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-body{display:grid!important;grid-template-columns:1.05fr .95fr!important;gap:8px!important;align-items:center!important}
+html body.ag-profile-mode .missions .ag-mission-skill-chart{
+  border-radius:12px!important;padding:5px!important;background:radial-gradient(circle at center,rgba(80,157,170,.13),rgba(5,18,24,.14))!important;
+  border:1px solid rgba(129,190,199,.12)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-chart svg{width:100%!important;height:auto!important;filter:drop-shadow(0 6px 10px rgba(0,0,0,.32))!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list{display:flex!important;flex-direction:column!important;gap:4px!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:5px!important;padding:5px 6px!important;
+  border-radius:7px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(173,216,221,.09)!important;
+  color:#a9c2c8!important;font:800 5.8px/1 Arial,sans-serif!important;letter-spacing:.25px!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div b{color:#cbed6b!important;font:900 8px/1 Arial,sans-serif!important}
+
+/* White mission cards float over the dark branded mission bar. */
+html body.ag-profile-mode .missions .mission{
+  position:relative!important;margin:9px 10px!important;padding:12px 11px 11px!important;border-radius:12px!important;
+  background:linear-gradient(145deg,#ffffff 0%,#f5f8f7 68%,#edf3f2 100%)!important;
+  border:1px solid rgba(203,218,219,.9)!important;
+  box-shadow:0 10px 22px rgba(2,15,20,.18),inset 0 1px 0 #fff!important;
+  overflow:hidden!important;transition:transform .18s ease,box-shadow .18s ease!important;
+}
+html body.ag-profile-mode .missions .mission:before{
+  content:""!important;position:absolute!important;left:0!important;top:0!important;bottom:0!important;width:4px!important;
+  background:linear-gradient(180deg,#c8ee5d,#5aaeb8)!important;
+}
+html body.ag-profile-mode .missions .mission:hover{transform:translateY(-2px)!important;box-shadow:0 14px 26px rgba(2,15,20,.25),inset 0 1px 0 #fff!important}
+html body.ag-profile-mode .missions .mission .tag{color:#4f9c8e!important;font:900 7px/1 Arial,sans-serif!important;letter-spacing:1px!important}
+html body.ag-profile-mode .missions .mission strong{color:#17323a!important;font:900 10px/1.2 Arial,sans-serif!important;padding-right:20px!important}
+html body.ag-profile-mode .missions .mission p{color:#667b80!important;font:600 7px/1.42 Arial,sans-serif!important}
+html body.ag-profile-mode .missions .mission .reward{
+  display:inline-flex!important;align-items:center!important;padding:4px 7px!important;border-radius:999px!important;
+  background:#edf6d6!important;color:#507f27!important;font:900 6.2px/1 Arial,sans-serif!important;
+}
+html body.ag-profile-mode .missions .mission:after{color:#b9d955!important;text-shadow:0 2px 5px rgba(0,0,0,.12)!important}
+
+/* Stacked emblem: vertical artwork gets the full hero band and readable tagline. */
+html body.ag-profile-mode .sidebar .brand,html body.ag-game-mode .sidebar .brand,html body.ag-premium-mode .sidebar .brand{
+  padding:7px 9px 8px!important;background:radial-gradient(circle at 50% 18%,rgba(189,233,80,.10),transparent 46%)!important;
+}
+html body.ag-profile-mode .sidebar .brand .brand-logo,html body.ag-game-mode .sidebar .brand .brand-logo,html body.ag-premium-mode .sidebar .brand .brand-logo{
+  object-fit:contain!important;object-position:center center!important;transform:scale(.94)!important;
+}
+
 }
 `;
 function installStyles(){let s=document.getElementById(STYLE_ID);if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}if(s.textContent!==css)s.textContent=css}
@@ -184,6 +285,27 @@ function ensureMissionsPlayerProfile(){
  else if(!anchor && missions.firstElementChild!==card)missions.prepend(card);
  return card;
 }
+
+function ensureMissionsDrawer(){
+ const missions=document.querySelector('.missions');if(!missions)return;
+ let handle=missions.querySelector('.ag-missions-drawer-handle');
+ if(!handle){
+   handle=document.createElement('button');
+   handle.type='button';handle.className='ag-missions-drawer-handle';
+   handle.setAttribute('aria-label','Toggle My Missions');
+   handle.innerHTML='<span>MY MISSIONS</span>';
+   missions.appendChild(handle);
+ }
+ const toggle=()=>missions.classList.toggle('ag-missions-collapsed');
+ handle.onclick=(e)=>{e.preventDefault();e.stopPropagation();toggle();};
+ const header=missions.querySelector('.eyebrow,h1,.missions-title,.mission-title');
+ if(header&&!header.dataset.agDrawerBound){
+   header.dataset.agDrawerBound='1';
+   header.style.cursor='pointer';
+   header.addEventListener('click',toggle);
+ }
+}
+
 function ensureSidebarBrand(s){
  if(!s)return null;
  let brand=s.querySelector('.brand');
@@ -391,19 +513,20 @@ function refreshPlayerUI(){
  const d=playerData();card.innerHTML=playerCardHTML(d);
 }
 function start(){
- installStyles();correctSidebar();
+ installStyles();correctSidebar();ensureMissionsDrawer();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
  const observer=new MutationObserver(()=>{
   installStyles();
   const s=document.querySelector('.sidebar');if(!s)return;
   const good=!!(s.querySelector('.brand .brand-logo')&&document.querySelector('.missions #agPlayerMissionProfile'));
   if(!good)correctSidebar();
+  ensureMissionsDrawer();
  });
  /* Important: watch descendants because game-view-mode changes sidebar.innerHTML. The callback is inert once final markup exists, so it cannot loop. */
  observer.observe(document.body,{childList:true,subtree:true});
  // Defensive health check: later game modules are not allowed to remove the
  // mission player profile or its style rules after the layout has been normalised.
- setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();refreshPlayerUI();},1200);
+ setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureMissionsDrawer();refreshPlayerUI();},1200);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
