@@ -56,6 +56,11 @@
 .ag-guide-nav button.active{border-color:rgba(184,230,32,.5);background:rgba(184,230,32,.12);color:#B8E620}
 .ag-guide-progress{height:3px;margin:0 0 11px;border-radius:999px;background:rgba(244,243,237,.08);overflow:hidden}
 .ag-guide-progress i{display:block;width:0%;height:100%;background:#B8E620;box-shadow:0 0 12px rgba(184,230,32,.7);transition:width .12s linear}
+.ag-guide-step{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;color:#8FA49A;font-size:7px;font-weight:900;letter-spacing:1px}
+.ag-guide-sequence{display:flex;align-items:center;gap:5px}
+.ag-guide-sequence button{min-height:26px;padding:0 8px;border:1px solid rgba(244,243,237,.11);border-radius:7px;background:rgba(244,243,237,.045);color:#D9DAD5;font-size:7px;font-weight:900;letter-spacing:.7px;cursor:pointer}
+.ag-guide-sequence button:disabled{opacity:.35;cursor:default}
+.ag-guide-sequence .ag-guide-next{border-color:rgba(184,230,32,.42);color:#B8E620}
 .ag-guide-controls{display:flex;align-items:center;gap:7px}
 .ag-guide-play{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:0 12px;border:1px solid rgba(184,230,32,.52);border-radius:8px;background:#0D6A38;color:#F4F3ED;font-size:8px;font-weight:900;letter-spacing:.8px;cursor:pointer}
 .ag-guide-play:hover{background:#0b5a31}
@@ -105,8 +110,13 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
             <button type="button" data-guide-section="game">AGWORLD</button>
           </div>
           <div class="ag-guide-progress" aria-hidden="true"><i></i></div>
+          <div class="ag-guide-step"><span class="ag-guide-step-label">STEP 1 OF 4</span><span>GUIDED ORIENTATION</span></div>
           <div class="ag-guide-controls">
             <button class="ag-guide-play" type="button"><span>▶</span><span>PLAY BRIEFING</span></button>
+            <div class="ag-guide-sequence">
+              <button class="ag-guide-prev" type="button">PREV</button>
+              <button class="ag-guide-next" type="button">NEXT</button>
+            </div>
             <button class="ag-guide-minimise" type="button">MINIMISE</button>
           </div>
         </div>
@@ -150,8 +160,12 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     root.querySelector('.ag-guide-minimise').addEventListener('click',hideGuide);
     reopen.addEventListener('click',showGuide);
 
+    const GUIDE_SEQUENCE=['welcome','player','mission','game'];
     let currentSection='welcome';
     const playButton=root.querySelector('.ag-guide-play');
+    const previousButton=root.querySelector('.ag-guide-prev');
+    const nextButton=root.querySelector('.ag-guide-next');
+    const stepLabel=root.querySelector('.ag-guide-step-label');
     const playIcon=playButton.firstElementChild;
     const playLabel=playButton.lastElementChild;
     const progress=root.querySelector('.ag-guide-progress i');
@@ -176,6 +190,10 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       root.querySelectorAll('[data-guide-section]').forEach(btn=>{
         btn.classList.toggle('active',btn.dataset.guideSection===currentSection);
       });
+      const sequenceIndex=Math.max(0,GUIDE_SEQUENCE.indexOf(currentSection));
+      stepLabel.textContent='STEP '+(sequenceIndex+1)+' OF '+GUIDE_SEQUENCE.length;
+      previousButton.disabled=sequenceIndex===0;
+      nextButton.textContent=sequenceIndex===GUIDE_SEQUENCE.length-1?'FINISH':'NEXT';
       resetPlaybackUI();
       if(show) showGuide();
       if(autoplay) setTimeout(()=>playButton.click(),80);
@@ -183,6 +201,19 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
 
     root.querySelectorAll('[data-guide-section]').forEach(btn=>{
       btn.addEventListener('click',()=>setSection(btn.dataset.guideSection));
+    });
+
+    previousButton.addEventListener('click',()=>{
+      const index=GUIDE_SEQUENCE.indexOf(currentSection);
+      if(index>0) setSection(GUIDE_SEQUENCE[index-1]);
+    });
+    nextButton.addEventListener('click',()=>{
+      const index=GUIDE_SEQUENCE.indexOf(currentSection);
+      if(index>=GUIDE_SEQUENCE.length-1){
+        hideGuide();
+        return;
+      }
+      setSection(GUIDE_SEQUENCE[index+1]);
     });
 
     root.querySelector('.ag-guide-play').addEventListener('click',async()=>{
