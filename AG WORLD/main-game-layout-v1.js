@@ -175,13 +175,12 @@
     frame(entity,leftStage,topH,shellW-leftStage,bottomH);
     if(territory) important(territory,'display','none');
     if(territoryDrawer){
-      // Territory Stats is a deliberate left-side strategic panel. It sits below
-      // the top command/menu zone, is vertically dominant, and never consumes
-      // the map's centre or right-side tactical space.
+      // Territory Stats remains a right-side pop-out, reshaped into a tall,
+      // narrow strategic side panel without occupying the centre of the map.
       important(territoryDrawer,'position','absolute');
-      important(territoryDrawer,'left','14px');
+      important(territoryDrawer,'left','auto');
       important(territoryDrawer,'top','74px');
-      important(territoryDrawer,'right','auto');
+      important(territoryDrawer,'right','14px');
       important(territoryDrawer,'bottom','14px');
       important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round((shellW-leftStage)*0.235)))+'px');
       important(territoryDrawer,'height','auto');
@@ -274,8 +273,28 @@
       overflow:hidden!important;
       clip-path:inset(0)!important;
       isolation:isolate!important;
+      contain:paint!important;
+      border:1px solid rgba(113,151,128,.52)!important;
       border-radius:0!important;
       box-shadow:none!important;
+      background:#07151b!important;
+    }
+    /* Explicit hard edge overlay: prevents any terrain glow, map imagery,
+       pseudo-element or GPU anti-aliasing effect from softening the frame. */
+    .map-area::after{
+      content:""!important;
+      position:absolute!important;
+      inset:0!important;
+      pointer-events:none!important;
+      z-index:999999!important;
+      border:1px solid rgba(113,151,128,.62)!important;
+      border-radius:0!important;
+      box-shadow:none!important;
+    }
+    .map-area::before{
+      filter:none!important;
+      box-shadow:none!important;
+      opacity:0!important;
     }
     .map-area>canvas,
     .map-area>svg,
