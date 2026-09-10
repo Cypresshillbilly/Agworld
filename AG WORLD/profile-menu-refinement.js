@@ -281,9 +281,14 @@ html body.ag-profile-mode .ag-advisor-bay-head{
 html body.ag-profile-mode .ag-advisor-bay-head strong{color:#f7fbf8!important;font:900 9px/1 Arial,sans-serif!important;letter-spacing:1.05px!important}
 html body.ag-profile-mode .ag-advisor-bay-head span{color:#a9cbc1!important;font:800 5.8px/1 Arial,sans-serif!important;letter-spacing:.7px!important}
 html body.ag-profile-mode .ag-advisor-grid{
-  position:relative!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
-  gap:6px!important;z-index:1!important;
+  position:relative!important;display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,minmax(0,1fr))!important;gap:7px!important;z-index:1!important;flex:1!important;
 }
+html body.ag-profile-mode .ag-advisor:nth-child(1){grid-column:2 / span 2!important;grid-row:1!important}
+html body.ag-profile-mode .ag-advisor:nth-child(2){grid-column:4 / span 2!important;grid-row:1!important}
+html body.ag-profile-mode .ag-advisor:nth-child(3){grid-column:1 / span 2!important;grid-row:2!important}
+html body.ag-profile-mode .ag-advisor:nth-child(4){grid-column:3 / span 2!important;grid-row:2!important}
+html body.ag-profile-mode .ag-advisor:nth-child(5){grid-column:5 / span 2!important;grid-row:2!important}
 html body.ag-profile-mode .ag-advisor{
   position:relative!important;min-width:0!important;height:78px!important;padding:5px 2px 4px!important;
   border-radius:11px!important;border:1px solid rgba(176,210,198,.18)!important;
@@ -349,20 +354,20 @@ html body.ag-profile-mode .missions #agAdvisorBay{
   left:10px!important;right:10px!important;
   top:var(--ag-advisor-top,300px)!important;
   margin:0!important;
-  min-height:86px!important;
+  min-height:120px!important;
   height:var(--ag-advisor-height,180px)!important;
   box-sizing:border-box!important;
   padding:10px!important;
   overflow:hidden!important;
   z-index:40!important;
 }
-html body.ag-profile-mode .missions .ag-advisor-bay-head{margin-bottom:5px!important}
+html body.ag-profile-mode .missions .ag-advisor-bay-head{margin-bottom:6px!important;flex:0 0 auto!important}
 html body.ag-profile-mode .missions .ag-advisor{
-  height:54px!important;
-  padding:3px 2px!important;
+  height:auto!important;min-height:0!important;
+  padding:4px 3px!important;
 }
-html body.ag-profile-mode .ag-advisor-icon{transform:translateX(-50%) scale(.82)!important;transform-origin:top center!important;top:2px!important}
-html body.ag-profile-mode .ag-advisor-label{font-size:5.3px!important}
+html body.ag-profile-mode .ag-advisor-icon{transform:translateX(-50%) scale(1.02)!important;transform-origin:top center!important;top:4px!important}
+html body.ag-profile-mode .ag-advisor-label{font-size:6.1px!important}
 
 /* Full Missions command panel. */
 #agMissionHub{
@@ -432,9 +437,13 @@ function ensureMissionsPlayerProfile(){
  card.innerHTML=playerCardHTML(playerData());
  const eyebrow=missions.querySelector('.eyebrow');
  const heading=missions.querySelector('h1,.missions-title,.mission-title');
- const anchor=eyebrow||heading||missions.firstElementChild;
- if(anchor && card.nextElementSibling!==anchor)anchor.insertAdjacentElement('beforebegin',card);
+ const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+ // Player identity is the first information card on the landing page.
+ // The Skill Profile must follow it, never precede it.
+ const anchor=eyebrow||heading||skill||missions.firstElementChild;
+ if(anchor && anchor!==card && card.nextElementSibling!==anchor)anchor.insertAdjacentElement('beforebegin',card);
  else if(!anchor && missions.firstElementChild!==card)missions.prepend(card);
+ if(skill && card.nextElementSibling!==skill)card.insertAdjacentElement('afterend',skill);
  return card;
 }
 
