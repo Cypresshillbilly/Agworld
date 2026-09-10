@@ -177,8 +177,11 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       const stage=root.querySelector('.ag-guide-avatar-stage');
       if(!stage || !window.WebGLRenderingContext) return;
       try{
+        // Use jsDelivr's browser-module rewrite for GLTFLoader. The previous URL left
+        // GLTFLoader's internal "three" import as a bare specifier, which caused the
+        // 3D loader to fail in a normal browser and silently fall back to the static CSS figure.
         const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
-        const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+        const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?module');
         const width=132,height=160;
         const scene=new THREE.Scene();
         const camera=new THREE.PerspectiveCamera(25,width/height,.1,100);
@@ -284,6 +287,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         };
         commander3D={setMode};
         root.querySelector('.ag-guide-hologram').classList.add('three-ready');
+        root.dataset.commander='3d-ready';
         setMode(commanderMode);
 
         const tick=()=>{
@@ -326,7 +330,8 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         tick();
       }catch(err){
         // Keep the animated CSS fallback if the remote model or WebGL cannot load.
-        console.warn('AgWorld 3D Strategic Commander fallback active.',err);
+        root.dataset.commander='3d-failed';
+        console.warn('AgWorld 3D Strategic Commander failed to load; static fallback remains active.',err);
       }
     };
     initCommander3D();
