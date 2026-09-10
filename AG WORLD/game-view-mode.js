@@ -10,6 +10,24 @@ body.ag-profile-mode .bottom{position:absolute!important;left:0!important;right:
 .ag-badges{display:flex!important;align-items:flex-start!important;gap:17px!important}.ag-badge-item{width:50px!important;flex:0 0 50px!important;text-align:center!important}.ag-badge{width:45px!important;height:45px!important;margin:0 auto 4px!important;border-radius:8px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#fff!important;font:900 18px Arial,sans-serif!important;background:#39769b!important;border:3px solid #d8b84d!important}.ag-badge.gold{background:#4b7590!important}.ag-badge.purple{background:#694a92!important;border-color:#b9a0d9!important}.ag-badge.locked{background:#90999e!important;border-color:#c6cdd0!important}.ag-badge-item span{display:block!important;color:#45545c!important;font:800 5.5px Arial,sans-serif!important;line-height:1.25!important}.ag-leader-list{display:flex!important;flex-direction:column!important;gap:3px!important}.ag-leader-row{display:grid!important;grid-template-columns:19px 1fr auto!important;align-items:center!important;gap:5px!important;padding:4px 6px!important;border-radius:4px!important;color:#33434b!important;font:700 6.5px Arial,sans-serif!important}.ag-leader-row.current{background:#e9f1f6!important}.ag-rank{width:16px!important;height:16px!important;border-radius:50%!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#edf1f2!important}.ag-leader-row:nth-child(1) .ag-rank{background:#f2c52e!important}.ag-leader-row:nth-child(2) .ag-rank{background:#dce3e6!important}.ag-leader-row:nth-child(3) .ag-rank{background:#d99859!important}.ag-leader-xp{font-weight:900!important}.ag-leader-link{margin-top:4px!important;color:#168aa0!important;font:800 6px Arial,sans-serif!important}.ag-reward-drone{width:104px!important;height:43px!important;margin:0 auto 1px!important;position:relative!important}.ag-drone-body{position:absolute!important;left:39px!important;top:18px!important;width:27px!important;height:11px!important;border-radius:50%!important;background:#475158!important}.ag-drone-arm{position:absolute!important;width:43px!important;height:4px!important;background:#59636a!important;top:21px!important;border-radius:3px!important}.ag-drone-arm.left{left:4px!important;transform:rotate(-14deg)!important}.ag-drone-arm.right{right:4px!important;transform:rotate(14deg)!important}.ag-rotor{position:absolute!important;width:22px!important;height:22px!important;border:2px solid #7b858b!important;border-radius:50%!important;top:9px!important}.ag-rotor.a{left:0!important}.ag-rotor.b{right:0!important}.ag-rotor:after{content:'';position:absolute;left:50%;top:-5px;width:2px;height:28px;background:#a0a8ac;transform:rotate(90deg)!important}.ag-reward-title{text-align:center!important;color:#26343d!important;font:900 10px Arial,sans-serif!important}.ag-reward-sub{text-align:center!important;margin-top:3px!important;color:#718089!important;font:700 6px Arial,sans-serif!important}.ag-reward-bar{height:6px!important;background:#dce3e6!important;border-radius:8px!important;margin:6px 9px 0!important;overflow:hidden!important}.ag-reward-bar i{display:block!important;width:22%!important;height:100%!important;background:#63ad43!important}.ag-reward-xp{text-align:center!important;margin-top:3px!important;color:#718089!important;font:700 6px Arial,sans-serif!important}
 .ag-profile-logout{position:absolute!important;right:18px!important;bottom:10px!important;z-index:60!important;border:1px solid #ccd7dc!important;background:#fff!important;color:#26343d!important;border-radius:4px!important;padding:5px 9px!important;font:800 6px Arial,sans-serif!important;cursor:pointer!important}
 body.ag-game-mode{display:block!important;background:#050706!important;overflow:hidden!important}body.ag-game-mode .app-shell{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;transform:none!important;border-radius:0!important;box-shadow:none!important;background:#050706!important}body.ag-game-mode .ag-hud,body.ag-game-mode .sidebar,body.ag-game-mode .missions,body.ag-game-mode .bottom,body.ag-game-mode .map-header,body.ag-game-mode .map-status,body.ag-game-mode .farm-card,body.ag-game-mode .ag-profile-logout{display:none!important}body.ag-game-mode .map-area,body.ag-game-mode .map{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;background:#050706!important}
+
+/* === MAIN GAME TRANSITION CONTROL === */
+#agGameModeControl{
+ position:fixed;z-index:2147481000;display:none;align-items:center;gap:8px;
+ left:calc(36.7% + 18px);top:18px;padding:10px 13px;border-radius:12px;
+ border:1px solid rgba(194,233,94,.42);background:linear-gradient(145deg,rgba(18,50,59,.96),rgba(7,24,31,.96));
+ color:#eef8ed;box-shadow:0 14px 32px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.08);
+ font:900 9px/1 Arial,sans-serif;letter-spacing:.8px;cursor:pointer
+}
+#agGameModeControl .ag-game-control-dot{width:8px;height:8px;border-radius:50%;background:#c6ed63;box-shadow:0 0 12px rgba(198,237,99,.8)}
+#agGameModeControl.show{display:flex}
+body.ag-game-mode #agGameModeControl{display:flex;left:auto;right:16px;top:16px;padding:9px 12px;border-color:rgba(137,193,200,.36);background:rgba(7,22,28,.9)}
+body.ag-game-mode #agGameModeControl .ag-game-control-dot{background:#78c4cd;box-shadow:0 0 10px rgba(120,196,205,.65)}
+body.ag-game-mode #territorySection,body.ag-game-mode #entityInformationSection{display:block!important;visibility:visible!important;z-index:214748000!important}
+body.ag-game-mode #territorySection{background:linear-gradient(145deg,rgba(18,40,48,.97),rgba(7,20,26,.97))!important}
+body.ag-game-mode #entityInformationSection{background:linear-gradient(145deg,rgba(249,252,252,.98),rgba(231,239,240,.98))!important}
+body.ag-game-mode .map-area{z-index:1!important}
+
 `;
 function install(){if(document.getElementById('ag-world-view-mode-style'))return;const s=document.createElement('style');s.id='ag-world-view-mode-style';s.textContent=css;document.head.appendChild(s);const profile=()=>{document.body.classList.remove('ag-game-mode','ag-premium-mode');document.body.classList.add('ag-profile-mode');window.__AG_WORLD_VIEW='profile';window.__AG_WORLD_PREMIUM_MODE=false;};const game=()=>{document.body.classList.remove('ag-profile-mode');document.body.classList.add('ag-game-mode','ag-premium-mode');window.__AG_WORLD_VIEW='game';window.__AG_WORLD_PREMIUM_MODE=true;};const logout=()=>{sessionStorage.removeItem('agworld.authenticated');document.body.classList.remove('ag-profile-mode','ag-game-mode','ag-premium-mode');window.__AG_WORLD_VIEW='login';window.location.reload();};window.agWorldEnterProfile=profile;window.agWorldEnterPremium=game;window.agWorldExitPremium=profile;window.agWorldLogout=logout;
 const footer=()=>{const f=document.querySelector('.bottom');if(!f)return;f.classList.add('ag-profile-footer');f.innerHTML=`<section class="pf-section"><div class="pf-title">YOUR PROGRESS</div><div class="ag-progress-row"><div class="ag-level-shield"><b>7</b><span>LEVEL</span></div><div class="ag-progress-main"><strong>1,250 / 2,000 XP</strong><div class="ag-progress-bar"><i></i></div><div class="ag-progress-foot"><span>Level 7</span><span>62%</span></div><div class="ag-progress-note">Level 8 unlocks: Advanced Proposals</div></div></div></section><section class="pf-section"><div class="pf-title">BADGES EARNED</div><div class="ag-badges"><div class="ag-badge-item"><div class="ag-badge">♙</div><span>First Meeting</span></div><div class="ag-badge-item"><div class="ag-badge gold">◈</div><span>Opportunity<br>Finder</span></div><div class="ag-badge-item"><div class="ag-badge purple">♛</div><span>Presentation<br>Pro</span></div><div class="ag-badge-item"><div class="ag-badge gold">⚒</div><span>Proposal<br>Pro</span></div><div class="ag-badge-item"><div class="ag-badge locked">▣</div><span>Top Performer<br>(LOCKED)</span></div></div></section><section class="pf-section"><div class="pf-title">WEEKLY LEADERBOARD</div><div class="ag-leader-list"><div class="ag-leader-row"><span class="ag-rank">1</span><span>Sarah K.</span><span class="ag-leader-xp">2,450 XP</span></div><div class="ag-leader-row current"><span class="ag-rank">2</span><span>Nico</span><span class="ag-leader-xp">1,250 XP</span></div><div class="ag-leader-row"><span class="ag-rank">3</span><span>David L.</span><span class="ag-leader-xp">980 XP</span></div></div><div class="ag-leader-link">View Full Leaderboard</div></section><section class="pf-section"><div class="pf-title">NEXT LEVEL REWARD</div><div class="ag-reward-drone"><div class="ag-rotor a"></div><div class="ag-rotor b"></div><div class="ag-drone-arm left"></div><div class="ag-drone-arm right"></div><div class="ag-drone-body"></div></div><div class="ag-reward-title">DJI Mavic 3</div><div class="ag-reward-sub">Sales Certification</div><div class="ag-reward-bar"><i></i></div><div class="ag-reward-xp">750 XP to go</div></section>`;};
@@ -18,7 +36,37 @@ const sidebar=()=>{const s=document.querySelector('.sidebar');if(!s)return;
   s.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{s.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active')}));
 };
 const missions=()=>{ /* Mission content is owned exclusively by Player Progression. Never inject demo missions here. */ };
-const build=()=>{sidebar();footer();profile();window.dispatchEvent(new Event('agworld:ui-shell-ready'));};
+
+const ensureGameModeControl=()=>{
+ let control=document.getElementById('agGameModeControl');
+ if(!control){
+   control=document.createElement('button');
+   control.type='button';control.id='agGameModeControl';
+   control.innerHTML='<span class="ag-game-control-dot"></span><span class="ag-game-control-label">ENTER FULL GAME</span>';
+   document.body.appendChild(control);
+   control.addEventListener('click',e=>{
+     e.preventDefault();e.stopPropagation();
+     if(document.body.classList.contains('ag-game-mode'))window.agWorldExitPremium?.();
+     else window.agWorldEnterPremium?.();
+     sync();
+   });
+   const area=document.querySelector('.map-area');
+   if(area)area.addEventListener('click',e=>{
+     if(!document.body.classList.contains('ag-profile-mode'))return;
+     if(e.target.closest('button,a,input,select,textarea,.ag-missions-drawer-handle'))return;
+     control.classList.add('show');
+   },true);
+ }
+ function sync(){
+   const inGame=document.body.classList.contains('ag-game-mode');
+   control.classList.toggle('show',inGame||control.classList.contains('show'));
+   control.querySelector('.ag-game-control-label').textContent=inGame?'EXIT FULL GAME':'ENTER FULL GAME';
+ }
+ sync();window.addEventListener('agworld:ui-shell-ready',sync,{once:true});
+ return control;
+};
+
+const build=()=>{sidebar();footer();profile();ensureGameModeControl();window.dispatchEvent(new Event('agworld:ui-shell-ready'));};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();
 window.addEventListener('load',()=>{if(window.__AG_WORLD_VIEW==='profile')build();});
 }
