@@ -331,6 +331,74 @@ html body.ag-profile-mode .ag-advisor-label{
 }
 html body.ag-profile-mode .ag-advisor.is-active .ag-advisor-label{color:#d9f276!important}
 
+/* === PLAYER LANDING CONTRACT v2 ===
+   One current/next mission stays visible. The Advisor Bay occupies the lower
+   mission surface aligned with the Command Center rather than replacing missions. */
+html body.ag-profile-mode .missions .mission{
+  display:none!important;
+}
+html body.ag-profile-mode .missions .mission.ag-landing-mission{
+  display:block!important;
+  margin:10px 10px 9px!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay{
+  margin:0 10px 12px!important;
+  min-height:86px!important;
+  height:86px!important;
+  box-sizing:border-box!important;
+  padding:8px 10px!important;
+}
+html body.ag-profile-mode .missions .ag-advisor-bay-head{margin-bottom:5px!important}
+html body.ag-profile-mode .missions .ag-advisor{
+  height:54px!important;
+  padding:3px 2px!important;
+}
+html body.ag-profile-mode .ag-advisor-icon{transform:translateX(-50%) scale(.82)!important;transform-origin:top center!important;top:2px!important}
+html body.ag-profile-mode .ag-advisor-label{font-size:5.3px!important}
+
+/* Full Missions command panel. */
+#agMissionHub{
+  position:fixed!important;inset:0!important;z-index:2200000000!important;
+  display:none;align-items:center;justify-content:center;padding:28px;
+  background:rgba(4,15,20,.66)!important;backdrop-filter:blur(7px)!important;
+  box-sizing:border-box!important;
+}
+#agMissionHub.show{display:flex!important}
+#agMissionHub .ag-mission-hub-card{
+  width:min(900px,94vw)!important;max-height:min(760px,88vh)!important;
+  overflow:hidden!important;border-radius:18px!important;
+  background:linear-gradient(145deg,#173c45,#102b36 60%,#0a2029)!important;
+  border:1px solid rgba(120,194,130,.46)!important;
+  box-shadow:0 30px 90px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,255,255,.1)!important;
+  color:#edf7f1!important;
+}
+#agMissionHub .ag-mission-hub-head{
+  display:flex!important;justify-content:space-between!important;align-items:flex-start!important;
+  gap:18px!important;padding:22px 24px 16px!important;border-bottom:1px solid rgba(255,255,255,.1)!important;
+}
+#agMissionHub .ag-mission-hub-kicker{color:#c6e85b!important;font:900 8px/1 Arial,sans-serif!important;letter-spacing:1.4px!important}
+#agMissionHub h2{margin:6px 0 0!important;color:#fff!important;font:900 24px/1 Arial,sans-serif!important;letter-spacing:.4px!important}
+#agMissionHub .ag-mission-hub-close{
+  width:34px!important;height:34px!important;border-radius:9px!important;border:1px solid rgba(255,255,255,.15)!important;
+  background:rgba(255,255,255,.06)!important;color:#fff!important;font:900 22px/1 Arial,sans-serif!important;cursor:pointer!important;
+}
+#agMissionHub .ag-mission-tabs{display:flex!important;gap:7px!important;padding:14px 24px!important;border-bottom:1px solid rgba(255,255,255,.08)!important}
+#agMissionHub .ag-mission-tab{
+  border:1px solid rgba(169,203,193,.22)!important;border-radius:999px!important;padding:8px 12px!important;
+  background:rgba(255,255,255,.045)!important;color:#b9cbc4!important;font:900 9px/1 Arial,sans-serif!important;letter-spacing:.6px!important;cursor:pointer!important;
+}
+#agMissionHub .ag-mission-tab.is-active{background:#c6e85b!important;color:#11251c!important;border-color:#dff58c!important}
+#agMissionHub .ag-mission-hub-body{padding:18px 24px 24px!important;overflow:auto!important;max-height:calc(min(760px,88vh) - 175px)!important}
+#agMissionHub .ag-mission-panel{display:none!important}
+#agMissionHub .ag-mission-panel.is-active{display:block!important}
+#agMissionHub .ag-mission-panel .mission{
+  display:block!important;visibility:visible!important;opacity:1!important;margin:0 0 10px!important;
+}
+#agMissionHub .ag-mission-empty{
+  padding:28px!important;border:1px dashed rgba(169,203,193,.22)!important;border-radius:12px!important;
+  color:#a9cbc1!important;font:800 12px/1.5 Arial,sans-serif!important;text-align:center!important;
+}
+
 }
 `;
 function installStyles(){let s=document.getElementById(STYLE_ID);if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}if(s.textContent!==css)s.textContent=css}
@@ -364,6 +432,15 @@ function ensureMissionsPlayerProfile(){
 
 function ensureAdvisorBay(){
  const missions=document.querySelector('.missions');if(!missions)return null;
+ const cards=Array.from(missions.querySelectorAll('.mission'));
+ // Landing page: exactly one mission is visible — current if active, otherwise next available.
+ let landing=cards.find(m=>/current|active|in progress/i.test((m.dataset.status||'')+' '+(m.textContent||'')))||cards[0]||null;
+ cards.forEach(m=>{
+   const show=m===landing;
+   m.classList.toggle('ag-landing-mission',show);
+   m.setAttribute('aria-hidden',show?'false':'true');
+   if(show)m.style.removeProperty('display');else m.style.setProperty('display','none','important');
+ });
  let bay=missions.querySelector('#agAdvisorBay');
  if(!bay){
    bay=document.createElement('section');
@@ -376,11 +453,15 @@ function ensureAdvisorBay(){
      ['operations','O','OPERATIONS'],
      ['technical','T','TECHNICAL']
    ].map(([id,mark,label])=>'<button type="button" class="ag-advisor" data-advisor="'+id+'" aria-label="Open '+label+' advisor"><span class="ag-advisor-icon" aria-hidden="true"><i class="head"></i><i class="hair"></i><i class="body"></i><b class="mark">'+mark+'</b></span><span class="ag-advisor-label">'+label+'</span></button>').join('')+'</div>';
-   const anchor=missions.querySelector('.mission')||missions.querySelector('.section-title');
-   if(anchor)anchor.insertAdjacentElement('beforebegin',bay);else missions.appendChild(bay);
  }
- // Future mission cards do not live on the player landing surface. Mission History owns them.
- missions.querySelectorAll('.mission').forEach(m=>{m.style.display='none';m.setAttribute('aria-hidden','true');});
+ // The mission remains in the upper mission slot. The Advisor Bay is deliberately
+ // moved below it, occupying the lower strip aligned with the Command Center.
+ if(landing){
+   if(landing.nextElementSibling!==bay)landing.insertAdjacentElement('afterend',bay);
+ }else{
+   const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+   if(skill)skill.insertAdjacentElement('afterend',bay);else missions.appendChild(bay);
+ }
  bay.querySelectorAll('.ag-advisor').forEach(btn=>{
    if(btn.dataset.agAdvisorBound)return;
    btn.dataset.agAdvisorBound='1';
@@ -389,8 +470,6 @@ function ensureAdvisorBay(){
      bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.toggle('is-active',x===btn));
      window.AGWorldAdvisorState={id:advisor,label:btn.querySelector('.ag-advisor-label')?.textContent||advisor};
      window.dispatchEvent(new CustomEvent('agworld:advisor-selected',{detail:window.AGWorldAdvisorState}));
-     // Sales is the current implemented commander personality. Other disciplines
-     // share the same guide location until their dedicated avatars are defined.
      const reopen=document.querySelector('.ag-guide-reopen');
      const holo=document.querySelector('.ag-guide-hologram');
      const root=document.querySelector('.ag-system-guide');
@@ -401,14 +480,58 @@ function ensureAdvisorBay(){
  });
  return bay;
 }
+
+function ensureMissionHub(){
+ let hub=document.getElementById('agMissionHub');
+ if(!hub){
+   hub=document.createElement('div');
+   hub.id='agMissionHub';
+   hub.setAttribute('role','dialog');hub.setAttribute('aria-modal','true');hub.setAttribute('aria-label','Missions');
+   hub.innerHTML='<div class="ag-mission-hub-card"><div class="ag-mission-hub-head"><div><div class="ag-mission-hub-kicker">MISSION COMMAND</div><h2>Missions</h2></div><button class="ag-mission-hub-close" type="button" aria-label="Close Missions">×</button></div><div class="ag-mission-tabs"><button class="ag-mission-tab is-active" data-tab="active" type="button">CURRENT / NEXT</button><button class="ag-mission-tab" data-tab="upcoming" type="button">UPCOMING MISSIONS</button><button class="ag-mission-tab" data-tab="history" type="button">MISSION HISTORY</button></div><div class="ag-mission-hub-body"><section class="ag-mission-panel is-active" data-panel="active"></section><section class="ag-mission-panel" data-panel="upcoming"></section><section class="ag-mission-panel" data-panel="history"></section></div></div>';
+   document.body.appendChild(hub);
+   hub.querySelector('.ag-mission-hub-close').onclick=()=>hub.classList.remove('show');
+   hub.addEventListener('click',e=>{if(e.target===hub)hub.classList.remove('show');});
+   hub.querySelectorAll('.ag-mission-tab').forEach(tab=>tab.onclick=()=>{
+     const key=tab.dataset.tab;
+     hub.querySelectorAll('.ag-mission-tab').forEach(x=>x.classList.toggle('is-active',x===tab));
+     hub.querySelectorAll('.ag-mission-panel').forEach(x=>x.classList.toggle('is-active',x.dataset.panel===key));
+   });
+ }
+ return hub;
+}
+
+function openMissionHub(){
+ const hub=ensureMissionHub();
+ const missions=document.querySelector('.missions');
+ const cards=Array.from(missions?.querySelectorAll('.mission')||[]);
+ const active=cards.find(m=>/current|active|in progress/i.test((m.dataset.status||'')+' '+(m.textContent||'')))||cards[0]||null;
+ const completed=cards.filter(m=>m!==active&&/complete|completed|history/i.test((m.dataset.status||'')+' '+(m.textContent||'')));
+ const upcoming=cards.filter(m=>m!==active&&!completed.includes(m));
+ const fill=(key,items,empty)=>{
+   const panel=hub.querySelector('[data-panel="'+key+'"]');panel.replaceChildren();
+   if(!items.length){panel.innerHTML='<div class="ag-mission-empty">'+empty+'</div>';return;}
+   items.forEach(m=>{const c=m.cloneNode(true);c.classList.remove('ag-landing-mission');c.style.removeProperty('display');c.style.removeProperty('visibility');c.removeAttribute('aria-hidden');panel.appendChild(c);});
+ };
+ fill('active',active?[active]:[],'No active mission is currently available.');
+ fill('upcoming',upcoming,'No additional missions are currently queued.');
+ const stored=(()=>{try{return JSON.parse(localStorage.getItem('agworldMissionHistory')||'[]')}catch{return[]}})();
+ const historyPanel=hub.querySelector('[data-panel="history"]');historyPanel.replaceChildren();
+ if(completed.length){
+   completed.forEach(m=>{const c=m.cloneNode(true);c.style.removeProperty('display');c.removeAttribute('aria-hidden');historyPanel.appendChild(c);});
+ }else if(Array.isArray(stored)&&stored.length){
+   stored.forEach(item=>{const d=document.createElement('div');d.className='ag-mission-empty';d.textContent=typeof item==='string'?item:(item.title||'Completed mission');historyPanel.appendChild(d);});
+ }else historyPanel.innerHTML='<div class="ag-mission-empty">Your completed missions will appear here.</div>';
+ hub.classList.add('show');
+}
+
 function ensureMissionsDrawer(){
  const missions=document.querySelector('.missions');if(!missions)return;
  let handle=missions.querySelector('.ag-missions-drawer-handle');
  if(!handle){
    handle=document.createElement('button');
    handle.type='button';handle.className='ag-missions-drawer-handle';
-   handle.setAttribute('aria-label','Toggle My Missions');
-   handle.innerHTML='<span>MY MISSIONS</span>';
+   handle.setAttribute('aria-label','Toggle Missions');
+   handle.innerHTML='<span>MISSIONS</span>';
    missions.appendChild(handle);
  }
  const toggle=()=>missions.classList.toggle('ag-missions-collapsed');
@@ -447,7 +570,7 @@ const SIDEBAR_MENU=[
  ['clients','Client List'],
  ['products','Sales Products'],
  ['after sales','After Sales'],
- ['mission history','Mission History'],
+ ['mission history','Missions'],
  ['ai assistant','AI Assistant'],
  ['territory campaigns','Territory Campaigns'],
  ['territory graphics','Territory Graphics'],
@@ -510,6 +633,12 @@ function normaliseSidebarMenu(nav){
  // Remove only stale navigation entries; matching keeps the original elements, IDs and click handlers intact.
  nodes.forEach(el=>{if(!Array.from(matched.values()).includes(el))el.remove()});
  SIDEBAR_MENU.forEach(([needle])=>{const el=matched.get(needle);if(el)nav.appendChild(el)});
+ const missionMenu=matched.get('mission history');
+ if(missionMenu&&!missionMenu.dataset.agMissionsBound){
+   missionMenu.dataset.agMissionsBound='1';
+   missionMenu.setAttribute('aria-label','Missions');
+   missionMenu.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMissionHub();});
+ }
 }
 function removeMapPlayerProfile(){
  const mapArea=document.querySelector('.map-area');if(!mapArea)return;
@@ -629,7 +758,7 @@ function refreshPlayerUI(){
  const d=playerData();card.innerHTML=playerCardHTML(d);
 }
 function start(){
- installStyles();correctSidebar();ensureAdvisorBay();ensureMissionsDrawer();
+ installStyles();correctSidebar();ensureAdvisorBay();ensureMissionHub();ensureMissionsDrawer();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
  const observer=new MutationObserver(()=>{
   installStyles();
@@ -642,7 +771,7 @@ function start(){
  observer.observe(document.body,{childList:true,subtree:true});
  // Defensive health check: later game modules are not allowed to remove the
  // mission player profile or its style rules after the layout has been normalised.
- setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureAdvisorBay();ensureMissionsDrawer();refreshPlayerUI();},1200);
+ setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureAdvisorBay();ensureMissionHub();ensureMissionsDrawer();refreshPlayerUI();},1200);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
