@@ -175,10 +175,17 @@
     frame(entity,leftStage,topH,shellW-leftStage,bottomH);
     if(territory) important(territory,'display','none');
     if(territoryDrawer){
+      // Territory Stats is a deliberate left-side strategic panel. It sits below
+      // the top command/menu zone, is vertically dominant, and never consumes
+      // the map's centre or right-side tactical space.
       important(territoryDrawer,'position','absolute');
-      important(territoryDrawer,'right','10px');
-      important(territoryDrawer,'top','50%');
-      important(territoryDrawer,'transform','translateY(-50%)');
+      important(territoryDrawer,'left','14px');
+      important(territoryDrawer,'top','74px');
+      important(territoryDrawer,'right','auto');
+      important(territoryDrawer,'bottom','14px');
+      important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round((shellW-leftStage)*0.235)))+'px');
+      important(territoryDrawer,'height','auto');
+      important(territoryDrawer,'transform','none');
       important(territoryDrawer,'z-index','2200');
     }
 
@@ -261,10 +268,59 @@
   const style=document.createElement('style');
   style.id='agworldTerritoryDrawerStyle';
   style.textContent=`
-    .map-area{overflow:hidden!important}
-    .ag-territory-drawer{width:min(320px,calc(100% - 24px));display:flex;align-items:stretch;transition:transform .28s ease,width .28s ease;filter:drop-shadow(0 14px 28px rgba(0,0,0,.32))}
-    .ag-territory-drawer #territoryStatsDrawerContent{width:100%;min-width:0;overflow:hidden}
-    .ag-territory-drawer #territoryInfoPanel{position:relative!important;right:auto!important;top:auto!important;left:auto!important;bottom:auto!important;width:100%!important;box-sizing:border-box!important;margin:0!important;border-radius:10px 0 0 10px!important;padding:12px!important;display:block!important;max-height:min(72vh,500px);overflow:auto}
+    /* MAP FRAME — hard clipping only. No blurred/cloudy edge can bleed past
+       the left or bottom boundary of the playable map. */
+    .map-area{
+      overflow:hidden!important;
+      clip-path:inset(0)!important;
+      isolation:isolate!important;
+      border-radius:0!important;
+      box-shadow:none!important;
+    }
+    .map-area>canvas,
+    .map-area>svg,
+    .map-area .leaflet-container,
+    .map-area .mapboxgl-map,
+    .map-area .maplibregl-map,
+    .map-area .map-container,
+    .map-area .map-canvas{
+      border-radius:0!important;
+      box-shadow:none!important;
+      filter:none!important;
+    }
+
+    /* TERRITORY STATS — tall, narrow strategic side panel on the left. */
+    .ag-territory-drawer{
+      width:clamp(228px,23.5%,272px);
+      height:auto;
+      display:flex;
+      align-items:stretch;
+      transition:transform .28s ease,width .28s ease;
+      filter:none!important;
+    }
+    .ag-territory-drawer #territoryStatsDrawerContent{
+      width:100%;
+      min-width:0;
+      min-height:0;
+      height:100%;
+      overflow:hidden;
+    }
+    .ag-territory-drawer #territoryInfoPanel{
+      position:relative!important;
+      right:auto!important;
+      top:auto!important;
+      left:auto!important;
+      bottom:auto!important;
+      width:100%!important;
+      height:100%!important;
+      box-sizing:border-box!important;
+      margin:0!important;
+      border-radius:12px 0 0 12px!important;
+      padding:14px 12px!important;
+      display:block!important;
+      max-height:none!important;
+      overflow:auto;
+    }
     .ag-territory-drawer #territoryStatsToggle{width:28px;flex:0 0 28px;border:1px solid rgba(142,181,101,.48);border-right:0;border-radius:10px 0 0 10px;background:#10252c;color:#dce9df;cursor:pointer;padding:7px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
     .ag-territory-toggle-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;font-weight:900;letter-spacing:1px}
     .ag-territory-toggle-arrow{font-size:22px;line-height:1;transition:transform .25s ease}
