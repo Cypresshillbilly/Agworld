@@ -13,7 +13,7 @@ const STACK_ID='agMyMissionsStack';
 const CARD_ID='agMissionCardV2';
 const LEGACY_CARD_ID='agLandingMissionCard';
 const LEGACY_MISSION_SELECTORS=['#agLandingMissionCard','#agMissionCardV1','#agMissionCard','.ag-mission-card-v1','.ag-landing-mission-card','.mission-card-legacy'];
-const GAP=8, HEADER_H=30, PLAYER_MIN=70, PLAYER_MAX=96, SKILL_MIN=108, SKILL_MAX=156;
+const GAP=8, MISSION_BOUNDARY=12, HEADER_H=30, PLAYER_MIN=70, PLAYER_MAX=96, SKILL_MIN=108, SKILL_MAX=156;
 let raf=0, resizeObserver=null, mutationObserver=null;
 
 const css=String.raw`
@@ -69,11 +69,11 @@ body .missions{
 .missions>#${STACK_ID}>#${CARD_ID}{
   grid-row:3!important;grid-column:1!important;
   width:100%!important;max-width:none!important;
-  height:auto!important;min-height:0!important;
+  height:auto!important;min-height:0!important;max-height:calc(100% - (var(--ag-mm-boundary) * 2))!important;
   margin:0!important;box-sizing:border-box!important;
   align-self:center!important;justify-self:stretch!important;
-  display:flex!important;flex-direction:column!important;
-  padding:10px 12px!important;gap:6px!important;
+  display:flex!important;flex-direction:column!important;flex:0 1 auto!important;
+  padding:8px 12px 6px!important;gap:5px!important;
   overflow:hidden!important;
   border-radius:10px!important;
   border:1px solid rgba(114,184,74,.52)!important;
@@ -291,13 +291,15 @@ function layout(){
   const advisorTop=px(clamp(anchorTop-mr.top,0,mr.height));
   const advisorHeight=px(clamp(anchorHeight,0,Math.max(0,mr.height-advisorTop)));
   const stackTop=HEADER_H+GAP;
-  const stackBottom=advisorTop-GAP;
+  // Hard geometry boundary: the Mission bay ends before the Advisory Hub.
+  // The same boundary is reserved above the card by the grid row gap.
+  const stackBottom=advisorTop-MISSION_BOUNDARY;
   const stackHeight=Math.max(0,stackBottom-stackTop);
 
   let playerHeight=clamp(naturalHeight(p.player)||84,PLAYER_MIN,PLAYER_MAX);
   let skillHeight=clamp(naturalHeight(p.skill)||126,SKILL_MIN,SKILL_MAX);
   const minimumMissionBay=64;
-  let required=playerHeight+skillHeight+GAP*2+minimumMissionBay;
+  let required=playerHeight+skillHeight+GAP+MISSION_BOUNDARY+minimumMissionBay;
 
   if(required>stackHeight&&skillHeight>SKILL_MIN){
     const cut=Math.min(required-stackHeight,skillHeight-SKILL_MIN);
@@ -309,18 +311,19 @@ function layout(){
   }
 
   const vars=[
-    ['--ag-mm-gap',GAP],['--ag-mm-header-h',HEADER_H],
+    ['--ag-mm-gap',GAP],['--ag-mm-boundary',MISSION_BOUNDARY],['--ag-mm-header-h',HEADER_H],
     ['--ag-mm-player-h',playerHeight],['--ag-mm-skill-h',skillHeight],
     ['--ag-mm-stack-top',stackTop],['--ag-mm-stack-height',stackHeight],
     ['--ag-advisor-top',advisorTop],['--ag-advisor-height',advisorHeight]
   ];
   vars.forEach(([k,v])=>p.missions.style.setProperty(k,px(v)+'px'));
 
-  // The V2 card has no height variable at all. Grid row 3 is simply the bay,
-  // and CSS align-self:center centres the intrinsic card within it.
-  card.style.removeProperty('height');
-  card.style.removeProperty('max-height');
-  card.style.removeProperty('min-height');
+  // Reduce the card from the bottom by keeping its geometry intrinsic and
+  // compact. The mission bay itself owns the enforced boundaries above/below.
+  card.style.setProperty('height','auto','important');
+  card.style.setProperty('min-height','0','important');
+  card.style.setProperty('max-height','calc(100% - (var(--ag-mm-boundary) * 2))','important');
+  card.style.setProperty('align-self','center','important');
 
   // Fail-safe visibility lock: later legacy styles are not allowed to hide V2.
   card.style.setProperty('display','flex','important');
