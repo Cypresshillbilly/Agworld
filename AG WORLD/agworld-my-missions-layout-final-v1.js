@@ -11,6 +11,7 @@ const STYLE_ID='agworld-my-missions-v2-style';
 const HEADER_ID='agMyMissionsHeader';
 const STACK_ID='agMyMissionsStack';
 const CARD_ID='agMissionCardV2';
+const LEGACY_CARD_ID='agLandingMissionCard';
 const GAP=8, HEADER_H=30, PLAYER_MIN=70, PLAYER_MAX=96, SKILL_MIN=108, SKILL_MAX=156;
 let raf=0, resizeObserver=null, mutationObserver=null;
 
@@ -170,8 +171,21 @@ function textFrom(root,selector,fallback){
   return String(el?.textContent||fallback).replace(/\s+/g,' ').trim();
 }
 
+function removeDuplicateMissionCards(missions,stack){
+  // Production invariant: exactly one visible Mission Card exists.
+  document.querySelectorAll('#'+LEGACY_CARD_ID).forEach(el=>{
+    el.setAttribute('aria-hidden','true');
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+  });
+  const cards=[...document.querySelectorAll('#'+CARD_ID)];
+  const canonical=stack.querySelector(':scope > #'+CARD_ID)||cards[0]||null;
+  cards.forEach(el=>{if(el!==canonical)el.remove();});
+  return canonical;
+}
+
 function ensureCard(stack,legacy){
-  let card=stack.querySelector(':scope > #'+CARD_ID);
+  let card=removeDuplicateMissionCards(document.querySelector('.missions'),stack);
   if(!card){
     card=document.createElement('article');
     card.id=CARD_ID;
@@ -248,12 +262,13 @@ function layout(){
   if(p.player.parentElement!==stack)stack.appendChild(p.player);
   if(p.skill.parentElement!==stack)stack.appendChild(p.skill);
 
-  // Keep the old component alive for existing game data/actions, but never let
-  // its DOM, CSS or dimensions participate in the visible V2 layout.
-  if(p.legacy&&p.legacy.parentElement!==document.body){
-    p.legacy.setAttribute('aria-hidden','true');
-    p.legacy.style.setProperty('display','none','important');
-  }
+  // Enforce the single-card invariant before every layout pass.
+  // The legacy component remains only as a hidden event/data bridge.
+  document.querySelectorAll('#'+LEGACY_CARD_ID).forEach(el=>{
+    el.setAttribute('aria-hidden','true');
+    el.style.setProperty('display','none','important');
+    el.style.setProperty('visibility','hidden','important');
+  });
 
   const card=ensureCard(stack,p.legacy);
   if(card.parentElement!==stack)stack.appendChild(card);
