@@ -34,8 +34,20 @@
 #${GUIDE_ID}{position:fixed;left:0;top:0;right:auto;bottom:auto;z-index:2147482000;display:none;align-items:flex-end;gap:12px;pointer-events:none;font-family:Arial,Helvetica,sans-serif}
 #${GUIDE_ID}.show{display:flex}
 #${GUIDE_ID} *{box-sizing:border-box}
-.ag-guide-hologram{position:relative;width:132px;height:150px;flex:0 0 132px;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 18px 24px rgba(0,0,0,.28))}
-.ag-guide-core{position:absolute;left:50%;top:11px;width:92px;height:112px;transform:translateX(-50%);border-radius:48% 48% 38% 38%;background:radial-gradient(circle at 50% 25%,rgba(244,243,237,.94) 0 5%,rgba(184,230,32,.28) 6% 20%,rgba(13,106,56,.18) 21% 42%,rgba(11,44,32,.78) 68%,rgba(5,22,16,.94) 100%);border:1px solid rgba(184,230,32,.56);box-shadow:0 0 0 1px rgba(13,106,56,.28),0 0 24px rgba(184,230,32,.24),inset 0 0 28px rgba(184,230,32,.12);overflow:hidden}
+.ag-guide-hologram{position:relative;width:142px;height:176px;flex:0 0 142px;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 18px 24px rgba(0,0,0,.28));background:transparent;border:0}
+.ag-guide-commander{position:absolute;left:50%;bottom:17px;width:118px;height:150px;transform:translateX(-50%);transform-origin:50% 100%;animation:agCommanderIdle 4.6s ease-in-out infinite}
+.ag-guide-commander .ag-commander-head{position:absolute;left:50%;top:7px;width:42px;height:50px;transform:translateX(-50%);border-radius:48% 48% 44% 44%;background:linear-gradient(135deg,#D7A77D,#8A5638);border:2px solid rgba(244,243,237,.18);box-shadow:0 0 18px rgba(184,230,32,.12)}
+.ag-guide-commander .ag-commander-hair{position:absolute;left:50%;top:4px;width:46px;height:20px;transform:translateX(-50%);border-radius:50% 50% 25% 25%;background:#172018}
+.ag-guide-commander .ag-commander-earpiece{position:absolute;right:2px;top:25px;width:10px;height:10px;border:2px solid #B8E620;border-left:0;border-radius:0 8px 8px 0;box-shadow:0 0 8px rgba(184,230,32,.55)}
+.ag-guide-commander .ag-commander-neck{position:absolute;left:50%;top:50px;width:18px;height:17px;transform:translateX(-50%);background:#A86C49}
+.ag-guide-commander .ag-commander-torso{position:absolute;left:50%;bottom:0;width:92px;height:95px;transform:translateX(-50%);border-radius:26px 26px 8px 8px;background:linear-gradient(145deg,#0D6A38,#0B2C20 68%);border:1px solid rgba(184,230,32,.45);box-shadow:inset 0 0 0 1px rgba(244,243,237,.06),0 0 20px rgba(13,106,56,.25)}
+.ag-guide-commander .ag-commander-collar{position:absolute;left:50%;top:3px;width:46px;height:30px;transform:translateX(-50%);border-left:2px solid rgba(244,243,237,.28);border-right:2px solid rgba(244,243,237,.28);border-bottom:2px solid rgba(184,230,32,.42);border-radius:0 0 16px 16px}
+.ag-guide-commander .ag-commander-insignia{position:absolute;left:50%;top:37px;transform:translateX(-50%);color:#B8E620;font-size:8px;font-weight:900;letter-spacing:1px;text-shadow:0 0 8px rgba(184,230,32,.6)}
+.ag-guide-commander .ag-commander-arm{position:absolute;top:71px;width:24px;height:68px;border-radius:15px;background:linear-gradient(#0D6A38,#0B2C20);border:1px solid rgba(184,230,32,.28);transform-origin:50% 10%}
+.ag-guide-commander .ag-commander-arm.left{left:10px;transform:rotate(8deg)}
+.ag-guide-commander .ag-commander-arm.right{right:10px;transform:rotate(-8deg)}
+.ag-guide-commander .ag-commander-hand{position:absolute;bottom:-4px;left:50%;width:20px;height:20px;transform:translateX(-50%);border-radius:48%;background:#B77854}
+.ag-guide-core{display:none;position:absolute;left:50%;top:11px;width:92px;height:112px;transform:translateX(-50%);border-radius:48% 48% 38% 38%;background:radial-gradient(circle at 50% 25%,rgba(244,243,237,.94) 0 5%,rgba(184,230,32,.28) 6% 20%,rgba(13,106,56,.18) 21% 42%,rgba(11,44,32,.78) 68%,rgba(5,22,16,.94) 100%);border:1px solid rgba(184,230,32,.56);box-shadow:0 0 0 1px rgba(13,106,56,.28),0 0 24px rgba(184,230,32,.24),inset 0 0 28px rgba(184,230,32,.12);overflow:hidden}
 .ag-guide-core:before{content:'';position:absolute;left:50%;top:14px;width:31px;height:31px;transform:translateX(-50%);border-radius:50%;border:2px solid rgba(244,243,237,.72);box-shadow:0 0 16px rgba(184,230,32,.36)}
 .ag-guide-core:after{content:'';position:absolute;left:50%;bottom:12px;width:55px;height:55px;transform:translateX(-50%);border-radius:46% 46% 18% 18%;border:1px solid rgba(244,243,237,.42);border-bottom:0;box-shadow:0 -12px 22px rgba(184,230,32,.12)}
 .ag-guide-scan{position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 5px,rgba(184,230,32,.06) 6px 7px);mix-blend-mode:screen;animation:agGuideScan 3.8s linear infinite}
@@ -74,6 +86,13 @@
 /* The System Guide belongs in the upper-left open space of the live map, directly beneath the map controls. It is positioned from the actual map rectangle in JS, so it remains correct in both Player View and full-screen AgWorld mode. */
 body.ag-full-game-mode #${GUIDE_ID}{left:18px;top:118px;right:auto;bottom:auto}
 body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:auto}
+@keyframes agCommanderIdle{0%,100%{transform:translateX(-50%) translateY(0) rotate(0deg)}45%{transform:translateX(-50%) translateY(-2px) rotate(-.8deg)}70%{transform:translateX(-50%) translateY(0) rotate(.7deg)}}
+#${GUIDE_ID}.is-talking .ag-guide-commander{animation:agCommanderTalk .75s ease-in-out infinite alternate}
+#${GUIDE_ID}.is-talking .ag-commander-arm.right{animation:agCommanderGesture 1.15s ease-in-out infinite alternate}
+#${GUIDE_ID}.is-talking .ag-commander-arm.left{animation:agCommanderGestureLeft 1.6s ease-in-out infinite alternate}
+@keyframes agCommanderTalk{from{transform:translateX(-50%) translateY(0) rotate(-.7deg)}to{transform:translateX(-50%) translateY(-2px) rotate(.8deg)}}
+@keyframes agCommanderGesture{from{transform:rotate(-8deg)}to{transform:rotate(-28deg) translateY(-5px)}}
+@keyframes agCommanderGestureLeft{from{transform:rotate(8deg)}to{transform:rotate(22deg) translateY(-3px)}}
 @keyframes agGuideScan{0%{transform:translateY(-8px)}100%{transform:translateY(8px)}}
 @keyframes agGuidePulse{0%,100%{opacity:.62;transform:translateX(-50%) scale(.94)}50%{opacity:1;transform:translateX(-50%) scale(1.03)}}
 @media(max-width:700px){#${GUIDE_ID}{right:10px;bottom:10px;gap:7px}.ag-guide-hologram{width:74px;height:106px;flex-basis:74px}.ag-guide-core{width:66px;height:82px}.ag-guide-card{width:min(310px,calc(100vw - 96px))}.ag-guide-ring{width:70px}.ag-guide-label{font-size:6px}}
@@ -91,9 +110,13 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     root.setAttribute('aria-label','AgWorld System Guide');
     root.innerHTML=`
       <button class="ag-guide-hologram" type="button" aria-label="Open System Guide">
-        <span class="ag-guide-core"><span class="ag-guide-scan"></span></span>
+        <span class="ag-guide-commander" aria-hidden="true">
+          <span class="ag-commander-head"></span><span class="ag-commander-hair"></span><span class="ag-commander-earpiece"></span><span class="ag-commander-neck"></span>
+          <span class="ag-commander-torso"><span class="ag-commander-collar"></span><span class="ag-commander-insignia">AG</span></span>
+          <span class="ag-commander-arm left"><span class="ag-commander-hand"></span></span><span class="ag-commander-arm right"><span class="ag-commander-hand"></span></span>
+        </span>
         <span class="ag-guide-ring"></span>
-        <span class="ag-guide-label">SYSTEM GUIDE</span>
+        <span class="ag-guide-label">STRATEGIC COMMANDER</span>
       </button>
       <div class="ag-guide-card" role="dialog" aria-live="polite">
         <div class="ag-guide-card-head">
@@ -233,6 +256,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       if(audio.paused){
         try{
           await audio.play();
+          root.classList.add('is-talking');
           playIcon.textContent='Ⅱ';
           playLabel.textContent='PAUSE BRIEFING';
         }catch(err){
@@ -241,6 +265,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         }
       }else{
         audio.pause();
+        root.classList.remove('is-talking');
         playIcon.textContent='▶';
         playLabel.textContent='PLAY BRIEFING';
       }
@@ -250,8 +275,9 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       if(!audio.duration || !isFinite(audio.duration)) return;
       progress.style.width=Math.max(0,Math.min(100,(audio.currentTime/audio.duration)*100))+'%';
     });
-    audio.addEventListener('ended',resetPlaybackUI);
+    audio.addEventListener('ended',()=>{root.classList.remove('is-talking');resetPlaybackUI();});
     audio.addEventListener('error',()=>{
+      root.classList.remove('is-talking');
       resetPlaybackUI();
       root.querySelector('.ag-guide-copy').textContent='The AI voice briefing could not be loaded. Please try again.';
     });
