@@ -17,8 +17,9 @@
   const MIN_PLAYER_H=70;
   const MAX_PLAYER_H=96;
   const MIN_SKILL_H=96;
-  const MIN_MISSION_H=68;
-  const PREF_MISSION_H=72;
+  const MIN_MISSION_H=56;
+  const MAX_MISSION_H=128;
+  const FALLBACK_MISSION_H=72;
 
   let resizeObserver=null;
   let mutationObserver=null;
@@ -294,22 +295,40 @@ body .missions{
 
   function naturalHeight(el){
     if(!el) return 0;
-    const previous={
-      position:el.style.position,
-      top:el.style.top,
-      left:el.style.left,
-      right:el.style.right,
-      height:el.style.height,
-      minHeight:el.style.minHeight,
-      maxHeight:el.style.maxHeight,
-      visibility:el.style.visibility,
-      pointerEvents:el.style.pointerEvents
-    };
     /* The element may already be absolutely positioned by this module. Its
        scrollHeight remains the most stable representation of its approved
        internal content requirement. */
     const h=Math.max(el.scrollHeight||0,el.getBoundingClientRect().height||0);
     return px(h);
+  }
+
+  /* Measure the mission card at its true content height before assigning the
+     stack geometry. This is the critical distinction between a compact card
+     and a fixed-height box with unused space below START MISSION. The temporary
+     overrides are restored immediately and never alter the card's approved
+     visual design or internal markup. */
+  function intrinsicHeight(el){
+    if(!el) return 0;
+    const props=['height','min-height','max-height','overflow','visibility'];
+    const previous=props.map(name=>({
+      name,
+      value:el.style.getPropertyValue(name),
+      priority:el.style.getPropertyPriority(name)
+    }));
+
+    try{
+      el.style.setProperty('height','auto','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('max-height','none','important');
+      el.style.setProperty('overflow','visible','important');
+      el.style.setProperty('visibility','hidden','important');
+      return px(Math.max(el.scrollHeight||0,el.getBoundingClientRect().height||0));
+    }finally{
+      previous.forEach(({name,value,priority})=>{
+        if(value) el.style.setProperty(name,value,priority);
+        else el.style.removeProperty(name);
+      });
+    }
   }
 
   function setGeometry(missions,geometry){
@@ -352,8 +371,10 @@ body .missions{
     const playerNatural=naturalHeight(player);
     let playerH=clamp(playerNatural||84,MIN_PLAYER_H,MAX_PLAYER_H);
 
-    /* Mission retains its approved compact card scale whenever space permits. */
-    let missionH=PREF_MISSION_H;
+    /* Mission height is driven by its actual content, so the card ends directly
+       after the final control instead of reserving an arbitrary empty area. */
+    const missionNatural=intrinsicHeight(mission);
+    let missionH=clamp(missionNatural||FALLBACK_MISSION_H,MIN_MISSION_H,MAX_MISSION_H);
 
     /* Skill Profile receives the remaining proportional space and therefore
        remains the largest information-rich card. */
