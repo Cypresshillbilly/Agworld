@@ -218,7 +218,9 @@
       // deliberate map margin on both sides. Vertical placement is unchanged.
       // Use substantially more of the available map width while preserving
       // symmetric edge clearance on both sides.
-      const commandW=Math.min(Math.round(mapW*.86),Math.round(720*canonicalScale));
+      // Expand again toward the map edges while retaining a clear, deliberate
+      // margin on both sides. The Command Center remains horizontally centered.
+      const commandW=Math.min(Math.round(mapW*.93),Math.round(780*canonicalScale));
       const commandH=Math.max(Math.round(160*canonicalScale),Math.round(shellH*.19));
       const commandBottom=Math.max(18,Math.round(shellH*.024));
       const commandTop=Math.max(0,shellH-commandH-commandBottom);
@@ -241,6 +243,24 @@
         important(heading,'height','34px');
         important(heading,'margin','0');
         important(heading,'z-index','3');
+        // Keep the COMMAND CENTER label visually centered regardless of
+        // the separate LIVE status indicator on the right.
+        important(heading,'display','grid');
+        important(heading,'grid-template-columns','1fr auto 1fr');
+        important(heading,'align-items','center');
+        important(heading,'text-align','center');
+        const commandLabel=heading.querySelector('.agworld-command-center-label');
+        const liveStatus=heading.querySelector('.agworld-command-center-live');
+        if(commandLabel){
+          important(commandLabel,'grid-column','2');
+          important(commandLabel,'justify-self','center');
+          important(commandLabel,'white-space','nowrap');
+        }
+        if(liveStatus){
+          important(liveStatus,'grid-column','3');
+          important(liveStatus,'justify-self','end');
+          important(liveStatus,'margin-right','12px');
+        }
       }
 
       const entityCard=$('farmCard');
