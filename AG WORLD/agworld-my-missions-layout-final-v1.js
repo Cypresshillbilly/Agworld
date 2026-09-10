@@ -138,7 +138,7 @@ function getParts(){
   if(!missions)return null;
   const player=missions.querySelector('#agPlayerMissionProfile');
   const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
-  const advisor=missions.querySelector('#agAdvisorBay');
+  const advisor=missions.querySelector('#agAdvisorBay')||document.getElementById('agAdvisorBay');
   const legacy=missions.querySelector('#agLandingMissionCard')||document.querySelector('#agLandingMissionCard');
   const command=document.getElementById('entityInformationSection');
   return {missions,player,skill,advisor,legacy,command};
@@ -240,7 +240,7 @@ function naturalHeight(el){
 
 function layout(){
   const p=getParts();
-  if(!p?.missions||!p.player||!p.skill||!p.advisor||!p.command)return;
+  if(!p?.missions||!p.player||!p.skill)return;
 
   const header=ensureHeader(p.missions);
   const stack=ensureStack(p.missions,header);
@@ -257,14 +257,20 @@ function layout(){
 
   const card=ensureCard(stack,p.legacy);
   if(card.parentElement!==stack)stack.appendChild(card);
-  if(p.advisor.parentElement!==p.missions)p.missions.appendChild(p.advisor);
+  if(p.advisor&&p.advisor.parentElement!==p.missions)p.missions.appendChild(p.advisor);
 
   const mr=p.missions.getBoundingClientRect();
-  const cr=p.command.getBoundingClientRect();
-  if(mr.width<=0||mr.height<=0||cr.height<=0)return;
+  if(mr.width<=0||mr.height<=0)return;
 
-  const advisorTop=px(clamp(cr.top-mr.top,0,mr.height));
-  const advisorHeight=px(clamp(cr.height,0,Math.max(0,mr.height-advisorTop)));
+  // The V2 card must render even while downstream Advisory/Command layers are
+  // still mounting. Once they become available a later layout pass refines the
+  // bay boundary without ever withholding the card from the screen.
+  const commandRect=p.command?.getBoundingClientRect();
+  const advisorRect=p.advisor?.getBoundingClientRect();
+  const anchorTop=commandRect?.height>0?commandRect.top:advisorRect?.height>0?advisorRect.top:mr.bottom;
+  const anchorHeight=commandRect?.height>0?commandRect.height:advisorRect?.height>0?advisorRect.height:0;
+  const advisorTop=px(clamp(anchorTop-mr.top,0,mr.height));
+  const advisorHeight=px(clamp(anchorHeight,0,Math.max(0,mr.height-advisorTop)));
   const stackTop=HEADER_H+GAP;
   const stackBottom=advisorTop-GAP;
   const stackHeight=Math.max(0,stackBottom-stackTop);
@@ -297,6 +303,10 @@ function layout(){
   card.style.removeProperty('max-height');
   card.style.removeProperty('min-height');
 
+  // Fail-safe visibility lock: later legacy styles are not allowed to hide V2.
+  card.style.setProperty('display','flex','important');
+  card.style.setProperty('visibility','visible','important');
+  card.style.setProperty('opacity','1','important');
   p.missions.dataset.agMissionLayer='mission-card-v2';
   p.missions.dataset.agMissionLayout='canonical';
 }
@@ -326,7 +336,7 @@ function start(){
   });
   mutationObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
 
-  [0,80,180,360,700,1200].forEach(ms=>setTimeout(schedule,ms));
+  [0,80,180,360,700,1200,2000,3500,5000].forEach(ms=>setTimeout(schedule,ms));
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
