@@ -89,17 +89,32 @@ function layout(){
  const root=ensure();if(!root)return;
  const map=document.querySelector('.map-area'),command=document.getElementById('entityInformationSection');
  if(!map)return;
- const mr=map.getBoundingClientRect(),cr=command?.getBoundingClientRect();
- const top=18,gap=14,handleH=44;
+ const mr=map.getBoundingClientRect();
+ const top=18,gap=16;
+ // Player Page Command Center: centred horizontally within the cropped map,
+ // floating above the bottom edge with visible map on all exposed sides.
+ if(command){
+   const desiredW=Math.min(Math.round(mr.width*.72),Math.max(360,Math.round(mr.width-72)));
+   const desiredH=Math.min(Math.round(mr.height*.30),220);
+   const bottomInset=Math.max(18,Math.round(mr.height*.035));
+   const left=Math.max(18,Math.round((mr.width-desiredW)/2));
+   command.style.setProperty('position','absolute','important');
+   command.style.setProperty('left',left+'px','important');
+   command.style.setProperty('right','auto','important');
+   command.style.setProperty('width',desiredW+'px','important');
+   command.style.setProperty('height',desiredH+'px','important');
+   command.style.setProperty('bottom',bottomInset+'px','important');
+   command.style.setProperty('top','auto','important');
+   command.style.setProperty('z-index','1500','important');
+ }
+ const cr=command?.getBoundingClientRect();
  let bottom=18;
  if(cr&&cr.width&&cr.height){
-   // Profile rule: the Territory Stats body never enters the Command Center zone.
-   // Its bottom edge is locked above the Command Center plus a visible gap.
+   // Territory Stats and Command Center are physically separated: stats stop
+   // above the command center and leave a persistent visual breathing gap.
    bottom=Math.max(18,Math.round(mr.bottom-cr.top)+gap);
  }
- const available=Math.max(100,Math.round(mr.height-top-bottom));
  root.style.top=top+'px';root.style.bottom=bottom+'px';root.style.height='auto';
- root.style.setProperty('--agpts-available-h',available+'px');
  root.dataset.commandClearance=String(bottom);
 }
 function refresh(){if(!isProfile())return;ensure();update();layout();}
