@@ -12,6 +12,7 @@ const HEADER_ID='agMyMissionsHeader';
 const STACK_ID='agMyMissionsStack';
 const CARD_ID='agMissionCardV2';
 const LEGACY_CARD_ID='agLandingMissionCard';
+const LEGACY_MISSION_SELECTORS=['#agLandingMissionCard','#agMissionCardV1','#agMissionCard','.ag-mission-card-v1','.ag-landing-mission-card','.mission-card-legacy'];
 const GAP=8, HEADER_H=30, PLAYER_MIN=70, PLAYER_MAX=96, SKILL_MIN=108, SKILL_MAX=156;
 let raf=0, resizeObserver=null, mutationObserver=null;
 
@@ -140,7 +141,7 @@ function getParts(){
   const player=missions.querySelector('#agPlayerMissionProfile');
   const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
   const advisor=missions.querySelector('#agAdvisorBay')||document.getElementById('agAdvisorBay');
-  const legacy=missions.querySelector('#agLandingMissionCard')||document.querySelector('#agLandingMissionCard');
+  const legacy=null;
   const command=document.getElementById('entityInformationSection');
   return {missions,player,skill,advisor,legacy,command};
 }
@@ -171,13 +172,19 @@ function textFrom(root,selector,fallback){
   return String(el?.textContent||fallback).replace(/\s+/g,' ').trim();
 }
 
+function purgeLegacyMissionCards(missions){
+  // Legacy player-screen mission panels are deleted, not merely hidden.
+  LEGACY_MISSION_SELECTORS.forEach(selector=>{
+    document.querySelectorAll(selector).forEach(el=>{
+      if(el.id===CARD_ID)return;
+      el.remove();
+    });
+  });
+}
+
 function removeDuplicateMissionCards(missions,stack){
   // Production invariant: exactly one visible Mission Card exists.
-  document.querySelectorAll('#'+LEGACY_CARD_ID).forEach(el=>{
-    el.setAttribute('aria-hidden','true');
-    el.style.setProperty('display','none','important');
-    el.style.setProperty('visibility','hidden','important');
-  });
+  purgeLegacyMissionCards(missions);
   const cards=[...document.querySelectorAll('#'+CARD_ID)];
   const canonical=stack.querySelector(':scope > #'+CARD_ID)||cards[0]||null;
   cards.forEach(el=>{if(el!==canonical)el.remove();});
@@ -262,15 +269,12 @@ function layout(){
   if(p.player.parentElement!==stack)stack.appendChild(p.player);
   if(p.skill.parentElement!==stack)stack.appendChild(p.skill);
 
-  // Enforce the single-card invariant before every layout pass.
-  // The legacy component remains only as a hidden event/data bridge.
-  document.querySelectorAll('#'+LEGACY_CARD_ID).forEach(el=>{
-    el.setAttribute('aria-hidden','true');
-    el.style.setProperty('display','none','important');
-    el.style.setProperty('visibility','hidden','important');
-  });
+  // Delete any old/previous player-screen Mission Card before V2 mounts.
+  purgeLegacyMissionCards(p.missions);
 
-  const card=ensureCard(stack,p.legacy);
+  // The old DOM is no longer retained as a hidden bridge. V2 is the only
+  // Mission Card panel in the player screen.
+  const card=ensureCard(stack,null);
   if(card.parentElement!==stack)stack.appendChild(card);
   if(p.advisor&&p.advisor.parentElement!==p.missions)p.missions.appendChild(p.advisor);
 
