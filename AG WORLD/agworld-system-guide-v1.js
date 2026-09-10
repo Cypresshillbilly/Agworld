@@ -138,6 +138,8 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       reopen.style.right='auto';
       reopen.style.bottom='auto';
     };
+    const showGuide=()=>{placeGuide();root.classList.add('show');reopen.classList.remove('show');};
+    const hideGuide=()=>{root.classList.remove('show');reopen.classList.add('show');};
     root.querySelector('.ag-guide-hologram').addEventListener('click',showGuide);
     window.addEventListener('resize',placeGuide);
     window.addEventListener('agworld:game-mode-changed',()=>setTimeout(placeGuide,80));
@@ -167,9 +169,6 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       if(show) showGuide();
       if(autoplay) setTimeout(()=>playButton.click(),80);
     };
-
-    const showGuide=()=>{placeGuide();root.classList.add('show');reopen.classList.remove('show');};
-    const hideGuide=()=>{root.classList.remove('show');reopen.classList.add('show');};
 
     root.querySelectorAll('[data-guide-section]').forEach(btn=>{
       btn.addEventListener('click',()=>setSection(btn.dataset.guideSection));
