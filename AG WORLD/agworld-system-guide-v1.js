@@ -9,7 +9,7 @@
   let welcomeTimer=null;
 
   const css=`
-#${GUIDE_ID}{position:fixed;right:22px;bottom:22px;z-index:2147482000;display:none;align-items:flex-end;gap:12px;pointer-events:none;font-family:Arial,Helvetica,sans-serif}
+#${GUIDE_ID}{position:fixed;right:clamp(250px,18vw,420px);top:235px;bottom:auto;z-index:2147482000;display:none;align-items:flex-end;gap:12px;pointer-events:none;font-family:Arial,Helvetica,sans-serif}
 #${GUIDE_ID}.show{display:flex}
 #${GUIDE_ID} *{box-sizing:border-box}
 .ag-guide-hologram{position:relative;width:132px;height:150px;flex:0 0 132px;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 18px 24px rgba(0,0,0,.28))}
@@ -35,8 +35,9 @@
 .ag-guide-minimise{margin-left:auto;border:0;background:transparent;color:#D9DAD5;font-size:8px;font-weight:800;letter-spacing:.5px;cursor:pointer}
 .ag-guide-reopen{position:fixed;right:18px;bottom:18px;z-index:2147481999;display:none;width:42px;height:42px;border-radius:50%;border:1px solid rgba(184,230,32,.55);background:#0B2C20;color:#B8E620;box-shadow:0 10px 25px rgba(0,0,0,.28),0 0 18px rgba(184,230,32,.16);font-size:17px;cursor:pointer}
 .ag-guide-reopen.show{display:block}
-body.ag-game-mode #${GUIDE_ID}{right:22px;bottom:92px}
-body.ag-game-mode .ag-guide-reopen{right:22px;bottom:92px}
+/* Guide sits in the open map space below the territory summary and alongside the My Missions pull-tab. */
+body.ag-game-mode #${GUIDE_ID}{right:clamp(250px,18vw,420px);top:235px;bottom:auto}
+body.ag-game-mode .ag-guide-reopen{right:clamp(250px,18vw,420px);top:235px;bottom:auto}
 @keyframes agGuideScan{0%{transform:translateY(-8px)}100%{transform:translateY(8px)}}
 @keyframes agGuidePulse{0%,100%{opacity:.62;transform:translateX(-50%) scale(.94)}50%{opacity:1;transform:translateX(-50%) scale(1.03)}}
 @media(max-width:700px){#${GUIDE_ID}{right:10px;bottom:10px;gap:7px}.ag-guide-hologram{width:74px;height:106px;flex-basis:74px}.ag-guide-core{width:66px;height:82px}.ag-guide-card{width:min(310px,calc(100vw - 96px))}.ag-guide-ring{width:70px}.ag-guide-label{font-size:6px}}
