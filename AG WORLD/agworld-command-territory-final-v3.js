@@ -189,6 +189,135 @@
   fill:#B8E620!important;
   stroke:#0D6A38!important;
 }
+
+/* FINAL COMPONENT-FAMILY LOCK
+   Command Center and Territory Stats now use the same rounded floating-panel
+   construction as the approved Player Profile / Skill Profile family. */
+#territoryStatsDrawer,
+#territoryStatsDrawerContent{
+  background:transparent!important;
+  border:0!important;
+  border-radius:20px!important;
+  overflow:visible!important;
+  box-shadow:none!important;
+}
+#territoryStatsDrawerContent{padding:0!important}
+#territoryInfoPanel,
+#territoryInfoPanel.agworld-territory-command-panel{
+  background:
+    radial-gradient(circle at 82% 8%,rgba(184,230,32,.12),transparent 28%),
+    linear-gradient(145deg,#0D6A38 0%,#0B2C20 66%,#0B2C20 100%)!important;
+  border:1px solid rgba(184,230,32,.42)!important;
+  border-radius:20px!important;
+  overflow:hidden!important;
+  box-shadow:0 16px 36px rgba(11,44,32,.32),inset 0 1px 0 rgba(244,243,237,.11)!important;
+}
+#territoryInfoPanel .agworld-territory-stats-heading{
+  min-height:42px!important;
+  padding:0 14px!important;
+  background:linear-gradient(90deg,rgba(184,230,32,.10),rgba(13,106,56,.12),transparent)!important;
+  border-bottom:1px solid rgba(217,218,213,.16)!important;
+  border-radius:20px 20px 0 0!important;
+}
+#territoryInfoPanel .territory-info-grid>div,
+#territoryInfoPanel .territory-national-scope,
+#territoryInfoPanel .territory-info-empty,
+#territoryInfoPanel .territory-info-control,
+#territoryInfoPanel .territory-info-footer{
+  background:rgba(244,243,237,.055)!important;
+  border:1px solid rgba(217,218,213,.14)!important;
+  border-radius:14px!important;
+  box-shadow:inset 0 1px 0 rgba(244,243,237,.06)!important;
+}
+#territoryInfoPanel .territory-info-grid>div:hover,
+#territoryInfoPanel .territory-national-scope:hover{
+  background:rgba(184,230,32,.075)!important;
+  border-color:rgba(184,230,32,.30)!important;
+}
+#territoryInfoPanel .territory-info-name,
+#territoryInfoPanel .territory-info-grid strong,
+#territoryInfoPanel .territory-national-scope strong{color:#F4F3ED!important}
+#territoryInfoPanel .territory-info-level,
+#territoryInfoPanel .territory-info-footer{color:#D9DAD5!important}
+#territoryInfoPanel .territory-info-control-value,
+#territoryInfoPanel .territory-info-grid b{color:#B8E620!important}
+
+/* Command Center: warm-white stage with separate rounded floating cards. */
+#entityInformationSection{
+  background:#F4F3ED!important;
+  border:0!important;
+  padding:10px!important;
+}
+#entityCommandCentreHeading,
+#entityInformationSection>#entityCommandCentreHeading.agworld-command-center-heading-exact{
+  min-height:42px!important;
+  height:42px!important;
+  padding:0 14px!important;
+  background:
+    radial-gradient(circle at 86% 0%,rgba(184,230,32,.11),transparent 28%),
+    linear-gradient(145deg,#0D6A38 0%,#0B2C20 72%)!important;
+  border:1px solid rgba(184,230,32,.42)!important;
+  border-radius:16px!important;
+  box-shadow:0 10px 24px rgba(11,44,32,.22),inset 0 1px 0 rgba(244,243,237,.10)!important;
+}
+#entityInformationSection #farmCard,
+#entityInformationSection #farmCard.farm-card,
+#entityInformationSection #farmCard.farm-card.agworld-company-entity-card,
+#entityInformationSection .agworld-company-entity-card,
+#entityInformationSection .agworld-entity-command-interface{
+  background:
+    radial-gradient(circle at 84% 8%,rgba(184,230,32,.12),transparent 30%),
+    linear-gradient(145deg,#0D6A38 0%,#0B2C20 68%,#0B2C20 100%)!important;
+  border:1px solid rgba(184,230,32,.42)!important;
+  border-radius:20px!important;
+  overflow:hidden!important;
+  box-shadow:0 16px 36px rgba(11,44,32,.28),inset 0 1px 0 rgba(244,243,237,.10)!important;
+}
+#entityInformationSection #farmCard>.company-command-split,
+#entityInformationSection .agworld-company-entity-card>.company-command-split,
+#entityInformationSection .agworld-entity-command-interface>.company-command-split{background:transparent!important}
+#entityInformationSection .company-command-stats-pane,
+#entityInformationSection .company-command-right-pane,
+#entityInformationSection .company-command-facility-side,
+#entityInformationSection .company-command-skills-pane,
+#entityInformationSection .company-skill-chart-expanded,
+#entityInformationSection .company-skill-chart-main,
+#entityInformationSection .company-skill-visual,
+#entityInformationSection .company-command-kpis>div,
+#entityInformationSection .company-stats-summary>div,
+#entityInformationSection .company-facility-row,
+#entityInformationSection #farmCard .stats,
+#entityInformationSection #farmCard .stat,
+#entityInformationSection #farmCard .farm-extra,
+#entityInformationSection #farmCard .farm-extra>div,
+#entityInformationSection #agworldV2FarmDetailHost,
+#entityInformationSection #agworldV2FarmDetailHost .agworld-v2-detail-tabs,
+#entityInformationSection #agworldV2FarmDetailHost .agworld-v2-detail-content,
+#entityInformationSection #farmActions{
+  background:rgba(244,243,237,.055)!important;
+  border:1px solid rgba(217,218,213,.14)!important;
+  border-radius:14px!important;
+  box-shadow:inset 0 1px 0 rgba(244,243,237,.055)!important;
+}
+#entityInformationSection .company-command-pane-title,
+#entityInformationSection .company-command-pane-title>*{background:transparent!important}
+#entityInformationSection .company-command-kpis>div:hover,
+#entityInformationSection .company-facility-row:hover,
+#entityInformationSection .stat:hover{
+  background:rgba(184,230,32,.075)!important;
+  border-color:rgba(184,230,32,.30)!important;
+}
+#entityInformationSection .company-command-kpis,
+#entityInformationSection .company-stats-summary{gap:8px!important}
+#entityInformationSection .company-skill-chart,
+#entityInformationSection .company-skill-chart-expanded,
+#entityInformationSection .company-skill-chart-main,
+#entityInformationSection .company-skill-visual{
+  background:
+    radial-gradient(circle at 50% 46%,rgba(184,230,32,.12),transparent 44%),
+    rgba(244,243,237,.04)!important;
+}
+
 `;
   function installStyle(){
     document.getElementById(STYLE_ID)?.remove();
