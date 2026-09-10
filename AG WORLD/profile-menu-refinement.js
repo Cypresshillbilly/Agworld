@@ -94,7 +94,13 @@ body.ag-profile-mode .sidebar button[id*="logout"],.app-shell .sidebar button[id
 body.ag-profile-mode .sidebar .logout,.app-shell .sidebar .logout{
   order:3!important;flex:0 0 auto!important;min-height:18px!important;height:18px!important;
 }
+/* Keep the map's command tools clear of the dedicated Developer Mode corner. */
+body.ag-profile-mode .map-area .map-header,.app-shell .map-area .map-header{padding-right:118px!important}
+body.ag-profile-mode .map-area .map-tools,.app-shell .map-area .map-tools{justify-content:flex-start!important;right:auto!important;max-width:calc(100% - 118px)!important}
+#developerModeBtn{position:absolute!important;top:10px!important;right:12px!important;z-index:1250!important;min-width:94px!important;height:24px!important;padding:0 9px!important;border-radius:6px!important;font-size:7px!important;white-space:nowrap!important}
 body.ag-profile-mode .map-area .ag-world-map-logo,.app-shell .map-area .ag-world-map-logo{display:none!important}
+/* The mission card is the only player profile shown on this screen. */
+.map-area .map-player-profile,.map-area .player-profile,.map-area .map-user-profile,.map-area .player-avatar-control,.map-area [id*="mapPlayerProfile"],.map-area [id*="mapUserProfile"]{display:none!important}
 body.ag-profile-mode .bottom{height:23%!important}
 
 @media(min-width:1500px){
@@ -163,10 +169,8 @@ const SIDEBAR_MENU=[
  ['after sales','After Sales'],
  ['mission history','Mission History'],
  ['ai assistant','AI Assistant'],
- ['company commands','Company Commands'],
- ['company controls','Company Controls'],
+ ['territory campaigns','Territory Campaigns'],
  ['territory graphics','Territory Graphics'],
- ['developer mode','Developer Mode'],
  ['settings','Settings'],
  ['logout','Logout']
 ];
@@ -174,8 +178,26 @@ function menuKey(el){
  const raw=(el.dataset.menu||el.dataset.view||el.id||el.getAttribute('aria-label')||el.textContent||'').toLowerCase();
  return raw.replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
 }
+function ensureTerritoryCampaignMenuItem(nav){
+ if(!nav)return null;
+ let campaign=document.getElementById('agCampaignCommandButton');
+ if(!campaign)return null;
+ // Re-home the existing functional button rather than cloning it, preserving its
+ // campaign click handler and all Chapter 3 behaviour.
+ campaign.style.position='static';
+ campaign.style.right='auto';
+ campaign.style.bottom='auto';
+ campaign.style.zIndex='auto';
+ campaign.style.display='';
+ campaign.style.visibility='visible';
+ campaign.style.opacity='1';
+ campaign.textContent='Territory Campaigns';
+ if(campaign.parentElement!==nav)nav.appendChild(campaign);
+ return campaign;
+}
 function normaliseSidebarMenu(nav){
  if(!nav)return;
+ ensureTerritoryCampaignMenuItem(nav);
  const nodes=Array.from(nav.querySelectorAll('button,a,[role="button"]'));
  const matched=new Map();
  nodes.forEach(el=>{
@@ -193,6 +215,18 @@ function normaliseSidebarMenu(nav){
  nodes.forEach(el=>{if(!Array.from(matched.values()).includes(el))el.remove()});
  SIDEBAR_MENU.forEach(([needle])=>{const el=matched.get(needle);if(el)nav.appendChild(el)});
 }
+function removeMapPlayerProfile(){
+ const mapArea=document.querySelector('.map-area');if(!mapArea)return;
+ mapArea.querySelectorAll('.map-player-profile,.player-profile,.map-user-profile,.player-avatar-control,[id*="mapPlayerProfile"],[id*="mapUserProfile"]').forEach(el=>el.remove());
+ // Remove a late-injected standalone player chip only when it is clearly a
+ // map overlay, leaving map controls and the mission profile untouched.
+ [...mapArea.children].forEach(el=>{
+   if(el.id==='map'||el.classList.contains('map-header')||el.classList.contains('map-status')||el.id==='farmCard')return;
+   const text=(el.textContent||'').trim().toUpperCase();
+   const cls=((el.id||'')+' '+(el.className||'')).toLowerCase();
+   if((/player|profile|avatar|user/.test(cls)) && (text.length<=40||/NICO VAN ROOYEN/.test(text)))el.remove();
+ });
+}
 function correctSidebar(){
  const s=document.querySelector('.sidebar');if(!s)return;
  // Remove legacy duplicate player blocks only. The official sidebar brand is retained.
@@ -203,6 +237,7 @@ function correctSidebar(){
  if(nav && brand.nextElementSibling!==nav)brand.insertAdjacentElement('afterend',nav);
  normaliseSidebarMenu(nav);
  ensureMissionsPlayerProfile();
+ removeMapPlayerProfile();
  document.querySelectorAll('.map-area .ag-world-map-logo').forEach(el=>el.remove());
 }
 function refreshPlayerUI(){
