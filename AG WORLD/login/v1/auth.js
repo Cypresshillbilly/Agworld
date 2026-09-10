@@ -19,14 +19,14 @@
   // profile used by the desktop shortcut. It never shares credentials with
   // Ag World player sign-in.
   const REMEMBER_USER = 'gamechanger.master.remembered.username';
-  const REMEMBER_PASS = 'gamechanger.master.remembered.password';
   const REMEMBER_FLAG = 'gamechanger.master.remembered.enabled';
-  // Ag World Remember Me is intentionally scoped to this login only.
-  // It restores the credentials into the login boundary after refresh/logout
-  // when the user explicitly opted in.
+  // Remember Me stores only a non-secret username/email. Authentication is
+  // restored by the authenticated session provider, never by a plaintext
+  // password retained in browser storage.
   const AG_REMEMBER_USER = 'agworld.remembered.email';
-  const AG_REMEMBER_PASS = 'agworld.remembered.password';
   const AG_REMEMBER_FLAG = 'agworld.remembered.enabled';
+  const LEGACY_REMEMBER_PASS = 'gamechanger.master.remembered.password';
+  const LEGACY_AG_REMEMBER_PASS = 'agworld.remembered.password';
 
   async function sha256(text){
     const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
@@ -86,42 +86,42 @@
     // Restore credentials only when this browser/profile has explicitly
     // been told to remember them.
     try{
+      // One-time hygiene for the old implementation: remove any legacy
+      // plaintext password values that may still exist from prior versions.
+      localStorage.removeItem(LEGACY_REMEMBER_PASS);
+      localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
       if(master){
         const remembered=localStorage.getItem(REMEMBER_FLAG)==='1';
         if(remembered){
           username.value=localStorage.getItem(REMEMBER_USER)||'';
-          password.value=localStorage.getItem(REMEMBER_PASS)||'';
-          remember.checked=!!(username.value||password.value);
+          remember.checked=!!username.value;
         }
       }else{
         const remembered=localStorage.getItem(AG_REMEMBER_FLAG)==='1';
         if(remembered){
           username.value=localStorage.getItem(AG_REMEMBER_USER)||'';
-          password.value=localStorage.getItem(AG_REMEMBER_PASS)||'';
-          remember.checked=!!(username.value||password.value);
+          remember.checked=!!username.value;
         }
       }
     }catch(err){
       console.warn('Unable to restore remembered login credentials',err);
     }
 
-    // Persist Ag World credentials as soon as Remember Me is explicitly checked,
-    // and keep the remembered values current while the user types. This means a
-    // refresh before pressing Enter still restores the credentials.
+    // Remember Me stores only the username/email. Passwords are never retained
+    // in localStorage; the authenticated provider owns session persistence.
     const persistAgRemember=()=>{
       if(master) return;
       try{
+        localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
         if(remember.checked){
           localStorage.setItem(AG_REMEMBER_FLAG,'1');
           localStorage.setItem(AG_REMEMBER_USER,username.value);
-          localStorage.setItem(AG_REMEMBER_PASS,password.value);
         }else{
           localStorage.removeItem(AG_REMEMBER_FLAG);
           localStorage.removeItem(AG_REMEMBER_USER);
-          localStorage.removeItem(AG_REMEMBER_PASS);
         }
       }catch(err){
-        console.warn('Unable to save remembered Ag World credentials',err);
+        console.warn('Unable to save remembered Ag World username',err);
       }
     };
     if(!master){
@@ -179,16 +179,16 @@
           sessionStorage.setItem('gamechanger.username',displayName);
           if(remember.checked){
             try{
+              localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
               localStorage.setItem(AG_REMEMBER_FLAG,'1');
               localStorage.setItem(AG_REMEMBER_USER,email);
-              localStorage.setItem(AG_REMEMBER_PASS,pass);
-            }catch(err){ console.warn('Unable to save remembered Ag World credentials',err); }
+            }catch(err){ console.warn('Unable to save remembered Ag World username',err); }
           }else{
             try{
               localStorage.removeItem(AG_REMEMBER_FLAG);
               localStorage.removeItem(AG_REMEMBER_USER);
-              localStorage.removeItem(AG_REMEMBER_PASS);
-            }catch(err){ console.warn('Unable to clear remembered Ag World credentials',err); }
+              localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
+            }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
           gate.remove();
           reveal();
@@ -210,14 +210,13 @@
       // successful login removes any previously remembered credentials.
       if(master){
         try{
+          localStorage.removeItem(LEGACY_REMEMBER_PASS);
           if(remember.checked){
             localStorage.setItem(REMEMBER_FLAG,'1');
             localStorage.setItem(REMEMBER_USER,username.value.trim());
-            localStorage.setItem(REMEMBER_PASS,password.value);
           }else{
             localStorage.removeItem(REMEMBER_FLAG);
             localStorage.removeItem(REMEMBER_USER);
-            localStorage.removeItem(REMEMBER_PASS);
           }
         }catch(err){
           console.warn('Unable to save Master Admin remembered credentials',err);
