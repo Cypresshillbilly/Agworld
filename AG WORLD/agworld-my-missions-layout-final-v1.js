@@ -173,12 +173,18 @@ function textFrom(root,selector,fallback){
 }
 
 function purgeLegacyMissionCards(missions){
-  // Legacy player-screen mission panels are deleted, not merely hidden.
+  // Hard production invariant: the player surface owns exactly one Mission Card.
+  // Delete all retired mission panels physically from the player-screen DOM.
   LEGACY_MISSION_SELECTORS.forEach(selector=>{
     document.querySelectorAll(selector).forEach(el=>{
-      if(el.id===CARD_ID)return;
-      el.remove();
+      if(el.id!==CARD_ID)el.remove();
     });
+  });
+  if(!missions)return;
+  missions.querySelectorAll('.mission,.mission-card,.mission-item,[data-mission],[data-mission-id]').forEach(el=>{
+    if(el.id===CARD_ID||el.closest('#agMissionHub,#agAdvisorBay'))return;
+    if(el.matches('#agPlayerMissionProfile,#agMissionSkillProfile,.ag-mission-skill-profile'))return;
+    el.remove();
   });
 }
 
