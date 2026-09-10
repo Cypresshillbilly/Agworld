@@ -1,173 +1,157 @@
-/* AG WORLD — MY MISSIONS CARD POLISH v1
-   Visual/content refinement only. The locked Mission Control boundary geometry
-   is intentionally not modified by this file. */
+/* AG WORLD — MISSION CONTROL CARD SYSTEM v2
+   Card-level production controller. It deliberately does not alter the locked
+   Mission Control outer boundary contract owned by agworld-player-progression-stack-v1.js. */
 (()=>{
 'use strict';
-const SID='agworld-mission-control-card-polish-v1-style';
+const SID='agworld-mission-control-card-system-v2-style';
+const PLAYER_CARD='agPlayerMissionProfile';
+const ADVISOR_BAY='agAdvisorBay';
+const COMMANDER='agStrategicCommanderPanel';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-const css=`
-/* Player card internals — no outer Mission Control geometry is touched. */
-#agPlayerMissionProfile .ag-player-identity{display:grid!important;grid-template-columns:60px minmax(0,1fr)!important;column-gap:10px!important;align-items:start!important;height:100%!important;min-width:0!important}
-#agPlayerMissionProfile .ag-player-avatar-frame{position:relative!important;width:56px!important;height:62px!important;align-self:start!important;justify-self:start!important;margin-top:-3px!important}
-#agPlayerMissionProfile .ag-player-avatar{width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important;font-size:21px!important;line-height:54px!important}
-#agPlayerMissionProfile .ag-player-online-dot{right:0!important;bottom:5px!important}
-#agPlayerMissionProfile .ag-player-summary{min-width:0!important;align-self:start!important;justify-content:flex-start!important;padding-top:0!important}
-#agPlayerMissionProfile .ag-player-kicker{font-size:6.4px!important}
-#agPlayerMissionProfile .ag-player-name{font-size:12px!important;line-height:1.08!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-#agPlayerMissionProfile .ag-player-role{font-size:6.6px!important;line-height:1.25!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-#agPlayerMissionProfile .ag-player-meta{display:flex!important;gap:4px!important;margin-top:3px!important}
-#agPlayerMissionProfile .ag-player-level,#agPlayerMissionProfile .ag-player-chapter{font-size:6.2px!important;padding:3px 5px!important}
-#agPlayerMissionProfile .ag-player-xp-label{margin-top:4px!important;font-size:6px!important}
-#agPlayerMissionProfile .ag-player-xp-track{height:6px!important;margin:3px 0!important}
-#agPlayerMissionProfile .ag-player-xp-text{font-size:6.2px!important}
+const css=String.raw`
+/* Player Profile: authoritative internal layout only; no outer panel geometry. */
+#${PLAYER_CARD} .ag-player-identity{display:grid!important;grid-template-columns:58px minmax(0,1fr)!important;gap:10px!important;align-items:start!important;min-width:0!important;height:100%!important}
+#${PLAYER_CARD} .ag-player-avatar-frame{position:relative!important;width:56px!important;height:58px!important;margin-top:-4px!important;align-self:start!important}
+#${PLAYER_CARD} .ag-player-avatar{width:54px!important;height:54px!important;display:grid!important;place-items:center!important;font-size:20px!important}
+#${PLAYER_CARD} .ag-player-online-dot{right:0!important;bottom:1px!important}
+#${PLAYER_CARD} .ag-player-summary{min-width:0!important;padding:0!important;align-self:start!important}
+#${PLAYER_CARD} .ag-player-kicker{display:block!important;margin-bottom:2px!important}
+#${PLAYER_CARD} .ag-player-name{display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#${PLAYER_CARD} .ag-player-role{display:block!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#${PLAYER_CARD} .ag-player-xp-label{margin-top:4px!important}
+#${PLAYER_CARD} .ag-player-xp-text b:first-child{color:#dff58a!important}
 
-/* Advisor Bay uses the exact canonical panel family. */
-#agAdvisorBay{background:linear-gradient(145deg,#173c45 0%,#102b36 65%,#0a2029 100%)!important;border-color:rgba(153,205,185,.28)!important;border-radius:12px!important}
-#agAdvisorBay .ag-advisor{position:relative!important}
-#agAdvisorBay .ag-advisor.is-active{border-color:#c2e95d!important;background:linear-gradient(145deg,rgba(194,233,93,.18),rgba(29,125,130,.10))!important;box-shadow:0 0 0 1px rgba(194,233,93,.22),0 10px 20px rgba(0,0,0,.26),0 0 18px rgba(194,233,93,.12)!important}
-#agAdvisorBay .ag-advisor.is-active::after{content:"ACTIVE"!important;position:absolute!important;right:4px!important;top:4px!important;color:#dff58a!important;font:900 5.5px/1 Arial,sans-serif!important;letter-spacing:.55px!important}
-#agAdvisorBay .ag-advisor-portrait{position:absolute!important;left:50%!important;top:4px!important;transform:translateX(-50%)!important;width:42px!important;height:50px!important;object-fit:cover!important;object-position:center top!important;border-radius:10px 10px 6px 6px!important;filter:drop-shadow(0 5px 6px rgba(0,0,0,.38)) saturate(1.08) contrast(1.05)!important}
-#agAdvisorBay .ag-advisor-icon{display:none!important}
-#agAdvisorBay .ag-advisor-label{position:relative!important;z-index:2!important}
+/* Advisory Bay shares the canonical dark command-card material. */
+#${ADVISOR_BAY}{background:linear-gradient(145deg,#173c45 0%,#102b36 65%,#0a2029 100%)!important;border:1px solid rgba(153,205,185,.28)!important;box-shadow:0 10px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important}
+#${ADVISOR_BAY} .ag-advisor{position:relative!important}
+#${ADVISOR_BAY} .ag-advisor.is-active{border-color:rgba(194,233,93,.82)!important;background:linear-gradient(155deg,rgba(194,233,93,.18),rgba(4,20,26,.28))!important;box-shadow:0 0 0 1px rgba(194,233,93,.16),0 10px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.12)!important}
+#${ADVISOR_BAY} .ag-advisor.is-active::after{content:'ACTIVE';position:absolute;right:4px;top:4px;color:#dff58a;font:900 5.5px/1 Arial,sans-serif;letter-spacing:.6px;z-index:4}
+#${ADVISOR_BAY} .ag-advisor-portrait{position:absolute!important;left:50%!important;top:3px!important;transform:translateX(-50%)!important;width:44px!important;height:52px!important;object-fit:cover!important;object-position:center top!important;border-radius:10px 10px 7px 7px!important;filter:drop-shadow(0 5px 7px rgba(0,0,0,.42)) contrast(1.04) saturate(1.08)!important}
+#${ADVISOR_BAY} .ag-advisor-icon{display:none!important}
+#${ADVISOR_BAY} .ag-advisor-label{position:relative!important;z-index:3!important}
 
-/* Sales-only Strategic Commander. It is created only while Sales is active. */
-#entityInformationSection.ag-sales-commander-active>:not(#agStrategicCommanderPanel){display:none!important}#agStrategicCommanderPanel{position:relative!important;margin:0!important;min-height:0!important;height:100%!important;box-sizing:border-box!important;padding:14px!important;border-radius:14px!important;background:linear-gradient(145deg,#173c45 0%,#102b36 65%,#0a2029 100%)!important;border:1px solid rgba(153,205,185,.28)!important;box-shadow:0 10px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;color:#edf7f2!important;overflow:auto!important}
-#agStrategicCommanderPanel .agsc-kicker{color:#c2e95d!important;font:900 8px/1 Arial,sans-serif!important;letter-spacing:1.2px!important}
-#agStrategicCommanderPanel h2{margin:6px 0 4px!important;color:#fff!important;font:900 22px/1.1 Arial,sans-serif!important}
-#agStrategicCommanderPanel p{margin:0 0 12px!important;color:#b9ccc5!important;font:700 10px/1.45 Arial,sans-serif!important}
-#agStrategicCommanderPanel .agsc-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
-#agStrategicCommanderPanel .agsc-metric{padding:10px!important;border-radius:10px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(176,214,215,.10)!important}
-#agStrategicCommanderPanel .agsc-metric span{display:block!important;color:#8fb4ba!important;font:900 7px/1 Arial,sans-serif!important;letter-spacing:.7px!important}
-#agStrategicCommanderPanel .agsc-metric b{display:block!important;margin-top:6px!important;color:#dff58a!important;font:900 19px/1 Arial,sans-serif!important}
+/* Conditional Sales surface: hidden from all non-Sales states. */
+#entityInformationSection.ag-sales-commander-active>:not(#${COMMANDER}){display:none!important}
+#${COMMANDER}{display:block!important;box-sizing:border-box!important;width:100%!important;height:100%!important;min-height:0!important;padding:16px!important;border-radius:14px!important;background:linear-gradient(145deg,#173c45 0%,#102b36 65%,#0a2029 100%)!important;border:1px solid rgba(153,205,185,.28)!important;box-shadow:0 10px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;color:#edf7f2!important;overflow:auto!important}
+#${COMMANDER} .agsc-kicker{color:#c2e95d!important;font:900 8px/1 Arial,sans-serif!important;letter-spacing:1.1px!important}
+#${COMMANDER} h2{margin:6px 0 5px!important;color:#fff!important;font:900 22px/1.08 Arial,sans-serif!important}
+#${COMMANDER} p{margin:0 0 12px!important;color:#b9ccc5!important;font:700 10px/1.45 Arial,sans-serif!important}
+#${COMMANDER} .agsc-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+#${COMMANDER} .agsc-metric{padding:10px!important;border-radius:10px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(176,214,215,.10)!important}
+#${COMMANDER} .agsc-metric span{display:block!important;color:#8fb4ba!important;font:900 7px/1 Arial,sans-serif!important;letter-spacing:.65px!important}
+#${COMMANDER} .agsc-metric b{display:block!important;margin-top:6px!important;color:#dff58a!important;font:900 18px/1 Arial,sans-serif!important}
 `;
 
-function install(){
- let style=document.getElementById(SID);
- if(!style){style=document.createElement('style');style.id=SID;document.head.appendChild(style)}
- style.textContent=css;
+function installStyle(){let el=document.getElementById(SID);if(!el){el=document.createElement('style');el.id=SID;document.head.appendChild(el)}el.textContent=css}
+
+function progressionState(){
+ const p=window.AGWorldProgression;
+ const st=p?.getState?.()||{};
+ return {progression:p,state:st};
 }
 
-function playerData(){
- const p=window.AGWorldPlayer||{};
- const get=(...keys)=>keys.map(k=>p[k]??sessionStorage.getItem('gamechanger.'+k)??localStorage.getItem('gamechanger.'+k)).find(v=>v!==null&&v!==undefined&&String(v).trim()!=='');
- const name=String(get('display_name','name','username')||'PLAYER').trim().toUpperCase();
- const role=String(get('role','title','position')||'AGWORLD FIELD COMMANDER').trim().toUpperCase();
- const level=Math.max(1,Number(get('level')||1));
- const chapter=Math.max(1,Number(get('chapter','currentChapter')||1));
- const xp=Math.max(0,Number(get('xp','total_xp','totalXp')||0));
+function canonicalPlayer(){
+ const player=window.AGWorldPlayer||{};
+ const {state}=progressionState();
+ const read=(...keys)=>{
+   for(const k of keys){
+     const sources=[player,state];
+     for(const src of sources){if(src&&src[k]!==undefined&&src[k]!==null&&String(src[k]).trim()!=='')return src[k]}
+     const a=sessionStorage.getItem('gamechanger.'+k),b=localStorage.getItem('gamechanger.'+k);
+     if(a!==null&&a!=='')return a;if(b!==null&&b!=='')return b;
+   }
+   return null;
+ };
+ const name=String(read('display_name','displayName','name','username')||'PLAYER').trim().toUpperCase();
+ const role=String(read('role','title','position')||'AGWORLD FIELD COMMANDER').trim().toUpperCase();
+ const level=Math.max(1,Number(read('level')||1));
+ const chapter=Math.max(1,Number(read('chapter','currentChapter')||1));
+ const xp=Math.max(0,Number(read('xp','totalXp','total_xp','experience')||0));
  const next=Math.max(1000,Math.ceil((xp+1)/1000)*1000);
  const pct=Math.max(0,Math.min(100,Math.round((xp/next)*100)));
- return {name,role,level,chapter,xp,next,pct,initial:(name[0]||'P').toUpperCase()};
+ return {name,role,level,chapter,xp,next,pct,initial:(name[0]||'P')};
 }
 
-function syncPlayer(){
- const card=document.getElementById('agPlayerMissionProfile');
- if(!card)return;
- const d=playerData();
- const set=(sel,v)=>{const el=card.querySelector(sel);if(el)el.textContent=v;};
- set('.ag-player-name',d.name);
- set('.ag-player-role',d.role);
- set('.ag-player-level','LVL '+d.level);
- set('.ag-player-chapter','CH '+d.chapter);
- set('.ag-player-xp-label span','XP EARNED');
- set('.ag-player-xp-label b',d.pct+'%');
- const fill=card.querySelector('.ag-player-xp-fill');if(fill)fill.style.width=d.pct+'%';
- const xp=card.querySelector('.ag-player-xp-text');if(xp)xp.innerHTML='<b>'+d.xp.toLocaleString()+' XP EARNED</b><b>NEXT '+d.next.toLocaleString()+'</b>';
- const avatar=card.querySelector('.ag-player-avatar');if(avatar)avatar.textContent=d.initial;
- card.dataset.agPlayerData='live';
+function renderPlayer(){
+ const card=document.getElementById(PLAYER_CARD);if(!card)return;
+ const d=canonicalPlayer();
+ card.innerHTML='<div class="ag-player-identity"><div class="ag-player-avatar-frame"><div class="ag-player-avatar" aria-hidden="true">'+esc(d.initial)+'</div><span class="ag-player-online-dot"></span></div><div class="ag-player-summary"><span class="ag-player-kicker">ACTIVE PLAYER</span><strong class="ag-player-name">'+esc(d.name)+'</strong><span class="ag-player-role">'+esc(d.role)+'</span><div class="ag-player-meta"><span class="ag-player-level">LVL '+d.level+'</span><span class="ag-player-chapter">CH '+d.chapter+'</span></div><div class="ag-player-xp-label"><span>XP EARNED</span><b>'+d.pct+'%</b></div><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' XP EARNED</b><b>NEXT '+d.next.toLocaleString()+'</b></span></div></div>';
+ card.dataset.agPlayerData='canonical-v2';
 }
 
-function portraitSvg(id,label){
- const palettes={
-  compliance:['#183a4c','#76b7c5','#d7a783','#251a18'],
-  sales:['#263d18','#c2e95d','#d7a783','#3b2318'],
-  product:['#163b54','#59a9d8','#c98968','#1b1715'],
-  operations:['#4a3a20','#d0a85a','#b87a5d','#231b17'],
-  technical:['#2c214b','#a787d8','#c68b70','#17151c']
- };
- const [bg,accent,skin,hair]=palettes[id]||palettes.sales;
+function portraitData(id,label){
+ const file='assets/advisors/'+id+'-commander.webp';
  const initials=label.split(/\s+/).map(x=>x[0]).join('').slice(0,2);
- const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240"><defs><linearGradient id="b" x2="1" y2="1"><stop stop-color="'+bg+'"/><stop offset="1" stop-color="#07151b"/></linearGradient><radialGradient id="s" cx=".35" cy=".25"><stop stop-color="#f1c7a5"/><stop offset=".72" stop-color="'+skin+'"/><stop offset="1" stop-color="#6f4233"/></radialGradient></defs><rect width="200" height="240" rx="24" fill="url(#b)"/><circle cx="154" cy="42" r="48" fill="'+accent+'" opacity=".16"/><path d="M18 225c12-56 43-79 82-79s70 23 82 79" fill="'+accent+'" opacity=".9"/><ellipse cx="100" cy="101" rx="49" ry="61" fill="url(#s)"/><path d="M51 88c3-45 23-67 50-67 31 0 50 25 49 64-18-15-32-19-50-18-19 0-33 7-49 21" fill="'+hair+'"/><path d="M70 110c7 5 16 5 23 0M108 110c7 5 16 5 23 0" stroke="#3c271f" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M83 137c11 7 23 7 34 0" stroke="#7a4038" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="83" cy="107" r="3" fill="#17212b"/><circle cx="117" cy="107" r="3" fill="#17212b"/><text x="100" y="218" text-anchor="middle" fill="#fff" opacity=".82" font-family="Arial" font-size="15" font-weight="800" letter-spacing="3">'+initials+'</text></svg>';
- return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);
+ const palette={compliance:['#173c45','#70b5c3','#d4a37e','#1f1714'],sales:['#263d18','#c2e95d','#d8a27d','#342017'],product:['#173b54','#66b8df','#c98769','#1b1715'],operations:['#493a21','#d4ad5d','#bd7e60','#251d18'],technical:['#30214b','#a88add','#c98b70','#18151d']}[id]||['#173c45','#c2e95d','#d4a37e','#201714'];
+ const [bg,accent,skin,hair]=palette;
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="'+bg+'"/><stop offset="1" stop-color="#07151b"/></linearGradient><radialGradient id="s" cx=".32" cy=".22"><stop stop-color="#f3c9a6"/><stop offset=".72" stop-color="'+skin+'"/><stop offset="1" stop-color="#754737"/></radialGradient></defs><rect width="200" height="240" rx="24" fill="url(#g)"/><circle cx="155" cy="42" r="52" fill="'+accent+'" opacity=".15"/><path d="M18 238c10-58 42-84 82-84s72 26 82 84" fill="'+accent+'" opacity=".92"/><ellipse cx="100" cy="103" rx="50" ry="62" fill="url(#s)"/><path d="M50 90c3-48 23-70 51-70 32 0 51 26 49 67-17-14-31-19-49-18-20 0-34 7-51 21" fill="'+hair+'"/><path d="M70 110c7 5 16 5 23 0M108 110c7 5 16 5 23 0" stroke="#3b2720" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="83" cy="107" r="3" fill="#17212b"/><circle cx="117" cy="107" r="3" fill="#17212b"/><path d="M84 138c10 7 22 7 33 0" stroke="#7a4038" stroke-width="4" fill="none" stroke-linecap="round"/><text x="100" y="220" text-anchor="middle" fill="#fff" opacity=".84" font-family="Arial" font-size="15" font-weight="800" letter-spacing="3">'+initials+'</text></svg>';
+ return {file,fallback:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg)};
 }
 
-function installPortraits(){
- const bay=document.getElementById('agAdvisorBay');if(!bay)return;
+function installAdvisorPortraits(){
+ const bay=document.getElementById(ADVISOR_BAY);if(!bay)return;
  bay.querySelectorAll('.ag-advisor').forEach(btn=>{
-   const id=btn.dataset.advisor,label=(btn.querySelector('.ag-advisor-label')?.textContent||id).trim();
+   const id=btn.dataset.advisor,label=(btn.querySelector('.ag-advisor-label')?.textContent||id).trim(),d=portraitData(id,label);
    let img=btn.querySelector('.ag-advisor-portrait');
-   if(!img){img=document.createElement('img');img.className='ag-advisor-portrait';img.alt=label+' advisor portrait';btn.prepend(img)}
-   const fallback=portraitSvg(id,label);
-   const preferred='assets/advisors/'+id+'-commander.webp';
-   if(!img.dataset.agPortraitBound){
-     img.dataset.agPortraitBound='1';
-     img.onerror=()=>{if(img.src!==fallback)img.src=fallback;};
-   }
-   if(!img.getAttribute('src'))img.src=preferred;
+   if(!img){img=document.createElement('img');img.className='ag-advisor-portrait';img.alt=label+' Commander';btn.prepend(img)}
+   img.onerror=()=>{if(img.src!==d.fallback)img.src=d.fallback};
+   if(!img.dataset.agPortraitSource){img.dataset.agPortraitSource='1';img.src=d.file}
  });
 }
 
 function removeStrategicCommander(){
- const panel=document.getElementById('agStrategicCommanderPanel');
+ const panel=document.getElementById(COMMANDER);
  const host=panel?.parentElement||document.getElementById('entityInformationSection');
  panel?.remove();
- host?.classList?.remove('ag-sales-commander-active');
+ host?.classList.remove('ag-sales-commander-active');
  document.body.dataset.agStrategicCommander='off';
 }
 
 function showStrategicCommander(){
- const host=document.getElementById('entityInformationSection')||document.querySelector('.map-area');
- if(!host)return;
- let panel=document.getElementById('agStrategicCommanderPanel');
- if(!panel){
-   panel=document.createElement('section');
-   panel.id='agStrategicCommanderPanel';
-   panel.setAttribute('aria-label','Strategic Commander');
-   host.appendChild(panel);
- }
- host.classList?.add('ag-sales-commander-active');
- const p=window.AGWorldPlayer||{};
- const company=String(p.company_name||p.company||'YOUR SALES COMMAND').toUpperCase();
- panel.innerHTML='<div class="agsc-kicker">SALES ADVISOR ACTIVE</div><h2>STRATEGIC COMMANDER</h2><p>Live strategic command for '+esc(company)+'. This surface exists only while the Sales Commander is actively selected.</p><div class="agsc-grid"><div class="agsc-metric"><span>ACTIVE LEADS</span><b>6</b></div><div class="agsc-metric"><span>PIPELINE VALUE</span><b>71</b></div><div class="agsc-metric"><span>WINS</span><b>4</b></div></div>';
+ const host=document.getElementById('entityInformationSection');if(!host)return;
+ let panel=document.getElementById(COMMANDER);
+ if(!panel){panel=document.createElement('section');panel.id=COMMANDER;panel.setAttribute('aria-label','Strategic Commander');host.appendChild(panel)}
+ host.classList.add('ag-sales-commander-active');
+ const p=canonicalPlayer();
+ panel.innerHTML='<div class="agsc-kicker">SALES COMMANDER ACTIVE</div><h2>STRATEGIC COMMANDER</h2><p>Strategic sales command is active for '+esc(p.name)+'. This surface exists only while the Sales Commander is selected on the My Missions screen.</p><div class="agsc-grid"><div class="agsc-metric"><span>PLAYER LEVEL</span><b>'+p.level+'</b></div><div class="agsc-metric"><span>XP EARNED</span><b>'+p.xp.toLocaleString()+'</b></div><div class="agsc-metric"><span>CHAPTER</span><b>'+p.chapter+'</b></div></div>';
  document.body.dataset.agStrategicCommander='sales-active';
 }
 
-function setAdvisor(bay,btn){
+function selectAdvisor(btn){
+ const bay=document.getElementById(ADVISOR_BAY);if(!bay)return;
  const id=btn.dataset.advisor;
- const active=btn.classList.contains('is-active');
- if(active){
-   bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.remove('is-active'));
+ const was=btn.classList.contains('is-active');
+ bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.remove('is-active'));
+ if(was){
    window.AGWorldAdvisorState=null;
    removeStrategicCommander();
    window.dispatchEvent(new CustomEvent('agworld:advisor-deselected',{detail:{id}}));
    return;
  }
- bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.toggle('is-active',x===btn));
- window.AGWorldAdvisorState={id,label:btn.querySelector('.ag-advisor-label')?.textContent||id};
+ btn.classList.add('is-active');
+ window.AGWorldAdvisorState={id,label:btn.querySelector('.ag-advisor-label')?.textContent||id,screen:'mission-control'};
  if(id==='sales')showStrategicCommander();else removeStrategicCommander();
  window.dispatchEvent(new CustomEvent('agworld:advisor-selected',{detail:window.AGWorldAdvisorState}));
 }
 
-function bindAdvisorBay(){
- const bay=document.getElementById('agAdvisorBay');if(!bay)return;
- installPortraits();
- if(bay.dataset.agCardPolishBound)return;
- bay.dataset.agCardPolishBound='1';
+function bindAdvisors(){
+ const bay=document.getElementById(ADVISOR_BAY);if(!bay)return;
+ installAdvisorPortraits();
+ if(bay.dataset.agAdvisorController==='v2')return;
+ bay.dataset.agAdvisorController='v2';
  bay.addEventListener('click',e=>{
    const btn=e.target.closest('.ag-advisor');
    if(!btn||!bay.contains(btn))return;
-   e.preventDefault();
-   e.stopImmediatePropagation();
-   setAdvisor(bay,btn);
+   e.preventDefault();e.stopPropagation();
+   selectAdvisor(btn);
  },true);
 }
 
-function run(){install();syncPlayer();bindAdvisorBay();}
-
+function run(){installStyle();renderPlayer();bindAdvisors()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
-['agworld:player-profile','agworld:player-ready','agworld:player-state','agworld:mission-completed','agworld:landing-layout-ready'].forEach(e=>addEventListener(e,()=>setTimeout(run,0)));
+['agworld:player-ready','agworld:player-state','agworld:mission-completed','agworld:landing-layout-ready'].forEach(e=>addEventListener(e,()=>setTimeout(run,0)));
 const observer=new MutationObserver(()=>requestAnimationFrame(run));
 observer.observe(document.documentElement,{childList:true,subtree:true});
-setInterval(syncPlayer,1500);
+setInterval(renderPlayer,1500);
 })();
