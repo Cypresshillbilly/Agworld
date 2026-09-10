@@ -3,6 +3,7 @@
 const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=menu-logo-official-v2';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
+:root{--ag-hero-header-h:170px;}
 /* Final layout contract:
    SIDEBAR: official AG World logo → navigation → logout.
    MISSIONS: player avatar/profile + level/XP → My Missions / Mission Control. */
@@ -24,9 +25,9 @@ body.ag-profile-mode .sidebar .profile,.app-shell .sidebar .profile{display:none
    so navigation can never climb into or clip the logo/tagline artwork. */
 body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{
   order:1!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  width:100%!important;height:var(--ag-sidebar-brand-header-h,112px)!important;
-  min-height:var(--ag-sidebar-brand-header-h,112px)!important;
-  flex:0 0 var(--ag-sidebar-brand-header-h,112px)!important;
+  width:100%!important;height:var(--ag-hero-header-h)!important;
+  min-height:var(--ag-hero-header-h)!important;
+  flex:0 0 var(--ag-hero-header-h)!important;
   margin:0!important;padding:6px 0!important;box-sizing:border-box!important;overflow:hidden!important;
 }
 body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{
@@ -38,8 +39,9 @@ body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .bra
 /* Mission profile is deliberately above the eyebrow and My Missions heading. */
 body.ag-profile-mode .missions .ag-player-mission-profile,.app-shell .missions .ag-player-mission-profile{
   display:grid!important;visibility:visible!important;opacity:1!important;
-  grid-template-columns:66px minmax(0,1fr)!important;align-items:center!important;column-gap:11px!important;
-  width:calc(100% - 8px)!important;min-height:96px!important;margin:3px 4px 8px!important;padding:10px 9px!important;
+  grid-template-columns:96px minmax(0,1fr)!important;align-items:center!important;column-gap:16px!important;
+  width:calc(100% - 12px)!important;height:var(--ag-hero-header-h)!important;min-height:var(--ag-hero-header-h)!important;
+  margin:0 6px 10px!important;padding:18px 16px!important;
   position:relative!important;z-index:50!important;box-sizing:border-box!important;overflow:hidden!important;
   border:1px solid rgba(93,128,141,.55)!important;border-radius:10px!important;
   background:linear-gradient(145deg,rgba(17,39,49,.96),rgba(8,22,29,.98))!important;
@@ -47,11 +49,11 @@ body.ag-profile-mode .missions .ag-player-mission-profile,.app-shell .missions .
 }
 body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-avatar,.app-shell .missions .ag-player-mission-profile .ag-player-avatar{
   display:flex!important;align-items:center!important;justify-content:center!important;
-  width:64px!important;height:64px!important;min-width:64px!important;min-height:64px!important;border-radius:50%!important;
+  width:92px!important;height:92px!important;min-width:92px!important;min-height:92px!important;border-radius:50%!important;
   background:
     radial-gradient(circle at 35% 28%,#7c99a5 0%,#3d5b68 22%,#1a3541 52%,#0b1e27 76%)!important;
   border:3px solid #9eb1b8!important;outline:2px solid rgba(178,220,71,.52)!important;outline-offset:2px!important;
-  color:#fff!important;font:900 26px Arial,sans-serif!important;letter-spacing:-1px!important;
+  color:#fff!important;font:900 38px Arial,sans-serif!important;letter-spacing:-1px!important;
   text-shadow:0 2px 4px rgba(0,0,0,.65)!important;box-sizing:border-box!important;
   box-shadow:0 7px 12px rgba(0,0,0,.38),inset 0 2px 4px rgba(255,255,255,.24),inset 0 -5px 9px rgba(0,0,0,.35)!important;
 }
@@ -61,14 +63,14 @@ body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-summary,.ap
 }
 body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-name,.app-shell .missions .ag-player-mission-profile .ag-player-name{
   display:block!important;width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;
-  color:#f1f6f7!important;font:900 12px/1.12 Arial,sans-serif!important;letter-spacing:.35px!important;white-space:nowrap!important;
+  color:#f1f6f7!important;font:900 16px/1.15 Arial,sans-serif!important;letter-spacing:.35px!important;white-space:nowrap!important;
   text-shadow:0 1px 2px rgba(0,0,0,.45)!important;
 }
 body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-role,
 body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-level,
 .app-shell .missions .ag-player-mission-profile .ag-player-role,
 .app-shell .missions .ag-player-mission-profile .ag-player-level{
-  display:block!important;color:#9fb1b8!important;font:800 8px/1.35 Arial,sans-serif!important;letter-spacing:.22px!important;white-space:nowrap!important;
+  display:block!important;color:#9fb1b8!important;font:800 11px/1.45 Arial,sans-serif!important;letter-spacing:.22px!important;white-space:nowrap!important;
 }
 body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-xp-track,.app-shell .missions .ag-player-mission-profile .ag-player-xp-track{
   display:block!important;width:100%!important;height:8px!important;margin:6px 0 4px!important;border-radius:999px!important;overflow:hidden!important;
@@ -317,13 +319,14 @@ function syncSidebarBrandHeader(){
  const sidebar=document.querySelector('.sidebar');
  const card=document.querySelector('.missions #agPlayerMissionProfile');
  if(!sidebar||!card)return;
- const sidebarRect=sidebar.getBoundingClientRect();
- const cardRect=card.getBoundingClientRect();
- // Reserve the entire top-left header from the screen top down to the bottom
- // edge of the live My Missions player profile. This is geometry, not a fixed
- // guess, so it remains aligned when responsive scaling changes.
- const aligned=Math.max(112,Math.round(cardRect.bottom-sidebarRect.top+1));
- sidebar.style.setProperty('--ag-sidebar-brand-header-h',aligned+'px','important');
+ // The logo and player profile are equal-status hero elements. They intentionally
+ // share one generous header height so neither is visually treated as secondary.
+ const shellH=document.querySelector('.app-shell')?.clientHeight||820;
+ const heroHeight=Math.max(160,Math.min(190,Math.round(shellH*0.207)));
+ document.documentElement.style.setProperty('--ag-hero-header-h',heroHeight+'px');
+ sidebar.style.setProperty('--ag-sidebar-brand-header-h',heroHeight+'px','important');
+ card.style.setProperty('height',heroHeight+'px','important');
+ card.style.setProperty('min-height',heroHeight+'px','important');
 }
 function correctSidebar(){
  const s=document.querySelector('.sidebar');if(!s)return;
