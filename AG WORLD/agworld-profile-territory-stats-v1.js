@@ -103,10 +103,14 @@ function layout(){
  // Player Page Command Center: centred horizontally within the cropped map,
  // floating above the bottom edge with visible map on all exposed sides.
  if(command){
-   const desiredW=Math.min(Math.round(mr.width*.72),Math.max(360,Math.round(mr.width-72)));
-   const desiredH=Math.min(Math.round(mr.height*.30),220);
-   const bottomInset=Math.max(18,Math.round(mr.height*.035));
-   const left=Math.max(18,Math.round((mr.width-desiredW)/2));
+   // Player Profile Command Center belongs to the full application stage, not to
+   // the legacy bottom-strip coordinate system. Centre it horizontally inside
+   // the map viewport and keep it floating low over the ocean with visible map
+   // below and around it.
+   const desiredW=Math.min(680,Math.max(420,Math.round(mr.width*.58)),Math.max(320,Math.round(mr.width-40)));
+   const desiredH=Math.min(170,Math.max(130,Math.round(mr.height*.18)));
+   const bottomInset=24;
+   const left=Math.round(mr.left+(mr.width-desiredW)/2);
    command.style.setProperty('position','absolute','important');
    command.style.setProperty('left',left+'px','important');
    command.style.setProperty('right','auto','important');
@@ -114,6 +118,7 @@ function layout(){
    command.style.setProperty('height',desiredH+'px','important');
    command.style.setProperty('bottom',bottomInset+'px','important');
    command.style.setProperty('top','auto','important');
+   command.style.setProperty('transform','none','important');
    command.style.setProperty('z-index','1500','important');
  }
  const cr=command?.getBoundingClientRect();
