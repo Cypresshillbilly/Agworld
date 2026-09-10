@@ -54,6 +54,8 @@
 .ag-guide-nav{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 11px}
 .ag-guide-nav button{border:1px solid rgba(244,243,237,.11);border-radius:999px;background:rgba(244,243,237,.045);color:#D9DAD5;padding:5px 8px;font-size:7px;font-weight:900;letter-spacing:.65px;cursor:pointer}
 .ag-guide-nav button.active{border-color:rgba(184,230,32,.5);background:rgba(184,230,32,.12);color:#B8E620}
+.ag-guide-progress{height:3px;margin:0 0 11px;border-radius:999px;background:rgba(244,243,237,.08);overflow:hidden}
+.ag-guide-progress i{display:block;width:0%;height:100%;background:#B8E620;box-shadow:0 0 12px rgba(184,230,32,.7);transition:width .12s linear}
 .ag-guide-controls{display:flex;align-items:center;gap:7px}
 .ag-guide-play{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:34px;padding:0 12px;border:1px solid rgba(184,230,32,.52);border-radius:8px;background:#0D6A38;color:#F4F3ED;font-size:8px;font-weight:900;letter-spacing:.8px;cursor:pointer}
 .ag-guide-play:hover{background:#0b5a31}
@@ -102,6 +104,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
             <button type="button" data-guide-section="mission">MISSIONS</button>
             <button type="button" data-guide-section="game">AGWORLD</button>
           </div>
+          <div class="ag-guide-progress" aria-hidden="true"><i></i></div>
           <div class="ag-guide-controls">
             <button class="ag-guide-play" type="button"><span>▶</span><span>PLAY BRIEFING</span></button>
             <button class="ag-guide-minimise" type="button">MINIMISE</button>
@@ -149,6 +152,14 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
 
     let currentSection='welcome';
     const playButton=root.querySelector('.ag-guide-play');
+    const playIcon=playButton.firstElementChild;
+    const playLabel=playButton.lastElementChild;
+    const progress=root.querySelector('.ag-guide-progress i');
+    const resetPlaybackUI=()=>{
+      playIcon.textContent='▶';
+      playLabel.textContent='PLAY BRIEFING';
+      progress.style.width='0%';
+    };
 
     const setSection=(key,{show=true,autoplay=false}={})=>{
       const section=GUIDE_LIBRARY[key]||GUIDE_LIBRARY.welcome;
@@ -165,7 +176,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       root.querySelectorAll('[data-guide-section]').forEach(btn=>{
         btn.classList.toggle('active',btn.dataset.guideSection===currentSection);
       });
-      playButton.lastElementChild.textContent='PLAY BRIEFING';
+      resetPlaybackUI();
       if(show) showGuide();
       if(autoplay) setTimeout(()=>playButton.click(),80);
     };
@@ -183,18 +194,28 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       if(audio.paused){
         try{
           await audio.play();
-          playButton.lastElementChild.textContent='PAUSE BRIEFING';
+          playIcon.textContent='Ⅱ';
+          playLabel.textContent='PAUSE BRIEFING';
         }catch(err){
-          root.querySelector('.ag-guide-copy').textContent='Click PLAY BRIEFING again to start the AI voice.';
-          playButton.lastElementChild.textContent='PLAY BRIEFING';
+          root.querySelector('.ag-guide-copy').textContent='The AI briefing is ready. Click PLAY BRIEFING again to start the audio.';
+          resetPlaybackUI();
         }
       }else{
         audio.pause();
-        playButton.lastElementChild.textContent='PLAY BRIEFING';
+        playIcon.textContent='▶';
+        playLabel.textContent='PLAY BRIEFING';
       }
     });
 
-    audio.addEventListener('ended',()=>{const b=root.querySelector('.ag-guide-play');if(b) b.lastElementChild.textContent='PLAY BRIEFING';});
+    audio.addEventListener('timeupdate',()=>{
+      if(!audio.duration || !isFinite(audio.duration)) return;
+      progress.style.width=Math.max(0,Math.min(100,(audio.currentTime/audio.duration)*100))+'%';
+    });
+    audio.addEventListener('ended',resetPlaybackUI);
+    audio.addEventListener('error',()=>{
+      resetPlaybackUI();
+      root.querySelector('.ag-guide-copy').textContent='The AI voice briefing could not be loaded. Please try again.';
+    });
 
     setSection('welcome',{show:false});
     window.AG_WORLD_GUIDE={
@@ -232,7 +253,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         audio.pause();
         audio.currentTime=0;
         const b=root.querySelector('.ag-guide-play');
-        if(b) b.lastElementChild.textContent='PLAY BRIEFING';
+        resetPlaybackUI();
       }
     };
   }
