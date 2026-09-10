@@ -890,40 +890,8 @@ function ensureAdvisorBay(){
    ].map(([id,mark,label])=>'<button type="button" class="ag-advisor" data-advisor="'+id+'" aria-label="Open '+label+' advisor"><span class="ag-advisor-icon" aria-hidden="true"><i class="head"></i><i class="hair"></i><i class="body"></i><b class="mark">'+mark+'</b></span><span class="ag-advisor-label">'+label+'</span></button>').join('')+'</div>';
  }
  if(bay.parentElement!==missions)missions.appendChild(bay);
- bay.querySelectorAll('.ag-advisor').forEach(btn=>{
-   if(btn.dataset.agAdvisorBound)return;
-   btn.dataset.agAdvisorBound='1';
-   btn.addEventListener('click',(event)=>{
-     event.preventDefault();
-     event.stopPropagation();
-     const advisor=btn.dataset.advisor;
-     const wasActive=btn.classList.contains('is-active');
-
-     // One explicit advisor state machine: active -> inactive on second click.
-     bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.remove('is-active'));
-
-     if(wasActive){
-       window.AGWorldAdvisorState=null;
-       window.dispatchEvent(new CustomEvent('agworld:advisor-deselected',{detail:{id:advisor,screen:'mission-control'}}));
-       // Purge the previous "always open/pinned" hologram behaviour.
-       window.AGWorldStrategicCommander?.hide?.();
-       return;
-     }
-
-     btn.classList.add('is-active');
-     window.AGWorldAdvisorState={
-       id:advisor,
-       label:btn.querySelector('.ag-advisor-label')?.textContent||advisor,
-       screen:'mission-control'
-     };
-     window.dispatchEvent(new CustomEvent('agworld:advisor-selected',{detail:window.AGWorldAdvisorState}));
-
-     // The hologram is controlled only by Sales selection. Other advisors do not
-     // invoke or pin the Sales hologram.
-     if(advisor==='sales') window.AGWorldStrategicCommander?.show?.();
-     else window.AGWorldStrategicCommander?.hide?.();
-   });
- });
+ // Advisor interaction is intentionally owned by agworld-mission-control-card-polish-v1.js.
+ // This layout file creates the tabs only and must never open or pin the map hologram.
  return bay;
 }
 function syncAdvisorBayGeometry(){
