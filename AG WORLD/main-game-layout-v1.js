@@ -135,6 +135,13 @@
   }
 
   function lockGeometry(){
+    // Player Profile owns its own map/overlay geometry. Full Game layout must
+    // never reserve a bottom strip or overwrite the profile Command Center.
+    if(document.body.classList.contains('ag-profile-mode')){
+      window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={mode:'profile',owner:'agworld-player-profile-floating-map-v1'};
+      return;
+    }
+
     const shell=document.querySelector('.app-shell');
     const sidebar=document.querySelector('.sidebar');
     const missions=document.querySelector('.missions');
