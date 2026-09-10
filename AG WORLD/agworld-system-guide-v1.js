@@ -436,6 +436,24 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     });
 
     setSection('welcome',{show:false});
+    // Sales Advisor controls the map hologram explicitly. It is not a persistent HUD.
+    window.AGWorldStrategicCommander={
+      show(){
+        placeGuide();
+        showAvatarOnly();
+        root.dataset.agSalesAdvisorActive='true';
+      },
+      hide(){
+        root.dataset.agSalesAdvisorActive='false';
+        root.classList.remove('show','avatar-only','is-talking');
+        reopen.classList.remove('show');
+        audio.pause();
+        audio.currentTime=0;
+        setCommanderMode('sleep');
+      },
+      isVisible(){return root.classList.contains('show');}
+    };
+
     window.AG_WORLD_GUIDE={
       show:openFullGuide,
       showAvatar:showAvatarOnly,
@@ -483,31 +501,21 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     const root=document.getElementById(GUIDE_ID);
     if(!root) return;
 
-    // Persistent HUD element: do not hide the hologram after the first welcome.
+    // The Strategic Commander is no longer a persistent or auto-pinned map HUD.
+    // Visibility is owned exclusively by the active Sales advisor state.
     const syncVisibility=()=>{
-      const active=document.body.classList.contains('ag-profile-mode') ||
-                   document.body.classList.contains('ag-game-mode') ||
-                   document.body.classList.contains('ag-full-game-mode');
-      const guide=window.AG_WORLD_GUIDE;
-      const reopen=document.querySelector('.ag-guide-reopen');
-      if(active && guide && !(reopen&&reopen.classList.contains('show'))) guide.showAvatar();
-      else if(!active) root.classList.remove('show','avatar-only');
+      const salesActive=window.AGWorldAdvisorState?.id==='sales';
+      if(salesActive) window.AGWorldStrategicCommander?.show?.();
+      else window.AGWorldStrategicCommander?.hide?.();
     };
 
     window.addEventListener('agworld:ui-shell-ready',syncVisibility);
+    window.addEventListener('agworld:advisor-selected',syncVisibility);
+    window.addEventListener('agworld:advisor-deselected',syncVisibility);
     window.addEventListener('load',syncVisibility);
-    new MutationObserver(()=>{
-      syncVisibility();
-      if(document.body.classList.contains('ag-full-game-mode') && window.AG_WORLD_GUIDE?.current?.()!=='game'){
-        window.AG_WORLD_GUIDE.select('game',{show:true,autoplay:false});
-      }
-    }).observe(document.body,{attributes:true,attributeFilter:['class']});
+    new MutationObserver(syncVisibility).observe(document.body,{attributes:true,attributeFilter:['class']});
 
     syncVisibility();
-    if((document.body.classList.contains('ag-profile-mode')||document.body.classList.contains('ag-game-mode')) && !sessionStorage.getItem(STATE_KEY)){
-      sessionStorage.setItem(STATE_KEY,'1');
-      setTimeout(()=>window.AG_WORLD_GUIDE?.select('welcome',{show:true,autoplay:false}),250);
-    }
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
