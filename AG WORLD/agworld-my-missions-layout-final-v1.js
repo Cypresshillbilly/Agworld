@@ -145,7 +145,10 @@ body .missions{
 
 /* The single Current / Next Mission Card remains a real card, at the approved
    branded material. Only its outer allocation changes. */
-.missions #agLandingMissionCard{
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard,
+html body.ag-premium-mode .missions #agLandingMissionCard,
+body .missions #agLandingMissionCard{
   display:block!important;
   visibility:visible!important;
   opacity:1!important;
@@ -160,7 +163,7 @@ body .missions{
   margin:0!important;
   box-sizing:border-box!important;
   overflow:hidden!important;
-  z-index:50!important;
+  z-index:90!important;
   transform:none!important;
 }
 
@@ -376,6 +379,30 @@ body .missions{
     missions.style.setProperty('--ag-advisor-height',geometry.bayH+'px');
   }
 
+  /* Runtime geometry lock. Several earlier UI layers also target the landing
+     mission with !important relative positioning. A stylesheet specificity race
+     can therefore make the correct compact card flash and then revert. The
+     canonical geometry is locked inline so no older layer can move or stretch it. */
+  function lockMissionGeometry(mission,geometry){
+    if(!mission) return;
+    const set=(name,value)=>mission.style.setProperty(name,value,'important');
+    set('display','block');
+    set('visibility','visible');
+    set('opacity','1');
+    set('position','absolute');
+    set('left','10px');
+    set('right','10px');
+    set('top',px(geometry.missionTop)+'px');
+    set('height',px(geometry.missionH)+'px');
+    set('min-height',px(geometry.missionH)+'px');
+    set('max-height',px(geometry.missionH)+'px');
+    set('width','auto');
+    set('margin','0');
+    set('overflow','hidden');
+    set('transform','none');
+    set('z-index','90');
+  }
+
   function layout(){
     const p=getParts();
     if(!p || !normaliseOrder(p)) return;
@@ -466,9 +493,7 @@ body .missions{
        live source of truth inspectable and prevents late CSS from silently
        restoring a larger empty mission box. */
     mission.dataset.agMissionMeasuredHeight=String(px(missionH));
-    mission.style.setProperty('height',px(missionH)+'px','important');
-    mission.style.setProperty('min-height',px(missionH)+'px','important');
-    mission.style.setProperty('max-height',px(missionH)+'px','important');
+    lockMissionGeometry(mission,{missionTop,missionH});
 
     requestAnimationFrame(()=>verify());
   }
@@ -547,7 +572,12 @@ body .missions{
       const p=getParts();
       if(p?.missions&&p.player&&p.skill&&p.mission&&p.bay) schedule();
     });
-    mutationObserver.observe(document.body,{childList:true,subtree:true});
+    mutationObserver.observe(document.body,{
+      childList:true,
+      subtree:true,
+      attributes:true,
+      attributeFilter:['style','class','id']
+    });
 
     [0,80,180,350,700,1200,2000].forEach(ms=>setTimeout(schedule,ms));
   }
