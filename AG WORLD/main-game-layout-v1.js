@@ -135,13 +135,6 @@
   }
 
   function lockGeometry(){
-    // Strict layout boundary: the Player Profile is its own rendering context.
-    // Never apply Full Game world geometry to body.ag-profile-mode.
-    if(document.body.classList.contains('ag-profile-mode')){
-      window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={mode:'profile',owner:'profile-renderer'};
-      return;
-    }
-
     const shell=document.querySelector('.app-shell');
     const sidebar=document.querySelector('.sidebar');
     const missions=document.querySelector('.missions');
@@ -156,23 +149,11 @@
     // bottom panels with different start heights.
     const shellH=shell.clientHeight||820;
     const shellW=shell.clientWidth||1280;
-    // FULL GAME VIEW ONLY:
-    // The Command Center is an independent floating world overlay. It is centred
-    // left-to-right inside the playable map stage and has map visible on BOTH
-    // sides and below. Player Profile Command Center geometry is owned by the
-    // profile renderer and is intentionally not touched here.
+    const bottomH=Math.round(shellH*(210/820));
+    const topH=shellH-bottomH;
     const sidebarW=Math.round(shellW*(215/1280));
     const missionsW=Math.round(shellW*(250/1280));
     const leftStage=sidebarW+missionsW;
-    const mapStageW=shellW-leftStage;
-    const commandBottomGap=Math.max(10,Math.round(shellH*0.014));
-    const commandSideGap=Math.max(22,Math.round(mapStageW*0.055));
-    const commandH=Math.round(shellH*(192/820));
-    const commandTop=shellH-commandBottomGap-commandH;
-    const commandW=Math.max(360,Math.round(mapStageW-commandSideGap*2));
-    const commandLeft=leftStage+Math.round((mapStageW-commandW)/2);
-    const bottomH=commandH;
-    const topH=commandTop;
     const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
     const frame=(el,left,top,width,height)=>{
       if(!el) return;
@@ -190,16 +171,8 @@
     // Territory Stats is an overlay drawer on the map instead of a bottom-left panel.
     frame(sidebar,0,0,sidebarW,shellH);
     frame(missions,sidebarW,0,missionsW,shellH);
-    // The map is now the full-height tactical background for the right stage.
-    // Command Center overlays it instead of reserving a separate strip below it.
-    frame(mapArea,leftStage,0,shellW-leftStage,shellH);
-    frame(entity,commandLeft,topH,commandW,bottomH);
-    if(entity){
-      important(entity,'z-index','1500');
-      important(entity,'pointer-events','auto');
-      important(entity,'background','transparent');
-      important(entity,'overflow','visible');
-    }
+    frame(mapArea,leftStage,0,shellW-leftStage,topH);
+    frame(entity,leftStage,topH,shellW-leftStage,bottomH);
     if(territory) important(territory,'display','none');
     if(territoryDrawer){
       // Territory Stats remains a right-side pop-out, reshaped into a tall,
@@ -208,15 +181,16 @@
       important(territoryDrawer,'left','auto');
       important(territoryDrawer,'top','74px');
       important(territoryDrawer,'right','0');
-      important(territoryDrawer,'bottom',(commandH+commandBottomGap+18)+'px');
+      important(territoryDrawer,'bottom','14px');
       important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round((shellW-leftStage)*0.235)))+'px');
       important(territoryDrawer,'height','auto');
       important(territoryDrawer,'transform','none');
       important(territoryDrawer,'z-index','2200');
     }
 
-    // The Command Center remains locked to its approved bottom-right geometry,
-    // but now floats as an overlay on top of the full-height map background.
+    // The Entity Command card is the sole visual surface for the entire
+    // bottom-right allocation. Force it to occupy the exact geometry owned
+    // by entityInformationSection rather than retaining any legacy card size.
     const entityCard=$('farmCard');
     if(entity && entityCard){
       important(entity,'overflow','hidden');
@@ -247,7 +221,7 @@
 
     if(entity && entity.parentElement!==shell) shell.appendChild(entity);
 
-    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={mode:'game',shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage,commandLeft,commandW,commandH,commandBottomGap,territoryDrawer:true,territoryDrawerSide:'right',territoryDrawerOpens:'left'};
+    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage,territoryDrawer:true};
   }
 
   function purgeLegacySurfaces(){
