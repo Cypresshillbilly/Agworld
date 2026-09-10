@@ -28,11 +28,25 @@
     const mapArea=document.querySelector('.map-area');
     if(!mapArea) return false;
 
-    const territorySection=ensurePanel('territorySection',mapArea,'bottom-game-panel territory-game-panel');
-    const entitySection=ensurePanel('entityInformationSection',territorySection,'bottom-game-panel entity-game-panel');
+    // Territory Stats is now a collapsible map drawer. It no longer consumes
+    // the entire bottom-left stage, leaving Sidebar and My Missions full height.
+    const entitySection=ensurePanel('entityInformationSection',mapArea,'bottom-game-panel entity-game-panel');
 
     const territoryPanel=$('territoryInfoPanel');
-    if(territoryPanel && territoryPanel.parentElement!==territorySection) territorySection.appendChild(territoryPanel);
+    let territoryDrawer=$('territoryStatsDrawer');
+    if(!territoryDrawer){
+      territoryDrawer=document.createElement('aside');
+      territoryDrawer.id='territoryStatsDrawer';
+      territoryDrawer.className='ag-territory-drawer';
+      territoryDrawer.innerHTML='<button id="territoryStatsToggle" type="button" aria-label="Toggle Territory Stats" aria-expanded="true"><span class="ag-territory-toggle-label">TERRITORY STATS</span><span class="ag-territory-toggle-arrow">›</span></button><div id="territoryStatsDrawerContent"></div>';
+      mapArea.appendChild(territoryDrawer);
+      territoryDrawer.querySelector('#territoryStatsToggle').addEventListener('click',()=>{
+        const collapsed=territoryDrawer.classList.toggle('collapsed');
+        territoryDrawer.querySelector('#territoryStatsToggle').setAttribute('aria-expanded',String(!collapsed));
+      });
+    }
+    const drawerContent=$('territoryStatsDrawerContent');
+    if(territoryPanel && drawerContent && territoryPanel.parentElement!==drawerContent) drawerContent.appendChild(territoryPanel);
     if(territoryPanel && !territoryPanel.classList.contains('show') && !territoryPanel.innerHTML.trim()){
       territoryPanel.classList.add('show');
       territoryPanel.innerHTML='<div class="territory-info-empty"><div class="territory-info-level">TERRITORY CONTROL</div><div class="territory-info-name">Select a territory on the map</div><div class="territory-info-footer"><span>Territory statistics will remain fixed here after selection.</span></div></div>';
@@ -127,6 +141,7 @@
     const mapArea=document.querySelector('.map-area');
     const territory=$('territorySection');
     const entity=$('entityInformationSection');
+    const territoryDrawer=$('territoryStatsDrawer');
     if(!shell) return;
 
     // The shell is the single geometry owner. Derive the split from the live
@@ -152,11 +167,20 @@
       important(el,'box-sizing','border-box');
     };
 
-    frame(sidebar,0,0,sidebarW,topH);
-    frame(missions,sidebarW,0,missionsW,topH);
+    // Sidebar and Missions now run the full height of the game screen.
+    // Territory Stats is an overlay drawer on the map instead of a bottom-left panel.
+    frame(sidebar,0,0,sidebarW,shellH);
+    frame(missions,sidebarW,0,missionsW,shellH);
     frame(mapArea,leftStage,0,shellW-leftStage,topH);
-    frame(territory,0,topH,leftStage,bottomH);
     frame(entity,leftStage,topH,shellW-leftStage,bottomH);
+    if(territory) important(territory,'display','none');
+    if(territoryDrawer){
+      important(territoryDrawer,'position','absolute');
+      important(territoryDrawer,'right','10px');
+      important(territoryDrawer,'top','50%');
+      important(territoryDrawer,'transform','translateY(-50%)');
+      important(territoryDrawer,'z-index','2200');
+    }
 
     // The Entity Command card is the sole visual surface for the entire
     // bottom-right allocation. Force it to occupy the exact geometry owned
@@ -180,7 +204,6 @@
     }
     ensureEntityCommandHeading(entity);
 
-    if(territory) important(territory,'z-index','999');
     if(entity) important(entity,'z-index','999');
 
     const oldProfile=document.querySelector('.bottom.user-profile-section');
@@ -190,10 +213,9 @@
       important(oldProfile,'pointer-events','none');
     }
 
-    if(territory && territory.parentElement!==shell) shell.appendChild(territory);
     if(entity && entity.parentElement!==shell) shell.appendChild(entity);
 
-    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage};
+    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage,territoryDrawer:true};
   }
 
   function run(){
@@ -220,6 +242,33 @@
   window.addEventListener('agworld:territory-selected',event=>{
     window.__AGWORLD_SELECTED_TERRITORY__=event.detail?.territory||event.detail||null;
   });
+})();
+
+/* Collapsible Territory Stats map drawer */
+(function(){
+  if(document.getElementById('agworldTerritoryDrawerStyle'))return;
+  const style=document.createElement('style');
+  style.id='agworldTerritoryDrawerStyle';
+  style.textContent=`
+    .map-area{overflow:hidden!important}
+    .ag-territory-drawer{width:min(320px,calc(100% - 24px));display:flex;align-items:stretch;transition:transform .28s ease,width .28s ease;filter:drop-shadow(0 14px 28px rgba(0,0,0,.32))}
+    .ag-territory-drawer #territoryStatsDrawerContent{width:100%;min-width:0;overflow:hidden}
+    .ag-territory-drawer #territoryInfoPanel{position:relative!important;right:auto!important;top:auto!important;left:auto!important;bottom:auto!important;width:100%!important;box-sizing:border-box!important;margin:0!important;border-radius:10px 0 0 10px!important;padding:12px!important;display:block!important;max-height:min(72vh,500px);overflow:auto}
+    .ag-territory-drawer #territoryStatsToggle{width:28px;flex:0 0 28px;border:1px solid rgba(142,181,101,.48);border-right:0;border-radius:10px 0 0 10px;background:#10252c;color:#dce9df;cursor:pointer;padding:7px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+    .ag-territory-toggle-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;font-weight:900;letter-spacing:1px}
+    .ag-territory-toggle-arrow{font-size:22px;line-height:1;transition:transform .25s ease}
+    .ag-territory-drawer.collapsed{width:28px}
+    .ag-territory-drawer.collapsed #territoryStatsDrawerContent{display:none}
+    .ag-territory-drawer.collapsed #territoryStatsToggle{border-right:1px solid rgba(142,181,101,.48);border-radius:10px}
+    .ag-territory-drawer.collapsed .ag-territory-toggle-arrow{transform:rotate(180deg)}
+    .ag-territory-drawer .territory-info-name{font-size:15px!important}
+    .ag-territory-drawer .territory-info-control{padding:8px 0 6px!important}
+    .ag-territory-drawer .territory-info-control-value{font-size:32px!important}
+    .ag-territory-drawer .territory-info-grid{grid-template-columns:repeat(2,1fr)!important}
+    .ag-territory-drawer .territory-info-grid div{padding:6px!important}
+    @media(max-width:900px){.ag-territory-drawer{top:auto!important;bottom:12px;transform:none!important}.ag-territory-drawer #territoryInfoPanel{max-height:50vh}}
+  `;
+  document.head.appendChild(style);
 })();
 
 /* AG World v4 layout state: national strategic summary remains fixed until a territory is selected. */
