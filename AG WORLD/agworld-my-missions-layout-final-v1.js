@@ -18,7 +18,6 @@
   const MAX_PLAYER_H=96;
   const MIN_SKILL_H=96;
   const MIN_MISSION_H=56;
-  const MAX_MISSION_H=128;
   const FALLBACK_MISSION_H=72;
 
   let resizeObserver=null;
@@ -310,27 +309,58 @@ body .missions{
   function missionContentHeight(el){
     if(!el) return 0;
 
-    /* The mission card is deliberately sized from the actual bottom edge of
-       its visible content, not scrollHeight. scrollHeight is polluted by older
-       fixed/min-height rules in the legacy card styles and was the source of
-       the empty block beneath START MISSION. */
-    const cardRect=el.getBoundingClientRect();
-    if(cardRect.width<=0) return 0;
+    /* Measure the mission card in its true intrinsic state. The previous
+       implementation measured child positions while an inherited fixed height
+       was still active, so the old oversized box could survive as empty space
+       below START MISSION. Temporarily removing every outer height constraint
+       lets the browser calculate the exact content box, including normal
+       padding and borders. */
+    const props=['height','min-height','max-height','overflow'];
+    const previous=props.map(name=>({
+      name,
+      value:el.style.getPropertyValue(name),
+      priority:el.style.getPropertyPriority(name)
+    }));
 
-    let contentBottom=cardRect.top;
-    Array.from(el.children).forEach(child=>{
-      const style=getComputedStyle(child);
-      if(style.display==='none'||style.visibility==='hidden') return;
-      const rect=child.getBoundingClientRect();
-      if(rect.width>0&&rect.height>0) contentBottom=Math.max(contentBottom,rect.bottom);
-    });
+    try{
+      el.style.setProperty('height','auto','important');
+      el.style.setProperty('min-height','0','important');
+      el.style.setProperty('max-height','none','important');
+      el.style.setProperty('overflow','visible','important');
 
-    if(contentBottom<=cardRect.top) return 0;
+      const rect=el.getBoundingClientRect();
+      const computed=getComputedStyle(el);
+      const measured=Math.ceil(Math.max(
+        rect.height||0,
+        (el.offsetHeight||0)
+      ));
 
-    const cs=getComputedStyle(el);
-    const paddingBottom=parseFloat(cs.paddingBottom)||0;
-    const borderBottom=parseFloat(cs.borderBottomWidth)||0;
-    return px(contentBottom-cardRect.top+paddingBottom+borderBottom);
+      /* A visible button is the final meaningful child. If a late stylesheet
+         gives the card a pathological intrinsic size, calculate directly from
+         the bottom edge of visible children as a second, content-first guard. */
+      let contentBottom=rect.top;
+      Array.from(el.children).forEach(child=>{
+        const cs=getComputedStyle(child);
+        if(cs.display==='none'||cs.visibility==='hidden') return;
+        const r=child.getBoundingClientRect();
+        if(r.width>0&&r.height>0) contentBottom=Math.max(contentBottom,r.bottom);
+      });
+
+      const childBased=contentBottom>rect.top
+        ? Math.ceil(
+            (contentBottom-rect.top)
+            +(parseFloat(computed.paddingBottom)||0)
+            +(parseFloat(computed.borderBottomWidth)||0)
+          )
+        : 0;
+
+      return px(Math.max(measured,childBased));
+    }finally{
+      previous.forEach(({name,value,priority})=>{
+        if(value) el.style.setProperty(name,value,priority);
+        else el.style.removeProperty(name);
+      });
+    }
   }
 
   function setGeometry(missions,geometry){
@@ -377,7 +407,10 @@ body .missions{
        bottom padding. This removes the empty lower block without changing any
        other card's approved visual design. */
     const missionNatural=missionContentHeight(mission);
-    let missionH=clamp(missionNatural||FALLBACK_MISSION_H,MIN_MISSION_H,MAX_MISSION_H);
+    /* Never impose an arbitrary maximum height on the mission card. Its height
+       is the measured content height, so the card ends immediately after the
+       final START MISSION control plus its real bottom padding. */
+    let missionH=Math.max(MIN_MISSION_H,missionNatural||FALLBACK_MISSION_H);
 
     /* Skill Profile receives the remaining proportional space and therefore
        remains the largest information-rich card. */
@@ -428,6 +461,14 @@ body .missions{
       bayTop,
       bayH
     });
+
+    /* Persist the measured card height as a runtime checkpoint. This makes the
+       live source of truth inspectable and prevents late CSS from silently
+       restoring a larger empty mission box. */
+    mission.dataset.agMissionMeasuredHeight=String(px(missionH));
+    mission.style.setProperty('height',px(missionH)+'px','important');
+    mission.style.setProperty('min-height',px(missionH)+'px','important');
+    mission.style.setProperty('max-height',px(missionH)+'px','important');
 
     requestAnimationFrame(()=>verify());
   }
