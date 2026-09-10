@@ -243,23 +243,30 @@
         important(heading,'height','34px');
         important(heading,'margin','0');
         important(heading,'z-index','3');
-        // Keep the COMMAND CENTER label visually centered regardless of
-        // the separate LIVE status indicator on the right.
-        important(heading,'display','grid');
-        important(heading,'grid-template-columns','1fr auto 1fr');
-        important(heading,'align-items','center');
-        important(heading,'text-align','center');
+        // Anchor each item independently: the title is at the exact
+        // geometric centre of the full heading bar, while LIVE stays right.
+        important(heading,'display','block');
+        important(heading,'text-align','initial');
         const commandLabel=heading.querySelector('.agworld-command-center-label');
         const liveStatus=heading.querySelector('.agworld-command-center-live');
         if(commandLabel){
-          important(commandLabel,'grid-column','2');
-          important(commandLabel,'justify-self','center');
+          important(commandLabel,'position','absolute');
+          important(commandLabel,'left','50%');
+          important(commandLabel,'top','50%');
+          important(commandLabel,'transform','translate(-50%,-50%)');
+          important(commandLabel,'margin','0');
           important(commandLabel,'white-space','nowrap');
+          important(commandLabel,'text-align','center');
+          important(commandLabel,'line-height','1');
         }
         if(liveStatus){
-          important(liveStatus,'grid-column','3');
-          important(liveStatus,'justify-self','end');
-          important(liveStatus,'margin-right','12px');
+          important(liveStatus,'position','absolute');
+          important(liveStatus,'right','12px');
+          important(liveStatus,'left','auto');
+          important(liveStatus,'top','50%');
+          important(liveStatus,'transform','translateY(-50%)');
+          important(liveStatus,'margin','0');
+          important(liveStatus,'white-space','nowrap');
         }
       }
 
