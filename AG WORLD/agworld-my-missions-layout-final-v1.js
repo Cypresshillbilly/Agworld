@@ -17,8 +17,8 @@
   const MIN_PLAYER_H=70;
   const MAX_PLAYER_H=96;
   const MIN_SKILL_H=96;
-  const MIN_MISSION_H=84;
-  const PREF_MISSION_H=84;
+  const MIN_MISSION_H=68;
+  const PREF_MISSION_H=72;
 
   let resizeObserver=null;
   let mutationObserver=null;
@@ -31,7 +31,7 @@
   --ag-mm-header-h:34px;
   --ag-mm-player-h:84px;
   --ag-mm-skill-h:112px;
-  --ag-mm-mission-h:84px;
+  --ag-mm-mission-h:72px;
   --ag-mm-player-top:42px;
   --ag-mm-skill-top:134px;
   --ag-mm-mission-top:254px;
