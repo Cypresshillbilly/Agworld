@@ -58,6 +58,7 @@ body .missions{
   min-width:0!important;height:100%!important;min-height:0!important;max-height:none!important;
   margin:0!important;box-sizing:border-box!important;transform:none!important;
   z-index:1!important;overflow:hidden!important;align-self:stretch!important;justify-self:stretch!important;
+  display:block!important;visibility:visible!important;opacity:1!important;
 }
 .missions>#${STACK_ID}>#agPlayerMissionProfile{grid-row:1!important}
 .missions>#${STACK_ID}>#agMissionSkillProfile,
@@ -172,19 +173,14 @@ function textFrom(root,selector,fallback){
   return String(el?.textContent||fallback).replace(/\s+/g,' ').trim();
 }
 
-function purgeLegacyMissionCards(missions){
-  // Hard production invariant: the player surface owns exactly one Mission Card.
-  // Delete all retired mission panels physically from the player-screen DOM.
+function purgeLegacyMissionCards(){
+  // Surgical purge only. Never traverse generic .mission or [data-mission]
+  // nodes: those selectors are shared by the Skill Profile and other live UI.
+  // Only positively identified retired Mission Card roots may be removed.
   LEGACY_MISSION_SELECTORS.forEach(selector=>{
     document.querySelectorAll(selector).forEach(el=>{
       if(el.id!==CARD_ID)el.remove();
     });
-  });
-  if(!missions)return;
-  missions.querySelectorAll('.mission,.mission-card,.mission-item,[data-mission],[data-mission-id]').forEach(el=>{
-    if(el.id===CARD_ID||el.closest('#agMissionHub,#agAdvisorBay'))return;
-    if(el.matches('#agPlayerMissionProfile,#agMissionSkillProfile,.ag-mission-skill-profile'))return;
-    el.remove();
   });
 }
 
@@ -275,8 +271,14 @@ function layout(){
   if(p.player.parentElement!==stack)stack.appendChild(p.player);
   if(p.skill.parentElement!==stack)stack.appendChild(p.skill);
 
-  // Delete any old/previous player-screen Mission Card before V2 mounts.
-  purgeLegacyMissionCards(p.missions);
+  // The Skill Profile is a protected canonical surface. V2 owns only the
+  // Mission Card and may never delete, hide or mutate the Skill Profile.
+  p.skill.style.setProperty('display','block','important');
+  p.skill.style.setProperty('visibility','visible','important');
+  p.skill.style.setProperty('opacity','1','important');
+
+  // Delete only positively identified retired Mission Card roots.
+  purgeLegacyMissionCards();
 
   // The old DOM is no longer retained as a hidden bridge. V2 is the only
   // Mission Card panel in the player screen.
