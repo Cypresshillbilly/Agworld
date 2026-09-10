@@ -135,6 +135,13 @@
   }
 
   function lockGeometry(){
+    // Strict layout boundary: the Player Profile is its own rendering context.
+    // Never apply Full Game world geometry to body.ag-profile-mode.
+    if(document.body.classList.contains('ag-profile-mode')){
+      window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={mode:'profile',owner:'profile-renderer'};
+      return;
+    }
+
     const shell=document.querySelector('.app-shell');
     const sidebar=document.querySelector('.sidebar');
     const missions=document.querySelector('.missions');
@@ -158,7 +165,7 @@
     const missionsW=Math.round(shellW*(250/1280));
     const leftStage=sidebarW+missionsW;
     const mapStageW=shellW-leftStage;
-    const commandBottomGap=Math.max(18,Math.round(shellH*0.028));
+    const commandBottomGap=Math.max(10,Math.round(shellH*0.014));
     const commandSideGap=Math.max(22,Math.round(mapStageW*0.055));
     const commandH=Math.round(shellH*(192/820));
     const commandTop=shellH-commandBottomGap-commandH;
@@ -201,7 +208,7 @@
       important(territoryDrawer,'left','auto');
       important(territoryDrawer,'top','74px');
       important(territoryDrawer,'right','0');
-      important(territoryDrawer,'bottom',(commandH+commandBottomGap+14)+'px');
+      important(territoryDrawer,'bottom',(commandH+commandBottomGap+18)+'px');
       important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round((shellW-leftStage)*0.235)))+'px');
       important(territoryDrawer,'height','auto');
       important(territoryDrawer,'transform','none');
@@ -240,7 +247,7 @@
 
     if(entity && entity.parentElement!==shell) shell.appendChild(entity);
 
-    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage,territoryDrawer:true};
+    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={mode:'game',shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage,commandLeft,commandW,commandH,commandBottomGap,territoryDrawer:true,territoryDrawerSide:'right',territoryDrawerOpens:'left'};
   }
 
   function purgeLegacySurfaces(){
