@@ -40,6 +40,18 @@ function normalize(p){
  return true;
 }
 const px=v=>Math.max(0,Math.round(Number(v)||0)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function missionContentHeight(el){
+ const r=el.getBoundingClientRect();if(r.height<=0)return 0;
+ let bottom=0;
+ const nodes=[...el.querySelectorAll('.tag,strong,p,.reward,button')].filter(n=>{
+   const s=getComputedStyle(n);return s.display!=='none'&&s.visibility!=='hidden';
+ });
+ for(const n of nodes){
+   const b=n.getBoundingClientRect();
+   if(b.width>0&&b.height>0)bottom=Math.max(bottom,b.bottom-r.top);
+ }
+ return px(bottom+4);
+}
 function natural(el){
  const names=['position','height','min-height','max-height','overflow','grid-row'],old=names.map(n=>[n,el.style.getPropertyValue(n),el.style.getPropertyPriority(n)]);
  try{el.style.setProperty('position','absolute','important');el.style.setProperty('height','auto','important');el.style.setProperty('min-height','0','important');el.style.setProperty('max-height','none','important');el.style.setProperty('overflow','visible','important');el.style.setProperty('grid-row','auto','important');return px(Math.max(el.scrollHeight||0,el.offsetHeight||0,el.getBoundingClientRect().height||0))}
@@ -60,12 +72,12 @@ function layout(){
  const mr=p.m.getBoundingClientRect(),cr=p.command.getBoundingClientRect();if(mr.width<=0||mr.height<=0||cr.height<=0)return;
  const bayTop=px(clamp(cr.top-mr.top,0,mr.height)),bayH=px(clamp(cr.height,0,Math.max(0,mr.height-bayTop)));if(bayTop<=HH)return;
  const gap=G,stackTop=HH+gap,stackBottom=bayTop-gap,stackH=Math.max(0,stackBottom-stackTop);
- const missionNatural=Math.max(0,natural(p.mission)||0);let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(MMIN,missionNatural),mh=stackH-ph-sh-gap*2;
+ const missionNatural=Math.max(0,missionContentHeight(p.mission)||natural(p.mission)||0);let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(56,missionNatural),mh=stackH-ph-sh-gap*2;
  if(mh<need&&sh>SMIN){const t=Math.min(need-mh,sh-SMIN);sh-=t;mh+=t}if(mh<need&&ph>PMIN){const t=Math.min(need-mh,ph-PMIN);ph-=t;mh+=t}mh=Math.max(0,mh);
  // The grid reserves the Mission row, but the visible card itself is content-sized.
  // This removes the dead green area beneath START MISSION without moving the card,
  // the Skill Profile, or the Advisory Bay.
- const missionCardH=Math.min(mh,Math.max(1,missionNatural));
+ const missionCardH=Math.min(mh,Math.max(56,missionNatural));
  [['--ag-mm-gap',gap],['--ag-mm-header-h',HH],['--ag-mm-player-h',ph],['--ag-mm-skill-h',sh],['--ag-mm-mission-h',mh],['--ag-mm-mission-card-h',missionCardH],['--ag-mm-stack-top',stackTop],['--ag-mm-stack-height',stackH],['--ag-advisor-top',bayTop],['--ag-advisor-height',bayH]].forEach(([n,v])=>p.m.style.setProperty(n,px(v)+'px'));
  hardLock(p,bayTop,bayH);p.m.dataset.agMissionLayer='single-grid-layer';p.m.dataset.agMissionMeasuredHeight=String(px(mh));p.m.dataset.agMissionCardHeight=String(px(missionCardH));p.m.dataset.agLayoutChecked='true';
  requestAnimationFrame(verify);
