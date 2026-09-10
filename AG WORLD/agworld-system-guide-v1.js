@@ -140,9 +140,30 @@ body.ag-game-mode .ag-guide-reopen{right:clamp(250px,18vw,420px);top:clamp(300px
         window.AG_WORLD_GUIDE_AUDIO_SRC=src;
         return true;
       },
-      setBriefing({title,copy}={}){
+      setBriefing({title,copy,audioSrc,show=true}={}){
         if(title) root.querySelector('.ag-guide-title').textContent=title;
         if(copy) root.querySelector('.ag-guide-copy').textContent=copy;
+        if(audioSrc) {
+          audio.src=audioSrc;
+          window.AG_WORLD_GUIDE_AUDIO_SRC=audioSrc;
+        }
+        if(show) root.classList.add('show');
+      },
+      briefMission({title,copy,audioSrc}={}){
+        if(title) root.querySelector('.ag-guide-title').textContent=title;
+        if(copy) root.querySelector('.ag-guide-copy').textContent=copy;
+        if(audioSrc) {
+          audio.src=audioSrc;
+          window.AG_WORLD_GUIDE_AUDIO_SRC=audioSrc;
+        }
+        show();
+      },
+      stopBriefing(){
+        window.speechSynthesis?.cancel();
+        audio.pause();
+        audio.currentTime=0;
+        const b=root.querySelector('.ag-guide-play');
+        if(b) b.lastElementChild.textContent='PLAY BRIEFING';
       }
     };
   }
