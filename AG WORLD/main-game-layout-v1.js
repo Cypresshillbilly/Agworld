@@ -37,8 +37,13 @@
     if(!territoryDrawer){
       territoryDrawer=document.createElement('aside');
       territoryDrawer.id='territoryStatsDrawer';
-      territoryDrawer.className='ag-territory-drawer';
-      territoryDrawer.innerHTML='<button id="territoryStatsToggle" type="button" aria-label="Toggle Territory Stats" aria-expanded="true"><span class="ag-territory-toggle-label">TERRITORY STATS</span><span class="ag-territory-toggle-arrow">›</span></button><div id="territoryStatsDrawerContent"></div>';
+      /*
+       * Player Profile stable-state rule:
+       * Territory Stats starts CLOSED on every fresh page load. Opening and
+       * closing after load is controlled only by the user toggle below.
+       */
+      territoryDrawer.className='ag-territory-drawer collapsed';
+      territoryDrawer.innerHTML='<button id="territoryStatsToggle" type="button" aria-label="Toggle Territory Stats" aria-expanded="false"><span class="ag-territory-toggle-label">TERRITORY STATS</span><span class="ag-territory-toggle-arrow">›</span></button><div id="territoryStatsDrawerContent"></div>';
       mapArea.appendChild(territoryDrawer);
       territoryDrawer.querySelector('#territoryStatsToggle').addEventListener('click',()=>{
         const collapsed=territoryDrawer.classList.toggle('collapsed');
@@ -157,6 +162,11 @@
        *
        * No second layout owner, no viewport-fixed shell and no re-parenting of
        * Sidebar/Missions are used. The shell remains the canonical owner.
+       *
+       * STABLE PLAYER SCREEN GEOMETRY — LOCKED BASELINE:
+       * This profile layout is now the approved final baseline. Future work on
+       * cards, map content or panel behaviour must preserve these shell,
+       * Sidebar, Missions, map, Command Center and Territory Stats boundaries.
        */
       const shell=document.querySelector('.app-shell');
       const sidebar=document.querySelector('.sidebar');
