@@ -280,12 +280,11 @@ html,body{visibility:hidden}
 </div>
 <script>
 (function(){
-  function openDeveloperMode(){ window.open('developer-mode.html','agworldDeveloperMode'); }
-  function ensureDeveloperModeButton(){
-    const mapArea=document.querySelector('.map-area')||document.querySelector('.map-panel')||document.querySelector('.map-section')||document.querySelector('.map-container');
-    if(!mapArea) return false;
-    // Ensure an absolute-positioned child has a reliable positioning context.
-    if(getComputedStyle(mapArea).position==='static') mapArea.style.position='relative';
+  /* Developer Mode is a primary navigation destination. Keep the button in the
+     left menu; do not re-parent it into the map where it competes with game HUD controls. */
+  function bindDeveloperMode(){
+    const nav=document.querySelector('.sidebar .nav')||document.querySelector('.nav');
+    if(!nav) return false;
     let btn=document.getElementById('developerModeBtn');
     if(!btn){
       btn=document.createElement('button');
@@ -293,34 +292,29 @@ html,body{visibility:hidden}
       btn.type='button';
       btn.textContent='⚙ DEVELOPER MODE ↗';
     }
-    // The map owns Developer Mode. Moving the same element preserves its
-    // behaviour while ensuring it can never return to the left navigation.
-    if(btn.parentElement!==mapArea) mapArea.appendChild(btn);
-    btn.onclick=openDeveloperMode;
-    btn.style.setProperty('position','absolute','important');
-    btn.style.setProperty('top','8px','important');
-    btn.style.setProperty('right','10px','important');
-    btn.style.setProperty('left','auto','important');
-    btn.style.setProperty('bottom','auto','important');
-    btn.style.setProperty('z-index','5000','important');
-    btn.style.setProperty('display','block','important');
-    btn.style.setProperty('visibility','visible','important');
-    btn.style.setProperty('opacity','1','important');
-    btn.style.setProperty('pointer-events','auto','important');
-    btn.style.setProperty('background','#173a2b','important');
-    btn.style.setProperty('color','#e9f8ec','important');
-    btn.style.setProperty('border','1px solid rgba(110,210,125,.65)','important');
-    btn.style.setProperty('border-radius','6px','important');
-    btn.style.setProperty('padding','5px 9px','important');
-    btn.style.setProperty('font-size','8px','important');
-    btn.style.setProperty('font-weight','800','important');
+    if(btn.parentElement!==nav) nav.appendChild(btn);
+    btn.onclick=()=>window.open('developer-mode.html','agworldDeveloperMode');
+    btn.style.removeProperty('position');
+    btn.style.removeProperty('top');
+    btn.style.removeProperty('right');
+    btn.style.removeProperty('left');
+    btn.style.removeProperty('bottom');
+    btn.style.removeProperty('z-index');
+    btn.style.removeProperty('background');
+    btn.style.removeProperty('color');
+    btn.style.removeProperty('border');
+    btn.style.removeProperty('border-radius');
+    btn.style.removeProperty('padding');
+    btn.style.removeProperty('font-size');
+    btn.style.removeProperty('font-weight');
+    btn.style.removeProperty('visibility');
+    btn.style.removeProperty('opacity');
+    btn.style.removeProperty('pointer-events');
     return true;
   }
-  ensureDeveloperModeButton();
-  const observer=new MutationObserver(()=>ensureDeveloperModeButton());
-  observer.observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('load',ensureDeveloperModeButton);
-  setInterval(ensureDeveloperModeButton,1200);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindDeveloperMode,{once:true});
+  else bindDeveloperMode();
+  window.addEventListener('load',bindDeveloperMode);
 })();
 </script><script>
 /* Canonical Sales Game boot: remove legacy fixed overlays before the final
@@ -370,4 +364,4 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
   window.addEventListener('agworld:player-profile',apply);document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));setInterval(apply,1000);
 })();
 </script><script src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039-late"></script>
-<script src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052"></script><script src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102"></script></body></html>
+<script src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052"></script><script src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102"></script><script src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125"></script></body></html>
