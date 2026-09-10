@@ -341,12 +341,20 @@ html body.ag-profile-mode .missions .mission.ag-landing-mission{
   display:block!important;
   margin:10px 10px 9px!important;
 }
+html body.ag-profile-mode .missions{
+  position:relative!important;
+}
 html body.ag-profile-mode .missions #agAdvisorBay{
-  margin:0 10px 12px!important;
+  position:absolute!important;
+  left:10px!important;right:10px!important;
+  top:var(--ag-advisor-top,300px)!important;
+  margin:0!important;
   min-height:86px!important;
-  height:86px!important;
+  height:var(--ag-advisor-height,180px)!important;
   box-sizing:border-box!important;
-  padding:8px 10px!important;
+  padding:10px!important;
+  overflow:hidden!important;
+  z-index:40!important;
 }
 html body.ag-profile-mode .missions .ag-advisor-bay-head{margin-bottom:5px!important}
 html body.ag-profile-mode .missions .ag-advisor{
@@ -454,14 +462,9 @@ function ensureAdvisorBay(){
      ['technical','T','TECHNICAL']
    ].map(([id,mark,label])=>'<button type="button" class="ag-advisor" data-advisor="'+id+'" aria-label="Open '+label+' advisor"><span class="ag-advisor-icon" aria-hidden="true"><i class="head"></i><i class="hair"></i><i class="body"></i><b class="mark">'+mark+'</b></span><span class="ag-advisor-label">'+label+'</span></button>').join('')+'</div>';
  }
- // The mission remains in the upper mission slot. The Advisor Bay is deliberately
- // moved below it, occupying the lower strip aligned with the Command Center.
- if(landing){
-   if(landing.nextElementSibling!==bay)landing.insertAdjacentElement('afterend',bay);
- }else{
-   const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
-   if(skill)skill.insertAdjacentElement('afterend',bay);else missions.appendChild(bay);
- }
+ // The Advisor Bay is an independent lower landing surface. It is positioned
+ // against the live Command Center geometry, not stacked directly below missions.
+ if(bay.parentElement!==missions)missions.appendChild(bay);
  bay.querySelectorAll('.ag-advisor').forEach(btn=>{
    if(btn.dataset.agAdvisorBound)return;
    btn.dataset.agAdvisorBound='1';
@@ -479,6 +482,24 @@ function ensureAdvisorBay(){
    });
  });
  return bay;
+}
+
+function syncAdvisorBayGeometry(){
+ const missions=document.querySelector('.missions');
+ const bay=missions?.querySelector('#agAdvisorBay');
+ const command=document.getElementById('entityInformationSection');
+ if(!missions||!bay||!command)return;
+ const mr=missions.getBoundingClientRect(),cr=command.getBoundingClientRect();
+ if(!mr.height||!cr.height)return;
+ // Match the Advisor Bay exactly to the Command Center's vertical footprint.
+ // This makes the two lower surfaces read as one aligned row.
+ const top=Math.max(0,Math.round(cr.top-mr.top));
+ const maxH=Math.max(86,Math.round(mr.bottom-cr.top-6));
+ const height=Math.max(86,Math.min(Math.round(cr.height),maxH));
+ missions.style.setProperty('--ag-advisor-top',top+'px');
+ missions.style.setProperty('--ag-advisor-height',height+'px');
+ bay.style.setProperty('top',top+'px','important');
+ bay.style.setProperty('height',height+'px','important');
 }
 
 function ensureMissionHub(){
@@ -758,7 +779,7 @@ function refreshPlayerUI(){
  const d=playerData();card.innerHTML=playerCardHTML(d);
 }
 function start(){
- installStyles();correctSidebar();ensureAdvisorBay();ensureMissionHub();ensureMissionsDrawer();
+ installStyles();correctSidebar();ensureAdvisorBay();syncAdvisorBayGeometry();ensureMissionHub();ensureMissionsDrawer();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
  const observer=new MutationObserver(()=>{
   installStyles();
@@ -766,12 +787,14 @@ function start(){
   const good=!!(s.querySelector('.brand .brand-logo')&&document.querySelector('.missions #agPlayerMissionProfile'));
   if(!good)correctSidebar();
   ensureMissionsDrawer();
+  syncAdvisorBayGeometry();
  });
  /* Important: watch descendants because game-view-mode changes sidebar.innerHTML. The callback is inert once final markup exists, so it cannot loop. */
  observer.observe(document.body,{childList:true,subtree:true});
  // Defensive health check: later game modules are not allowed to remove the
  // mission player profile or its style rules after the layout has been normalised.
- setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureAdvisorBay();ensureMissionHub();ensureMissionsDrawer();refreshPlayerUI();},1200);
+ window.addEventListener('resize',syncAdvisorBayGeometry);[0,100,300,700,1500,3000,6000].forEach(ms=>setTimeout(syncAdvisorBayGeometry,ms));
+ setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureAdvisorBay();syncAdvisorBayGeometry();ensureMissionHub();ensureMissionsDrawer();refreshPlayerUI();},900);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
