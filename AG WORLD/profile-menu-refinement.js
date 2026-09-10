@@ -1,9 +1,9 @@
 /* AG WORLD — Profile menu. Profile Summary ALWAYS stays to the right of the avatar. */
 (()=>{
-const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Stacked_Vertical.png?v=menu-logo-stacked-readable-v3';
+const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=primary-horizontal-readable-v1';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
-:root{--ag-hero-header-h:170px;}
+:root{--ag-hero-header-h:170px;--ag-logo-fit-width:142px;}
 /* Final layout contract:
    SIDEBAR: official AG World logo → navigation → logout.
    MISSIONS: player avatar/profile + level/XP → My Missions / Mission Control. */
@@ -32,7 +32,7 @@ body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{
 }
 body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{
   display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;
-  object-fit:contain!important;object-position:center center!important;
+  object-fit:contain!important;object-position:center center!important;width:var(--ag-logo-fit-width)!important;height:auto!important;
   filter:drop-shadow(0 3px 5px rgba(0,0,0,.28))!important;
 }
 
