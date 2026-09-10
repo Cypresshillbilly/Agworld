@@ -346,6 +346,7 @@ html body.ag-profile-mode .missions [data-mission],
 html body.ag-profile-mode .missions [data-mission-id]{
   display:none!important;
 }
+html body.ag-profile-mode .missions #agLandingMissionCard,
 html body.ag-profile-mode .missions .mission.ag-landing-mission,
 html body.ag-profile-mode .missions .mission-card.ag-landing-mission,
 html body.ag-profile-mode .missions .mission-item.ag-landing-mission,
@@ -447,39 +448,85 @@ function ensureMissionsPlayerProfile(){
    card.setAttribute('aria-label','Player profile');
  }
  card.innerHTML=playerCardHTML(playerData());
- const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
 
- // HARD ORDERING CONTRACT:
- // 1) Player Profile, 2) Skill Profile, 3) mission content.
- // Move the existing node rather than styling around the wrong DOM order.
- if(skill){
-   missions.insertBefore(card,skill);
- }else{
-   const firstContent=Array.from(missions.children).find(el=>
-     el!==card&&!el.classList.contains('ag-missions-drawer-handle')&&el.id!=='agAdvisorBay'
-   );
-   if(firstContent)missions.insertBefore(card,firstContent);
-   else if(card.parentElement!==missions)missions.appendChild(card);
- }
+ // LANDING ORDER CONTRACT:
+ // 1) Player Profile, 2) Skill Profile, 3) one Current/Next Mission.
+ // Player Profile is always the first real child of the mission surface.
+ if(missions.firstElementChild!==card)missions.insertBefore(card,missions.firstElementChild||null);
+ const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+ if(skill&&card.nextElementSibling!==skill)card.insertAdjacentElement('afterend',skill);
  return card;
 }
 
+function progressionMissionData(){
+ const progression=window.AGWorldProgression;
+ const state=progression?.getState?.();
+ const chapters=progression?.getChapters?.();
+ if(!state||!Array.isArray(chapters))return null;
+ const chapterId=Number(state.currentChapter||1);
+ const chapter=chapters.find(c=>Number(c.id)===chapterId)||chapters[0];
+ const list=Array.isArray(chapter?.missions)?chapter.missions:[];
+ const completed=state.completed||{};
+ const index=list.findIndex(m=>!completed[m.id]);
+ if(index<0)return null;
+ return {chapter,mission:list[index],index,state};
+}
+
+function ensureLandingMissionCard(){
+ const missions=document.querySelector('.missions');if(!missions)return null;
+ let card=missions.querySelector('#agLandingMissionCard');
+ const data=progressionMissionData();
+
+ if(!card){
+   card=document.createElement('section');
+   card.id='agLandingMissionCard';
+   card.className='mission ag-landing-mission';
+   card.setAttribute('aria-label','Current or next mission');
+ }
+ if(data){
+   const {chapter,mission}=data;
+   card.dataset.chapterMission=String(mission.id||'');
+   card.dataset.status='current';
+   card.innerHTML=
+     '<div class="tag">CHAPTER '+String(chapter.id)+' · '+String(mission.type||'MISSION')+'</div>'+
+     '<strong>'+String(mission.title||'Current Mission')+'</strong>'+
+     '<p>'+String(mission.objective||'Continue your current assignment.')+'</p>'+
+     '<div class="reward">+'+Number(mission.xp||0).toLocaleString()+' XP</div>'+
+     '<button type="button" data-landing-mission-start="'+String(mission.id||'')+'">START MISSION</button>';
+   const button=card.querySelector('[data-landing-mission-start]');
+   if(button&&!button.dataset.agLandingBound){
+     button.dataset.agLandingBound='1';
+     button.addEventListener('click',()=>window.AGWorldProgression?.completeMission?.(button.dataset.landingMissionStart));
+   }
+ }else{
+   card.dataset.status='loading';
+   card.innerHTML='<div class="tag">MISSION COMMAND</div><strong>Mission briefing loading…</strong><p>Preparing your current assignment.</p>';
+ }
+ card.classList.add('ag-landing-mission');
+ card.removeAttribute('aria-hidden');
+ if(card.parentElement!==missions)missions.appendChild(card);
+ const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+ if(skill)skill.insertAdjacentElement('afterend',card);
+ else if(card.previousElementSibling!==missions.querySelector('#agPlayerMissionProfile'))missions.querySelector('#agPlayerMissionProfile')?.insertAdjacentElement('afterend',card);
+ return card;
+}
 function missionCardCandidates(root){
  if(!root)return [];
  return Array.from(root.querySelectorAll('.mission,.mission-card,.mission-item,[data-mission],[data-mission-id]'))
-   .filter(m=>!m.closest('#agAdvisorBay')&&!m.closest('#agMissionHub')&&m.id!=='agPlayerMissionProfile'&&!m.matches('#agMissionSkillProfile,.ag-mission-skill-profile'));
+   .filter(m=>m.id!=='agLandingMissionCard'&&!m.closest('#agAdvisorBay')&&!m.closest('#agMissionHub')&&m.id!=='agPlayerMissionProfile'&&!m.matches('#agMissionSkillProfile,.ag-mission-skill-profile'));
 }
 function ensureAdvisorBay(){
  const missions=document.querySelector('.missions');if(!missions)return null;
- const cards=missionCardCandidates(missions);
- // Landing page: exactly one mission is visible — current if active, otherwise next available.
- let landing=cards.find(m=>/current|active|in progress/i.test((m.dataset.status||'')+' '+(m.textContent||'')))||cards[0]||null;
- cards.forEach(m=>{
-   const show=m===landing;
-   m.classList.toggle('ag-landing-mission',show);
-   m.setAttribute('aria-hidden',show?'false':'true');
-   if(show)m.style.removeProperty('display');else m.style.setProperty('display','none','important');
+
+ // Source mission cards remain available to the Missions hub but never occupy
+ // the player landing surface. The landing surface owns one dedicated card.
+ missionCardCandidates(missions).forEach(m=>{
+   m.classList.remove('ag-landing-mission');
+   m.setAttribute('aria-hidden','true');
+   m.style.setProperty('display','none','important');
  });
+ ensureLandingMissionCard();
+
  let bay=missions.querySelector('#agAdvisorBay');
  if(!bay){
    bay=document.createElement('section');
@@ -493,8 +540,6 @@ function ensureAdvisorBay(){
      ['technical','T','TECHNICAL']
    ].map(([id,mark,label])=>'<button type="button" class="ag-advisor" data-advisor="'+id+'" aria-label="Open '+label+' advisor"><span class="ag-advisor-icon" aria-hidden="true"><i class="head"></i><i class="hair"></i><i class="body"></i><b class="mark">'+mark+'</b></span><span class="ag-advisor-label">'+label+'</span></button>').join('')+'</div>';
  }
- // The Advisor Bay is an independent lower landing surface. It is positioned
- // against the live Command Center geometry, not stacked directly below missions.
  if(bay.parentElement!==missions)missions.appendChild(bay);
  bay.querySelectorAll('.ag-advisor').forEach(btn=>{
    if(btn.dataset.agAdvisorBound)return;
@@ -514,7 +559,6 @@ function ensureAdvisorBay(){
  });
  return bay;
 }
-
 function syncAdvisorBayGeometry(){
  const missions=document.querySelector('.missions');
  const bay=missions?.querySelector('#agAdvisorBay');
@@ -818,6 +862,8 @@ function start(){
  ensureMissionsDrawer();
  syncAdvisorBayGeometry();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
+ window.addEventListener('agworld:player-ready',()=>{ensureMissionsPlayerProfile();ensureLandingMissionCard();ensureAdvisorBay();});
+ window.addEventListener('agworld:mission-completed',()=>{ensureMissionsPlayerProfile();ensureLandingMissionCard();ensureAdvisorBay();});
 
  // Keep the late-module protection, but never continuously rebuild the page.
  // A subtree observer plus unconditional DOM writes caused a self-triggering
@@ -837,7 +883,7 @@ function start(){
    const hasAdvisor=!!document.querySelector('#agAdvisorBay');
    const missions=document.querySelector('.missions');
    const missionCards=missionCardCandidates(missions);
-   const hasLandingMission=!!missions?.querySelector('.ag-landing-mission');
+   const hasLandingMission=!!missions?.querySelector('#agLandingMissionCard.ag-landing-mission');
    const skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
    const correctProfileOrder=!skill||!!(document.querySelector('#agPlayerMissionProfile')?.compareDocumentPosition(skill)&Node.DOCUMENT_POSITION_FOLLOWING);
    // Do not short-circuit while late mission data is arriving or while another
