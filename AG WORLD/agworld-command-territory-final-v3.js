@@ -172,6 +172,82 @@
 #entityInformationSection .agworld-company-entity-card .company-stats-summary b,
 #entityInformationSection .agworld-company-entity-card .company-facility-staff b{color:#B8E620!important}
 
+
+/* UNIFIED PANEL GEOMETRY — Command Center and Territory Stats must use the same
+   floating, rounded AgWorld panel language as Player Profile / Skill Profile. */
+#territoryInfoPanel.agworld-territory-command-panel,
+#territoryInfoPanel{
+  border-radius:18px!important;
+  overflow:hidden!important;
+  background:radial-gradient(circle at 88% 8%,rgba(184,230,32,.16),transparent 30%),linear-gradient(145deg,#2F6B70 0%,#245C62 58%,#1B4D53 100%)!important;
+  border:1px solid rgba(184,230,32,.42)!important;
+  box-shadow:0 14px 30px rgba(11,44,32,.18),inset 0 1px 0 rgba(244,243,237,.14)!important;
+}
+#territoryInfoPanel .agworld-territory-stats-heading{
+  background:linear-gradient(145deg,#2F6B70,#245C62 62%,#1B4D53)!important;
+  border-radius:17px 17px 0 0!important;
+  border-bottom:1px solid rgba(244,243,237,.16)!important;
+  box-shadow:none!important;
+}
+#territoryInfoPanel .territory-info-grid>div,
+#territoryInfoPanel .territory-national-scope,
+#territoryInfoPanel .territory-info-empty,
+#territoryInfoPanel .territory-info-control,
+#territoryInfoPanel .territory-info-footer{
+  background:rgba(244,243,237,.07)!important;
+  border:1px solid rgba(244,243,237,.16)!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 1px 0 rgba(244,243,237,.08)!important;
+}
+
+/* Command Center becomes a white field containing rounded floating AgWorld cards,
+   exactly like My Missions rather than one square black strip. */
+#entityInformationSection{
+  background:#F4F3ED!important;
+  border:0!important;
+  padding:8px 10px 10px!important;
+  box-sizing:border-box!important;
+}
+#entityInformationSection>#entityCommandCentreHeading,
+#entityCommandCentreHeading{
+  background:linear-gradient(145deg,#2F6B70,#245C62 62%,#1B4D53)!important;
+  border:1px solid rgba(184,230,32,.38)!important;
+  border-radius:14px!important;
+  margin:0 0 8px 0!important;
+  color:#F4F3ED!important;
+  box-shadow:0 8px 18px rgba(11,44,32,.16),inset 0 1px 0 rgba(244,243,237,.14)!important;
+}
+#entityInformationSection #farmCard,
+#entityInformationSection #farmCard.farm-card,
+#entityInformationSection #farmCard.farm-card.agworld-company-entity-card,
+#entityInformationSection .agworld-company-entity-card,
+#entityInformationSection .agworld-entity-command-interface{
+  border-radius:18px!important;
+  overflow:hidden!important;
+  background:radial-gradient(circle at 88% 8%,rgba(184,230,32,.14),transparent 30%),linear-gradient(145deg,#2F6B70 0%,#245C62 58%,#1B4D53 100%)!important;
+  border:1px solid rgba(184,230,32,.42)!important;
+  box-shadow:0 14px 30px rgba(11,44,32,.18),inset 0 1px 0 rgba(244,243,237,.14)!important;
+}
+#entityInformationSection #farmCard .company-command-split,
+#entityInformationSection .agworld-company-entity-card .company-command-split{
+  background:transparent!important;
+}
+#entityInformationSection .agworld-company-entity-card .company-command-stats-pane,
+#entityInformationSection .agworld-company-entity-card .company-command-right-pane,
+#entityInformationSection .agworld-company-entity-card .company-command-facility-side,
+#entityInformationSection .agworld-company-entity-card .company-command-skills-pane,
+#entityInformationSection .agworld-company-entity-card .company-skill-chart-expanded,
+#entityInformationSection .agworld-company-entity-card .company-skill-chart-main,
+#entityInformationSection .agworld-company-entity-card .company-skill-visual,
+#entityInformationSection .agworld-company-entity-card .company-command-kpis>div,
+#entityInformationSection .agworld-company-entity-card .company-stats-summary>div,
+#entityInformationSection .agworld-company-entity-card .company-facility-row{
+  background:rgba(244,243,237,.07)!important;
+  border:1px solid rgba(244,243,237,.16)!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 1px 0 rgba(244,243,237,.08)!important;
+}
+
 `;
   function installStyle(){
     document.getElementById(STYLE_ID)?.remove();
@@ -179,16 +255,37 @@
   }
   const set=(el,p,v)=>el&&el.style.setProperty(p,v,'important');
   function paint(){
+    const panelBg='radial-gradient(circle at 88% 8%,rgba(184,230,32,.16),transparent 30%),linear-gradient(145deg,#2F6B70 0%,#245C62 58%,#1B4D53 100%)';
+    const headBg='linear-gradient(145deg,#2F6B70,#245C62 62%,#1B4D53)';
+    const tileBg='rgba(244,243,237,.07)';
+
     const territory=document.getElementById('territoryInfoPanel');
-    if(territory){set(territory,'background','radial-gradient(circle at 88% 8%,rgba(184,230,32,.18),transparent 30%),linear-gradient(145deg,#34777A 0%,#2F6B70 46%,#245C62 100%)'); territory.querySelectorAll('.agworld-territory-stats-heading,.territory-national-left,.territory-national-right').forEach(el=>set(el,'background',el.classList.contains('agworld-territory-stats-heading')?'linear-gradient(145deg,#34777A,#2F6B70 58%,#245C62)':'transparent'));}
+    if(territory){
+      ['background','border-radius','overflow','border'].forEach((p,i)=>set(territory,p,[panelBg,'18px','hidden','1px solid rgba(184,230,32,.42)'][i]));
+      territory.querySelectorAll('.agworld-territory-stats-heading').forEach(el=>{set(el,'background',headBg);set(el,'border-radius','17px 17px 0 0')});
+      territory.querySelectorAll('.territory-info-grid>div,.territory-national-scope,.territory-info-empty,.territory-info-control,.territory-info-footer').forEach(el=>{set(el,'background',tileBg);set(el,'border-radius','12px');set(el,'border','1px solid rgba(244,243,237,.16)')});
+      territory.querySelectorAll('.territory-national-left,.territory-national-right').forEach(el=>set(el,'background','transparent'));
+    }
+
     const toggle=document.getElementById('territoryStatsToggle');
-    if(toggle)set(toggle,'background','linear-gradient(145deg,#34777A,#245C62)');
+    if(toggle){set(toggle,'background',headBg);set(toggle,'border-radius','14px');}
+
     const section=document.getElementById('entityInformationSection');
-    if(section)set(section,'background','#F4F3ED');
-    const heading=document.getElementById('entityCommandCentreHeading'); if(heading)set(heading,'background','linear-gradient(145deg,#34777A,#2F6B70 58%,#245C62)');
+    if(section){set(section,'background','#F4F3ED');set(section,'padding','8px 10px 10px');set(section,'box-sizing','border-box');}
+
+    const heading=document.getElementById('entityCommandCentreHeading');
+    if(heading){set(heading,'background',headBg);set(heading,'border-radius','14px');set(heading,'margin','0 0 8px 0');set(heading,'border','1px solid rgba(184,230,32,.38)');}
+
     const card=document.getElementById('farmCard');
-    if(card){set(card,'background','radial-gradient(circle at 88% 8%,rgba(184,230,32,.15),transparent 30%),linear-gradient(145deg,#34777A 0%,#2F6B70 45%,#245C62 100%)'); card.querySelectorAll('.company-command-split').forEach(el=>set(el,'background','radial-gradient(circle at 88% 8%,rgba(184,230,32,.15),transparent 30%),linear-gradient(145deg,#34777A 0%,#2F6B70 45%,#245C62 100%)')); card.querySelectorAll('.company-command-stats-pane,.company-command-right-pane,.company-command-facility-side,.company-command-skills-pane,.company-skill-chart-expanded,.company-skill-chart-main,.company-skill-visual,.company-command-kpis>div,.company-stats-summary>div,.company-facility-row').forEach(el=>set(el,'background','rgba(11,44,32,.16)'));}
-    document.querySelectorAll('#entityInformationSection .agworld-company-entity-card,#entityInformationSection .agworld-entity-command-interface').forEach(el=>set(el,'background','radial-gradient(circle at 88% 8%,rgba(184,230,32,.15),transparent 30%),linear-gradient(145deg,#34777A 0%,#2F6B70 45%,#245C62 100%)'));
+    if(card){
+      set(card,'background',panelBg);set(card,'border-radius','18px');set(card,'overflow','hidden');set(card,'border','1px solid rgba(184,230,32,.42)');
+      card.querySelectorAll('.company-command-split').forEach(el=>set(el,'background','transparent'));
+      card.querySelectorAll('.company-command-stats-pane,.company-command-right-pane,.company-command-facility-side,.company-command-skills-pane,.company-skill-chart-expanded,.company-skill-chart-main,.company-skill-visual,.company-command-kpis>div,.company-stats-summary>div,.company-facility-row').forEach(el=>{set(el,'background',tileBg);set(el,'border-radius','12px');set(el,'border','1px solid rgba(244,243,237,.16)')});
+    }
+
+    document.querySelectorAll('#entityInformationSection .agworld-company-entity-card,#entityInformationSection .agworld-entity-command-interface').forEach(el=>{
+      set(el,'background',panelBg);set(el,'border-radius','18px');set(el,'overflow','hidden');set(el,'border','1px solid rgba(184,230,32,.42)');
+    });
   }
   installStyle();paint();
   [100,350,900,1800,3500,7000].forEach(ms=>setTimeout(paint,ms));
