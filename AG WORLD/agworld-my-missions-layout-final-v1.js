@@ -4,7 +4,7 @@
 */
 (()=>{
 'use strict';
-const ID='agworld-my-missions-canonical-v6',HID='agMyMissionsHeader',SID='agMyMissionsStack',G=8,HH=30,PMIN=70,PMAX=96,SMIN=108,SMAX=156,MMIN=112;
+const ID='agworld-my-missions-canonical-v6',HID='agMyMissionsHeader',SID='agMyMissionsStack',G=8,HH=30,PMIN=70,PMAX=96,SMIN=108,SMAX=156;
 let raf=0,ro,mo,settling=false;
 const css=String.raw`
 html body.ag-profile-mode .missions,html body.ag-game-mode .missions,html body.ag-premium-mode .missions,body .missions{position:relative!important;box-sizing:border-box!important;overflow:hidden!important;isolation:isolate!important}
@@ -65,10 +65,6 @@ function natural(el){
  try{el.style.setProperty('position','absolute','important');el.style.setProperty('height','auto','important');el.style.setProperty('min-height','0','important');el.style.setProperty('max-height','none','important');el.style.setProperty('overflow','visible','important');el.style.setProperty('grid-row','auto','important');return px(Math.max(el.scrollHeight||0,el.offsetHeight||0,el.getBoundingClientRect().height||0))}
  finally{old.forEach(([n,v,p])=>v?el.style.setProperty(n,v,p):el.style.removeProperty(n))}
 }
-function lock(p,bayTop,bayH){
- const put=(e,n,v)=>e.style.setProperty(n,v,'important');
- [p.player,p.skill,p.mission].forEach(e=>['position','relative','left','auto','right','auto','top','auto','bottom','auto','width','100%','height','100%','min-height','0','max-height','none','margin','0','transform','none','z-index','1'].forEach((v,i)=>{if(i%2===0)put(e,v,arguments[0])}));
-}
 function hardLock(p,bayTop,bayH){
  const set=(e,n,v)=>e.style.setProperty(n,v,'important');
  [p.player,p.skill,p.mission].forEach(e=>{set(e,'position','relative');set(e,'inset','auto');set(e,'left','auto');set(e,'right','auto');set(e,'top','auto');set(e,'bottom','auto');set(e,'width','100%');set(e,'height','100%');set(e,'min-height','0');set(e,'max-height','none');set(e,'margin','0');set(e,'transform','none');set(e,'z-index','1')});
@@ -82,9 +78,10 @@ function layout(){
  const gap=G,stackTop=HH+gap,stackBottom=bayTop-gap,stackH=Math.max(0,stackBottom-stackTop);
  const missionNatural=Math.max(0,missionContentHeight(p.mission)||0);let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(56,missionNatural),mh=stackH-ph-sh-gap*2;
  if(mh<need&&sh>SMIN){const t=Math.min(need-mh,sh-SMIN);sh-=t;mh+=t}if(mh<need&&ph>PMIN){const t=Math.min(need-mh,ph-PMIN);ph-=t;mh+=t}mh=Math.max(0,mh);
- // The grid reserves the Mission row, but the visible card itself is content-sized.
- // This removes the dead green area beneath START MISSION without moving the card,
- // the Skill Profile, or the Advisory Bay.
+ // The grid reserves the available bay between Skill and Advisory, while the
+ // visible Mission Card is content-sized and vertically centered inside that bay.
+ // This removes the dead green area beneath START MISSION without moving the
+ // Skill Profile or Advisory Bay.
  const missionCardH=Math.min(mh,Math.max(56,missionNatural));
  [['--ag-mm-gap',gap],['--ag-mm-header-h',HH],['--ag-mm-player-h',ph],['--ag-mm-skill-h',sh],['--ag-mm-mission-h',mh],['--ag-mm-mission-card-h',missionCardH],['--ag-mm-stack-top',stackTop],['--ag-mm-stack-height',stackH],['--ag-advisor-top',bayTop],['--ag-advisor-height',bayH]].forEach(([n,v])=>p.m.style.setProperty(n,px(v)+'px'));
  hardLock(p,bayTop,bayH);p.m.dataset.agMissionLayer='single-grid-layer';p.m.dataset.agMissionMeasuredHeight=String(px(mh));p.m.dataset.agMissionCardHeight=String(px(missionCardH));p.m.dataset.agLayoutChecked='true';
