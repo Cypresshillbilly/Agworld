@@ -100,7 +100,7 @@ body.ag-profile-mode .map-area .map-tools,.app-shell .map-area .map-tools{justif
 #developerModeBtn{position:absolute!important;top:10px!important;right:12px!important;z-index:1250!important;min-width:94px!important;height:24px!important;padding:0 9px!important;border-radius:6px!important;font-size:7px!important;white-space:nowrap!important}
 body.ag-profile-mode .map-area .ag-world-map-logo,.app-shell .map-area .ag-world-map-logo{display:none!important}
 /* The mission card is the only player profile shown on this screen. */
-.map-area .map-player-profile,.map-area .player-profile,.map-area .map-user-profile,.map-area .player-avatar-control,.map-area [id*="mapPlayerProfile"],.map-area [id*="mapUserProfile"]{display:none!important}
+.map-area .map-player-profile,.map-area .player-profile,.map-area .map-user-profile,.map-area .player-avatar-control,.map-area [id*="mapPlayerProfile"],.map-area [id*="mapUserProfile"],.map-area [data-player],.map-area [data-player-id],.map-area [data-user-profile],.map-area [aria-label*="Nico" i],.map-area [title*="Nico" i]{display:none!important}
 body.ag-profile-mode .bottom{height:23%!important}
 
 @media(min-width:1500px){
@@ -260,20 +260,52 @@ function removeExplicitlyObsoleteSidebarItems(nav){
 }
 function forceMapProfileRemoval(){
  const mapArea=document.querySelector('.map-area');if(!mapArea)return;
- // The small top-right Nico chip can be injected inside the map header by late
- // game scripts, so remove matching descendants rather than only direct children.
- const candidates=Array.from(mapArea.querySelectorAll('*'));
- candidates.forEach(el=>{
-   if(el.id==='developerModeBtn')return;
-   const text=(el.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
-   const cls=((el.id||'')+' '+(typeof el.className==='string'?el.className:'')).toLowerCase();
-   if((/NICO VAN ROOYEN|AG WORLD PLAYER/.test(text) || /map.*(player|profile|avatar|user)|(player|profile|avatar|user).*map/.test(cls)) &&
-      !el.closest('.missions') && !el.closest('#farmCard')){
-     // Remove the smallest matching container to avoid touching the map itself.
-     const parent=el.parentElement;
-     if(parent && parent!==mapArea && parent.children.length<=6) parent.remove();
-     else el.remove();
+ const hasPlayerIdentity=el=>{
+   const values=[
+     el.id,
+     typeof el.className==='string'?el.className:'',
+     el.getAttribute?.('aria-label')||'',
+     el.getAttribute?.('title')||'',
+     el.getAttribute?.('data-player')||'',
+     el.getAttribute?.('data-player-id')||'',
+     el.getAttribute?.('data-user')||'',
+     el.getAttribute?.('data-user-profile')||'',
+     el.textContent||''
+   ].join(' ').replace(/\s+/g,' ').trim().toUpperCase();
+   return /NICO VAN ROOYEN|AG WORLD PLAYER|\bPLAYER PROFILE\b|\bMAP PLAYER\b/.test(values) ||
+     /(^|\s)(MAP[-_ ]?)?(PLAYER|USER|PROFILE|AVATAR)([-_ ]?CONTROL)?(\s|$)/i.test([
+       el.id,typeof el.className==='string'?el.className:''
+     ].join(' '));
+ };
+ const removeCandidate=el=>{
+   if(!el||el===mapArea||el.id==='developerModeBtn'||el.closest('#farmCard'))return;
+   // Prefer the smallest meaningful overlay container, but never remove the map
+   // canvas/header wholesale.
+   let target=el;
+   for(let p=el.parentElement,steps=0;p&&p!==mapArea&&steps<4;p=p.parentElement,steps++){
+     const tag=(p.tagName||'').toLowerCase();
+     const cls=((p.id||'')+' '+(typeof p.className==='string'?p.className:'')).toLowerCase();
+     if(tag==='button'||tag==='a'||/player|profile|avatar|user|control|chip/.test(cls)) target=p;
    }
+   if(target.classList?.contains('map-header')||target.id==='map') return;
+   target.remove();
+ };
+ Array.from(mapArea.querySelectorAll('*')).forEach(el=>{
+   if(hasPlayerIdentity(el)) removeCandidate(el);
+ });
+ // The remaining visual is the small circular "N" avatar in the map's top-right.
+ // It can be injected without the player's name in text, so remove only a compact
+ // button/control in the top-right that contains a single N and is not a map tool.
+ Array.from(mapArea.querySelectorAll('button,[role="button"],div,span')).forEach(el=>{
+   if(el.id==='developerModeBtn'||el.closest('.map-tools'))return;
+   const text=(el.textContent||'').replace(/\s+/g,'').trim().toUpperCase();
+   if(text!=='N')return;
+   const rect=el.getBoundingClientRect?.();
+   const mapRect=mapArea.getBoundingClientRect?.();
+   if(!rect||!mapRect||rect.width>90||rect.height>90||rect.width<12||rect.height<12)return;
+   const nearTop=rect.top-mapRect.top<100;
+   const nearRight=mapRect.right-rect.right<140;
+   if(nearTop&&nearRight) removeCandidate(el);
  });
 }
 function correctSidebar(){
