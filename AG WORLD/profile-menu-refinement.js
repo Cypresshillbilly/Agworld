@@ -779,25 +779,53 @@ function refreshPlayerUI(){
  const d=playerData();card.innerHTML=playerCardHTML(d);
 }
 function start(){
- installStyles();correctSidebar();ensureAdvisorBay();syncAdvisorBayGeometry();ensureMissionHub();ensureMissionsDrawer();
+ installStyles();
+ correctSidebar();
+ ensureMissionsPlayerProfile();
+ ensureAdvisorBay();
+ ensureMissionHub();
+ ensureMissionsDrawer();
+ syncAdvisorBayGeometry();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
+
+ // Keep the late-module protection, but never continuously rebuild the page.
+ // A subtree observer plus unconditional DOM writes caused a self-triggering
+ // mutation loop and the player page could hang before first paint.
+ let repairQueued=false;
+ let repairing=false;
  const observer=new MutationObserver(()=>{
-  installStyles();
-  const s=document.querySelector('.sidebar');if(!s)return;
-  const good=!!(s.querySelector('.brand .brand-logo')&&document.querySelector('.missions #agPlayerMissionProfile'));
-  if(!good)correctSidebar();
-  ensureMissionsPlayerProfile();
-  ensureAdvisorBay();
-  ensureMissionHub();
-  ensureMissionsDrawer();
-  syncAdvisorBayGeometry();
+  if(repairQueued||repairing)return;
+  repairQueued=true;
+  requestAnimationFrame(()=>{
+   repairQueued=false;
+   if(repairing)return;
+   const sidebar=document.querySelector('.sidebar');
+   if(!sidebar)return;
+   const hasBrand=!!sidebar.querySelector('.brand .brand-logo');
+   const hasMission=!!document.querySelector('.missions #agPlayerMissionProfile');
+   const hasAdvisor=!!document.querySelector('#agAdvisorBay');
+   if(hasBrand&&hasMission&&hasAdvisor){
+    syncAdvisorBayGeometry();
+    return;
+   }
+   repairing=true;
+   try{
+    installStyles();
+    correctSidebar();
+    ensureMissionsPlayerProfile();
+    ensureAdvisorBay();
+    ensureMissionHub();
+    ensureMissionsDrawer();
+    syncAdvisorBayGeometry();
+   }finally{
+    repairing=false;
+   }
+  });
  });
- /* Important: watch descendants because game-view-mode changes sidebar.innerHTML. The callback is inert once final markup exists, so it cannot loop. */
  observer.observe(document.body,{childList:true,subtree:true});
- // Defensive health check: later game modules are not allowed to remove the
- // mission player profile or its style rules after the layout has been normalised.
- window.addEventListener('resize',syncAdvisorBayGeometry);[0,100,300,700,1500,3000,6000].forEach(ms=>setTimeout(syncAdvisorBayGeometry,ms));
- setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureAdvisorBay();syncAdvisorBayGeometry();ensureMissionHub();ensureMissionsDrawer();refreshPlayerUI();},900);
+
+ window.addEventListener('resize',syncAdvisorBayGeometry);
+ [0,100,300,700,1500,3000,6000].forEach(ms=>setTimeout(syncAdvisorBayGeometry,ms));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
