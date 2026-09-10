@@ -17,8 +17,9 @@
   const MIN_PLAYER_H=70;
   const MAX_PLAYER_H=96;
   const MIN_SKILL_H=96;
-  const MIN_MISSION_H=56;
-  const FALLBACK_MISSION_H=72;
+  const MIN_MISSION_H=104;
+  const PREFERRED_MISSION_H=112;
+  const FALLBACK_MISSION_H=112;
 
   let resizeObserver=null;
   let mutationObserver=null;
@@ -31,7 +32,7 @@
   --ag-mm-header-h:34px;
   --ag-mm-player-h:84px;
   --ag-mm-skill-h:112px;
-  --ag-mm-mission-h:72px;
+  --ag-mm-mission-h:112px;
   --ag-mm-player-top:42px;
   --ag-mm-skill-top:134px;
   --ag-mm-mission-top:254px;
@@ -167,24 +168,27 @@ body .missions #agLandingMissionCard{
   transform:none!important;
 }
 
-/* Keep mission information legible inside its proportional card allocation. */
+/* Keep mission information legible inside its restored full-card allocation. */
+.missions #agLandingMissionCard{
+  padding:10px 12px!important;
+}
 .missions #agLandingMissionCard .tag{
   display:block!important;
-  margin:0 0 4px!important;
-  font-size:9px!important;
-  line-height:1.2!important;
-  letter-spacing:.7px!important;
+  margin:0 0 3px!important;
+  font-size:8px!important;
+  line-height:1.15!important;
+  letter-spacing:.8px!important;
 }
 .missions #agLandingMissionCard strong{
   display:block!important;
-  margin:0 0 4px!important;
-  line-height:1.2!important;
+  margin:0 0 3px!important;
+  line-height:1.15!important;
   white-space:normal!important;
   overflow:hidden!important;
 }
 .missions #agLandingMissionCard p{
-  margin:0!important;
-  line-height:1.35!important;
+  margin:0 0 4px!important;
+  line-height:1.25!important;
   overflow:hidden!important;
   display:-webkit-box!important;
   -webkit-box-orient:vertical!important;
@@ -192,7 +196,13 @@ body .missions #agLandingMissionCard{
 }
 .missions #agLandingMissionCard .reward{
   display:inline-flex!important;
+  margin:2px 0 0!important;
+}
+.missions #agLandingMissionCard button{
+  display:block!important;
+  width:100%!important;
   margin-top:5px!important;
+  box-sizing:border-box!important;
 }
 
 /* Advisory Bay is a protected lower boundary. It is aligned to the live
@@ -241,6 +251,47 @@ body .missions #agLandingMissionCard{
     style.textContent=css;
   }
 
+  function ensureMissionCard(missions){
+    if(!missions) return null;
+    let card=missions.querySelector('#agLandingMissionCard');
+    if(card) return card;
+
+    card=document.createElement('section');
+    card.id='agLandingMissionCard';
+    card.className='mission ag-landing-mission';
+    card.setAttribute('aria-label','Current or next mission');
+
+    const progression=window.AGWorldProgression;
+    const state=progression?.getState?.();
+    const chapters=progression?.getChapters?.();
+    const chapterId=Number(state?.currentChapter||1);
+    const chapter=Array.isArray(chapters)?(chapters.find(c=>Number(c.id)===chapterId)||chapters[0]):null;
+    const completed=state?.completed||{};
+    const list=Array.isArray(chapter?.missions)?chapter.missions:[];
+    const current=list.find(m=>!completed[m.id])||null;
+
+    if(current&&chapter){
+      card.dataset.chapterMission=String(current.id||'');
+      card.dataset.status='current';
+      card.innerHTML=
+        '<div class="tag">CHAPTER '+String(chapter.id)+' · '+String(current.type||'MISSION')+'</div>'+
+        '<strong>'+String(current.title||'Current Mission')+'</strong>'+
+        '<p>'+String(current.objective||'Continue your current assignment.')+'</p>'+
+        '<div class="reward">+'+Number(current.xp||0).toLocaleString()+' XP</div>'+
+        '<button type="button" data-landing-mission-start="'+String(current.id||'')+'">START MISSION</button>';
+      const button=card.querySelector('[data-landing-mission-start]');
+      if(button) button.addEventListener('click',()=>window.AGWorldProgression?.completeMission?.(button.dataset.landingMissionStart));
+    }else{
+      card.dataset.status='loading';
+      card.innerHTML='<div class="tag">MISSION COMMAND</div><strong>Mission briefing loading…</strong><p>Preparing your current assignment.</p>';
+    }
+
+    const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+    if(skill) skill.insertAdjacentElement('afterend',card);
+    else missions.appendChild(card);
+    return card;
+  }
+
   function getParts(){
     const missions=document.querySelector('.missions');
     if(!missions) return null;
@@ -249,7 +300,7 @@ body .missions #agLandingMissionCard{
       command:document.getElementById('entityInformationSection'),
       player:missions.querySelector('#agPlayerMissionProfile'),
       skill:missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile'),
-      mission:missions.querySelector('#agLandingMissionCard'),
+      mission:ensureMissionCard(missions),
       bay:missions.querySelector('#agAdvisorBay')
     };
   }
@@ -439,42 +490,31 @@ body .missions #agLandingMissionCard{
        final START MISSION control plus its real bottom padding. */
     let missionH=Math.max(MIN_MISSION_H,missionNatural||FALLBACK_MISSION_H);
 
-    /* Skill Profile receives the remaining proportional space and therefore
-       remains the largest information-rich card. */
-    let skillH=contentBudget-playerH-missionH;
-
-    /* Resolve tight spaces without changing card order or crossing the Advisor
-       boundary. First reduce mission toward its readable minimum, then player
-       toward its compact minimum; the Skill Profile is never replaced or
-       redesigned. */
-    if(skillH<MIN_SKILL_H){
-      const need=MIN_SKILL_H-skillH;
-      const reducibleMission=Math.max(0,missionH-MIN_MISSION_H);
-      const missionReduction=Math.min(need,reducibleMission);
-      missionH-=missionReduction;
-      skillH+=missionReduction;
-    }
-
-    if(skillH<MIN_SKILL_H){
-      const need=MIN_SKILL_H-skillH;
-      const reduciblePlayer=Math.max(0,playerH-MIN_PLAYER_H);
-      const playerReduction=Math.min(need,reduciblePlayer);
-      playerH-=playerReduction;
-      skillH+=playerReduction;
-    }
-
-    /* Hard geometric boundary. The mission bottom plus the fourth equal gap is
-       mathematically locked to the Advisory Bay top. */
-    skillH=Math.max(0,skillH);
+    /* Preserve the approved Skill Profile allocation. It must not absorb the
+       Mission Card's empty white region. */
+    const skillNatural=naturalHeight(skill);
+    let skillH=clamp(skillNatural||112,MIN_SKILL_H,140);
 
     const playerTop=headerH+gap;
     const skillTop=playerTop+playerH+gap;
-    const missionTop=skillTop+skillH+gap;
 
-    /* Last safety calculation preserves the protected Bay even if late CSS
-       changes alter a card's intrinsic box sizing. */
-    const missionMax=Math.max(0,bayTop-gap-missionTop);
-    missionH=Math.min(missionH,missionMax);
+    /* The Mission Card owns the white region below the Skill Profile. */
+    let missionTop=skillTop+skillH+gap;
+    let missionMax=Math.max(0,bayTop-gap-missionTop);
+
+    /* On unusually tight heights, reclaim only unused outer Skill allocation,
+       never overlap the approved Skill Profile or Advisory Bay. */
+    if(missionMax<MIN_MISSION_H && skillH>MIN_SKILL_H){
+      const reclaim=Math.min(MIN_MISSION_H-missionMax,skillH-MIN_SKILL_H);
+      skillH-=reclaim;
+      missionTop=skillTop+skillH+gap;
+      missionMax=Math.max(0,bayTop-gap-missionTop);
+    }
+
+    missionH=Math.min(
+      missionMax,
+      Math.max(MIN_MISSION_H,PREFERRED_MISSION_H,missionNatural||FALLBACK_MISSION_H)
+    );
 
     setGeometry(missions,{
       gap:px(gap),
