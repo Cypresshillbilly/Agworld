@@ -36,8 +36,8 @@ function ensureStyle(){
  const style=document.createElement('style');style.id=STYLE_ID;
  style.textContent=
  'body.ag-profile-mode #territoryInfoPanel,body.ag-profile-mode #territoryStatsDrawer{display:none!important}'+
- '#'+ROOT_ID+'{position:absolute;right:0;top:18px;z-index:2600;height:auto;display:flex;flex-direction:row-reverse;align-items:stretch;pointer-events:auto}'+
- '#'+ROOT_ID+' .agpts-toggle{width:30px;min-width:30px;border:1px solid rgba(184,230,32,.48);border-right:0;border-radius:10px 0 0 10px;background:linear-gradient(180deg,#173c45,#102b36);color:#f4f3ed;cursor:pointer;padding:8px 0;display:flex;align-items:center;justify-content:center;gap:7px;writing-mode:vertical-rl;letter-spacing:1px;font:800 8px Arial,sans-serif}'+
+ '#'+ROOT_ID+'{position:absolute;right:0;top:18px;z-index:2600;height:auto;display:flex;flex-direction:row;align-items:stretch;justify-content:flex-end;pointer-events:auto}'+
+ '#'+ROOT_ID+' .agpts-toggle{width:30px;min-width:30px;border:1px solid rgba(184,230,32,.48);border-left:0;border-radius:0 10px 10px 0;background:linear-gradient(180deg,#173c45,#102b36);color:#f4f3ed;cursor:pointer;padding:8px 0;display:flex;align-items:center;justify-content:center;gap:7px;writing-mode:vertical-rl;letter-spacing:1px;font:800 8px Arial,sans-serif}'+
  '#'+ROOT_ID+' .agpts-toggle b{font-size:15px;line-height:1;font-weight:400}'+
  '#'+ROOT_ID+' .agpts-panel{width:260px;min-width:260px;height:100%;overflow:hidden;border:1px solid rgba(184,230,32,.42);border-right:0;border-radius:14px 0 0 14px;background:linear-gradient(150deg,#173c45 0%,#102b36 55%,#0a2029 100%);box-shadow:0 16px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07);color:#f4f3ed}'+
  '#'+ROOT_ID+'.is-collapsed .agpts-panel{display:none}'+
@@ -72,7 +72,7 @@ function ensure(){
  let root=document.getElementById(ROOT_ID);
  if(!root){
    root=document.createElement('aside');root.id=ROOT_ID;root.className='is-collapsed';
-   root.innerHTML='<button type="button" class="agpts-toggle" aria-expanded="false" aria-label="Open Territory Stats"><span>TERRITORY STATS</span><b>‹</b></button><section class="agpts-panel" aria-label="Territory control statistics">'+panelHTML()+'</section>';
+   root.innerHTML='<section class="agpts-panel" aria-label="Territory control statistics">'+panelHTML()+'</section><button type="button" class="agpts-toggle" aria-expanded="false" aria-label="Open Territory Stats"><span>TERRITORY STATS</span><b>‹</b></button>';
    map.appendChild(root);
    root.querySelector('.agpts-toggle').addEventListener('click',()=>{root.classList.toggle('is-collapsed');const open=!root.classList.contains('is-collapsed');root.querySelector('.agpts-toggle').setAttribute('aria-expanded',String(open));root.querySelector('.agpts-toggle').querySelector('b').textContent=open?'›':'‹';layout();});
  }
