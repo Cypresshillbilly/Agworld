@@ -58,28 +58,10 @@ body .missions{
   min-width:0!important;height:100%!important;min-height:0!important;max-height:none!important;
   margin:0!important;box-sizing:border-box!important;transform:none!important;
   z-index:1!important;overflow:hidden!important;align-self:stretch!important;justify-self:stretch!important;
-  display:block!important;visibility:visible!important;opacity:1!important;
 }
 .missions>#${STACK_ID}>#agPlayerMissionProfile{grid-row:1!important}
 .missions>#${STACK_ID}>#agMissionSkillProfile,
 .missions>#${STACK_ID}>.ag-mission-skill-profile{grid-row:2!important}
-
-.missions>#${STACK_ID}>#agMissionSkillProfile[data-ag-canonical-skill-profile="true"]{
-  padding:10px!important;border-radius:14px!important;
-  background:linear-gradient(145deg,#173c45,#102b36 64%,#0b2028)!important;
-  border:1px solid rgba(106,183,113,.44)!important;
-  box-shadow:0 12px 28px rgba(14,42,49,.18),inset 0 1px 0 rgba(255,255,255,.09)!important;
-}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;padding-bottom:6px!important;margin-bottom:6px!important;border-bottom:1px solid rgba(184,220,224,.13)!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-head span{display:block!important;color:#91b9c0!important;font:900 6.5px/1 Arial,sans-serif!important;letter-spacing:1.05px!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-head b{display:block!important;margin-top:4px!important;color:#f4fbf5!important;font:900 12px/1 Arial,sans-serif!important;letter-spacing:.55px!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-head>strong{min-width:28px!important;height:28px!important;border-radius:9px!important;display:flex!important;align-items:center!important;justify-content:center!important;color:#dff58a!important;background:rgba(190,232,90,.12)!important;border:1px solid rgba(190,232,90,.28)!important;font:900 8px/1 Arial,sans-serif!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-body{display:grid!important;grid-template-columns:1fr 1fr!important;gap:7px!important;align-items:center!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-chart{border-radius:10px!important;padding:4px!important;background:radial-gradient(circle at center,rgba(80,157,170,.13),rgba(5,18,24,.14))!important;border:1px solid rgba(129,190,199,.12)!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-chart svg{width:100%!important;height:76px!important;display:block!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-list{display:flex!important;flex-direction:column!important;gap:3px!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-list>div{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:5px!important;padding:4px 5px!important;border-radius:6px!important;background:rgba(255,255,255,.045)!important;border:1px solid rgba(173,216,221,.09)!important;color:#a9c2c8!important;font:800 5.8px/1 Arial,sans-serif!important;letter-spacing:.25px!important}
-#agMissionSkillProfile[data-ag-canonical-skill-profile="true"] .ag-mission-skill-list>div b{color:#cbed6b!important;font:900 8px/1 Arial,sans-serif!important}
 
 /* Legacy card is intentionally not allowed to participate in V2 layout. */
 #agLandingMissionCard{display:none!important}
@@ -153,36 +135,11 @@ function injectStyle(){
   el.textContent=css;
 }
 
-function ensureCanonicalSkillProfile(missions){
-  let skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
-  if(skill)return skill;
-
-  // Regression recovery only: recreate the canonical Skill Profile if a
-  // previous broad DOM purge removed its root. Existing live skill data is
-  // never overwritten.
-  skill=document.createElement('section');
-  skill.id='agMissionSkillProfile';
-  skill.className='ag-mission-skill-profile';
-  skill.setAttribute('aria-label','Player capability skill profile');
-  skill.dataset.agCanonicalSkillProfile='true';
-  skill.innerHTML=
-    '<div class="ag-mission-skill-head"><div><span>PLAYER CAPABILITY</span><b>SKILL PROFILE</b></div><strong>LVL 1</strong></div>'+
-    '<div class="ag-mission-skill-body">'+
-      '<div class="ag-mission-skill-chart" aria-hidden="true"><svg viewBox="0 0 160 126"><g fill="none" stroke="rgba(169,203,193,.28)" stroke-width="1"><path d="M80 8 L148 48 L122 116 L38 116 L12 48 Z"/><path d="M80 30 L129 58 L111 102 L49 102 L31 58 Z"/><path d="M80 52 L110 68 L100 88 L60 88 L50 68 Z"/><path d="M80 8 V52 M148 48 L110 68 M122 116 L100 88 M38 116 L60 88 M12 48 L50 68"/></g><path d="M80 24 L123 58 L105 96 L54 92 L38 52 Z" fill="rgba(194,233,93,.10)" stroke="#c2e95d" stroke-width="1.8"/><circle cx="80" cy="24" r="2.5" fill="#c2e95d"/><circle cx="123" cy="58" r="2.5" fill="#c2e95d"/><circle cx="105" cy="96" r="2.5" fill="#c2e95d"/><circle cx="54" cy="92" r="2.5" fill="#c2e95d"/><circle cx="38" cy="52" r="2.5" fill="#c2e95d"/></svg></div>'+
-      '<div class="ag-mission-skill-list"><div><span>COMPLIANCE</span><b>60</b></div><div><span>SALES</span><b>45</b></div><div><span>PRODUCT</span><b>50</b></div><div><span>OPERATIONS</span><b>55</b></div><div><span>TECHNICAL</span><b>65</b></div></div>'+
-    '</div>';
-
-  const player=missions.querySelector('#agPlayerMissionProfile');
-  if(player)player.insertAdjacentElement('afterend',skill);
-  else missions.prepend(skill);
-  return skill;
-}
-
 function getParts(){
   const missions=document.querySelector('.missions');
   if(!missions)return null;
   const player=missions.querySelector('#agPlayerMissionProfile');
-  const skill=ensureCanonicalSkillProfile(missions);
+  const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
   const advisor=missions.querySelector('#agAdvisorBay')||document.getElementById('agAdvisorBay');
   const legacy=null;
   const command=document.getElementById('entityInformationSection');
@@ -215,13 +172,12 @@ function textFrom(root,selector,fallback){
   return String(el?.textContent||fallback).replace(/\s+/g,' ').trim();
 }
 
-function purgeLegacyMissionCards(){
-  // Surgical purge only. Never traverse generic .mission or [data-mission]
-  // nodes: those selectors are shared by the Skill Profile and other live UI.
-  // Only positively identified retired Mission Card roots may be removed.
+function purgeLegacyMissionCards(missions){
+  // Legacy player-screen mission panels are deleted, not merely hidden.
   LEGACY_MISSION_SELECTORS.forEach(selector=>{
     document.querySelectorAll(selector).forEach(el=>{
-      if(el.id!==CARD_ID)el.remove();
+      if(el.id===CARD_ID)return;
+      el.remove();
     });
   });
 }
@@ -313,14 +269,8 @@ function layout(){
   if(p.player.parentElement!==stack)stack.appendChild(p.player);
   if(p.skill.parentElement!==stack)stack.appendChild(p.skill);
 
-  // The Skill Profile is a protected canonical surface. V2 owns only the
-  // Mission Card and may never delete, hide or mutate the Skill Profile.
-  p.skill.style.setProperty('display','block','important');
-  p.skill.style.setProperty('visibility','visible','important');
-  p.skill.style.setProperty('opacity','1','important');
-
-  // Delete only positively identified retired Mission Card roots.
-  purgeLegacyMissionCards();
+  // Delete any old/previous player-screen Mission Card before V2 mounts.
+  purgeLegacyMissionCards(p.missions);
 
   // The old DOM is no longer retained as a hidden bridge. V2 is the only
   // Mission Card panel in the player screen.
