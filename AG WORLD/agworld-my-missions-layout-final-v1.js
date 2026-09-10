@@ -62,7 +62,7 @@ body .missions{
 .missions>#${STACK_ID}>.ag-mission-skill-profile{grid-row:2!important}
 
 /* Legacy card is intentionally not allowed to participate in V2 layout. */
-#agLandingMissionCard{display:none!important!important}
+#agLandingMissionCard{display:none!important}
 
 .missions>#${STACK_ID}>#${CARD_ID}{
   grid-row:3!important;grid-column:1!important;
