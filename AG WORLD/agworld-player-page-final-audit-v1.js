@@ -228,7 +228,7 @@ function schedule(){
 function start(){
   install();schedule();
   addEventListener('resize',schedule,{passive:true});
-  ['agworld:landing-layout-ready','agworld:player-ready','agworld:player-profile','agworld:advisor-selected','agworld:mission-completed','agworld:player-page-geometry-locked'].forEach(e=>addEventListener(e,schedule));
+  ['agworld:landing-layout-ready','agworld:player-ready','agworld:player-profile','agworld:advisor-selected','agworld:mission-completed'].forEach(e=>addEventListener(e,schedule));
   [0,40,120,300,700,1400,2600,4200].forEach(ms=>setTimeout(schedule,ms));
   if('ResizeObserver'in window){
     ro?.disconnect();ro=new ResizeObserver(schedule);
