@@ -49,7 +49,6 @@ function install(){
 }
 
 function playerData(){
- host.classList?.add('ag-sales-commander-active');
  const p=window.AGWorldPlayer||{};
  const get=(...keys)=>keys.map(k=>p[k]??sessionStorage.getItem('gamechanger.'+k)??localStorage.getItem('gamechanger.'+k)).find(v=>v!==null&&v!==undefined&&String(v).trim()!=='');
  const name=String(get('display_name','name','username')||'PLAYER').trim().toUpperCase();
@@ -127,6 +126,7 @@ function showStrategicCommander(){
    panel.setAttribute('aria-label','Strategic Commander');
    host.appendChild(panel);
  }
+ host.classList?.add('ag-sales-commander-active');
  const p=window.AGWorldPlayer||{};
  const company=String(p.company_name||p.company||'YOUR SALES COMMAND').toUpperCase();
  panel.innerHTML='<div class="agsc-kicker">SALES ADVISOR ACTIVE</div><h2>STRATEGIC COMMANDER</h2><p>Live strategic command for '+esc(company)+'. This surface exists only while the Sales Commander is actively selected.</p><div class="agsc-grid"><div class="agsc-metric"><span>ACTIVE LEADS</span><b>6</b></div><div class="agsc-metric"><span>PIPELINE VALUE</span><b>71</b></div><div class="agsc-metric"><span>WINS</span><b>4</b></div></div>';
