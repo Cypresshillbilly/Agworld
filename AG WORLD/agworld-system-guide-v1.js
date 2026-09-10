@@ -175,114 +175,86 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     };
     const initCommander3D=async()=>{
       const stage=root.querySelector('.ag-guide-avatar-stage');
-      if(!stage || !window.WebGLRenderingContext) return;
+      if(!stage) return;
       try{
-        // Use jsDelivr's browser-module rewrite for GLTFLoader. The previous URL left
-        // GLTFLoader's internal "three" import as a bare specifier, which caused the
-        // 3D loader to fail in a normal browser and silently fall back to the static CSS figure.
+        // Self-contained procedural 3D commander. This deliberately avoids a remote GLB
+        // and GLTFLoader so the guide cannot silently fall back to the old static figure.
         const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
-        const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?module');
         const width=132,height=160;
         const scene=new THREE.Scene();
-        const camera=new THREE.PerspectiveCamera(25,width/height,.1,100);
-        // Upper-body command briefing framing: the Strategic Commander reads clearly
-        // in the small map HUD without looking like a distant full-body game NPC.
-        camera.position.set(0,1.05,4.55);
+        const camera=new THREE.PerspectiveCamera(24,width/height,.1,100);
+        camera.position.set(0,.15,6.15);
         const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
         renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
         renderer.setSize(width,height,false);
         renderer.outputColorSpace=THREE.SRGBColorSpace;
         renderer.setClearColor(0x000000,0);
-        stage.appendChild(renderer.domElement);
-        scene.add(new THREE.HemisphereLight(0xd9ead8,0x08120d,2.1));
-        const key=new THREE.DirectionalLight(0xffffff,2.4); key.position.set(3,5,6); scene.add(key);
-        const rim=new THREE.DirectionalLight(0xb8e620,1.25); rim.position.set(-4,2,-2); scene.add(rim);
-        const loader=new GLTFLoader();
-        const gltf=await loader.loadAsync('https://threejs.org/examples/models/gltf/Soldier.glb');
-        const model=gltf.scene;
-        model.scale.setScalar(1.28);
-        model.position.set(0,-1.76,0);
-        model.rotation.y=Math.PI;
-        scene.add(model);
+        stage.replaceChildren(renderer.domElement);
 
-        const mixer=new THREE.AnimationMixer(model);
-        const actions={};
-        gltf.animations.forEach(clip=>actions[clip.name]=mixer.clipAction(clip));
-        const idle=actions.Idle || Object.values(actions)[0];
-        if(idle){idle.reset().setEffectiveWeight(1).play();}
+        scene.add(new THREE.HemisphereLight(0xd9ead8,0x07110b,2.4));
+        const key=new THREE.DirectionalLight(0xffffff,2.6); key.position.set(3,4,5); scene.add(key);
+        const rim=new THREE.DirectionalLight(0xb8e620,2.0); rim.position.set(-4,2,-2); scene.add(rim);
+        const fill=new THREE.PointLight(0x2bb673,1.4,8); fill.position.set(0,1.5,2); scene.add(fill);
 
-        const findBone=(terms)=>{
-          let hit=null;
-          model.traverse(o=>{
-            if(hit || !o.isBone) return;
-            const n=(o.name||'').toLowerCase();
-            if(terms.some(t=>n.includes(t))) hit=o;
-          });
-          return hit;
+        const commander=new THREE.Group();
+        commander.position.set(0,-1.05,0);
+        commander.rotation.y=-.08;
+        scene.add(commander);
+
+        const skin=new THREE.MeshStandardMaterial({color:0xa96f50,roughness:.62,metalness:.02});
+        const skinLight=new THREE.MeshStandardMaterial({color:0xc28a65,roughness:.58});
+        const uniform=new THREE.MeshStandardMaterial({color:0x0c5d36,roughness:.48,metalness:.08});
+        const uniformDark=new THREE.MeshStandardMaterial({color:0x08291d,roughness:.55});
+        const accent=new THREE.MeshStandardMaterial({color:0xb8e620,emissive:0x4f7108,emissiveIntensity:.42,roughness:.35});
+        const dark=new THREE.MeshStandardMaterial({color:0x172018,roughness:.78});
+        const holo=new THREE.MeshBasicMaterial({color:0xb8e620,transparent:true,opacity:.30});
+
+        const torso=new THREE.Mesh(new THREE.BoxGeometry(1.72,1.62,.64,.14,.14,.14),uniform);
+        torso.position.y=-.10; commander.add(torso);
+        const chest=new THREE.Mesh(new THREE.BoxGeometry(1.25,.52,.07),uniformDark);
+        chest.position.set(0,.20,.35); commander.add(chest);
+        const badge=new THREE.Mesh(new THREE.BoxGeometry(.17,.17,.05),accent);
+        badge.position.set(.47,.25,.40); commander.add(badge);
+
+        const neck=new THREE.Mesh(new THREE.CylinderGeometry(.24,.26,.42,16),skin);
+        neck.position.y=.93; commander.add(neck);
+        const head=new THREE.Mesh(new THREE.SphereGeometry(.58,28,22),skinLight);
+        head.scale.set(.92,1.12,.86); head.position.y=1.48; commander.add(head);
+        const hair=new THREE.Mesh(new THREE.SphereGeometry(.60,28,18,0,Math.PI*2,0,1.12),dark);
+        hair.scale.set(.94,.42,.90); hair.position.set(0,1.82,.02); commander.add(hair);
+
+        const capBand=new THREE.Mesh(new THREE.BoxGeometry(1.02,.18,.84),uniformDark);
+        capBand.position.set(0,1.98,.05); commander.add(capBand);
+        const capTop=new THREE.Mesh(new THREE.CylinderGeometry(.52,.60,.20,24),uniform);
+        capTop.scale.z=.82; capTop.position.set(0,2.10,.02); commander.add(capTop);
+        const capMark=new THREE.Mesh(new THREE.BoxGeometry(.16,.08,.05),accent);
+        capMark.position.set(0,2.03,.43); commander.add(capMark);
+
+        const shoulder=(side)=>{
+          const pivot=new THREE.Group();
+          pivot.position.set(side*1.02,.42,0);
+          const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.22,.70,6,12),uniform);
+          upper.rotation.z=side*.32; upper.position.set(side*.12,-.36,.03);
+          pivot.add(upper);
+          const forearm=new THREE.Mesh(new THREE.CapsuleGeometry(.17,.58,6,12),uniformDark);
+          forearm.rotation.z=side*.12; forearm.position.set(side*.22,-.92,.10);
+          pivot.add(forearm);
+          const hand=new THREE.Mesh(new THREE.SphereGeometry(.20,16,12),skin);
+          hand.position.set(side*.28,-1.26,.12); pivot.add(hand);
+          commander.add(pivot);
+          return pivot;
         };
-        const head=findBone(['head']);
-        const rightArm=findBone(['rightarm','right_arm','upperarm.r','upper_arm.r']);
-        const leftArm=findBone(['leftarm','left_arm','upperarm.l','upper_arm.l']);
-        const spine=findBone(['spine','chest']);
+        const rightArm=shoulder(1), leftArm=shoulder(-1);
 
-        // AgWorld Strategic Commander presentation layer.
-        // This is intentionally geometry-based rather than a generated image:
-        // command insignia, rank bars and a restrained green corporate accent
-        // turn the base animated rig into the AgWorld guide personality.
-        const accentMat=new THREE.MeshStandardMaterial({
-          color:0xb8e620,emissive:0x355000,emissiveIntensity:.55,
-          metalness:.25,roughness:.42,transparent:true,opacity:.92
-        });
-        const darkMat=new THREE.MeshStandardMaterial({
-          color:0x102a20,metalness:.35,roughness:.52,transparent:true,opacity:.88
-        });
-        const addCommanderInsignia=()=>{
-          if(!spine) return;
-          const rig=new THREE.Group();
-          rig.name='AgWorldStrategicCommanderInsignia';
-
-          // Narrow command chest panel.
-          const chest=new THREE.Mesh(new THREE.BoxGeometry(.42,.19,.025),darkMat);
-          chest.position.set(0,.12,-.20);
-          rig.add(chest);
-
-          // Three objective/rank bars.
-          for(let i=0;i<3;i++){
-            const bar=new THREE.Mesh(new THREE.BoxGeometry(.09,.018,.028),accentMat);
-            bar.position.set(-.11+i*.11,.16,-.225);
-            rig.add(bar);
-          }
-
-          // Small central command badge.
-          const badge=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.018,20),accentMat);
-          badge.rotation.x=Math.PI/2;
-          badge.position.set(0,.02,-.22);
-          rig.add(badge);
-
-          // Restrained shoulder command tabs.
-          const shoulderL=new THREE.Mesh(new THREE.BoxGeometry(.15,.025,.08),accentMat);
-          shoulderL.position.set(.32,.34,-.02);
-          shoulderL.rotation.z=-.12;
-          rig.add(shoulderL);
-          const shoulderR=shoulderL.clone();
-          shoulderR.position.x=-.32;
-          shoulderR.rotation.z=.12;
-          rig.add(shoulderR);
-
-          spine.add(rig);
-        };
-        addCommanderInsignia();
+        // Subtle holographic command pedestal.
+        const ringGeo=new THREE.TorusGeometry(.86,.025,8,48);
+        const ring1=new THREE.Mesh(ringGeo,holo); ring1.rotation.x=Math.PI/2; ring1.position.y=-.93; commander.add(ring1);
+        const ring2=new THREE.Mesh(new THREE.TorusGeometry(.58,.016,8,40),holo); ring2.rotation.x=Math.PI/2; ring2.position.y=-.89; commander.add(ring2);
 
         const clock=new THREE.Clock();
-        const baseline={
-          head:head?head.rotation.clone():null,
-          right:rightArm?rightArm.rotation.clone():null,
-          left:leftArm?leftArm.rotation.clone():null,
-          spine:spine?spine.rotation.clone():null
-        };
         let mode='sleep',wakeStart=0;
         const setMode=(next)=>{
-          if(next==='wake' || (mode==='sleep'&&next==='idle')) wakeStart=performance.now();
+          if(next==='wake') wakeStart=clock.elapsedTime;
           mode=next;
         };
         commander3D={setMode};
@@ -292,46 +264,47 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
 
         const tick=()=>{
           requestAnimationFrame(tick);
-          const dt=Math.min(clock.getDelta(),.05), t=clock.elapsedTime;
-          mixer.update(dt);
-          const lerpBone=(bone,base,dx,dy,dz,amount=.08)=>{
-            if(!bone||!base) return;
-            bone.rotation.x+=(base.x+dx-bone.rotation.x)*amount;
-            bone.rotation.y+=(base.y+dy-bone.rotation.y)*amount;
-            bone.rotation.z+=(base.z+dz-bone.rotation.z)*amount;
-          };
+          const t=clock.elapsedTime;
           if(mode==='sleep'){
-            model.rotation.z=Math.sin(t*.55)*.018;
-            model.position.y=-1.76+Math.sin(t*1.15)*.025;
-            lerpBone(head,baseline.head,.34,0,0,.045);
-            lerpBone(rightArm,baseline.right,.10,0,-.08,.05);
-            lerpBone(leftArm,baseline.left,.10,0,.08,.05);
-            lerpBone(spine,baseline.spine,.05,0,0,.05);
+            commander.position.y=-1.05+Math.sin(t*1.05)*.025;
+            commander.rotation.z=Math.sin(t*.52)*.035;
+            commander.rotation.x=.14;
+            head.rotation.x=.20;
+            rightArm.rotation.z=.08+Math.sin(t*.9)*.03;
+            leftArm.rotation.z=-.08-Math.sin(t*.9)*.03;
+          }else if(mode==='wake'){
+            const p=Math.min(1,(t-wakeStart)/.8);
+            commander.rotation.x=.14*(1-p);
+            commander.rotation.z=Math.sin(p*Math.PI)*.08;
+            head.rotation.x=.20*(1-p)-Math.sin(p*Math.PI)*.18;
+            rightArm.rotation.z=.08*(1-p)+Math.sin(p*Math.PI)*-.58;
+            leftArm.rotation.z=-.08*(1-p)+Math.sin(p*Math.PI)*.58;
+            if(p>=1) mode='idle';
           }else if(mode==='talk'){
-            model.rotation.z=Math.sin(t*1.3)*.012;
-            model.position.y=-1.76+Math.sin(t*2.2)*.012;
-            lerpBone(head,baseline.head,Math.sin(t*2.7)*.035,Math.sin(t*1.9)*.025,0,.14);
-            lerpBone(rightArm,baseline.right,.22+Math.sin(t*3.0)*.16,0,-.30-Math.sin(t*2.1)*.18,.12);
-            lerpBone(leftArm,baseline.left,.12+Math.sin(t*2.1)*.09,0,.16+Math.sin(t*2.7)*.12,.12);
-            lerpBone(spine,baseline.spine,Math.sin(t*1.8)*.025,0,Math.sin(t*1.3)*.018,.1);
+            commander.position.y=-1.05+Math.sin(t*2.1)*.018;
+            commander.rotation.z=Math.sin(t*1.3)*.012;
+            commander.rotation.x=0;
+            head.rotation.x=Math.sin(t*2.6)*.045;
+            head.rotation.y=Math.sin(t*1.55)*.08;
+            rightArm.rotation.z=-.18+Math.sin(t*2.8)*.24;
+            leftArm.rotation.z=.14+Math.sin(t*2.15)*.17;
           }else{
-            const wakeElapsed=wakeStart?(performance.now()-wakeStart)/1000:99;
-            const kick=wakeElapsed<.8?Math.sin(Math.min(1,wakeElapsed/.8)*Math.PI)*.22:0;
-            model.rotation.z=Math.sin(t*.72)*.01;
-            model.position.y=-1.76+Math.sin(t*1.25)*.015;
-            lerpBone(head,baseline.head,-kick*.9,0,0,.09);
-            lerpBone(rightArm,baseline.right,kick*.9,0,-kick*.7,.1);
-            lerpBone(leftArm,baseline.left,kick*.75,0,kick*.55,.1);
-            lerpBone(spine,baseline.spine,-kick*.15,0,0,.08);
-            if(wakeElapsed>=.8 && mode==='wake') mode='idle';
+            commander.position.y=-1.05+Math.sin(t*1.2)*.012;
+            commander.rotation.z=Math.sin(t*.7)*.012;
+            commander.rotation.x=0;
+            head.rotation.x=Math.sin(t*1.4)*.025;
+            head.rotation.y=Math.sin(t*.85)*.035;
+            rightArm.rotation.z=-.12+Math.sin(t*1.15)*.05;
+            leftArm.rotation.z=.12-Math.sin(t*1.15)*.05;
           }
+          ring1.rotation.z=t*.55;
+          ring2.rotation.z=-t*.8;
           renderer.render(scene,camera);
         };
         tick();
       }catch(err){
-        // Keep the animated CSS fallback if the remote model or WebGL cannot load.
         root.dataset.commander='3d-failed';
-        console.warn('AgWorld 3D Strategic Commander failed to load; static fallback remains active.',err);
+        console.warn('AgWorld procedural 3D Strategic Commander failed to initialize.',err);
       }
     };
     initCommander3D();
