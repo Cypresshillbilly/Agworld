@@ -143,10 +143,10 @@
     return String(p.display_name||'NICO VAN ROOYEN').trim().toUpperCase();
   }
 
-  /* Remove the stray duplicate identity HUD only. The canonical player card in
-     My Missions and the normal sidebar/profile surfaces are explicitly kept. */
+  /* Remove the duplicate Nico identity HUD from the map layer. The landing
+     screen already has the canonical player profile, so there must never be a
+     second Nico/player card floating over the map or the Enter AgWorld control. */
   function purgeDuplicatePlayerOverlay(){
-    const name=playerName();
     const keepRoots=[
       document.getElementById('agPlayerMissionProfile'),
       document.querySelector('.missions'),
@@ -154,15 +154,45 @@
       document.querySelector('.bottom.user-profile-section')
     ].filter(Boolean);
 
+    const isKept=el=>keepRoots.some(root=>root===el||root.contains(el));
+    const isDuplicateName=el=>/\bNICO\s+VAN\s+ROOYEN\b/i.test((el.textContent||'').replace(/\s+/g,' ').trim());
+
+    const roots=new Set();
     [...document.querySelectorAll('body *')].forEach(el=>{
-      if(!el || el.id==='agPlayerMissionProfile') return;
-      if(keepRoots.some(root=>root.contains(el))) return;
-      const txt=(el.textContent||'').trim().replace(/\s+/g,' ').toUpperCase();
-      if(txt!==name) return;
-      const mapClone=el.closest('.ag-leader,.ag-player-hud,.player-hud,.game-player-card,.hud-player-card,[data-agworld-player-overlay]') ||
-        el.parentElement?.closest('.ag-leader,.ag-player-hud,.player-hud,.game-player-card,.hud-player-card,[data-agworld-player-overlay]');
-      const positioned=mapClone || (()=>{let n=el.parentElement;while(n&&n!==document.body){const cs=getComputedStyle(n);if((cs.position==='absolute'||cs.position==='fixed')&&!keepRoots.some(root=>root.contains(n))) return n;n=n.parentElement;}return null;})();
-      if(positioned && !positioned.matches('#entityInformationSection,#territoryStatsDrawer,.map-header')) positioned.remove();
+      if(!el || isKept(el) || !isDuplicateName(el)) return;
+
+      /* Ignore large container nodes that merely contain a duplicate further
+         down; start from the smallest matching node and climb only to the
+         floating HUD/card root. */
+      if([...el.children].some(child=>isDuplicateName(child))) return;
+
+      let n=el;
+      let fallback=el;
+      while(n && n!==document.body){
+        if(isKept(n)) return;
+        if(n.matches?.('#entityInformationSection,#territoryStatsDrawer,.map-header')) break;
+
+        const cs=getComputedStyle(n);
+        const floating=cs.position==='absolute'||cs.position==='fixed'||cs.position==='sticky';
+        const cardLike=/(^|[-_\s])(leader|player|profile|hud|card|overlay)([-_\s]|$)/i.test((n.id||'')+' '+(n.className||''));
+        if(floating || cardLike) fallback=n;
+
+        if(n.parentElement?.classList?.contains('map-area')){
+          roots.add(floating||cardLike?n:fallback);
+          return;
+        }
+        n=n.parentElement;
+      }
+
+      /* If the duplicate is injected directly into the map without a useful
+         class name, remove its nearest element inside the live map rather than
+         allowing it to cover the Enter AgWorld button. */
+      if(el.closest('.map-area')) roots.add(fallback);
+    });
+
+    roots.forEach(root=>{
+      if(!root || isKept(root)) return;
+      try{root.remove();}catch(e){}
     });
   }
 
