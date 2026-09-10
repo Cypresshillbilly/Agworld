@@ -216,7 +216,9 @@
        */
       // Widen the floating Command Center symmetrically while preserving a
       // deliberate map margin on both sides. Vertical placement is unchanged.
-      const commandW=Math.min(Math.round(mapW*.76),Math.round(640*canonicalScale));
+      // Use substantially more of the available map width while preserving
+      // symmetric edge clearance on both sides.
+      const commandW=Math.min(Math.round(mapW*.86),Math.round(720*canonicalScale));
       const commandH=Math.max(Math.round(160*canonicalScale),Math.round(shellH*.19));
       const commandBottom=Math.max(18,Math.round(shellH*.024));
       const commandTop=Math.max(0,shellH-commandH-commandBottom);
