@@ -32,7 +32,7 @@ const css=`
 #agAdvisorBay .ag-advisor-label{position:relative!important;z-index:2!important}
 
 /* Sales-only Strategic Commander. It is created only while Sales is active. */
-#agStrategicCommanderPanel{position:relative!important;margin:0!important;min-height:0!important;height:100%!important;box-sizing:border-box!important;padding:14px!important;border-radius:14px!important;background:linear-gradient(145deg,#173c45 0%,#102b36 65%,#0a2029 100%)!important;border:1px solid rgba(153,205,185,.28)!important;box-shadow:0 10px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;color:#edf7f2!important;overflow:auto!important}
+#entityInformationSection.ag-sales-commander-active>:not(#agStrategicCommanderPanel){display:none!important}#agStrategicCommanderPanel{position:relative!important;margin:0!important;min-height:0!important;height:100%!important;box-sizing:border-box!important;padding:14px!important;border-radius:14px!important;background:linear-gradient(145deg,#173c45 0%,#102b36 65%,#0a2029 100%)!important;border:1px solid rgba(153,205,185,.28)!important;box-shadow:0 10px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.07)!important;color:#edf7f2!important;overflow:auto!important}
 #agStrategicCommanderPanel .agsc-kicker{color:#c2e95d!important;font:900 8px/1 Arial,sans-serif!important;letter-spacing:1.2px!important}
 #agStrategicCommanderPanel h2{margin:6px 0 4px!important;color:#fff!important;font:900 22px/1.1 Arial,sans-serif!important}
 #agStrategicCommanderPanel p{margin:0 0 12px!important;color:#b9ccc5!important;font:700 10px/1.45 Arial,sans-serif!important}
@@ -49,6 +49,7 @@ function install(){
 }
 
 function playerData(){
+ host.classList?.add('ag-sales-commander-active');
  const p=window.AGWorldPlayer||{};
  const get=(...keys)=>keys.map(k=>p[k]??sessionStorage.getItem('gamechanger.'+k)??localStorage.getItem('gamechanger.'+k)).find(v=>v!==null&&v!==undefined&&String(v).trim()!=='');
  const name=String(get('display_name','name','username')||'PLAYER').trim().toUpperCase();
@@ -109,7 +110,10 @@ function installPortraits(){
 }
 
 function removeStrategicCommander(){
- document.getElementById('agStrategicCommanderPanel')?.remove();
+ const panel=document.getElementById('agStrategicCommanderPanel');
+ const host=panel?.parentElement||document.getElementById('entityInformationSection');
+ panel?.remove();
+ host?.classList?.remove('ag-sales-commander-active');
  document.body.dataset.agStrategicCommander='off';
 }
 
@@ -121,7 +125,7 @@ function showStrategicCommander(){
    panel=document.createElement('section');
    panel.id='agStrategicCommanderPanel';
    panel.setAttribute('aria-label','Strategic Commander');
-   host.replaceChildren(panel);
+   host.appendChild(panel);
  }
  const p=window.AGWorldPlayer||{};
  const company=String(p.company_name||p.company||'YOUR SALES COMMAND').toUpperCase();
