@@ -852,10 +852,42 @@ function progressionMissionData(){
 }
 
 function ensureLandingMissionCard(){
- // Mission rendering is now owned exclusively by agworld-canonical-mission-card-v1.js.
- // This legacy constructor is intentionally a read-only compatibility hook so
- // no previous Mission Card can be recreated by this file.
- return document.querySelector('#agCanonicalMissionCard')||null;
+ const missions=document.querySelector('.missions');if(!missions)return null;
+ let card=missions.querySelector('#agLandingMissionCard');
+ const data=progressionMissionData();
+
+ if(!card){
+   card=document.createElement('section');
+   card.id='agLandingMissionCard';
+   card.className='mission ag-landing-mission';
+   card.setAttribute('aria-label','Current or next mission');
+ }
+ if(data){
+   const {chapter,mission}=data;
+   card.dataset.chapterMission=String(mission.id||'');
+   card.dataset.status='current';
+   card.innerHTML=
+     '<div class="tag">CHAPTER '+String(chapter.id)+' · '+String(mission.type||'MISSION')+'</div>'+
+     '<strong>'+String(mission.title||'Current Mission')+'</strong>'+
+     '<p>'+String(mission.objective||'Continue your current assignment.')+'</p>'+
+     '<div class="reward">+'+Number(mission.xp||0).toLocaleString()+' XP</div>'+
+     '<button type="button" data-landing-mission-start="'+String(mission.id||'')+'">START MISSION</button>';
+   const button=card.querySelector('[data-landing-mission-start]');
+   if(button&&!button.dataset.agLandingBound){
+     button.dataset.agLandingBound='1';
+     button.addEventListener('click',()=>window.AGWorldProgression?.completeMission?.(button.dataset.landingMissionStart));
+   }
+ }else{
+   card.dataset.status='loading';
+   card.innerHTML='<div class="tag">MISSION COMMAND</div><strong>Mission briefing loading…</strong><p>Preparing your current assignment.</p>';
+ }
+ card.classList.add('ag-landing-mission');
+ card.removeAttribute('aria-hidden');
+ if(card.parentElement!==missions)missions.appendChild(card);
+ const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+ if(skill)skill.insertAdjacentElement('afterend',card);
+ else if(card.previousElementSibling!==missions.querySelector('#agPlayerMissionProfile'))missions.querySelector('#agPlayerMissionProfile')?.insertAdjacentElement('afterend',card);
+ return card;
 }
 function missionCardCandidates(root){
  if(!root)return [];
