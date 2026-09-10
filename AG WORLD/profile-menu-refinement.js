@@ -539,11 +539,6 @@ html body.ag-game-mode .missions #agMissionSkillProfile,
 html body.ag-game-mode .missions .ag-mission-skill-profile{
   position:relative!important;z-index:65!important;
 }
-html body.ag-profile-mode .missions #agLandingMissionCard,
-html body.ag-game-mode .missions #agLandingMissionCard{
-  display:block!important;visibility:visible!important;opacity:1!important;
-  position:relative!important;z-index:60!important;
-}
 
 /* Player profile: increase usable type hierarchy and contrast. */
 html body.ag-profile-mode .missions .ag-player-kicker,
@@ -1151,8 +1146,8 @@ function start(){
  ensureMissionsDrawer();
  syncAdvisorBayGeometry();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
- window.addEventListener('agworld:player-ready',()=>{ensureMissionsPlayerProfile();ensureLandingMissionCard();ensureAdvisorBay();});
- window.addEventListener('agworld:mission-completed',()=>{ensureMissionsPlayerProfile();ensureLandingMissionCard();ensureAdvisorBay();});
+ window.addEventListener('agworld:player-ready',()=>{ensureMissionsPlayerProfile();ensureAdvisorBay();});
+ window.addEventListener('agworld:mission-completed',()=>{ensureMissionsPlayerProfile();ensureAdvisorBay();});
 
  // Keep the late-module protection, but never continuously rebuild the page.
  // A subtree observer plus unconditional DOM writes caused a self-triggering
@@ -1172,12 +1167,11 @@ function start(){
    const hasAdvisor=!!document.querySelector('#agAdvisorBay');
    const missions=document.querySelector('.missions');
    const missionCards=missionCardCandidates(missions);
-   const hasLandingMission=!!missions?.querySelector('#agLandingMissionCard.ag-landing-mission');
    const skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
    const correctProfileOrder=!skill||!!(document.querySelector('#agPlayerMissionProfile')?.compareDocumentPosition(skill)&Node.DOCUMENT_POSITION_FOLLOWING);
    // Do not short-circuit while late mission data is arriving or while another
    // module has put Skill Profile above Player Profile.
-   if(hasBrand&&hasMission&&hasAdvisor&&correctProfileOrder&&(!missionCards.length||hasLandingMission)){
+   if(hasBrand&&hasMission&&hasAdvisor&&correctProfileOrder){
     syncAdvisorBayGeometry();
     return;
    }
