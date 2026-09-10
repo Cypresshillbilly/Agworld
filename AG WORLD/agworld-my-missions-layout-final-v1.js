@@ -46,7 +46,7 @@ body .missions{
   top:var(--ag-mm-stack-top)!important;height:var(--ag-mm-stack-height)!important;
   margin:0!important;padding:0!important;
   display:grid!important;grid-template-columns:minmax(0,1fr)!important;
-  grid-template-rows:var(--ag-mm-player-h) var(--ag-mm-skill-h) minmax(0,1fr)!important;
+  grid-template-rows:var(--ag-mm-player-h) var(--ag-mm-skill-h) max-content!important;
   row-gap:var(--ag-mm-gap)!important;align-content:start!important;
   box-sizing:border-box!important;overflow:hidden!important;isolation:isolate!important;z-index:1!important;
 }
@@ -69,10 +69,10 @@ body .missions{
 .missions>#${STACK_ID}>#${CARD_ID}{
   grid-row:3!important;grid-column:1!important;
   width:100%!important;max-width:none!important;
-  height:auto!important;min-height:0!important;max-height:calc(100% - (var(--ag-mm-boundary) * 2))!important;
+  height:fit-content!important;min-height:0!important;max-height:none!important;
   margin:0!important;box-sizing:border-box!important;
-  align-self:center!important;justify-self:stretch!important;
-  display:flex!important;flex-direction:column!important;flex:0 1 auto!important;
+  align-self:start!important;justify-self:stretch!important;
+  display:flex!important;flex-direction:column!important;flex:none!important;
   padding:8px 12px 6px!important;gap:5px!important;
   overflow:hidden!important;
   border-radius:10px!important;
@@ -318,12 +318,15 @@ function layout(){
   ];
   vars.forEach(([k,v])=>p.missions.style.setProperty(k,px(v)+'px'));
 
-  // Reduce the card from the bottom by keeping its geometry intrinsic and
-  // compact. The mission bay itself owns the enforced boundaries above/below.
-  card.style.setProperty('height','auto','important');
+  // The Mission Card is content-sized. The grid no longer gives the card a
+  // flexible 1fr row, so no empty area can become part of the card below the
+  // START MISSION button. Any remaining space belongs to the mission bay,
+  // outside the card, before the protected Advisory boundary.
+  card.style.setProperty('height','fit-content','important');
   card.style.setProperty('min-height','0','important');
-  card.style.setProperty('max-height','calc(100% - (var(--ag-mm-boundary) * 2))','important');
-  card.style.setProperty('align-self','center','important');
+  card.style.setProperty('max-height','none','important');
+  card.style.setProperty('align-self','start','important');
+  card.style.setProperty('flex','none','important');
 
   // Fail-safe visibility lock: later legacy styles are not allowed to hide V2.
   card.style.setProperty('display','flex','important');
