@@ -135,10 +135,118 @@
   }
 
   function lockGeometry(){
-    // Player Profile owns its own map/overlay geometry. Full Game layout must
-    // never reserve a bottom strip or overwrite the profile Command Center.
+    // PLAYER PROFILE — rebuilt directly from the stable geometry model.
+    // No fixed shell, no independent absolute map script, and no second layout owner.
+    // The only changes from the stable state are:
+    //   1) map continues behind the Command Center to the bottom;
+    //   2) Command Center floats over that map;
+    //   3) Territory Stats stays on the far right above the Command Center.
     if(document.body.classList.contains('ag-profile-mode')){
-      window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={mode:'profile',owner:'agworld-player-profile-floating-map-v1'};
+      const shell=document.querySelector('.app-shell');
+      const sidebar=document.querySelector('.sidebar');
+      const missions=document.querySelector('.missions');
+      const mapArea=document.querySelector('.map-area');
+      const territory=$('territorySection');
+      const entity=$('entityInformationSection');
+      const territoryDrawer=$('territoryStatsDrawer');
+      if(!shell||!mapArea||!entity) return;
+
+      const shellH=shell.clientHeight||820;
+      const shellW=shell.clientWidth||1280;
+      const sidebarW=Math.round(shellW*(215/1280));
+      const missionsW=Math.round(shellW*(250/1280));
+      const leftStage=sidebarW+missionsW;
+      const mapW=shellW-leftStage;
+      const stableCommandH=Math.round(shellH*(210/820));
+      const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
+      const frame=(el,left,top,width,height)=>{
+        if(!el) return;
+        important(el,'position','absolute');
+        important(el,'left',left+'px');
+        important(el,'top',top+'px');
+        important(el,'width',width+'px');
+        important(el,'height',height+'px');
+        important(el,'right','auto');
+        important(el,'bottom','auto');
+        important(el,'box-sizing','border-box');
+      };
+
+      // Preserve the stable full-height sidebar and My Missions geometry.
+      frame(sidebar,0,0,sidebarW,shellH);
+      frame(missions,sidebarW,0,missionsW,shellH);
+
+      // Stable map geometry, extended only downward behind the floating card.
+      frame(mapArea,leftStage,0,mapW,shellH);
+      important(mapArea,'overflow','hidden');
+      important(mapArea,'z-index','1');
+
+      if(territory) important(territory,'display','none');
+
+      // Floating Command Center: same stable visual asset, simply removed from
+      // the bottom strip and centered over the lower ocean portion of the map.
+      const commandW=Math.min(Math.round(mapW*.68),Math.max(520,Math.round(mapW*.58)));
+      const commandH=Math.min(stableCommandH,Math.max(145,Math.round(shellH*.18)));
+      const commandLeft=leftStage+Math.round((mapW-commandW)/2);
+      const commandBottom=Math.max(18,Math.round(shellH*.025));
+      const commandTop=shellH-commandH-commandBottom;
+      frame(entity,commandLeft,commandTop,commandW,commandH);
+      important(entity,'z-index','1800');
+      important(entity,'overflow','hidden');
+
+      const entityCard=$('farmCard');
+      if(entityCard){
+        important(entityCard,'position','absolute');
+        important(entityCard,'left','0');
+        important(entityCard,'top','34px');
+        important(entityCard,'right','0');
+        important(entityCard,'bottom','0');
+        important(entityCard,'width','100%');
+        important(entityCard,'height','calc(100% - 34px)');
+        important(entityCard,'min-height','calc(100% - 34px)');
+        important(entityCard,'max-width','none');
+        important(entityCard,'max-height','none');
+        important(entityCard,'margin','0');
+        important(entityCard,'box-sizing','border-box');
+        important(entityCard,'z-index','2');
+      }
+      ensureEntityCommandHeading(entity);
+
+      // Territory Stats remains a right-edge drawer and is explicitly capped
+      // above the Command Center. It can never pass behind the floating card.
+      if(territoryDrawer){
+        const gap=Math.max(16,Math.round(shellH*.02));
+        const topInset=74;
+        const maxBottom=Math.max(topInset+220,commandTop-gap);
+        const drawerH=Math.max(220,Math.min(Math.round(shellH*.50),maxBottom-topInset));
+        important(territoryDrawer,'position','absolute');
+        important(territoryDrawer,'left','auto');
+        important(territoryDrawer,'right','0');
+        important(territoryDrawer,'top',topInset+'px');
+        important(territoryDrawer,'bottom','auto');
+        important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round(mapW*.235)))+'px');
+        important(territoryDrawer,'height',drawerH+'px');
+        important(territoryDrawer,'max-height',drawerH+'px');
+        important(territoryDrawer,'transform','none');
+        important(territoryDrawer,'z-index','2300');
+      }
+
+      const oldProfile=document.querySelector('.bottom.user-profile-section');
+      if(oldProfile){
+        important(oldProfile,'display','none');
+        important(oldProfile,'visibility','hidden');
+        important(oldProfile,'pointer-events','none');
+      }
+      if(entity.parentElement!==shell) shell.appendChild(entity);
+
+      window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={
+        mode:'profile',
+        owner:'main-game-layout-v1-profile-stable-floating',
+        shellW,shellH,leftStage,mapW,
+        map:'full-height-behind-command-center',
+        commandCenter:'floating-over-lower-map',
+        territoryStats:'right-side-above-command-center',
+        gap
+      };
       return;
     }
 
