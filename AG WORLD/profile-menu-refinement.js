@@ -189,11 +189,17 @@ function menuKey(el){
 function ensureTerritoryCampaignMenuItem(nav){
  if(!nav)return null;
  let campaign=document.getElementById('agCampaignCommandButton');
- // Chapter 3 may load after this refinement. Retry via the health check until
- // the real functional button exists, then move that same element.
- if(!campaign)return null;
- // Re-home the existing functional button rather than cloning it, preserving its
- // campaign click handler and all Chapter 3 behaviour.
+ // If Chapter 3 loads after the menu, create a safe menu bridge now and bind it
+ // to the real campaign system as soon as that system becomes available.
+ if(!campaign){
+   campaign=document.createElement('button');
+   campaign.id='agCampaignCommandButton';
+   campaign.type='button';
+   campaign.textContent='Territory Campaigns';
+   campaign.onclick=()=>window.AGWorldCampaign?.open?.();
+ }
+ // Re-home the existing functional button rather than cloning it. If the
+ // Chapter 3 script replaces or upgrades it, its own click handler is retained.
  campaign.style.position='static';
  campaign.style.right='auto';
  campaign.style.bottom='auto';
@@ -239,14 +245,17 @@ function removeMapPlayerProfile(){
 }
 function removeExplicitlyObsoleteSidebarItems(nav){
  const s=document.querySelector('.sidebar');if(!s)return;
- const obsolete=/^(company commands?|company controls?|developer mode)$/i;
- // Some legacy versions render these as section headings outside .nav, so scan
- // the entire sidebar and remove the smallest exact-label container.
- Array.from(s.querySelectorAll('*')).forEach(el=>{
+ const obsolete=/(^|\b)(company commands?|company controls?)(\b|$)|(^|\b)developer mode(\b|$)/i;
+ // Legacy entries can include icons or wrappers, so identify the smallest
+ // matching element rather than relying on an exact plain-text match.
+ const matches=Array.from(s.querySelectorAll('button,a,[role="button"],.nav-item,.menu-item,.nav-link,li,div,span')).filter(el=>{
    const label=(el.textContent||'').replace(/\s+/g,' ').trim();
-   if(!obsolete.test(label))return;
-   if(el.querySelector('button,a,[role="button"],.nav-item,.menu-item,.nav-link')) el.remove();
-   else el.remove();
+   if(!obsolete.test(label))return false;
+   return !Array.from(el.children).some(child=>obsolete.test((child.textContent||'').replace(/\s+/g,' ').trim()));
+ });
+ matches.forEach(el=>{
+   const clickable=el.closest('button,a,[role="button"],.nav-item,.menu-item,.nav-link,li');
+   (clickable||el).remove();
  });
 }
 function forceMapProfileRemoval(){
