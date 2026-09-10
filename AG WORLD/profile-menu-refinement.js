@@ -339,14 +339,24 @@ html body.ag-profile-mode .ag-advisor.is-active .ag-advisor-label{color:#d9f276!
 /* === PLAYER LANDING CONTRACT v2 ===
    One current/next mission stays visible. The Advisor Bay occupies the lower
    mission surface aligned with the Command Center rather than replacing missions. */
-html body.ag-profile-mode .missions .mission{
+html body.ag-profile-mode .missions .mission,
+html body.ag-profile-mode .missions .mission-card,
+html body.ag-profile-mode .missions .mission-item,
+html body.ag-profile-mode .missions [data-mission],
+html body.ag-profile-mode .missions [data-mission-id]{
   display:none!important;
 }
-html body.ag-profile-mode .missions .mission.ag-landing-mission{
+html body.ag-profile-mode .missions .mission.ag-landing-mission,
+html body.ag-profile-mode .missions .mission-card.ag-landing-mission,
+html body.ag-profile-mode .missions .mission-item.ag-landing-mission,
+html body.ag-profile-mode .missions [data-mission].ag-landing-mission,
+html body.ag-profile-mode .missions [data-mission-id].ag-landing-mission{
   display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
   margin:10px 10px 9px!important;
   position:relative!important;
-  z-index:5!important;
+  z-index:55!important;
 }
 html body.ag-profile-mode .missions{
   position:relative!important;
@@ -437,21 +447,31 @@ function ensureMissionsPlayerProfile(){
    card.setAttribute('aria-label','Player profile');
  }
  card.innerHTML=playerCardHTML(playerData());
- const eyebrow=missions.querySelector('.eyebrow');
- const heading=missions.querySelector('h1,.missions-title,.mission-title');
  const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
- // Player identity is the first information card on the landing page.
- // The Skill Profile must follow it, never precede it.
- const anchor=eyebrow||heading||skill||missions.firstElementChild;
- if(anchor && anchor!==card && card.nextElementSibling!==anchor)anchor.insertAdjacentElement('beforebegin',card);
- else if(!anchor && missions.firstElementChild!==card)missions.prepend(card);
- if(skill && card.nextElementSibling!==skill)card.insertAdjacentElement('afterend',skill);
+
+ // HARD ORDERING CONTRACT:
+ // 1) Player Profile, 2) Skill Profile, 3) mission content.
+ // Move the existing node rather than styling around the wrong DOM order.
+ if(skill){
+   missions.insertBefore(card,skill);
+ }else{
+   const firstContent=Array.from(missions.children).find(el=>
+     el!==card&&!el.classList.contains('ag-missions-drawer-handle')&&el.id!=='agAdvisorBay'
+   );
+   if(firstContent)missions.insertBefore(card,firstContent);
+   else if(card.parentElement!==missions)missions.appendChild(card);
+ }
  return card;
 }
 
+function missionCardCandidates(root){
+ if(!root)return [];
+ return Array.from(root.querySelectorAll('.mission,.mission-card,.mission-item,[data-mission],[data-mission-id]'))
+   .filter(m=>!m.closest('#agAdvisorBay')&&!m.closest('#agMissionHub')&&m.id!=='agPlayerMissionProfile'&&!m.matches('#agMissionSkillProfile,.ag-mission-skill-profile'));
+}
 function ensureAdvisorBay(){
  const missions=document.querySelector('.missions');if(!missions)return null;
- const cards=Array.from(missions.querySelectorAll('.mission'));
+ const cards=missionCardCandidates(missions);
  // Landing page: exactly one mission is visible — current if active, otherwise next available.
  let landing=cards.find(m=>/current|active|in progress/i.test((m.dataset.status||'')+' '+(m.textContent||'')))||cards[0]||null;
  cards.forEach(m=>{
@@ -535,7 +555,7 @@ function ensureMissionHub(){
 function openMissionHub(){
  const hub=ensureMissionHub();
  const missions=document.querySelector('.missions');
- const cards=Array.from(missions?.querySelectorAll('.mission')||[]);
+ const cards=missionCardCandidates(missions);
  const active=cards.find(m=>/current|active|in progress/i.test((m.dataset.status||'')+' '+(m.textContent||'')))||cards[0]||null;
  const completed=cards.filter(m=>m!==active&&/complete|completed|history/i.test((m.dataset.status||'')+' '+(m.textContent||'')));
  const upcoming=cards.filter(m=>m!==active&&!completed.includes(m));
@@ -815,11 +835,14 @@ function start(){
    const hasBrand=!!sidebar.querySelector('.brand .brand-logo');
    const hasMission=!!document.querySelector('.missions #agPlayerMissionProfile');
    const hasAdvisor=!!document.querySelector('#agAdvisorBay');
-   const missionCards=Array.from(document.querySelectorAll('.missions .mission'));
-   const hasLandingMission=!!document.querySelector('.missions .mission.ag-landing-mission');
-   // Mission data can arrive after the Advisor Bay. In that case the Bay already
-   // exists, but we still must run the landing-card selection once the cards appear.
-   if(hasBrand&&hasMission&&hasAdvisor&&(!missionCards.length||hasLandingMission)){
+   const missions=document.querySelector('.missions');
+   const missionCards=missionCardCandidates(missions);
+   const hasLandingMission=!!missions?.querySelector('.ag-landing-mission');
+   const skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+   const correctProfileOrder=!skill||!!(document.querySelector('#agPlayerMissionProfile')?.compareDocumentPosition(skill)&Node.DOCUMENT_POSITION_FOLLOWING);
+   // Do not short-circuit while late mission data is arriving or while another
+   // module has put Skill Profile above Player Profile.
+   if(hasBrand&&hasMission&&hasAdvisor&&correctProfileOrder&&(!missionCards.length||hasLandingMission)){
     syncAdvisorBayGeometry();
     return;
    }
