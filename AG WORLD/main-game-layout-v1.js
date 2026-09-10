@@ -218,7 +218,16 @@
     window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={shellW,shellH,topH,bottomH,sidebarW,missionsW,leftStage,territoryDrawer:true};
   }
 
+  function purgeLegacySurfaces(){
+    // These belonged to superseded dashboard layers and must never sit above
+    // the canonical Sales Game shell.
+    ['agControlDashboardButton','agCompanyCommandButton','agControlDashboard','agCompanyCommand']
+      .forEach(id=>document.getElementById(id)?.remove());
+    document.querySelectorAll('.ag-db-box,.ag-cc-box').forEach(el=>el.closest('#agControlDashboard,#agCompanyCommand')?.remove());
+  }
+
   function run(){
+    purgeLegacySurfaces();
     moveCorePanels();
     moveProgress();
     moveBadges();
