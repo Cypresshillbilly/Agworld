@@ -111,8 +111,8 @@ body.ag-profile-mode .map-area .ag-world-map-logo,.app-shell .map-area .ag-world
 body.ag-profile-mode .bottom{height:23%!important}
 
 @media(min-width:1500px){
-  body.ag-profile-mode .app-shell,.app-shell{grid-template-columns:174px 158px minmax(0,1fr)!important}
-  body.ag-profile-mode .sidebar,.app-shell .sidebar{width:174px!important;min-width:174px!important}
+  body.ag-profile-mode .app-shell{grid-template-columns:210px 158px minmax(0,1fr)!important}.app-shell{grid-template-columns:210px 158px minmax(0,1fr)!important}
+  body.ag-profile-mode .sidebar,.app-shell .sidebar{width:210px!important;min-width:210px!important}
   body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{height:118px!important;min-height:118px!important;flex-basis:118px!important}
   body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{height:110px!important}
   body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{height:24px!important;min-height:24px!important;flex-basis:24px!important;font-size:8.4px!important}
@@ -252,8 +252,84 @@ html body.ag-profile-mode .sidebar .brand,html body.ag-game-mode .sidebar .brand
   padding:7px 9px 8px!important;background:radial-gradient(circle at 50% 18%,rgba(189,233,80,.10),transparent 46%)!important;
 }
 html body.ag-profile-mode .sidebar .brand .brand-logo,html body.ag-game-mode .sidebar .brand .brand-logo,html body.ag-premium-mode .sidebar .brand .brand-logo{
-  object-fit:contain!important;object-position:center center!important;transform:scale(.94)!important;
+  object-fit:contain!important;object-position:center center!important;transform:scale(1.48)!important;
 }
+
+/* === AGWORLD ADVISOR BAY ===
+   Replaces future locked mission cards. Five character portals live here and
+   activate the shared map guide. */
+html body.ag-profile-mode .missions #agAdvisorBay{
+  position:relative!important;
+  display:flex!important;flex-direction:column!important;
+  margin:10px 10px 12px!important;padding:12px!important;
+  min-height:132px!important;
+  border-radius:14px!important;
+  background:linear-gradient(145deg,#173c45,#102b36 64%,#0b2028)!important;
+  border:1px solid rgba(100,178,113,.46)!important;
+  box-shadow:0 12px 28px rgba(14,42,49,.18),inset 0 1px 0 rgba(255,255,255,.09),inset 0 0 0 1px rgba(176,210,198,.06)!important;
+  overflow:hidden!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay:before{
+  content:""!important;position:absolute!important;inset:0!important;
+  background:radial-gradient(circle at 18% 0,rgba(194,233,93,.10),transparent 38%),linear-gradient(90deg,transparent,rgba(29,125,130,.06),transparent)!important;
+  pointer-events:none!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head{
+  position:relative!important;display:flex!important;align-items:center!important;justify-content:space-between!important;
+  margin-bottom:9px!important;z-index:1!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head strong{color:#f7fbf8!important;font:900 9px/1 Arial,sans-serif!important;letter-spacing:1.05px!important}
+html body.ag-profile-mode .ag-advisor-bay-head span{color:#a9cbc1!important;font:800 5.8px/1 Arial,sans-serif!important;letter-spacing:.7px!important}
+html body.ag-profile-mode .ag-advisor-grid{
+  position:relative!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:6px!important;z-index:1!important;
+}
+html body.ag-profile-mode .ag-advisor{
+  position:relative!important;min-width:0!important;height:78px!important;padding:5px 2px 4px!important;
+  border-radius:11px!important;border:1px solid rgba(176,210,198,.18)!important;
+  background:linear-gradient(155deg,rgba(255,255,255,.075),rgba(4,20,26,.32))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 7px 14px rgba(2,15,20,.18)!important;
+  color:#eff7f3!important;cursor:pointer!important;overflow:hidden!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end!important;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease!important;
+}
+html body.ag-profile-mode .ag-advisor:hover,html body.ag-profile-mode .ag-advisor.is-active{
+  transform:translateY(-3px)!important;border-color:rgba(194,233,93,.72)!important;
+  box-shadow:0 10px 20px rgba(4,18,23,.32),0 0 0 1px rgba(194,233,93,.14),inset 0 1px 0 rgba(255,255,255,.12)!important;
+}
+html body.ag-profile-mode .ag-advisor-icon{
+  position:absolute!important;left:50%!important;top:5px!important;transform:translateX(-50%)!important;
+  width:38px!important;height:46px!important;filter:drop-shadow(0 5px 6px rgba(0,0,0,.32))!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .head{
+  position:absolute!important;left:50%!important;top:1px!important;transform:translateX(-50%)!important;
+  width:16px!important;height:17px!important;border-radius:48% 48% 45% 45%!important;
+  background:linear-gradient(145deg,#d6a47f,#8c573f)!important;border:1px solid rgba(255,255,255,.15)!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .hair{
+  position:absolute!important;left:50%!important;top:0!important;transform:translateX(-50%)!important;
+  width:18px!important;height:7px!important;border-radius:12px 12px 4px 4px!important;background:#111c1b!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .body{
+  position:absolute!important;left:50%!important;bottom:0!important;transform:translateX(-50%)!important;
+  width:34px!important;height:29px!important;border-radius:12px 12px 5px 5px!important;
+  background:linear-gradient(145deg,#275a45,#0b2b22)!important;border:1px solid rgba(194,233,93,.18)!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .mark{
+  position:absolute!important;left:50%!important;bottom:10px!important;transform:translateX(-50%)!important;
+  color:#d9f276!important;font:900 8px/1 Arial,sans-serif!important;text-shadow:0 1px 3px rgba(0,0,0,.7)!important;
+}
+html body.ag-profile-mode .ag-advisor[data-advisor="compliance"] .body{background:linear-gradient(145deg,#1d4b58,#102934)!important}
+html body.ag-profile-mode .ag-advisor[data-advisor="sales"] .body{background:linear-gradient(145deg,#41611f,#142916)!important}
+html body.ag-profile-mode .ag-advisor[data-advisor="product"] .body{background:linear-gradient(145deg,#285a70,#112d3a)!important}
+html body.ag-profile-mode .ag-advisor[data-advisor="operations"] .body{background:linear-gradient(145deg,#5c4d27,#292411)!important}
+html body.ag-profile-mode .ag-advisor[data-advisor="technical"] .body{background:linear-gradient(145deg,#4c3970,#21182f)!important}
+html body.ag-profile-mode .ag-advisor-label{
+  position:relative!important;z-index:2!important;max-width:100%!important;
+  color:#dbe9e4!important;font:900 5.7px/1.08 Arial,sans-serif!important;letter-spacing:.45px!important;
+  text-align:center!important;white-space:normal!important;
+}
+html body.ag-profile-mode .ag-advisor.is-active .ag-advisor-label{color:#d9f276!important}
 
 }
 `;
@@ -286,6 +362,45 @@ function ensureMissionsPlayerProfile(){
  return card;
 }
 
+function ensureAdvisorBay(){
+ const missions=document.querySelector('.missions');if(!missions)return null;
+ let bay=missions.querySelector('#agAdvisorBay');
+ if(!bay){
+   bay=document.createElement('section');
+   bay.id='agAdvisorBay';
+   bay.setAttribute('aria-label','AgWorld advisor bay');
+   bay.innerHTML='<div class="ag-advisor-bay-head"><strong>ADVISOR BAY</strong><span>SELECT A DISCIPLINE</span></div><div class="ag-advisor-grid">'+[
+     ['compliance','C','COMPLIANCE'],
+     ['sales','S','SALES'],
+     ['product','P','PRODUCT'],
+     ['operations','O','OPERATIONS'],
+     ['technical','T','TECHNICAL']
+   ].map(([id,mark,label])=>'<button type="button" class="ag-advisor" data-advisor="'+id+'" aria-label="Open '+label+' advisor"><span class="ag-advisor-icon" aria-hidden="true"><i class="head"></i><i class="hair"></i><i class="body"></i><b class="mark">'+mark+'</b></span><span class="ag-advisor-label">'+label+'</span></button>').join('')+'</div>';
+   const anchor=missions.querySelector('.mission')||missions.querySelector('.section-title');
+   if(anchor)anchor.insertAdjacentElement('beforebegin',bay);else missions.appendChild(bay);
+ }
+ // Future mission cards do not live on the player landing surface. Mission History owns them.
+ missions.querySelectorAll('.mission').forEach(m=>{m.style.display='none';m.setAttribute('aria-hidden','true');});
+ bay.querySelectorAll('.ag-advisor').forEach(btn=>{
+   if(btn.dataset.agAdvisorBound)return;
+   btn.dataset.agAdvisorBound='1';
+   btn.addEventListener('click',()=>{
+     const advisor=btn.dataset.advisor;
+     bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.toggle('is-active',x===btn));
+     window.AGWorldAdvisorState={id:advisor,label:btn.querySelector('.ag-advisor-label')?.textContent||advisor};
+     window.dispatchEvent(new CustomEvent('agworld:advisor-selected',{detail:window.AGWorldAdvisorState}));
+     // Sales is the current implemented commander personality. Other disciplines
+     // share the same guide location until their dedicated avatars are defined.
+     const reopen=document.querySelector('.ag-guide-reopen');
+     const holo=document.querySelector('.ag-guide-hologram');
+     const root=document.querySelector('.ag-system-guide');
+     if(reopen?.classList.contains('show'))reopen.click();
+     else if(root?.classList.contains('avatar-only')||root?.classList.contains('show'))holo?.click();
+     else holo?.click();
+   });
+ });
+ return bay;
+}
 function ensureMissionsDrawer(){
  const missions=document.querySelector('.missions');if(!missions)return;
  let handle=missions.querySelector('.ag-missions-drawer-handle');
@@ -500,6 +615,7 @@ function correctSidebar(){
  ensureTerritoryCampaignMenuItem(nav);
  normaliseSidebarMenu(nav);
  ensureMissionsPlayerProfile();
+ ensureAdvisorBay();
  // Measure after the card exists; a second animation-frame pass catches fonts
  // and responsive layout settling before the user sees the navigation.
  syncSidebarBrandHeader();
@@ -513,7 +629,7 @@ function refreshPlayerUI(){
  const d=playerData();card.innerHTML=playerCardHTML(d);
 }
 function start(){
- installStyles();correctSidebar();ensureMissionsDrawer();
+ installStyles();correctSidebar();ensureAdvisorBay();ensureMissionsDrawer();
  window.addEventListener('agworld:player-profile',refreshPlayerUI);
  const observer=new MutationObserver(()=>{
   installStyles();
@@ -526,7 +642,7 @@ function start(){
  observer.observe(document.body,{childList:true,subtree:true});
  // Defensive health check: later game modules are not allowed to remove the
  // mission player profile or its style rules after the layout has been normalised.
- setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureMissionsDrawer();refreshPlayerUI();},1200);
+ setInterval(()=>{installStyles();correctSidebar();ensureMissionsPlayerProfile();ensureAdvisorBay();ensureMissionsDrawer();refreshPlayerUI();},1200);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
