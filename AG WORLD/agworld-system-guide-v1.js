@@ -284,7 +284,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
           audio.src=audioSrc;
           window.AG_WORLD_GUIDE_AUDIO_SRC=audioSrc;
         }
-        showGuide();
+        openFullGuide();
       },
       sections:GUIDE_LIBRARY,
       current(){return currentSection;},
@@ -309,7 +309,8 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
                    document.body.classList.contains('ag-game-mode') ||
                    document.body.classList.contains('ag-full-game-mode');
       const guide=window.AG_WORLD_GUIDE;
-      if(active && guide && !reopen.classList.contains('show')) guide.showAvatar();
+      const reopen=document.querySelector('.ag-guide-reopen');
+      if(active && guide && !(reopen&&reopen.classList.contains('show'))) guide.showAvatar();
       else if(!active) root.classList.remove('show','avatar-only');
     };
 
