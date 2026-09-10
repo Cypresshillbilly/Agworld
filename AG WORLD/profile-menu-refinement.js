@@ -77,15 +77,18 @@ body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-xp-fill,.ap
 body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-xp-text,.app-shell .missions .ag-player-mission-profile .ag-player-xp-text{
   display:flex!important;justify-content:space-between!important;gap:6px!important;color:#b8c6cb!important;font:800 7.2px/1 Arial,sans-serif!important;white-space:nowrap!important;
 }
-/* Navigation consumes only remaining space and can scroll internally if another module adds rows. */
+/* Navigation occupies only the space below the fixed logo.  The logo can never be compressed by menu items. */
 body.ag-profile-mode .sidebar .nav,.app-shell .sidebar .nav{
-  order:2!important;display:flex!important;flex-direction:column!important;gap:0!important;margin:0!important;padding:0!important;
+  order:2!important;display:flex!important;flex-direction:column!important;gap:1px!important;margin:0!important;padding:0 1px!important;
   flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
 }
 body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{
-  width:100%!important;min-height:15px!important;height:15px!important;flex:0 0 15px!important;
-  margin:0!important;padding:2px 6px!important;font:700 5.8px/1 Arial,sans-serif!important;
-  letter-spacing:.04px!important;white-space:nowrap!important;box-sizing:border-box!important;
+  width:100%!important;min-height:23px!important;height:23px!important;flex:0 0 23px!important;
+  margin:0!important;padding:4px 7px!important;font:700 8px/1 Arial,sans-serif!important;
+  letter-spacing:.08px!important;white-space:nowrap!important;box-sizing:border-box!important;
+}
+body.ag-profile-mode .sidebar .nav button .icon,.app-shell .sidebar .nav button .icon{
+  transform:scale(.82)!important;transform-origin:center!important;
 }
 body.ag-profile-mode .sidebar button[id*="logout"],.app-shell .sidebar button[id*="logout"],
 body.ag-profile-mode .sidebar .logout,.app-shell .sidebar .logout{
@@ -99,7 +102,7 @@ body.ag-profile-mode .bottom{height:23%!important}
   body.ag-profile-mode .sidebar,.app-shell .sidebar{width:174px!important;min-width:174px!important}
   body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{height:118px!important;min-height:118px!important;flex-basis:118px!important}
   body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{height:110px!important}
-  body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{height:16px!important;min-height:16px!important;flex-basis:16px!important;font-size:6px!important}
+  body.ag-profile-mode .sidebar .nav button,.app-shell .sidebar .nav button{height:24px!important;min-height:24px!important;flex-basis:24px!important;font-size:8.4px!important}
   body.ag-profile-mode .missions .ag-player-mission-profile,.app-shell .missions .ag-player-mission-profile{min-height:108px!important;grid-template-columns:74px minmax(0,1fr)!important}
   body.ag-profile-mode .missions .ag-player-mission-profile .ag-player-avatar,.app-shell .missions .ag-player-mission-profile .ag-player-avatar{width:72px!important;height:72px!important;min-width:72px!important;min-height:72px!important;font-size:29px!important}
 }
@@ -152,6 +155,44 @@ function ensureSidebarBrand(s){
 function playerCardHTML(d){
  return '<div class="ag-player-avatar" aria-hidden="true">'+d.initial+'</div><div class="ag-player-summary"><strong class="ag-player-name">'+d.name+'</strong><span class="ag-player-role">AG WORLD PLAYER</span><span class="ag-player-level">Level '+d.level+' · Chapter '+d.chapter+'</span><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' / '+d.next.toLocaleString()+' XP</b><b>'+d.pct+'%</b></span></div>';
 }
+const SIDEBAR_MENU=[
+ ['profile','Profile'],
+ ['pipeline','Sales Funnel'],
+ ['clients','Client List'],
+ ['products','Sales Products'],
+ ['after sales','After Sales'],
+ ['mission history','Mission History'],
+ ['ai assistant','AI Assistant'],
+ ['company commands','Company Commands'],
+ ['company controls','Company Controls'],
+ ['territory graphics','Territory Graphics'],
+ ['developer mode','Developer Mode'],
+ ['settings','Settings'],
+ ['logout','Logout']
+];
+function menuKey(el){
+ const raw=(el.dataset.menu||el.dataset.view||el.id||el.getAttribute('aria-label')||el.textContent||'').toLowerCase();
+ return raw.replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function normaliseSidebarMenu(nav){
+ if(!nav)return;
+ const nodes=Array.from(nav.querySelectorAll('button,a,[role="button"]'));
+ const matched=new Map();
+ nodes.forEach(el=>{
+   const key=menuKey(el);
+   for(const [needle,label] of SIDEBAR_MENU){
+     if(!matched.has(needle) && (key===needle || key.includes(needle) || (needle==='profile' && key.includes('my profile')) || (needle==='pipeline' && key.includes('my pipeline')) || (needle==='clients' && key.includes('my clients')) || (needle==='products' && key.includes('my products')))){
+       matched.set(needle,el);
+       el.textContent=label;
+       el.setAttribute('data-ag-menu-label',label);
+       break;
+     }
+   }
+ });
+ // Remove only stale navigation entries; matching keeps the original elements, IDs and click handlers intact.
+ nodes.forEach(el=>{if(!Array.from(matched.values()).includes(el))el.remove()});
+ SIDEBAR_MENU.forEach(([needle])=>{const el=matched.get(needle);if(el)nav.appendChild(el)});
+}
 function correctSidebar(){
  const s=document.querySelector('.sidebar');if(!s)return;
  // Remove legacy duplicate player blocks only. The official sidebar brand is retained.
@@ -160,6 +201,7 @@ function correctSidebar(){
  const nav=s.querySelector('.nav');
  if(s.firstElementChild!==brand)s.prepend(brand);
  if(nav && brand.nextElementSibling!==nav)brand.insertAdjacentElement('afterend',nav);
+ normaliseSidebarMenu(nav);
  ensureMissionsPlayerProfile();
  document.querySelectorAll('.map-area .ag-world-map-logo').forEach(el=>el.remove());
 }
