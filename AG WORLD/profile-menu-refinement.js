@@ -786,6 +786,9 @@ function start(){
   const s=document.querySelector('.sidebar');if(!s)return;
   const good=!!(s.querySelector('.brand .brand-logo')&&document.querySelector('.missions #agPlayerMissionProfile'));
   if(!good)correctSidebar();
+  ensureMissionsPlayerProfile();
+  ensureAdvisorBay();
+  ensureMissionHub();
   ensureMissionsDrawer();
   syncAdvisorBayGeometry();
  });
