@@ -132,19 +132,18 @@ body.ag-game-mode .ag-guide-reopen{right:clamp(250px,18vw,420px);top:235px;botto
     ensure();
     const root=document.getElementById(GUIDE_ID);
     if(!root) return;
-    const launch=()=>{
-      if(sessionStorage.getItem(STATE_KEY)) return;
-      clearTimeout(welcomeTimer);
-      welcomeTimer=setTimeout(()=>{
-        if(document.body.classList.contains('ag-profile-mode')){
-          root.classList.add('show');
-          sessionStorage.setItem(STATE_KEY,'1');
-        }
-      },900);
+
+    // Persistent HUD element: do not hide the hologram after the first welcome.
+    const syncVisibility=()=>{
+      const active=document.body.classList.contains('ag-profile-mode') ||
+                   document.body.classList.contains('ag-game-mode');
+      root.classList.toggle('show',active);
     };
-    window.addEventListener('agworld:ui-shell-ready',launch);
-    window.addEventListener('load',launch);
-    launch();
+
+    window.addEventListener('agworld:ui-shell-ready',syncVisibility);
+    window.addEventListener('load',syncVisibility);
+    new MutationObserver(syncVisibility).observe(document.body,{attributes:true,attributeFilter:['class']});
+    syncVisibility();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
