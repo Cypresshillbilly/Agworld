@@ -35,6 +35,10 @@
 #${GUIDE_ID}.show{display:flex}
 #${GUIDE_ID} *{box-sizing:border-box}
 .ag-guide-hologram{position:relative;width:142px;height:176px;flex:0 0 142px;pointer-events:auto;cursor:pointer;filter:drop-shadow(0 18px 24px rgba(0,0,0,.28));background:transparent;border:0}
+.ag-guide-avatar-stage{position:absolute;left:50%;bottom:13px;width:132px;height:160px;transform:translateX(-50%);z-index:2;pointer-events:none}
+.ag-guide-avatar-stage canvas{display:block;width:100%;height:100%;background:transparent}
+.ag-guide-hologram.three-ready .ag-guide-commander{opacity:0;visibility:hidden}
+.ag-guide-hologram.three-ready .ag-guide-avatar-stage{filter:drop-shadow(0 0 12px rgba(184,230,32,.24))}
 .ag-guide-commander{position:absolute;left:50%;bottom:17px;width:118px;height:150px;transform:translateX(-50%);transform-origin:50% 100%;animation:agCommanderIdle 4.6s ease-in-out infinite}
 .ag-guide-commander .ag-commander-head{position:absolute;left:50%;top:7px;width:42px;height:50px;transform:translateX(-50%);border-radius:48% 48% 44% 44%;background:linear-gradient(135deg,#D7A77D,#8A5638);border:2px solid rgba(244,243,237,.18);box-shadow:0 0 18px rgba(184,230,32,.12)}
 .ag-guide-commander .ag-commander-hair{position:absolute;left:50%;top:4px;width:46px;height:20px;transform:translateX(-50%);border-radius:50% 50% 25% 25%;background:#172018}
@@ -110,6 +114,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
     root.setAttribute('aria-label','AgWorld System Guide');
     root.innerHTML=`
       <button class="ag-guide-hologram" type="button" aria-label="Open System Guide">
+        <span class="ag-guide-avatar-stage" aria-hidden="true"></span>
         <span class="ag-guide-commander" aria-hidden="true">
           <span class="ag-commander-head"></span><span class="ag-commander-hair"></span><span class="ag-commander-earpiece"></span><span class="ag-commander-neck"></span>
           <span class="ag-commander-torso"><span class="ag-commander-collar"></span><span class="ag-commander-insignia">AG</span></span>
@@ -160,6 +165,121 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
 
     document.body.append(root,reopen,audio);
 
+    // Real animated 3D Strategic Commander. The existing CSS commander remains only
+    // as a safe fallback while the GLB is loading or if WebGL is unavailable.
+    let commander3D=null;
+    let commanderMode='sleep';
+    const setCommanderMode=(mode)=>{
+      commanderMode=mode;
+      if(commander3D) commander3D.setMode(mode);
+    };
+    const initCommander3D=async()=>{
+      const stage=root.querySelector('.ag-guide-avatar-stage');
+      if(!stage || !window.WebGLRenderingContext) return;
+      try{
+        const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js');
+        const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
+        const width=132,height=160;
+        const scene=new THREE.Scene();
+        const camera=new THREE.PerspectiveCamera(28,width/height,.1,100);
+        camera.position.set(0,1.2,5.2);
+        const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+        renderer.setSize(width,height,false);
+        renderer.outputColorSpace=THREE.SRGBColorSpace;
+        renderer.setClearColor(0x000000,0);
+        stage.appendChild(renderer.domElement);
+        scene.add(new THREE.HemisphereLight(0xd9ead8,0x08120d,2.1));
+        const key=new THREE.DirectionalLight(0xffffff,2.4); key.position.set(3,5,6); scene.add(key);
+        const rim=new THREE.DirectionalLight(0xb8e620,1.25); rim.position.set(-4,2,-2); scene.add(rim);
+        const loader=new GLTFLoader();
+        const gltf=await loader.loadAsync('https://threejs.org/examples/models/gltf/Soldier.glb');
+        const model=gltf.scene;
+        model.scale.setScalar(1.18);
+        model.position.set(0,-1.62,0);
+        model.rotation.y=Math.PI;
+        scene.add(model);
+
+        const mixer=new THREE.AnimationMixer(model);
+        const actions={};
+        gltf.animations.forEach(clip=>actions[clip.name]=mixer.clipAction(clip));
+        const idle=actions.Idle || Object.values(actions)[0];
+        if(idle){idle.reset().setEffectiveWeight(1).play();}
+
+        const findBone=(terms)=>{
+          let hit=null;
+          model.traverse(o=>{
+            if(hit || !o.isBone) return;
+            const n=(o.name||'').toLowerCase();
+            if(terms.some(t=>n.includes(t))) hit=o;
+          });
+          return hit;
+        };
+        const head=findBone(['head']);
+        const rightArm=findBone(['rightarm','right_arm','upperarm.r','upper_arm.r']);
+        const leftArm=findBone(['leftarm','left_arm','upperarm.l','upper_arm.l']);
+        const spine=findBone(['spine','chest']);
+        const clock=new THREE.Clock();
+        const baseline={
+          head:head?head.rotation.clone():null,
+          right:rightArm?rightArm.rotation.clone():null,
+          left:leftArm?leftArm.rotation.clone():null,
+          spine:spine?spine.rotation.clone():null
+        };
+        let mode='sleep',wakeStart=0;
+        const setMode=(next)=>{
+          if(next==='wake' || (mode==='sleep'&&next==='idle')) wakeStart=performance.now();
+          mode=next;
+        };
+        commander3D={setMode};
+        root.querySelector('.ag-guide-hologram').classList.add('three-ready');
+        setMode(commanderMode);
+
+        const tick=()=>{
+          requestAnimationFrame(tick);
+          const dt=Math.min(clock.getDelta(),.05), t=clock.elapsedTime;
+          mixer.update(dt);
+          const lerpBone=(bone,base,dx,dy,dz,amount=.08)=>{
+            if(!bone||!base) return;
+            bone.rotation.x+=(base.x+dx-bone.rotation.x)*amount;
+            bone.rotation.y+=(base.y+dy-bone.rotation.y)*amount;
+            bone.rotation.z+=(base.z+dz-bone.rotation.z)*amount;
+          };
+          if(mode==='sleep'){
+            model.rotation.z=Math.sin(t*.55)*.018;
+            model.position.y=-1.62+Math.sin(t*1.15)*.025;
+            lerpBone(head,baseline.head,.34,0,0,.045);
+            lerpBone(rightArm,baseline.right,.10,0,-.08,.05);
+            lerpBone(leftArm,baseline.left,.10,0,.08,.05);
+            lerpBone(spine,baseline.spine,.05,0,0,.05);
+          }else if(mode==='talk'){
+            model.rotation.z=Math.sin(t*1.3)*.012;
+            model.position.y=-1.62+Math.sin(t*2.2)*.012;
+            lerpBone(head,baseline.head,Math.sin(t*2.7)*.035,Math.sin(t*1.9)*.025,0,.14);
+            lerpBone(rightArm,baseline.right,.22+Math.sin(t*3.0)*.16,0,-.30-Math.sin(t*2.1)*.18,.12);
+            lerpBone(leftArm,baseline.left,.12+Math.sin(t*2.1)*.09,0,.16+Math.sin(t*2.7)*.12,.12);
+            lerpBone(spine,baseline.spine,Math.sin(t*1.8)*.025,0,Math.sin(t*1.3)*.018,.1);
+          }else{
+            const wakeElapsed=wakeStart?(performance.now()-wakeStart)/1000:99;
+            const kick=wakeElapsed<.8?Math.sin(Math.min(1,wakeElapsed/.8)*Math.PI)*.22:0;
+            model.rotation.z=Math.sin(t*.72)*.01;
+            model.position.y=-1.62+Math.sin(t*1.25)*.015;
+            lerpBone(head,baseline.head,-kick*.9,0,0,.09);
+            lerpBone(rightArm,baseline.right,kick*.9,0,-kick*.7,.1);
+            lerpBone(leftArm,baseline.left,kick*.75,0,kick*.55,.1);
+            lerpBone(spine,baseline.spine,-kick*.15,0,0,.08);
+            if(wakeElapsed>=.8 && mode==='wake') mode='idle';
+          }
+          renderer.render(scene,camera);
+        };
+        tick();
+      }catch(err){
+        // Keep the animated CSS fallback if the remote model or WebGL cannot load.
+        console.warn('AgWorld 3D Strategic Commander fallback active.',err);
+      }
+    };
+    initCommander3D();
+
     const placeGuide=()=>{
       const area=document.querySelector('.map-area');
       if(!area) return;
@@ -177,11 +297,12 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       reopen.style.right='auto';
       reopen.style.bottom='auto';
     };
-    const openFullGuide=()=>{placeGuide();root.classList.remove('avatar-only');root.classList.add('show');reopen.classList.remove('show');};
-    const showAvatarOnly=()=>{placeGuide();root.classList.add('show','avatar-only');reopen.classList.remove('show');};
-    const collapseGuide=()=>{root.classList.remove('show','avatar-only');reopen.classList.add('show');};
+    const openFullGuide=()=>{placeGuide();root.classList.remove('avatar-only');root.classList.add('show');reopen.classList.remove('show');setCommanderMode('wake');};
+    const showAvatarOnly=()=>{placeGuide();root.classList.add('show','avatar-only');reopen.classList.remove('show');setCommanderMode('idle');};
+    const collapseGuide=()=>{root.classList.remove('show','avatar-only');reopen.classList.add('show');setCommanderMode('sleep');};
     root.querySelector('.ag-guide-hologram').addEventListener('click',()=>{
       if(root.classList.contains('avatar-only')) openFullGuide();
+      else setCommanderMode('wake');
     });
     window.addEventListener('resize',placeGuide);
     window.addEventListener('agworld:game-mode-changed',()=>setTimeout(placeGuide,80));
@@ -257,6 +378,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         try{
           await audio.play();
           root.classList.add('is-talking');
+          setCommanderMode('talk');
           playIcon.textContent='Ⅱ';
           playLabel.textContent='PAUSE BRIEFING';
         }catch(err){
@@ -266,6 +388,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       }else{
         audio.pause();
         root.classList.remove('is-talking');
+        setCommanderMode('idle');
         playIcon.textContent='▶';
         playLabel.textContent='PLAY BRIEFING';
       }
@@ -275,9 +398,10 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
       if(!audio.duration || !isFinite(audio.duration)) return;
       progress.style.width=Math.max(0,Math.min(100,(audio.currentTime/audio.duration)*100))+'%';
     });
-    audio.addEventListener('ended',()=>{root.classList.remove('is-talking');resetPlaybackUI();});
+    audio.addEventListener('ended',()=>{root.classList.remove('is-talking');setCommanderMode('idle');resetPlaybackUI();});
     audio.addEventListener('error',()=>{
       root.classList.remove('is-talking');
+      setCommanderMode('idle');
       resetPlaybackUI();
       root.querySelector('.ag-guide-copy').textContent='The AI voice briefing could not be loaded. Please try again.';
     });
@@ -318,6 +442,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         window.speechSynthesis?.cancel();
         audio.pause();
         audio.currentTime=0;
+        setCommanderMode('idle');
         const b=root.querySelector('.ag-guide-play');
         resetPlaybackUI();
       }
