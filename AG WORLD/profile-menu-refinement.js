@@ -728,6 +728,83 @@ html body.ag-game-mode .ag-advisor:nth-child(4){grid-column:3 / span 2!important
 html body.ag-profile-mode .ag-advisor:nth-child(5),
 html body.ag-game-mode .ag-advisor:nth-child(5){grid-column:5 / span 2!important;grid-row:2!important}
 
+
+/* === MY MISSIONS FIT LOCK — THREE CARDS SHARE ONLY THE SPACE ABOVE ADVISOR BAY === */
+html body.ag-profile-mode .missions,
+html body.ag-game-mode .missions,
+html body.ag-premium-mode .missions{
+  --ag-player-card-h:82px;
+  --ag-skill-card-h:76px;
+  --ag-landing-card-h:90px;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile,
+html body.ag-game-mode .missions #agPlayerMissionProfile{
+  height:var(--ag-player-card-h)!important;min-height:var(--ag-player-card-h)!important;max-height:var(--ag-player-card-h)!important;
+  margin:0 6px 5px!important;padding:6px 8px!important;overflow:hidden!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-identity,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-identity{grid-template-columns:58px minmax(0,1fr)!important;gap:9px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-avatar-frame,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-avatar-frame{width:54px!important;height:54px!important;padding:3px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-avatar,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-avatar{font-size:24px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-online-dot,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-online-dot{width:10px!important;height:10px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-kicker,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-kicker{font-size:7.2px!important;line-height:1.1!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-name,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-name{font-size:14px!important;line-height:1.05!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-role,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-role{font-size:7.4px!important;line-height:1.15!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-chapter,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-chapter{font-size:7.2px!important;padding:3px 5px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-label{font-size:6.8px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-label b,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-label b{font-size:7.8px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-track,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-track{height:7px!important}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-text,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-text{font-size:6.6px!important}
+
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-profile-mode .missions .ag-mission-skill-profile,
+html body.ag-game-mode .missions #agMissionSkillProfile,
+html body.ag-game-mode .missions .ag-mission-skill-profile{
+  height:var(--ag-skill-card-h)!important;min-height:var(--ag-skill-card-h)!important;max-height:var(--ag-skill-card-h)!important;
+  margin:0 6px 5px!important;padding:7px 9px!important;box-sizing:border-box!important;overflow:hidden!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head,
+html body.ag-game-mode .missions .ag-mission-skill-head{margin-bottom:5px!important}
+html body.ag-profile-mode .missions .ag-mission-skill-head span,
+html body.ag-game-mode .missions .ag-mission-skill-head span{font-size:7.5px!important;letter-spacing:1px!important}
+html body.ag-profile-mode .missions .ag-mission-skill-head b,
+html body.ag-game-mode .missions .ag-mission-skill-head b{font-size:12px!important;line-height:1.1!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list,
+html body.ag-game-mode .missions .ag-mission-skill-list{gap:4px!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div,
+html body.ag-game-mode .missions .ag-mission-skill-list>div{min-height:0!important;height:20px!important;padding:4px 6px!important;font-size:8px!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div b,
+html body.ag-game-mode .missions .ag-mission-skill-list>div b{font-size:9.2px!important}
+
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard{
+  height:var(--ag-landing-card-h)!important;min-height:var(--ag-landing-card-h)!important;max-height:var(--ag-landing-card-h)!important;
+  margin:0 6px!important;padding:8px 10px!important;box-sizing:border-box!important;overflow:hidden!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .tag,
+html body.ag-game-mode .missions #agLandingMissionCard .tag{font-size:7.8px!important;line-height:1!important}
+html body.ag-profile-mode .missions #agLandingMissionCard strong,
+html body.ag-game-mode .missions #agLandingMissionCard strong{font-size:12.5px!important;line-height:1.18!important}
+html body.ag-profile-mode .missions #agLandingMissionCard p,
+html body.ag-game-mode .missions #agLandingMissionCard p{font-size:8.8px!important;line-height:1.28!important;margin:4px 0!important}
+html body.ag-profile-mode .missions #agLandingMissionCard .reward,
+html body.ag-game-mode .missions #agLandingMissionCard .reward{font-size:7.4px!important;padding:4px 6px!important}
+html body.ag-profile-mode .missions #agLandingMissionCard button,
+html body.ag-game-mode .missions #agLandingMissionCard button{font-size:7.8px!important;padding:5px 7px!important}
+
 `;
 function installStyles(){let s=document.getElementById(STYLE_ID);if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}if(s.textContent!==css)s.textContent=css}
 function playerData(){
@@ -877,6 +954,37 @@ function syncAdvisorBayGeometry(){
  missions.style.setProperty('--ag-advisor-height',height+'px');
  bay.style.setProperty('top',top+'px','important');
  bay.style.setProperty('height',height+'px','important');
+ syncMissionStackFit();
+}
+
+
+function syncMissionStackFit(){
+ const missions=document.querySelector('.missions');
+ const player=missions?.querySelector('#agPlayerMissionProfile');
+ const skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+ const mission=missions?.querySelector('#agLandingMissionCard');
+ const bay=missions?.querySelector('#agAdvisorBay');
+ if(!missions||!player||!skill||!mission||!bay)return;
+ const mr=missions.getBoundingClientRect(),pr=player.getBoundingClientRect(),br=bay.getBoundingClientRect();
+ if(!mr.height||!pr.height||!br.height)return;
+ const stackTop=Math.max(0,Math.round(pr.top-mr.top));
+ const bayTop=Math.max(0,Math.round(br.top-mr.top));
+ const usable=Math.max(0,bayTop-stackTop-12);
+ if(usable<180)return;
+ let playerH=Math.max(66,Math.min(88,Math.round(usable*.31)));
+ let skillH=Math.max(58,Math.min(82,Math.round(usable*.28)));
+ let missionH=usable-playerH-skillH;
+ if(missionH<68){
+   const shortfall=68-missionH;
+   const reducePlayer=Math.min(shortfall,Math.max(0,playerH-66));
+   playerH-=reducePlayer;
+   skillH-=Math.min(shortfall-reducePlayer,Math.max(0,skillH-58));
+   missionH=usable-playerH-skillH;
+ }
+ if(missionH<64)return;
+ missions.style.setProperty('--ag-player-card-h',playerH+'px');
+ missions.style.setProperty('--ag-skill-card-h',skillH+'px');
+ missions.style.setProperty('--ag-landing-card-h',missionH+'px');
 }
 
 function ensureMissionHub(){
