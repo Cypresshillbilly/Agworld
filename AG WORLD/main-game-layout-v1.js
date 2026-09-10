@@ -142,6 +142,22 @@
     //   2) Command Center floats over that map;
     //   3) Territory Stats stays on the far right above the Command Center.
     if(document.body.classList.contains('ag-profile-mode')){
+      /*
+       * PLAYER PROFILE — FLOATING MAP LAYOUT
+       *
+       * This deliberately starts from the last known stable desktop geometry:
+       *   sidebar  = 180px
+       *   missions = 285px
+       *   map      = 815px on the canonical 1280px shell
+       *
+       * Only three things are changed from that stable layout:
+       *   1. the map extends to the shell bottom;
+       *   2. the Command Center becomes an overlay on the lower map/ocean;
+       *   3. Territory Stats remains a separate right-edge drawer above it.
+       *
+       * No second layout owner, no viewport-fixed shell and no re-parenting of
+       * Sidebar/Missions are used. The shell remains the canonical owner.
+       */
       const shell=document.querySelector('.app-shell');
       const sidebar=document.querySelector('.sidebar');
       const missions=document.querySelector('.missions');
@@ -149,15 +165,15 @@
       const territory=$('territorySection');
       const entity=$('entityInformationSection');
       const territoryDrawer=$('territoryStatsDrawer');
-      if(!shell||!mapArea||!entity) return;
+      if(!shell||!sidebar||!missions||!mapArea||!entity) return;
 
       const shellH=shell.clientHeight||820;
       const shellW=shell.clientWidth||1280;
-      const sidebarW=Math.round(shellW*(215/1280));
-      const missionsW=Math.round(shellW*(250/1280));
+      const canonicalScale=shellW/1280;
+      const sidebarW=Math.round(180*canonicalScale);
+      const missionsW=Math.round(285*canonicalScale);
       const leftStage=sidebarW+missionsW;
-      const mapW=shellW-leftStage;
-      const stableCommandH=Math.round(shellH*(210/820));
+      const mapW=Math.max(320,shellW-leftStage);
       const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
       const frame=(el,left,top,width,height)=>{
         if(!el) return;
@@ -171,59 +187,82 @@
         important(el,'box-sizing','border-box');
       };
 
-      // Preserve the stable full-height sidebar and My Missions geometry.
+      // Restore the stable Player Profile left stage exactly.
       frame(sidebar,0,0,sidebarW,shellH);
       frame(missions,sidebarW,0,missionsW,shellH);
 
-      // Stable map geometry, extended only downward behind the floating card.
+      // The map keeps its stable left edge and simply extends to the bottom.
       frame(mapArea,leftStage,0,mapW,shellH);
       important(mapArea,'overflow','hidden');
       important(mapArea,'z-index','1');
+      important(mapArea,'clip-path','inset(0)');
 
       if(territory) important(territory,'display','none');
 
-      // Floating Command Center: same stable visual asset, simply removed from
-      // the bottom strip and centered over the lower ocean portion of the map.
-      const commandW=Math.min(Math.round(mapW*.68),Math.max(520,Math.round(mapW*.58)));
-      const commandH=Math.min(stableCommandH,Math.max(145,Math.round(shellH*.18)));
+      /*
+       * Command Center is an independent overlay, not a replacement for the
+       * bottom layout row. Its top is intentionally calculated from the bottom
+       * so it stays over the lower ocean portion of the map.
+       */
+      const commandW=Math.min(Math.round(mapW*.69),Math.round(560*canonicalScale));
+      const commandH=Math.max(Math.round(160*canonicalScale),Math.round(shellH*.19));
+      const commandBottom=Math.max(18,Math.round(shellH*.024));
+      const commandTop=Math.max(0,shellH-commandH-commandBottom);
       const commandLeft=leftStage+Math.round((mapW-commandW)/2);
-      const commandBottom=Math.max(18,Math.round(shellH*.025));
-      const commandTop=shellH-commandH-commandBottom;
       frame(entity,commandLeft,commandTop,commandW,commandH);
       important(entity,'z-index','1800');
       important(entity,'overflow','hidden');
+      important(entity,'background','transparent');
+      important(entity,'border','0');
+      important(entity,'box-shadow','none');
+      important(entity,'padding','0');
+
+      ensureEntityCommandHeading(entity);
+      const heading=$('entityCommandCentreHeading');
+      if(heading){
+        important(heading,'position','absolute');
+        important(heading,'left','0');
+        important(heading,'top','0');
+        important(heading,'width','100%');
+        important(heading,'height','34px');
+        important(heading,'margin','0');
+        important(heading,'z-index','3');
+      }
 
       const entityCard=$('farmCard');
       if(entityCard){
         important(entityCard,'position','absolute');
         important(entityCard,'left','0');
-        important(entityCard,'top','34px');
-        important(entityCard,'right','0');
-        important(entityCard,'bottom','0');
+        important(entityCard,'top','42px');
+        important(entityCard,'right','auto');
+        important(entityCard,'bottom','auto');
         important(entityCard,'width','100%');
-        important(entityCard,'height','calc(100% - 34px)');
-        important(entityCard,'min-height','calc(100% - 34px)');
+        important(entityCard,'height','calc(100% - 42px)');
+        important(entityCard,'min-height','0');
         important(entityCard,'max-width','none');
         important(entityCard,'max-height','none');
         important(entityCard,'margin','0');
         important(entityCard,'box-sizing','border-box');
         important(entityCard,'z-index','2');
       }
-      ensureEntityCommandHeading(entity);
 
-      // Territory Stats remains a right-edge drawer and is explicitly capped
-      // above the Command Center. It can never pass behind the floating card.
+      /*
+       * Territory Stats is never part of the floating map extension. It stays
+       * anchored to the far-right edge and is mathematically capped above the
+       * Command Center, guaranteeing a visible gap at every supported size.
+       */
       if(territoryDrawer){
-        const gap=Math.max(16,Math.round(shellH*.02));
-        const topInset=74;
-        const maxBottom=Math.max(topInset+220,commandTop-gap);
-        const drawerH=Math.max(220,Math.min(Math.round(shellH*.50),maxBottom-topInset));
+        const gap=Math.max(18,Math.round(18*canonicalScale));
+        const topInset=Math.max(70,Math.round(74*canonicalScale));
+        const maxDrawerBottom=commandTop-gap;
+        const preferredH=Math.round(Math.min(360*canonicalScale,shellH*.44));
+        const drawerH=Math.max(190,Math.min(preferredH,maxDrawerBottom-topInset));
         important(territoryDrawer,'position','absolute');
         important(territoryDrawer,'left','auto');
         important(territoryDrawer,'right','0');
         important(territoryDrawer,'top',topInset+'px');
         important(territoryDrawer,'bottom','auto');
-        important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round(mapW*.235)))+'px');
+        important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round(mapW*.29)))+'px');
         important(territoryDrawer,'height',drawerH+'px');
         important(territoryDrawer,'max-height',drawerH+'px');
         important(territoryDrawer,'transform','none');
@@ -236,16 +275,18 @@
         important(oldProfile,'visibility','hidden');
         important(oldProfile,'pointer-events','none');
       }
+
+      // entityInformationSection is intentionally a shell-level overlay.
       if(entity.parentElement!==shell) shell.appendChild(entity);
 
       window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={
         mode:'profile',
-        owner:'main-game-layout-v1-profile-stable-floating',
-        shellW,shellH,leftStage,mapW,
-        map:'full-height-behind-command-center',
-        commandCenter:'floating-over-lower-map',
-        territoryStats:'right-side-above-command-center',
-        gap
+        owner:'main-game-layout-v1-stable-shell-overlay',
+        shellW,shellH,sidebarW,missionsW,leftStage,mapW,
+        map:'stable-left-edge-full-height',
+        commandCenter:'floating-lower-map',
+        territoryStats:'far-right-capped-above-command-center',
+        commandTop,commandBottom,gap
       };
       return;
     }
