@@ -205,6 +205,38 @@ body .missions #agLandingMissionCard{
   box-sizing:border-box!important;
 }
 
+/* FINAL MISSION GRID OVERRIDE: this rule intentionally comes after all legacy
+   mission-card rules and matches their mode specificity. The legacy absolute
+   layer must not win once the card has been moved into #agMyMissionsStack. */
+html body.ag-profile-mode .missions #agMyMissionsStack > #agLandingMissionCard,
+html body.ag-game-mode .missions #agMyMissionsStack > #agLandingMissionCard,
+html body.ag-premium-mode .missions #agMyMissionsStack > #agLandingMissionCard,
+html body .missions #agMyMissionsStack > #agLandingMissionCard{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  grid-column:1!important;
+  grid-row:3!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0!important;
+  align-self:stretch!important;
+  justify-self:stretch!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  transform:none!important;
+  z-index:1!important;
+  pointer-events:auto!important;
+}
+
 /* Canonical single-layer card stack. Player, Skill and Mission share one
    grid coordinate system, eliminating independent absolute-position layers. */
 .missions #agMyMissionsStack{
