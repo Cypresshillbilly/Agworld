@@ -307,28 +307,30 @@ body .missions{
      and a fixed-height box with unused space below START MISSION. The temporary
      overrides are restored immediately and never alter the card's approved
      visual design or internal markup. */
-  function intrinsicHeight(el){
+  function missionContentHeight(el){
     if(!el) return 0;
-    const props=['height','min-height','max-height','overflow','visibility'];
-    const previous=props.map(name=>({
-      name,
-      value:el.style.getPropertyValue(name),
-      priority:el.style.getPropertyPriority(name)
-    }));
 
-    try{
-      el.style.setProperty('height','auto','important');
-      el.style.setProperty('min-height','0','important');
-      el.style.setProperty('max-height','none','important');
-      el.style.setProperty('overflow','visible','important');
-      el.style.setProperty('visibility','hidden','important');
-      return px(Math.max(el.scrollHeight||0,el.getBoundingClientRect().height||0));
-    }finally{
-      previous.forEach(({name,value,priority})=>{
-        if(value) el.style.setProperty(name,value,priority);
-        else el.style.removeProperty(name);
-      });
-    }
+    /* The mission card is deliberately sized from the actual bottom edge of
+       its visible content, not scrollHeight. scrollHeight is polluted by older
+       fixed/min-height rules in the legacy card styles and was the source of
+       the empty block beneath START MISSION. */
+    const cardRect=el.getBoundingClientRect();
+    if(cardRect.width<=0) return 0;
+
+    let contentBottom=cardRect.top;
+    Array.from(el.children).forEach(child=>{
+      const style=getComputedStyle(child);
+      if(style.display==='none'||style.visibility==='hidden') return;
+      const rect=child.getBoundingClientRect();
+      if(rect.width>0&&rect.height>0) contentBottom=Math.max(contentBottom,rect.bottom);
+    });
+
+    if(contentBottom<=cardRect.top) return 0;
+
+    const cs=getComputedStyle(el);
+    const paddingBottom=parseFloat(cs.paddingBottom)||0;
+    const borderBottom=parseFloat(cs.borderBottomWidth)||0;
+    return px(contentBottom-cardRect.top+paddingBottom+borderBottom);
   }
 
   function setGeometry(missions,geometry){
@@ -371,9 +373,10 @@ body .missions{
     const playerNatural=naturalHeight(player);
     let playerH=clamp(playerNatural||84,MIN_PLAYER_H,MAX_PLAYER_H);
 
-    /* Mission height is driven by its actual content, so the card ends directly
-       after the final control instead of reserving an arbitrary empty area. */
-    const missionNatural=intrinsicHeight(mission);
+    /* Mission height ends immediately after START MISSION plus the card's real
+       bottom padding. This removes the empty lower block without changing any
+       other card's approved visual design. */
+    const missionNatural=missionContentHeight(mission);
     let missionH=clamp(missionNatural||FALLBACK_MISSION_H,MIN_MISSION_H,MAX_MISSION_H);
 
     /* Skill Profile receives the remaining proportional space and therefore
