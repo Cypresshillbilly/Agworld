@@ -1393,3 +1393,297 @@ html body.ag-profile-mode .missions #agAdvisorBay,html body.ag-game-mode .missio
   function start(){install();queue();const m=document.querySelector('.missions');if(m&&'ResizeObserver'in window){const ro=new ResizeObserver(queue);ro.observe(m);const b=m.querySelector('#agAdvisorBay');if(b)ro.observe(b)}window.addEventListener('resize',queue,{passive:true});[0,80,250,600,1200,2200].forEach(ms=>setTimeout(queue,ms))}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
+
+
+/* ==========================================================================
+   AG WORLD — PREMIUM GAME UI SYSTEM v30
+   Visual refactor only: preserves the established mission functionality and
+   layout contract while applying a consistent 4/8px rhythm, stronger type,
+   premium translucent surfaces and deliberate interaction states.
+   ========================================================================== */
+(()=>{
+  const STYLE_ID='ag-premium-game-ui-system-v30';
+  const css=`
+:root{
+  --ag-space-1:4px;--ag-space-2:8px;--ag-space-3:12px;--ag-space-4:16px;
+  --ag-space-5:20px;--ag-space-6:24px;--ag-space-8:32px;
+  --ag-radius-sm:8px;--ag-radius-md:12px;--ag-radius-lg:16px;
+  --ag-text:#f4faf7;--ag-text-soft:#b9c9c7;--ag-text-muted:#849a9c;
+  --ag-surface:rgba(13,35,43,.86);--ag-surface-strong:rgba(11,29,37,.96);
+  --ag-glass-line:rgba(177,220,216,.20);--ag-glass-highlight:rgba(255,255,255,.07);
+  --ag-shadow:0 14px 34px rgba(2,12,16,.24);
+  --ag-ease:cubic-bezier(.22,.72,.18,1);
+}
+html body.ag-profile-mode .missions,
+html body.ag-game-mode .missions,
+html body.ag-premium-mode .missions{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  color:var(--ag-text)!important;
+  letter-spacing:.01em!important;
+}
+html body.ag-profile-mode .missions *,
+html body.ag-game-mode .missions *,
+html body.ag-premium-mode .missions *{box-sizing:border-box!important}
+
+/* Consistent panel language: one radius family, crisp translucent borders and
+   restrained depth. */
+html body.ag-profile-mode .missions #agPlayerMissionProfile,
+html body.ag-game-mode .missions #agPlayerMissionProfile,
+html body.ag-premium-mode .missions #agPlayerMissionProfile,
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-game-mode .missions #agMissionSkillProfile,
+html body.ag-premium-mode .missions #agMissionSkillProfile,
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard,
+html body.ag-premium-mode .missions #agLandingMissionCard,
+html body.ag-profile-mode .missions #agAdvisorBay,
+html body.ag-game-mode .missions #agAdvisorBay,
+html body.ag-premium-mode .missions #agAdvisorBay{
+  border-radius:var(--ag-radius-md)!important;
+  border-color:var(--ag-glass-line)!important;
+  box-shadow:var(--ag-shadow),inset 0 1px 0 var(--ag-glass-highlight)!important;
+}
+
+/* Player card — clearer hierarchy and breathing room without changing its
+   allocated geometry. */
+html body.ag-profile-mode .missions #agPlayerMissionProfile,
+html body.ag-game-mode .missions #agPlayerMissionProfile,
+html body.ag-premium-mode .missions #agPlayerMissionProfile{
+  padding:var(--ag-space-3)!important;
+  background:
+    radial-gradient(circle at 92% 0%,rgba(194,233,93,.13),transparent 30%),
+    linear-gradient(145deg,rgba(29,62,72,.97),rgba(16,43,54,.98) 58%,rgba(8,25,32,.99))!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-identity,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-identity,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-identity{
+  gap:var(--ag-space-3)!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-summary,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-summary,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-summary{
+  gap:var(--ag-space-1)!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-kicker,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-kicker,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-kicker{
+  color:var(--ag-lime)!important;font-size:8px!important;line-height:1.2!important;
+  letter-spacing:1.15px!important;font-weight:900!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-name,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-name,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-name{
+  color:#fff!important;font-size:17px!important;line-height:1.08!important;
+  letter-spacing:.025em!important;font-weight:900!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-role,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-role,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-role{
+  color:var(--ag-text-soft)!important;font-size:8.5px!important;line-height:1.5!important;
+  letter-spacing:.04em!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-level,
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-chapter,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-chapter,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-chapter{
+  padding:4px 8px!important;border-radius:999px!important;font-size:7.5px!important;
+  line-height:1.1!important;letter-spacing:.06em!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-xp-label,
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-xp-text,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-xp-text,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-xp-text{
+  line-height:1.5!important;color:var(--ag-text-soft)!important;
+}
+html body.ag-profile-mode .missions #agPlayerMissionProfile .ag-player-avatar-frame,
+html body.ag-game-mode .missions #agPlayerMissionProfile .ag-player-avatar-frame,
+html body.ag-premium-mode .missions #agPlayerMissionProfile .ag-player-avatar-frame{
+  box-shadow:0 0 0 2px rgba(5,20,26,.8),0 10px 22px rgba(0,0,0,.30),0 0 20px rgba(194,233,93,.16)!important;
+}
+
+/* Skill profile — strong title hierarchy, glass radar well and readable list. */
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-game-mode .missions #agMissionSkillProfile,
+html body.ag-premium-mode .missions #agMissionSkillProfile{
+  padding:var(--ag-space-3)!important;
+  background:
+    radial-gradient(circle at 10% 10%,rgba(29,125,130,.15),transparent 36%),
+    linear-gradient(145deg,rgba(25,59,68,.95),rgba(16,43,54,.98) 64%,rgba(7,25,32,.99))!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head,
+html body.ag-game-mode .missions .ag-mission-skill-head,
+html body.ag-premium-mode .missions .ag-mission-skill-head{
+  margin-bottom:var(--ag-space-2)!important;padding-bottom:var(--ag-space-2)!important;
+  border-bottom:1px solid rgba(180,220,216,.14)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head span,
+html body.ag-game-mode .missions .ag-mission-skill-head span,
+html body.ag-premium-mode .missions .ag-mission-skill-head span{
+  color:var(--ag-text-muted)!important;font-size:8px!important;line-height:1.3!important;
+  letter-spacing:1px!important;font-weight:800!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head b,
+html body.ag-game-mode .missions .ag-mission-skill-head b,
+html body.ag-premium-mode .missions .ag-mission-skill-head b{
+  color:#fff!important;font-size:14px!important;line-height:1.12!important;
+  letter-spacing:.02em!important;font-weight:900!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-chart,
+html body.ag-game-mode .missions .ag-mission-skill-chart,
+html body.ag-premium-mode .missions .ag-mission-skill-chart{
+  padding:var(--ag-space-1)!important;border:1px solid rgba(177,220,216,.12)!important;
+  background:radial-gradient(circle at 50% 45%,rgba(194,233,93,.12),rgba(29,70,77,.20) 56%,rgba(7,23,30,.52))!important;
+  border-radius:var(--ag-radius-sm)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list,
+html body.ag-game-mode .missions .ag-mission-skill-list,
+html body.ag-premium-mode .missions .ag-mission-skill-list{gap:var(--ag-space-1)!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div,
+html body.ag-game-mode .missions .ag-mission-skill-list>div,
+html body.ag-premium-mode .missions .ag-mission-skill-list>div{
+  padding:4px 7px!important;border-radius:6px!important;
+  background:rgba(255,255,255,.045)!important;border:1px solid rgba(177,220,216,.10)!important;
+  color:var(--ag-text-soft)!important;transition:background .2s var(--ag-ease),border-color .2s var(--ag-ease),transform .2s var(--ag-ease)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div:hover,
+html body.ag-game-mode .missions .ag-mission-skill-list>div:hover,
+html body.ag-premium-mode .missions .ag-mission-skill-list>div:hover{
+  background:rgba(194,233,93,.09)!important;border-color:rgba(194,233,93,.28)!important;transform:translateX(2px)!important;
+}
+
+/* Current / next mission — premium focal card with high-contrast copy and
+   consistent body rhythm. */
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard,
+html body.ag-premium-mode .missions #agLandingMissionCard{
+  padding:var(--ag-space-3) var(--ag-space-4)!important;
+  background:
+    radial-gradient(circle at 90% 12%,rgba(194,233,93,.15),transparent 28%),
+    linear-gradient(145deg,rgba(25,68,75,.98),rgba(16,43,54,.99) 62%,rgba(8,26,33,1))!important;
+  border-color:rgba(139,201,133,.46)!important;
+  transition:transform .22s var(--ag-ease),box-shadow .22s var(--ag-ease),border-color .22s var(--ag-ease)!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard:hover,
+html body.ag-game-mode .missions #agLandingMissionCard:hover,
+html body.ag-premium-mode .missions #agLandingMissionCard:hover{
+  transform:translateY(-2px)!important;border-color:rgba(194,233,93,.62)!important;
+  box-shadow:0 18px 38px rgba(2,12,16,.30),0 0 0 1px rgba(194,233,93,.12),inset 0 1px 0 rgba(255,255,255,.09)!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .tag,
+html body.ag-game-mode .missions #agLandingMissionCard .tag,
+html body.ag-premium-mode .missions #agLandingMissionCard .tag{
+  color:var(--ag-lime)!important;font-size:8.5px!important;line-height:1.2!important;
+  letter-spacing:1.2px!important;font-weight:900!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard strong,
+html body.ag-game-mode .missions #agLandingMissionCard strong,
+html body.ag-premium-mode .missions #agLandingMissionCard strong{
+  display:block!important;color:#fff!important;font-size:15px!important;line-height:1.16!important;
+  letter-spacing:.015em!important;font-weight:900!important;margin-top:var(--ag-space-1)!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard p,
+html body.ag-game-mode .missions #agLandingMissionCard p,
+html body.ag-premium-mode .missions #agLandingMissionCard p{
+  color:#d0dfdc!important;font-size:9.5px!important;line-height:1.5!important;
+  margin:var(--ag-space-2) 0!important;letter-spacing:.005em!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .reward,
+html body.ag-game-mode .missions #agLandingMissionCard .reward,
+html body.ag-premium-mode .missions #agLandingMissionCard .reward{
+  padding:5px 9px!important;border-radius:999px!important;font-size:8px!important;line-height:1.1!important;
+  letter-spacing:.04em!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard button,
+html body.ag-game-mode .missions #agLandingMissionCard button,
+html body.ag-premium-mode .missions #agLandingMissionCard button{
+  min-height:30px!important;padding:7px 11px!important;border-radius:8px!important;
+  letter-spacing:.06em!important;cursor:pointer!important;
+  transition:transform .18s var(--ag-ease),filter .18s var(--ag-ease),box-shadow .18s var(--ag-ease)!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard button:hover,
+html body.ag-game-mode .missions #agLandingMissionCard button:hover,
+html body.ag-premium-mode .missions #agLandingMissionCard button:hover{
+  transform:translateY(-1px)!important;filter:brightness(1.06)!important;box-shadow:0 7px 16px rgba(194,233,93,.22)!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard button:active,
+html body.ag-game-mode .missions #agLandingMissionCard button:active,
+html body.ag-premium-mode .missions #agLandingMissionCard button:active{transform:translateY(0)!important}
+
+/* Advisor Bay — premium dock rather than five tiny icons floating in empty
+   space. The established 3 + 2 arrangement remains intact. */
+html body.ag-profile-mode .missions #agAdvisorBay,
+html body.ag-game-mode .missions #agAdvisorBay,
+html body.ag-premium-mode .missions #agAdvisorBay{
+  padding:var(--ag-space-2)!important;
+  background:
+    linear-gradient(180deg,rgba(22,55,64,.90),rgba(11,31,39,.94))!important;
+  border:1px solid rgba(150,206,196,.24)!important;
+  backdrop-filter:blur(10px) saturate(120%)!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-bay-head,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-bay-head,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-bay-head{
+  margin:0 0 var(--ag-space-2)!important;padding:0 var(--ag-space-1) var(--ag-space-2)!important;
+  border-bottom:1px solid rgba(177,220,216,.12)!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-bay-head strong,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-bay-head strong,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-bay-head strong{
+  color:#fff!important;font-size:9px!important;letter-spacing:1px!important;line-height:1.2!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-bay-head span,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-bay-head span,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-bay-head span{
+  color:var(--ag-text-muted)!important;font-size:7px!important;line-height:1.35!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-grid,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-grid,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-grid{
+  gap:var(--ag-space-2)!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-button,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-button,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-button{
+  border-radius:var(--ag-radius-sm)!important;border:1px solid rgba(177,220,216,.16)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.075),rgba(255,255,255,.025))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 6px 14px rgba(0,0,0,.16)!important;
+  transition:transform .2s var(--ag-ease),border-color .2s var(--ag-ease),background .2s var(--ag-ease),box-shadow .2s var(--ag-ease)!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-button:hover,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-button:hover,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-button:hover{
+  transform:translateY(-2px)!important;border-color:rgba(194,233,93,.48)!important;
+  background:linear-gradient(145deg,rgba(194,233,93,.13),rgba(29,125,130,.09))!important;
+  box-shadow:0 10px 22px rgba(0,0,0,.22),0 0 0 1px rgba(194,233,93,.08),inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+html body.ag-profile-mode .missions #agAdvisorBay .ag-advisor-button:focus-visible,
+html body.ag-game-mode .missions #agAdvisorBay .ag-advisor-button:focus-visible,
+html body.ag-premium-mode .missions #agAdvisorBay .ag-advisor-button:focus-visible{
+  outline:2px solid var(--ag-lime)!important;outline-offset:2px!important;
+}
+
+/* Mission drawer header receives the same rhythm and readable hierarchy. */
+html body.ag-profile-mode .missions:before,
+html body.ag-game-mode .missions:before,
+html body.ag-premium-mode .missions:before{
+  padding:var(--ag-space-4)!important;line-height:1.2!important;letter-spacing:1.4px!important;
+  font-size:10px!important;font-weight:900!important;
+}
+@media (prefers-reduced-motion:reduce){
+  html body.ag-profile-mode .missions *,html body.ag-game-mode .missions *,html body.ag-premium-mode .missions *{
+    transition-duration:.01ms!important;animation-duration:.01ms!important;
+  }
+}
+`;
+  function install(){
+    let s=document.getElementById(STYLE_ID);
+    if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}
+    s.textContent=css;
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
