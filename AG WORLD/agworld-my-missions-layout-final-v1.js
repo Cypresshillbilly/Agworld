@@ -14,13 +14,13 @@ html body.ag-profile-mode .missions,html body.ag-game-mode .missions,html body.a
 #${HID} .s{font-size:9px!important;line-height:1!important;font-weight:800!important;letter-spacing:.9px!important;white-space:nowrap!important;color:#5c776f!important}
 .missions>.eyebrow,.missions>h1,.missions>.level,.missions>.xpbar,.missions>.xptext,.missions>.section-title{display:none!important}
 .missions>#${SID}{position:absolute!important;left:10px!important;right:10px!important;top:var(--ag-mm-stack-top)!important;height:var(--ag-mm-stack-height)!important;margin:0!important;padding:0!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:var(--ag-mm-player-h) var(--ag-mm-skill-h) var(--ag-mm-mission-h)!important;row-gap:var(--ag-mm-gap)!important;align-content:start!important;box-sizing:border-box!important;overflow:hidden!important;isolation:isolate!important;z-index:1!important}
-.missions>#${SID}>#agPlayerMissionProfile,.missions>#${SID}>#agMissionSkillProfile,.missions>#${SID}>.ag-mission-skill-profile,.missions>#${SID}>#agLandingMissionCard{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;max-height:none!important;margin:0!important;box-sizing:border-box!important;transform:none!important;z-index:1!important;overflow:hidden!important;align-self:stretch!important;justify-self:stretch!important}
+.missions>#${SID}>#agPlayerMissionProfile,.missions>#${SID}>#agMissionSkillProfile,.missions>#${SID}>.ag-mission-skill-profile{position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:100%!important;min-width:0!important;height:100%!important;min-height:0!important;max-height:none!important;margin:0!important;box-sizing:border-box!important;transform:none!important;z-index:1!important;overflow:hidden!important;align-self:stretch!important;justify-self:stretch!important}
 .missions>#${SID}>#agPlayerMissionProfile{grid-row:1!important}
 .missions>#${SID}>#agMissionSkillProfile,.missions>#${SID}>.ag-mission-skill-profile{grid-row:2!important}
-html body.ag-profile-mode .missions>#${SID}>#agLandingMissionCard,html body.ag-game-mode .missions>#${SID}>#agLandingMissionCard,html body.ag-premium-mode .missions>#${SID}>#agLandingMissionCard,html body .missions>#${SID}>#agLandingMissionCard{display:flex!important;visibility:visible!important;opacity:1!important;grid-row:3!important;position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:100%!important;height:100%!important;min-height:0!important;max-height:none!important;margin:0!important;padding:9px 12px 4px!important;box-sizing:border-box!important;transform:none!important;z-index:1!important;overflow:hidden!important;flex-direction:column!important;justify-content:flex-start!important;gap:3px!important}
+html body.ag-profile-mode .missions>#${SID}>#agLandingMissionCard,html body.ag-game-mode .missions>#${SID}>#agLandingMissionCard,html body.ag-premium-mode .missions>#${SID}>#agLandingMissionCard,html body .missions>#${SID}>#agLandingMissionCard{display:flex!important;visibility:visible!important;opacity:1!important;grid-row:3!important;position:relative!important;inset:auto!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:100%!important;height:var(--ag-mm-mission-card-h)!important;min-height:0!important;max-height:var(--ag-mm-mission-card-h)!important;margin:0!important;padding:9px 12px 9px!important;box-sizing:border-box!important;transform:none!important;z-index:1!important;overflow:hidden!important;flex-direction:column!important;justify-content:flex-start!important;gap:3px!important;align-self:center!important;justify-self:stretch!important}
 .missions>#${SID}>#agLandingMissionCard .tag{display:block!important;margin:0!important;font-size:8px!important;line-height:1.1!important;letter-spacing:.8px!important;flex:0 0 auto!important}
 .missions>#${SID}>#agLandingMissionCard strong{display:block!important;margin:0!important;line-height:1.18!important;white-space:normal!important;overflow:visible!important;flex:0 0 auto!important}
-.missions>#${SID}>#agLandingMissionCard p{display:block!important;margin:0!important;line-height:1.22!important;overflow:hidden!important;flex:1 1 auto!important;min-height:0!important}
+.missions>#${SID}>#agLandingMissionCard p{display:block!important;margin:0!important;line-height:1.22!important;overflow:visible!important;flex:0 0 auto!important;min-height:0!important}
 .missions>#${SID}>#agLandingMissionCard .reward{display:inline-flex!important;align-self:flex-start!important;margin:0!important;flex:0 0 auto!important}
 .missions>#${SID}>#agLandingMissionCard button{display:block!important;width:100%!important;margin:2px 0 0!important;box-sizing:border-box!important;flex:0 0 auto!important}
 .missions>#agAdvisorBay{position:absolute!important;left:10px!important;right:10px!important;top:var(--ag-advisor-top)!important;height:var(--ag-advisor-height)!important;min-height:var(--ag-advisor-height)!important;max-height:var(--ag-advisor-height)!important;width:auto!important;margin:0!important;box-sizing:border-box!important;transform:none!important;overflow:hidden!important;z-index:2!important}
@@ -41,16 +41,24 @@ function normalize(p){
 }
 const px=v=>Math.max(0,Math.round(Number(v)||0)),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function missionContentHeight(el){
- const r=el.getBoundingClientRect();if(r.height<=0)return 0;
- let bottom=0;
+ // Measure intrinsic content rather than the current grid allocation. A
+ // flex-growing paragraph inside a tall grid row previously expanded to the
+ // row, and that expanded height was then fed back as the card's natural size.
  const nodes=[...el.querySelectorAll('.tag,strong,p,.reward,button')].filter(n=>{
    const s=getComputedStyle(n);return s.display!=='none'&&s.visibility!=='hidden';
  });
- for(const n of nodes){
-   const b=n.getBoundingClientRect();
-   if(b.width>0&&b.height>0)bottom=Math.max(bottom,b.bottom-r.top);
+ if(!nodes.length)return 0;
+ const names=['height','min-height','max-height','align-self','flex','overflow'];
+ const old=names.map(n=>[n,el.style.getPropertyValue(n),el.style.getPropertyPriority(n)]);
+ const childOld=nodes.map(n=>['flex','height','min-height','max-height','overflow'].map(k=>[k,n.style.getPropertyValue(k),n.style.getPropertyPriority(k)]));
+ try{
+   el.style.setProperty('height','auto','important');el.style.setProperty('min-height','0','important');el.style.setProperty('max-height','none','important');el.style.setProperty('align-self','start','important');el.style.setProperty('flex','0 0 auto','important');el.style.setProperty('overflow','visible','important');
+   nodes.forEach(n=>{n.style.setProperty('flex','0 0 auto','important');n.style.setProperty('height','auto','important');n.style.setProperty('min-height','0','important');n.style.setProperty('max-height','none','important');n.style.setProperty('overflow','visible','important')});
+   return px(Math.max(56,el.scrollHeight||0));
+ }finally{
+   old.forEach(([n,v,p])=>v?el.style.setProperty(n,v,p):el.style.removeProperty(n));
+   nodes.forEach((n,i)=>childOld[i].forEach(([k,v,p])=>v?n.style.setProperty(k,v,p):n.style.removeProperty(k)));
  }
- return px(bottom+4);
 }
 function natural(el){
  const names=['position','height','min-height','max-height','overflow','grid-row'],old=names.map(n=>[n,el.style.getPropertyValue(n),el.style.getPropertyPriority(n)]);
@@ -72,7 +80,7 @@ function layout(){
  const mr=p.m.getBoundingClientRect(),cr=p.command.getBoundingClientRect();if(mr.width<=0||mr.height<=0||cr.height<=0)return;
  const bayTop=px(clamp(cr.top-mr.top,0,mr.height)),bayH=px(clamp(cr.height,0,Math.max(0,mr.height-bayTop)));if(bayTop<=HH)return;
  const gap=G,stackTop=HH+gap,stackBottom=bayTop-gap,stackH=Math.max(0,stackBottom-stackTop);
- const missionNatural=Math.max(0,missionContentHeight(p.mission)||natural(p.mission)||0);let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(56,missionNatural),mh=stackH-ph-sh-gap*2;
+ const missionNatural=Math.max(0,missionContentHeight(p.mission)||0);let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(56,missionNatural),mh=stackH-ph-sh-gap*2;
  if(mh<need&&sh>SMIN){const t=Math.min(need-mh,sh-SMIN);sh-=t;mh+=t}if(mh<need&&ph>PMIN){const t=Math.min(need-mh,ph-PMIN);ph-=t;mh+=t}mh=Math.max(0,mh);
  // The grid reserves the Mission row, but the visible card itself is content-sized.
  // This removes the dead green area beneath START MISSION without moving the card,
