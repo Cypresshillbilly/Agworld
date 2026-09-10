@@ -245,3 +245,119 @@
   const observer=new MutationObserver(()=>purgeDuplicatePlayerOverlay());
   observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+
+
+/* FINAL MAP PLAYER OVERLAY KILL SWITCH
+   The map must never render a second player identity. The canonical identity is
+   the Player Profile in the Missions column only. This runs after every late
+   map mutation and removes the smallest compact map overlay containing the
+   player's name, including overlays injected inside the map header or Leaflet. */
+(()=>{
+  'use strict';
+
+  const normalise=v=>String(v||'').replace(/\s+/g,' ').trim().toUpperCase();
+
+  function canonicalNames(){
+    const p=window.AGWorldPlayer||{};
+    return [...new Set([
+      normalise(p.display_name),
+      normalise(sessionStorage.getItem('gamechanger.username')),
+      'NICO VAN ROOYEN'
+    ].filter(Boolean))];
+  }
+
+  function isProtected(el){
+    return !!(
+      !el ||
+      el.closest?.('#agPlayerMissionProfile,.missions,.sidebar,#entityInformationSection,#territoryStatsDrawer') ||
+      el.id==='agEnterWorldBtn' ||
+      el.id==='developerModeBtn' ||
+      el.closest?.('.map-tools')
+    );
+  }
+
+  function compact(el,mapRect){
+    const r=el.getBoundingClientRect?.();
+    if(!r) return false;
+    const nearMap=r.right>=mapRect.left && r.left<=mapRect.right && r.bottom>=mapRect.top && r.top<=mapRect.bottom;
+    return nearMap && r.width>0 && r.height>0 && r.width<=520 && r.height<=260;
+  }
+
+  function removeOverlayCandidate(seed,mapArea,mapRect){
+    if(!seed||isProtected(seed)) return;
+
+    let target=seed;
+    let n=seed;
+    for(let depth=0; n && n!==mapArea && depth<8; depth++, n=n.parentElement){
+      const parent=n.parentElement;
+      if(!parent || parent===mapArea || parent.id==='map' || parent.classList?.contains('map-header')) break;
+
+      const idcls=normalise((parent.id||'')+' '+(typeof parent.className==='string'?parent.className:''));
+      const positioned=['ABSOLUTE','FIXED','STICKY'].includes(getComputedStyle(parent).position.toUpperCase());
+      const looksLikeOverlay=/PLAYER|PROFILE|USER|AVATAR|HUD|OVERLAY|CONTROL|CHIP|LEAFLET/.test(idcls);
+
+      if(compact(parent,mapRect) && (positioned || looksLikeOverlay)) target=parent;
+      else if(normalise(parent.textContent).includes(normalise(seed.textContent)) && compact(parent,mapRect)) target=parent;
+    }
+
+    if(target===mapArea || target.id==='map' || target.classList?.contains('map-header') || isProtected(target)) return;
+    target.setAttribute('data-agworld-duplicate-player-overlay','true');
+    target.style.setProperty('display','none','important');
+    target.style.setProperty('visibility','hidden','important');
+    target.style.setProperty('pointer-events','none','important');
+    target.remove();
+  }
+
+  function purge(){
+    const mapArea=document.querySelector('.map-area');
+    if(!mapArea) return;
+    const mapRect=mapArea.getBoundingClientRect?.();
+    if(!mapRect) return;
+
+    const names=canonicalNames();
+
+    // Remove exact player-name overlays first, always from the smallest matching
+    // node so a shared map header/container is never deleted.
+    [...mapArea.querySelectorAll('*')].forEach(el=>{
+      if(isProtected(el)) return;
+      const text=normalise(el.textContent);
+      if(!text) return;
+      if(!names.some(name=>name && text.includes(name))) return;
+
+      const childAlsoMatches=[...el.children].some(child=>{
+        const childText=normalise(child.textContent);
+        return names.some(name=>name && childText.includes(name));
+      });
+      if(childAlsoMatches) return;
+
+      removeOverlayCandidate(el,mapArea,mapRect);
+    });
+
+    // Remove the compact top-right N avatar/chip if it is the duplicate shell
+    // rendered without the full name.
+    [...mapArea.querySelectorAll('button,[role="button"],div,span')].forEach(el=>{
+      if(isProtected(el)) return;
+      const text=normalise(el.textContent);
+      if(text!=='N') return;
+      const r=el.getBoundingClientRect?.();
+      if(!r || r.width<12 || r.height<12 || r.width>100 || r.height>100) return;
+      const nearTop=(r.top-mapRect.top)<140;
+      const nearRight=(mapRect.right-r.right)<180;
+      if(nearTop && nearRight) removeOverlayCandidate(el,mapArea,mapRect);
+    });
+  }
+
+  function start(){
+    purge();
+    const mapArea=document.querySelector('.map-area');
+    if(!mapArea) return;
+    const observer=new MutationObserver(()=>requestAnimationFrame(purge));
+    observer.observe(mapArea,{childList:true,subtree:true});
+    [50,150,400,900,1800,3500,7000,12000].forEach(ms=>setTimeout(purge,ms));
+    setInterval(purge,2000);
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
+})();
