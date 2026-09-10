@@ -1,154 +1,230 @@
-/* AG WORLD — MY MISSIONS CANONICAL STACK
-   Production layout lock:
-   Player Profile → approved Skill Profile → single Mission Card → Advisor Bay.
-   The Advisor Bay is the fixed lower boundary and aligns to the Command Center.
+/* AG WORLD — MY MISSIONS CANONICAL FOUR-PART STACK
+   Final production layout:
+   compact heading → equal gap → Active Player Profile → equal gap
+   → approved Player Skill Capability Profile → equal gap
+   → Current / Next Mission Card → equal gap → protected Advisory Bay.
+
+   This module controls geometry only. It deliberately does not redesign the
+   approved Player Profile, Skill Profile, Mission Card, or Advisor Bay internals.
 */
 (()=>{
   'use strict';
 
-  const STYLE_ID = 'agworld-my-missions-canonical-stack-v3-style';
-  const GAP = 8;
-  const NOMINAL_MISSION_HEIGHT = 96;
-  const MIN_MISSION_HEIGHT = 84;
-  const MIN_SKILL_HEIGHT = 96;
-  let resizeObserver = null;
-  let raf = 0;
+  const STYLE_ID='agworld-my-missions-canonical-stack-v4-style';
+  const HEADER_ID='agMyMissionsHeader';
+  const GAP=8;
+  const HEADER_H=34;
+  const MIN_PLAYER_H=70;
+  const MAX_PLAYER_H=96;
+  const MIN_SKILL_H=96;
+  const MIN_MISSION_H=84;
+  const PREF_MISSION_H=102;
 
-  const css = String.raw`
+  let resizeObserver=null;
+  let mutationObserver=null;
+  let raf=0;
+  let settling=false;
+
+  const css=String.raw`
 :root{
-  --ag-mm-gap: 8px;
-  --ag-mm-mission-h: 96px;
-  --ag-mm-skill-h: 120px;
-  --ag-advisor-top: 0px;
-  --ag-advisor-height: 180px;
+  --ag-mm-gap:8px;
+  --ag-mm-header-h:34px;
+  --ag-mm-player-h:84px;
+  --ag-mm-skill-h:112px;
+  --ag-mm-mission-h:102px;
+  --ag-mm-player-top:42px;
+  --ag-mm-skill-top:134px;
+  --ag-mm-mission-top:254px;
+  --ag-advisor-top:0px;
+  --ag-advisor-height:180px;
 }
 
-/* The My Missions column is a bounded vertical stage. */
+/* The white My Missions strip is a bounded stage. Nothing may bleed into the
+   protected Advisory Bay below. */
 html body.ag-profile-mode .missions,
 html body.ag-game-mode .missions,
-html body.ag-premium-mode .missions{
-  position:relative !important;
-  overflow:hidden !important;
-  box-sizing:border-box !important;
+html body.ag-premium-mode .missions,
+body .missions{
+  position:relative!important;
+  overflow:hidden!important;
+  isolation:isolate!important;
+  box-sizing:border-box!important;
 }
 
-/* Approved Player Profile remains visually untouched. */
-html body.ag-profile-mode .missions #agPlayerMissionProfile,
-html body.ag-game-mode .missions #agPlayerMissionProfile,
-html body.ag-premium-mode .missions #agPlayerMissionProfile{
-  position:relative !important;
-  z-index:40 !important;
-  box-sizing:border-box !important;
-  margin:0 10px !important;
+/* Canonical compact heading: the two labels sit beside one another and consume
+   only the space required by the heading itself. */
+#agMyMissionsHeader{
+  position:absolute!important;
+  left:10px!important;
+  right:10px!important;
+  top:0!important;
+  height:var(--ag-mm-header-h)!important;
+  min-height:var(--ag-mm-header-h)!important;
+  max-height:var(--ag-mm-header-h)!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  box-sizing:border-box!important;
+  z-index:80!important;
+  color:#102b36!important;
+  border-bottom:1px solid rgba(16,43,54,.12)!important;
+  pointer-events:none!important;
+}
+#agMyMissionsHeader .ag-mm-primary{
+  font-size:10px!important;
+  line-height:1!important;
+  font-weight:900!important;
+  letter-spacing:1.2px!important;
+  color:#102b36!important;
+  white-space:nowrap!important;
+}
+#agMyMissionsHeader .ag-mm-divider{
+  width:1px!important;
+  height:13px!important;
+  background:rgba(16,43,54,.18)!important;
+  flex:0 0 1px!important;
+}
+#agMyMissionsHeader .ag-mm-secondary{
+  font-size:9px!important;
+  line-height:1!important;
+  font-weight:800!important;
+  letter-spacing:.95px!important;
+  color:#5c776f!important;
+  white-space:nowrap!important;
 }
 
-/* Approved Skill Profile: preserve its existing internal design and content.
-   This file controls only the outer allocation of space. */
-html body.ag-profile-mode .missions #agMissionSkillProfile,
-html body.ag-profile-mode .missions .ag-mission-skill-profile,
-html body.ag-game-mode .missions #agMissionSkillProfile,
-html body.ag-game-mode .missions .ag-mission-skill-profile,
-html body.ag-premium-mode .missions #agMissionSkillProfile,
-html body.ag-premium-mode .missions .ag-mission-skill-profile{
-  position:relative !important;
-  z-index:35 !important;
-  height:var(--ag-mm-skill-h) !important;
-  min-height:0 !important;
-  max-height:none !important;
-  margin:var(--ag-mm-gap) 10px 0 !important;
-  box-sizing:border-box !important;
-  overflow:hidden !important;
+/* Hide only the superseded legacy heading rows. The canonical header above is
+   the single visible heading and leaves the approved cards untouched. */
+.missions>.eyebrow,
+.missions>h1,
+.missions>.level,
+.missions>.xpbar,
+.missions>.xptext,
+.missions>.section-title{
+  display:none!important;
 }
 
-/* Keep the original Skill Profile visual system intact. */
-html body.ag-profile-mode .missions #agMissionSkillProfile *,
-html body.ag-profile-mode .missions .ag-mission-skill-profile *,
-html body.ag-game-mode .missions #agMissionSkillProfile *,
-html body.ag-game-mode .missions .ag-mission-skill-profile *,
-html body.ag-premium-mode .missions #agMissionSkillProfile *,
-html body.ag-premium-mode .missions .ag-mission-skill-profile *{
-  max-width:100% !important;
-  box-sizing:border-box !important;
+/* Approved Player Profile: geometry only. */
+.missions #agPlayerMissionProfile{
+  position:absolute!important;
+  left:10px!important;
+  right:10px!important;
+  top:var(--ag-mm-player-top)!important;
+  height:var(--ag-mm-player-h)!important;
+  min-height:var(--ag-mm-player-h)!important;
+  max-height:var(--ag-mm-player-h)!important;
+  width:auto!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  z-index:60!important;
 }
 
-/* One readable current/next mission only, at the original compact card scale. */
-html body.ag-profile-mode .missions #agLandingMissionCard,
-html body.ag-game-mode .missions #agLandingMissionCard,
-html body.ag-premium-mode .missions #agLandingMissionCard{
-  display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
-  position:relative !important;
-  z-index:30 !important;
-  height:var(--ag-mm-mission-h) !important;
-  min-height:var(--ag-mm-mission-h) !important;
-  max-height:var(--ag-mm-mission-h) !important;
-  margin:var(--ag-mm-gap) 10px 0 !important;
-  padding:10px 12px 9px 14px !important;
-  box-sizing:border-box !important;
-  overflow:hidden !important;
+/* Approved Player Skill Capability Profile: preserve the existing internal
+   radar, stat descriptions and capability information. */
+.missions #agMissionSkillProfile,
+.missions .ag-mission-skill-profile{
+  position:absolute!important;
+  left:10px!important;
+  right:10px!important;
+  top:var(--ag-mm-skill-top)!important;
+  height:var(--ag-mm-skill-h)!important;
+  min-height:var(--ag-mm-skill-h)!important;
+  max-height:var(--ag-mm-skill-h)!important;
+  width:auto!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  z-index:55!important;
+}
+.missions #agMissionSkillProfile *,
+.missions .ag-mission-skill-profile *{
+  box-sizing:border-box!important;
+  max-width:100%!important;
 }
 
-html body.ag-profile-mode .missions #agLandingMissionCard .tag,
-html body.ag-game-mode .missions #agLandingMissionCard .tag,
-html body.ag-premium-mode .missions #agLandingMissionCard .tag{
-  display:block !important;
-  margin-bottom:3px !important;
-  font-size:9px !important;
-  line-height:1.2 !important;
+/* The single Current / Next Mission Card remains a real card, at the approved
+   branded material. Only its outer allocation changes. */
+.missions #agLandingMissionCard{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  left:10px!important;
+  right:10px!important;
+  top:var(--ag-mm-mission-top)!important;
+  height:var(--ag-mm-mission-h)!important;
+  min-height:var(--ag-mm-mission-h)!important;
+  max-height:var(--ag-mm-mission-h)!important;
+  width:auto!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  z-index:50!important;
+  transform:none!important;
 }
 
-html body.ag-profile-mode .missions #agLandingMissionCard strong,
-html body.ag-game-mode .missions #agLandingMissionCard strong,
-html body.ag-premium-mode .missions #agLandingMissionCard strong{
-  display:block !important;
-  margin:0 0 3px !important;
-  line-height:1.2 !important;
-  overflow:hidden !important;
-  text-overflow:ellipsis !important;
-  white-space:nowrap !important;
+/* Keep mission information legible inside its proportional card allocation. */
+.missions #agLandingMissionCard .tag{
+  display:block!important;
+  margin:0 0 4px!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+  letter-spacing:.7px!important;
+}
+.missions #agLandingMissionCard strong{
+  display:block!important;
+  margin:0 0 4px!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  overflow:hidden!important;
+}
+.missions #agLandingMissionCard p{
+  margin:0!important;
+  line-height:1.35!important;
+  overflow:hidden!important;
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+}
+.missions #agLandingMissionCard .reward{
+  display:inline-flex!important;
+  margin-top:5px!important;
 }
 
-html body.ag-profile-mode .missions #agLandingMissionCard p,
-html body.ag-game-mode .missions #agLandingMissionCard p,
-html body.ag-premium-mode .missions #agLandingMissionCard p{
-  margin:0 !important;
-  line-height:1.35 !important;
-  overflow:hidden !important;
-  display:-webkit-box !important;
-  -webkit-box-orient:vertical !important;
-  -webkit-line-clamp:2 !important;
+/* Advisory Bay is a protected lower boundary. It is aligned to the live
+   Command Center geometry and is never part of the resizable three-card pool. */
+.missions #agAdvisorBay{
+  position:absolute!important;
+  left:10px!important;
+  right:10px!important;
+  top:var(--ag-advisor-top)!important;
+  height:var(--ag-advisor-height)!important;
+  min-height:var(--ag-advisor-height)!important;
+  max-height:var(--ag-advisor-height)!important;
+  width:auto!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  z-index:40!important;
 }
 
-html body.ag-profile-mode .missions #agLandingMissionCard .reward,
-html body.ag-game-mode .missions #agLandingMissionCard .reward,
-html body.ag-premium-mode .missions #agLandingMissionCard .reward{
-  display:inline-flex !important;
-  margin-top:4px !important;
+/* The four intentional gaps are generated geometrically. Cards may never add
+   their own vertical margins and silently destroy the shared rhythm. */
+.missions #agPlayerMissionProfile,
+.missions #agMissionSkillProfile,
+.missions .ag-mission-skill-profile,
+.missions #agLandingMissionCard,
+.missions #agAdvisorBay{
+  transform:none!important;
 }
 
-/* Advisor Bay is the fixed lower boundary. It never overlaps the mission stack. */
-html body.ag-profile-mode .missions #agAdvisorBay,
-html body.ag-game-mode .missions #agAdvisorBay,
-html body.ag-premium-mode .missions #agAdvisorBay{
-  position:absolute !important;
-  left:10px !important;
-  right:10px !important;
-  top:var(--ag-advisor-top) !important;
-  height:var(--ag-advisor-height) !important;
-  min-height:0 !important;
-  max-height:none !important;
-  margin:0 !important;
-  box-sizing:border-box !important;
-  overflow:hidden !important;
-  z-index:20 !important;
-}
-
-/* Do not allow accidental transforms or negative margins to cross the Advisor boundary. */
-html body.ag-profile-mode .missions #agLandingMissionCard,
-html body.ag-game-mode .missions #agLandingMissionCard,
-html body.ag-premium-mode .missions #agLandingMissionCard{
-  transform:none !important;
+/* Narrow screens retain the same logical stack, while allowing the browser to
+   keep text readable rather than forcing microscopic type. */
+@media(max-height:760px){
+  :root{--ag-mm-gap:6px;}
+  #agMyMissionsHeader .ag-mm-primary{font-size:9px!important;}
+  #agMyMissionsHeader .ag-mm-secondary{font-size:8px!important;}
 }
 `;
 
@@ -175,28 +251,78 @@ html body.ag-premium-mode .missions #agLandingMissionCard{
     };
   }
 
+  function ensureHeader(missions){
+    let header=document.getElementById(HEADER_ID);
+    if(!header){
+      header=document.createElement('div');
+      header.id=HEADER_ID;
+      header.setAttribute('aria-label','My Missions Mission Control');
+      header.innerHTML='<span class="ag-mm-primary">MY MISSIONS</span><span class="ag-mm-divider" aria-hidden="true"></span><span class="ag-mm-secondary">MISSION CONTROL</span>';
+      missions.prepend(header);
+    }else if(header.parentElement!==missions){
+      missions.prepend(header);
+    }
+    return header;
+  }
+
   function normaliseOrder(parts){
     const {missions,player,skill,mission,bay}=parts;
     if(!missions||!player||!skill||!mission||!bay) return false;
 
-    /* Move only these four canonical cards and only when their order is wrong. */
-    const children=[...missions.children];
-    const positions=[children.indexOf(player),children.indexOf(skill),children.indexOf(mission),children.indexOf(bay)];
-    const ordered=positions.every((v,i)=>i===0||v>positions[i-1]);
-    if(!ordered || player.parentElement!==missions || skill.parentElement!==missions || mission.parentElement!==missions || bay.parentElement!==missions){
-      player.parentElement!==missions && missions.prepend(player);
-      skill.parentElement!==missions && missions.appendChild(skill);
-      mission.parentElement!==missions && missions.appendChild(mission);
-      bay.parentElement!==missions && missions.appendChild(bay);
-      player.insertAdjacentElement('afterend',skill);
-      skill.insertAdjacentElement('afterend',mission);
-      mission.insertAdjacentElement('afterend',bay);
-    }
+    /* Keep the exact requested canonical order without touching the approved
+       internal DOM of any card. */
+    if(player.parentElement!==missions) missions.appendChild(player);
+    if(skill.parentElement!==missions) missions.appendChild(skill);
+    if(mission.parentElement!==missions) missions.appendChild(mission);
+    if(bay.parentElement!==missions) missions.appendChild(bay);
+
+    const header=ensureHeader(missions);
+    header.insertAdjacentElement('afterend',player);
+    player.insertAdjacentElement('afterend',skill);
+    skill.insertAdjacentElement('afterend',mission);
+    mission.insertAdjacentElement('afterend',bay);
     return true;
   }
 
-  function px(value){
-    return Math.max(0,Math.round(value));
+  function clamp(v,min,max){
+    return Math.max(min,Math.min(max,v));
+  }
+
+  function px(v){
+    return Math.max(0,Math.round(Number(v)||0));
+  }
+
+  function naturalHeight(el){
+    if(!el) return 0;
+    const previous={
+      position:el.style.position,
+      top:el.style.top,
+      left:el.style.left,
+      right:el.style.right,
+      height:el.style.height,
+      minHeight:el.style.minHeight,
+      maxHeight:el.style.maxHeight,
+      visibility:el.style.visibility,
+      pointerEvents:el.style.pointerEvents
+    };
+    /* The element may already be absolutely positioned by this module. Its
+       scrollHeight remains the most stable representation of its approved
+       internal content requirement. */
+    const h=Math.max(el.scrollHeight||0,el.getBoundingClientRect().height||0);
+    return px(h);
+  }
+
+  function setGeometry(missions,geometry){
+    missions.style.setProperty('--ag-mm-gap',geometry.gap+'px');
+    missions.style.setProperty('--ag-mm-header-h',geometry.headerH+'px');
+    missions.style.setProperty('--ag-mm-player-h',geometry.playerH+'px');
+    missions.style.setProperty('--ag-mm-skill-h',geometry.skillH+'px');
+    missions.style.setProperty('--ag-mm-mission-h',geometry.missionH+'px');
+    missions.style.setProperty('--ag-mm-player-top',geometry.playerTop+'px');
+    missions.style.setProperty('--ag-mm-skill-top',geometry.skillTop+'px');
+    missions.style.setProperty('--ag-mm-mission-top',geometry.missionTop+'px');
+    missions.style.setProperty('--ag-advisor-top',geometry.bayTop+'px');
+    missions.style.setProperty('--ag-advisor-height',geometry.bayH+'px');
   }
 
   function layout(){
@@ -210,59 +336,114 @@ html body.ag-premium-mode .missions #agLandingMissionCard{
     const cr=command.getBoundingClientRect();
     if(mr.width<=0 || mr.height<=0 || cr.height<=0) return;
 
-    /* The Advisor Bay starts exactly where the Command Center starts. */
-    const bayTop=px(Math.max(0,cr.top-mr.top));
-    const bayHeight=px(Math.min(cr.height,Math.max(0,mr.bottom-cr.top)));
-    if(bayTop<=0 || bayHeight<=0) return;
+    /* Advisory Bay is anchored exactly to the Command Center's top edge. */
+    const bayTop=px(clamp(cr.top-mr.top,0,mr.height));
+    const bayH=px(clamp(Math.min(cr.height,mr.bottom-cr.top),0,mr.height-bayTop));
+    if(bayTop<=HEADER_H || bayH<=0) return;
 
-    missions.style.setProperty('--ag-advisor-top',bayTop+'px');
-    missions.style.setProperty('--ag-advisor-height',bayHeight+'px');
+    const gap=parseFloat(getComputedStyle(missions).getPropertyValue('--ag-mm-gap'))||GAP;
+    const headerH=HEADER_H;
 
-    /* Measure the actual approved Player Profile rather than imposing a new design. */
-    const pr=player.getBoundingClientRect();
-    const playerBottom=px(pr.bottom-mr.top);
+    /* The usable content region is fixed by the compact header, four identical
+       gaps, and the protected Advisor Bay boundary. */
+    const contentBudget=bayTop-headerH-(gap*4);
 
-    const stackBottom=bayTop-GAP;
-    const availableAfterPlayer=stackBottom-playerBottom-GAP;
+    /* Player stays compact and proportional to its approved content. */
+    const playerNatural=naturalHeight(player);
+    let playerH=clamp(playerNatural||84,MIN_PLAYER_H,MAX_PLAYER_H);
 
-    /* Keep the mission at the original compact size whenever physically possible.
-       The Skill Profile receives all remaining space above it. */
-    let missionHeight=NOMINAL_MISSION_HEIGHT;
-    let skillHeight=availableAfterPlayer-missionHeight-GAP;
+    /* Mission retains its approved compact card scale whenever space permits. */
+    let missionH=PREF_MISSION_H;
 
-    if(skillHeight<MIN_SKILL_HEIGHT){
-      const shortfall=MIN_SKILL_HEIGHT-skillHeight;
-      missionHeight=Math.max(MIN_MISSION_HEIGHT,missionHeight-shortfall);
-      skillHeight=availableAfterPlayer-missionHeight-GAP;
+    /* Skill Profile receives the remaining proportional space and therefore
+       remains the largest information-rich card. */
+    let skillH=contentBudget-playerH-missionH;
+
+    /* Resolve tight spaces without changing card order or crossing the Advisor
+       boundary. First reduce mission toward its readable minimum, then player
+       toward its compact minimum; the Skill Profile is never replaced or
+       redesigned. */
+    if(skillH<MIN_SKILL_H){
+      const need=MIN_SKILL_H-skillH;
+      const reducibleMission=Math.max(0,missionH-MIN_MISSION_H);
+      const missionReduction=Math.min(need,reducibleMission);
+      missionH-=missionReduction;
+      skillH+=missionReduction;
     }
 
-    /* Final hard boundary: the mission may never cross into the Advisor Bay. */
-    if(skillHeight<0){
-      skillHeight=0;
-      missionHeight=Math.max(MIN_MISSION_HEIGHT,availableAfterPlayer-GAP);
+    if(skillH<MIN_SKILL_H){
+      const need=MIN_SKILL_H-skillH;
+      const reduciblePlayer=Math.max(0,playerH-MIN_PLAYER_H);
+      const playerReduction=Math.min(need,reduciblePlayer);
+      playerH-=playerReduction;
+      skillH+=playerReduction;
     }
 
-    missions.style.setProperty('--ag-mm-mission-h',px(missionHeight)+'px');
-    missions.style.setProperty('--ag-mm-skill-h',px(skillHeight)+'px');
+    /* Hard geometric boundary. The mission bottom plus the fourth equal gap is
+       mathematically locked to the Advisory Bay top. */
+    skillH=Math.max(0,skillH);
 
-    /* Verify actual geometry after the browser applies the new values. */
-    requestAnimationFrame(()=>{
-      const q=getParts();
-      if(!q) return;
-      const qmr=q.missions.getBoundingClientRect();
-      const qcr=q.command?.getBoundingClientRect();
-      if(!qcr || qmr.height<=0) return;
+    const playerTop=headerH+gap;
+    const skillTop=playerTop+playerH+gap;
+    const missionTop=skillTop+skillH+gap;
 
-      const allowedTop=px(qcr.top-qmr.top)-GAP;
-      const missionRect=q.mission.getBoundingClientRect();
-      const skillRect=q.skill.getBoundingClientRect();
-      const overflow=px(missionRect.bottom-qmr.top)-allowedTop;
+    /* Last safety calculation preserves the protected Bay even if late CSS
+       changes alter a card's intrinsic box sizing. */
+    const missionMax=Math.max(MIN_MISSION_H,bayTop-gap-missionTop);
+    missionH=Math.min(missionH,missionMax);
 
-      if(overflow>0){
-        const nextSkill=Math.max(0,px(skillRect.height)-overflow);
-        q.missions.style.setProperty('--ag-mm-skill-h',nextSkill+'px');
-      }
+    setGeometry(missions,{
+      gap:px(gap),
+      headerH,
+      playerH:px(playerH),
+      skillH:px(skillH),
+      missionH:px(missionH),
+      playerTop:px(playerTop),
+      skillTop:px(skillTop),
+      missionTop:px(missionTop),
+      bayTop,
+      bayH
     });
+
+    requestAnimationFrame(()=>verify());
+  }
+
+  function verify(){
+    const p=getParts();
+    if(!p?.missions||!p?.command||!p?.player||!p?.skill||!p?.mission||!p?.bay) return;
+
+    const mr=p.missions.getBoundingClientRect();
+    const cr=p.command.getBoundingClientRect();
+    const pr=p.player.getBoundingClientRect();
+    const sr=p.skill.getBoundingClientRect();
+    const nr=p.mission.getBoundingClientRect();
+    const br=p.bay.getBoundingClientRect();
+
+    const tolerance=2;
+    const expectedBayTop=cr.top-mr.top;
+    const equalGaps=[
+      pr.top-mr.top-HEADER_H,
+      sr.top-pr.bottom,
+      nr.top-sr.bottom,
+      br.top-nr.bottom
+    ];
+
+    const bayAligned=Math.abs((br.top-mr.top)-expectedBayTop)<=tolerance;
+    const gapsAligned=equalGaps.every(g=>Math.abs(g-equalGaps[0])<=tolerance);
+    const noOverlap=nr.bottom<=br.top+tolerance;
+
+    p.missions.dataset.agLayoutChecked='true';
+    p.missions.dataset.agLayoutStatus=(bayAligned&&gapsAligned&&noOverlap)?'pass':'adjusting';
+
+    /* If another late stylesheet briefly changes dimensions, schedule one clean
+       recalculation instead of allowing drift or overlap to persist. */
+    if(!(bayAligned&&gapsAligned&&noOverlap) && !settling){
+      settling=true;
+      requestAnimationFrame(()=>{
+        settling=false;
+        schedule();
+      });
+    }
   }
 
   function schedule(){
@@ -285,8 +466,9 @@ html body.ag-premium-mode .missions #agLandingMissionCard{
       'agworld:player-profile',
       'agworld:mission-completed',
       'agworld:advisor-selected',
-      'agworld:landing-layout-ready'
-    ].forEach(eventName=>window.addEventListener(eventName,schedule));
+      'agworld:landing-layout-ready',
+      'agworld:game-mode-changed'
+    ].forEach(name=>window.addEventListener(name,schedule));
 
     if('ResizeObserver' in window){
       resizeObserver?.disconnect();
@@ -295,12 +477,16 @@ html body.ag-premium-mode .missions #agLandingMissionCard{
       [p?.missions,p?.command,p?.player,p?.skill,p?.mission,p?.bay].filter(Boolean).forEach(el=>resizeObserver.observe(el));
     }
 
-    [0,80,250,600,1200].forEach(delay=>setTimeout(schedule,delay));
+    mutationObserver?.disconnect();
+    mutationObserver=new MutationObserver(()=>{
+      const p=getParts();
+      if(p?.missions&&p.player&&p.skill&&p.mission&&p.bay) schedule();
+    });
+    mutationObserver.observe(document.body,{childList:true,subtree:true});
+
+    [0,80,180,350,700,1200,2000].forEach(ms=>setTimeout(schedule,ms));
   }
 
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',start,{once:true});
-  }else{
-    start();
-  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
 })();
