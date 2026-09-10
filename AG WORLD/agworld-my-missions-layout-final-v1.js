@@ -72,7 +72,7 @@ function lock(p,bayTop,bayH){
 function hardLock(p,bayTop,bayH){
  const set=(e,n,v)=>e.style.setProperty(n,v,'important');
  [p.player,p.skill,p.mission].forEach(e=>{set(e,'position','relative');set(e,'inset','auto');set(e,'left','auto');set(e,'right','auto');set(e,'top','auto');set(e,'bottom','auto');set(e,'width','100%');set(e,'height','100%');set(e,'min-height','0');set(e,'max-height','none');set(e,'margin','0');set(e,'transform','none');set(e,'z-index','1')});
- set(p.mission,'display','flex');set(p.mission,'visibility','visible');set(p.mission,'opacity','1');set(p.mission,'height','var(--ag-mm-mission-card-h,100%)');set(p.mission,'max-height','var(--ag-mm-mission-card-h,100%)');set(p.mission,'align-self','start');
+ set(p.mission,'display','flex');set(p.mission,'visibility','visible');set(p.mission,'opacity','1');set(p.mission,'height','var(--ag-mm-mission-card-h,100%)');set(p.mission,'max-height','var(--ag-mm-mission-card-h,100%)');set(p.mission,'align-self','center');
  set(p.bay,'position','absolute');set(p.bay,'left','10px');set(p.bay,'right','10px');set(p.bay,'top',bayTop+'px');set(p.bay,'height',bayH+'px');set(p.bay,'min-height',bayH+'px');set(p.bay,'max-height',bayH+'px');set(p.bay,'margin','0');set(p.bay,'transform','none');
 }
 function layout(){
@@ -95,8 +95,9 @@ function verify(){
  const mr=p.m.getBoundingClientRect(),cr=p.command.getBoundingClientRect(),a=p.player.getBoundingClientRect(),b=p.skill.getBoundingClientRect(),c=p.mission.getBoundingClientRect(),d=p.bay.getBoundingClientRect(),tol=2;
  const same=p.player.parentElement===p.skill.parentElement&&p.skill.parentElement===p.mission.parentElement&&p.player.parentElement?.id===SID;
  const missionRow=p.m.querySelector(':scope > #'+SID)?.getBoundingClientRect();
- const gaps=[a.top-mr.top-HH,b.top-a.bottom,c.top-b.bottom],cardFits=!!missionRow&&c.top>=missionRow.top-tol&&c.bottom<=missionRow.bottom+tol;
- const ok=same&&a.bottom<=b.top+tol&&b.bottom<=c.top+tol&&cardFits&&gaps.every(x=>Math.abs(x-gaps[0])<=tol)&&Math.abs(d.top-cr.top)<=tol;
+ const topGap=a.top-mr.top-HH,playerSkillGap=b.top-a.bottom,cardFits=!!missionRow&&c.top>=missionRow.top-tol&&c.bottom<=missionRow.bottom+tol;
+ const centered=!!missionRow&&Math.abs((c.top+c.bottom)/2-(missionRow.top+missionRow.bottom)/2)<=tol;
+ const ok=same&&a.bottom<=b.top+tol&&b.bottom<=c.top+tol&&cardFits&&Math.abs(topGap-playerSkillGap)<=tol&&centered&&Math.abs(d.top-cr.top)<=tol;
  p.m.dataset.agLayoutStatus=ok?'pass':'adjusting';if(!ok&&!settling){settling=true;requestAnimationFrame(()=>{settling=false;schedule()})}
 }
 function schedule(){if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{raf=0;layout()})}
