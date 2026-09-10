@@ -81,7 +81,7 @@ function renderPlayer(){
 }
 
 function portraitData(id,label){
- const file='assets/advisors/'+id+'-commander.webp';
+ const file='assets/advisors/'+id+'-commander.png';
  const initials=label.split(/\s+/).map(x=>x[0]).join('').slice(0,2);
  const palette={compliance:['#173c45','#70b5c3','#d4a37e','#1f1714'],sales:['#263d18','#c2e95d','#d8a27d','#342017'],product:['#173b54','#66b8df','#c98769','#1b1715'],operations:['#493a21','#d4ad5d','#bd7e60','#251d18'],technical:['#30214b','#a88add','#c98b70','#18151d']}[id]||['#173c45','#c2e95d','#d4a37e','#201714'];
  const [bg,accent,skin,hair]=palette;
@@ -96,7 +96,9 @@ function installAdvisorPortraits(){
    let img=btn.querySelector('.ag-advisor-portrait');
    if(!img){img=document.createElement('img');img.className='ag-advisor-portrait';img.alt=label+' Commander';btn.prepend(img)}
    img.onerror=()=>{if(img.src!==d.fallback)img.src=d.fallback};
-   if(!img.dataset.agPortraitSource){img.dataset.agPortraitSource='1';img.src=d.file}
+   img.src=d.file;
+   img.dataset.agPortraitSource=d.file;
+   btn.classList.add('ag-advisor-photo-tab');
  });
 }
 
@@ -135,7 +137,26 @@ function selectAdvisor(btn){
  window.dispatchEvent(new CustomEvent('agworld:advisor-selected',{detail:window.AGWorldAdvisorState}));
 }
 
-function bindAdvisors(){
+
+// Mission Control is the sole owner of the Sales hologram state.
+window.AGWorldStrategicCommander=window.AGWorldStrategicCommander||{
+ show(){
+   const host=document.getElementById('entityInformationSection');
+   if(!host)return;
+   showStrategicCommander();
+   const root=document.querySelector('.ag-system-guide');
+   root?.classList.remove('show','avatar-only');
+   root?.setAttribute('aria-hidden','true');
+ },
+ hide(){
+   removeStrategicCommander();
+   const root=document.querySelector('.ag-system-guide');
+   root?.classList.remove('show','avatar-only');
+   root?.setAttribute('aria-hidden','true');
+   document.querySelector('.ag-guide-reopen')?.classList.remove('show');
+ }
+};
+\nfunction bindAdvisors(){
  const bay=document.getElementById(ADVISOR_BAY);if(!bay)return;
  installAdvisorPortraits();
  if(bay.dataset.agAdvisorController==='v2')return;
