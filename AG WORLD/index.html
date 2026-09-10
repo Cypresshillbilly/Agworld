@@ -295,15 +295,23 @@ html,body{visibility:hidden}
     // behaviour while ensuring it can never return to the left navigation.
     if(btn.parentElement!==mapArea) mapArea.appendChild(btn);
     btn.onclick=openDeveloperMode;
-    btn.style.display='';
-    btn.style.visibility='visible';
-    btn.style.opacity='1';
+    btn.style.setProperty('position','absolute','important');
+    btn.style.setProperty('top','8px','important');
+    btn.style.setProperty('right','10px','important');
+    btn.style.setProperty('left','auto','important');
+    btn.style.setProperty('bottom','auto','important');
+    btn.style.setProperty('z-index','5000','important');
+    btn.style.setProperty('display','block','important');
+    btn.style.setProperty('visibility','visible','important');
+    btn.style.setProperty('opacity','1','important');
+    btn.style.setProperty('pointer-events','auto','important');
     return true;
   }
   ensureDeveloperModeButton();
   const observer=new MutationObserver(()=>ensureDeveloperModeButton());
   observer.observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('load',ensureDeveloperModeButton);
+  setInterval(ensureDeveloperModeButton,1200);
 })();
 </script><script src="main-game-layout-v1.js?v=sidebar-missions-rebalance-v50-20260909"></script><script>
 (function(){
