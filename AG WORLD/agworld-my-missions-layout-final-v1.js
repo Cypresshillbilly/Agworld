@@ -52,7 +52,7 @@ function lock(p,bayTop,bayH){
 function hardLock(p,bayTop,bayH){
  const set=(e,n,v)=>e.style.setProperty(n,v,'important');
  [p.player,p.skill,p.mission].forEach(e=>{set(e,'position','relative');set(e,'inset','auto');set(e,'left','auto');set(e,'right','auto');set(e,'top','auto');set(e,'bottom','auto');set(e,'width','100%');set(e,'height','100%');set(e,'min-height','0');set(e,'max-height','none');set(e,'margin','0');set(e,'transform','none');set(e,'z-index','1')});
- set(p.mission,'display','flex');set(p.mission,'visibility','visible');set(p.mission,'opacity','1');
+ set(p.mission,'display','flex');set(p.mission,'visibility','visible');set(p.mission,'opacity','1');set(p.mission,'height','var(--ag-mm-mission-card-h,100%)');set(p.mission,'max-height','var(--ag-mm-mission-card-h,100%)');set(p.mission,'align-self','start');
  set(p.bay,'position','absolute');set(p.bay,'left','10px');set(p.bay,'right','10px');set(p.bay,'top',bayTop+'px');set(p.bay,'height',bayH+'px');set(p.bay,'min-height',bayH+'px');set(p.bay,'max-height',bayH+'px');set(p.bay,'margin','0');set(p.bay,'transform','none');
 }
 function layout(){
@@ -60,16 +60,23 @@ function layout(){
  const mr=p.m.getBoundingClientRect(),cr=p.command.getBoundingClientRect();if(mr.width<=0||mr.height<=0||cr.height<=0)return;
  const bayTop=px(clamp(cr.top-mr.top,0,mr.height)),bayH=px(clamp(cr.height,0,Math.max(0,mr.height-bayTop)));if(bayTop<=HH)return;
  const gap=G,stackTop=HH+gap,stackBottom=bayTop-gap,stackH=Math.max(0,stackBottom-stackTop);
- let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(MMIN,natural(p.mission)||MMIN),mh=stackH-ph-sh-gap*2;
+ const missionNatural=Math.max(0,natural(p.mission)||0);let ph=clamp(natural(p.player)||84,PMIN,PMAX),sh=clamp(natural(p.skill)||126,SMIN,SMAX),need=Math.max(MMIN,missionNatural),mh=stackH-ph-sh-gap*2;
  if(mh<need&&sh>SMIN){const t=Math.min(need-mh,sh-SMIN);sh-=t;mh+=t}if(mh<need&&ph>PMIN){const t=Math.min(need-mh,ph-PMIN);ph-=t;mh+=t}mh=Math.max(0,mh);
- [['--ag-mm-gap',gap],['--ag-mm-header-h',HH],['--ag-mm-player-h',ph],['--ag-mm-skill-h',sh],['--ag-mm-mission-h',mh],['--ag-mm-stack-top',stackTop],['--ag-mm-stack-height',stackH],['--ag-advisor-top',bayTop],['--ag-advisor-height',bayH]].forEach(([n,v])=>p.m.style.setProperty(n,px(v)+'px'));
- hardLock(p,bayTop,bayH);p.m.dataset.agMissionLayer='single-grid-layer';p.m.dataset.agMissionMeasuredHeight=String(px(mh));p.m.dataset.agLayoutChecked='true';
+ // The grid reserves the Mission row, but the visible card itself is content-sized.
+ // This removes the dead green area beneath START MISSION without moving the card,
+ // the Skill Profile, or the Advisory Bay.
+ const missionCardH=Math.min(mh,Math.max(0,missionNatural));
+ [['--ag-mm-gap',gap],['--ag-mm-header-h',HH],['--ag-mm-player-h',ph],['--ag-mm-skill-h',sh],['--ag-mm-mission-h',mh],['--ag-mm-mission-card-h',missionCardH],['--ag-mm-stack-top',stackTop],['--ag-mm-stack-height',stackH],['--ag-advisor-top',bayTop],['--ag-advisor-height',bayH]].forEach(([n,v])=>p.m.style.setProperty(n,px(v)+'px'));
+ hardLock(p,bayTop,bayH);p.m.dataset.agMissionLayer='single-grid-layer';p.m.dataset.agMissionMeasuredHeight=String(px(mh));p.m.dataset.agMissionCardHeight=String(px(missionCardH));p.m.dataset.agLayoutChecked='true';
  requestAnimationFrame(verify);
 }
 function verify(){
  const p=parts();if(!p?.m||!p.command||!p.player||!p.skill||!p.mission||!p.bay)return;
  const mr=p.m.getBoundingClientRect(),cr=p.command.getBoundingClientRect(),a=p.player.getBoundingClientRect(),b=p.skill.getBoundingClientRect(),c=p.mission.getBoundingClientRect(),d=p.bay.getBoundingClientRect(),tol=2;
- const gaps=[a.top-mr.top-HH,b.top-a.bottom,c.top-b.bottom,d.top-c.bottom],same=p.player.parentElement===p.skill.parentElement&&p.skill.parentElement===p.mission.parentElement&&p.player.parentElement?.id===SID,ok=same&&a.bottom<=b.top+tol&&b.bottom<=c.top+tol&&c.bottom<=d.top+tol&&gaps.every(x=>Math.abs(x-gaps[0])<=tol)&&Math.abs(d.top-cr.top)<=tol;
+ const same=p.player.parentElement===p.skill.parentElement&&p.skill.parentElement===p.mission.parentElement&&p.player.parentElement?.id===SID;
+ const missionRow=p.m.querySelector(':scope > #'+SID)?.getBoundingClientRect();
+ const gaps=[a.top-mr.top-HH,b.top-a.bottom,c.top-b.bottom],cardFits=!!missionRow&&c.top>=missionRow.top-tol&&c.bottom<=missionRow.bottom+tol;
+ const ok=same&&a.bottom<=b.top+tol&&b.bottom<=c.top+tol&&cardFits&&gaps.every(x=>Math.abs(x-gaps[0])<=tol)&&Math.abs(d.top-cr.top)<=tol;
  p.m.dataset.agLayoutStatus=ok?'pass':'adjusting';if(!ok&&!settling){settling=true;requestAnimationFrame(()=>{settling=false;schedule()})}
 }
 function schedule(){if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{raf=0;layout()})}
