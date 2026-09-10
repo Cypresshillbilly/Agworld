@@ -282,17 +282,18 @@ html,body{visibility:hidden}
 (function(){
   function openDeveloperMode(){ window.open('developer-mode.html','agworldDeveloperMode'); }
   function ensureDeveloperModeButton(){
-    const nav=document.querySelector('.sidebar .nav') || document.querySelector('.nav');
-    if(!nav) return false;
+    const mapArea=document.querySelector('.map-area');
+    if(!mapArea) return false;
     let btn=document.getElementById('developerModeBtn');
     if(!btn){
       btn=document.createElement('button');
       btn.id='developerModeBtn';
       btn.type='button';
       btn.textContent='⚙ DEVELOPER MODE ↗';
-      const profile=nav.querySelector('[data-view="profile"]');
-      if(profile) nav.insertBefore(btn,profile); else nav.appendChild(btn);
     }
+    // The map owns Developer Mode. Moving the same element preserves its
+    // behaviour while ensuring it can never return to the left navigation.
+    if(btn.parentElement!==mapArea) mapArea.appendChild(btn);
     btn.onclick=openDeveloperMode;
     btn.style.display='';
     btn.style.visibility='visible';
