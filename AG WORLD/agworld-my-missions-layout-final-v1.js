@@ -205,6 +205,59 @@ body .missions #agLandingMissionCard{
   box-sizing:border-box!important;
 }
 
+/* Canonical single-layer card stack. Player, Skill and Mission share one
+   grid coordinate system, eliminating independent absolute-position layers. */
+.missions #agMyMissionsStack{
+  position:absolute!important;
+  left:10px!important;
+  right:10px!important;
+  top:var(--ag-mm-stack-top)!important;
+  height:var(--ag-mm-stack-height)!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:var(--ag-mm-player-h) var(--ag-mm-skill-h) minmax(var(--ag-mm-mission-h),1fr)!important;
+  row-gap:var(--ag-mm-gap)!important;
+  align-content:stretch!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  isolation:isolate!important;
+  z-index:1!important;
+}
+.missions #agMyMissionsStack > #agPlayerMissionProfile,
+.missions #agMyMissionsStack > #agMissionSkillProfile,
+.missions #agMyMissionsStack > .ag-mission-skill-profile,
+.missions #agMyMissionsStack > #agLandingMissionCard{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+  transform:none!important;
+  z-index:1!important;
+}
+.missions #agMyMissionsStack > #agPlayerMissionProfile{
+  height:var(--ag-mm-player-h)!important;
+  min-height:var(--ag-mm-player-h)!important;
+  max-height:var(--ag-mm-player-h)!important;
+}
+.missions #agMyMissionsStack > #agMissionSkillProfile,
+.missions #agMyMissionsStack > .ag-mission-skill-profile{
+  height:var(--ag-mm-skill-h)!important;
+  min-height:var(--ag-mm-skill-h)!important;
+  max-height:var(--ag-mm-skill-h)!important;
+}
+.missions #agMyMissionsStack > #agLandingMissionCard{
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important;
+  align-self:stretch!important;
+}
+
 /* Advisory Bay is a protected lower boundary. It is aligned to the live
    Command Center geometry and is never part of the resizable three-card pool. */
 .missions #agAdvisorBay{
@@ -319,22 +372,34 @@ body .missions #agLandingMissionCard{
     return header;
   }
 
+  function ensureStack(missions,header){
+    let stack=missions.querySelector(':scope > #agMyMissionsStack');
+    if(!stack){
+      stack=document.createElement('div');
+      stack.id='agMyMissionsStack';
+      stack.setAttribute('aria-label','My Missions panel stack');
+      header.insertAdjacentElement('afterend',stack);
+    }
+    return stack;
+  }
+
   function normaliseOrder(parts){
     const {missions,player,skill,mission,bay}=parts;
     if(!missions||!player||!skill||!mission||!bay) return false;
 
-    /* Keep the exact requested canonical order without touching the approved
-       internal DOM of any card. */
-    if(player.parentElement!==missions) missions.appendChild(player);
-    if(skill.parentElement!==missions) missions.appendChild(skill);
-    if(mission.parentElement!==missions) missions.appendChild(mission);
-    if(bay.parentElement!==missions) missions.appendChild(bay);
-
+    /* One canonical layout layer: Player, Skill and Mission are siblings in
+       the same grid container. No card is independently absolutely positioned
+       above another card. */
     const header=ensureHeader(missions);
-    header.insertAdjacentElement('afterend',player);
-    player.insertAdjacentElement('afterend',skill);
+    const stack=ensureStack(missions,header);
+
+    if(player.parentElement!==stack) stack.appendChild(player);
+    if(skill.parentElement!==stack) stack.appendChild(skill);
+    if(mission.parentElement!==stack) stack.appendChild(mission);
+
     skill.insertAdjacentElement('afterend',mission);
-    mission.insertAdjacentElement('afterend',bay);
+
+    if(bay.parentElement!==missions) missions.appendChild(bay);
     return true;
   }
 
@@ -428,6 +493,8 @@ body .missions #agLandingMissionCard{
     missions.style.setProperty('--ag-mm-mission-top',geometry.missionTop+'px');
     missions.style.setProperty('--ag-advisor-top',geometry.bayTop+'px');
     missions.style.setProperty('--ag-advisor-height',geometry.bayH+'px');
+    missions.style.setProperty('--ag-mm-stack-top',geometry.stackTop+'px');
+    missions.style.setProperty('--ag-mm-stack-height',geometry.stackH+'px');
   }
 
   /* Runtime geometry lock. Several earlier UI layers also target the landing
@@ -437,21 +504,23 @@ body .missions #agLandingMissionCard{
   function lockMissionGeometry(mission,geometry){
     if(!mission) return;
     const set=(name,value)=>mission.style.setProperty(name,value,'important');
+    /* The mission is now a normal grid item on the same layout layer as the
+       Player Profile and Skill Profile. It cannot float over either card. */
     set('display','block');
     set('visibility','visible');
     set('opacity','1');
-    set('position','absolute');
-    set('left','10px');
-    set('right','10px');
-    set('top',px(geometry.missionTop)+'px');
-    set('height',px(geometry.missionH)+'px');
-    set('min-height',px(geometry.missionH)+'px');
-    set('max-height',px(geometry.missionH)+'px');
-    set('width','auto');
+    set('position','relative');
+    set('left','auto');
+    set('right','auto');
+    set('top','auto');
+    set('height','100%');
+    set('min-height','0');
+    set('max-height','none');
+    set('width','100%');
     set('margin','0');
     set('overflow','hidden');
     set('transform','none');
-    set('z-index','90');
+    set('z-index','1');
   }
 
   function layout(){
@@ -495,26 +564,31 @@ body .missions #agLandingMissionCard{
     const skillNatural=naturalHeight(skill);
     let skillH=clamp(skillNatural||112,MIN_SKILL_H,140);
 
-    const playerTop=headerH+gap;
-    const skillTop=playerTop+playerH+gap;
+    /* The canonical stack occupies the exact region between the heading and
+       Advisory Bay. Within it, normal CSS Grid flow owns all vertical spacing. */
+    const stackTop=headerH+gap;
+    const stackBottom=bayTop-gap;
+    let stackH=Math.max(0,stackBottom-stackTop);
+    const preferredMission=Math.max(MIN_MISSION_H,PREFERRED_MISSION_H,missionNatural||FALLBACK_MISSION_H);
 
-    /* The Mission Card owns the white region below the Skill Profile. */
-    let missionTop=skillTop+skillH+gap;
-    let missionMax=Math.max(0,bayTop-gap-missionTop);
-
-    /* On unusually tight heights, reclaim only unused outer Skill allocation,
-       never overlap the approved Skill Profile or Advisory Bay. */
-    if(missionMax<MIN_MISSION_H && skillH>MIN_SKILL_H){
-      const reclaim=Math.min(MIN_MISSION_H-missionMax,skillH-MIN_SKILL_H);
+    let availableMission=stackH-playerH-skillH-(gap*2);
+    if(availableMission<preferredMission && skillH>MIN_SKILL_H){
+      const reclaim=Math.min(preferredMission-availableMission,skillH-MIN_SKILL_H);
       skillH-=reclaim;
-      missionTop=skillTop+skillH+gap;
-      missionMax=Math.max(0,bayTop-gap-missionTop);
+      availableMission+=reclaim;
+    }
+    if(availableMission<MIN_MISSION_H && playerH>MIN_PLAYER_H){
+      const reclaim=Math.min(MIN_MISSION_H-availableMission,playerH-MIN_PLAYER_H);
+      playerH-=reclaim;
+      availableMission+=reclaim;
     }
 
-    missionH=Math.min(
-      missionMax,
-      Math.max(MIN_MISSION_H,PREFERRED_MISSION_H,missionNatural||FALLBACK_MISSION_H)
-    );
+    /* Grid gives the Mission Card every remaining pixel below the Skill Profile.
+       This is the single source of truth, so it cannot overlay the Skill card. */
+    missionH=Math.max(0,availableMission);
+    const playerTop=stackTop;
+    const skillTop=playerTop+playerH+gap;
+    const missionTop=skillTop+skillH+gap;
 
     setGeometry(missions,{
       gap:px(gap),
@@ -526,7 +600,9 @@ body .missions #agLandingMissionCard{
       skillTop:px(skillTop),
       missionTop:px(missionTop),
       bayTop,
-      bayH
+      bayH,
+      stackTop:px(stackTop),
+      stackH:px(stackH)
     });
 
     /* Persist the measured card height as a runtime checkpoint. This makes the
@@ -560,10 +636,17 @@ body .missions #agLandingMissionCard{
 
     const bayAligned=Math.abs((br.top-mr.top)-expectedBayTop)<=tolerance;
     const gapsAligned=equalGaps.every(g=>Math.abs(g-equalGaps[0])<=tolerance);
-    const noOverlap=nr.bottom<=br.top+tolerance;
+    const ordered=pr.bottom<=sr.top+tolerance &&
+                  sr.bottom<=nr.top+tolerance &&
+                  nr.bottom<=br.top+tolerance;
+    const sameStack=p.player.parentElement===p.skill.parentElement &&
+                    p.skill.parentElement===p.mission.parentElement &&
+                    p.player.parentElement?.id==='agMyMissionsStack';
+    const noOverlap=ordered && sameStack;
 
     p.missions.dataset.agLayoutChecked='true';
     p.missions.dataset.agLayoutStatus=(bayAligned&&gapsAligned&&noOverlap)?'pass':'adjusting';
+    p.missions.dataset.agMissionLayer=sameStack?'single-grid-layer':'repairing';
 
     /* If another late stylesheet briefly changes dimensions, schedule one clean
        recalculation instead of allowing drift or overlap to persist. */
