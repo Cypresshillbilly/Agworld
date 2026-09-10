@@ -181,8 +181,10 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         const {GLTFLoader}=await import('https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js');
         const width=132,height=160;
         const scene=new THREE.Scene();
-        const camera=new THREE.PerspectiveCamera(28,width/height,.1,100);
-        camera.position.set(0,1.2,5.2);
+        const camera=new THREE.PerspectiveCamera(25,width/height,.1,100);
+        // Upper-body command briefing framing: the Strategic Commander reads clearly
+        // in the small map HUD without looking like a distant full-body game NPC.
+        camera.position.set(0,1.05,4.55);
         const renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
         renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
         renderer.setSize(width,height,false);
@@ -195,8 +197,8 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         const loader=new GLTFLoader();
         const gltf=await loader.loadAsync('https://threejs.org/examples/models/gltf/Soldier.glb');
         const model=gltf.scene;
-        model.scale.setScalar(1.18);
-        model.position.set(0,-1.62,0);
+        model.scale.setScalar(1.28);
+        model.position.set(0,-1.76,0);
         model.rotation.y=Math.PI;
         scene.add(model);
 
@@ -219,6 +221,55 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         const rightArm=findBone(['rightarm','right_arm','upperarm.r','upper_arm.r']);
         const leftArm=findBone(['leftarm','left_arm','upperarm.l','upper_arm.l']);
         const spine=findBone(['spine','chest']);
+
+        // AgWorld Strategic Commander presentation layer.
+        // This is intentionally geometry-based rather than a generated image:
+        // command insignia, rank bars and a restrained green corporate accent
+        // turn the base animated rig into the AgWorld guide personality.
+        const accentMat=new THREE.MeshStandardMaterial({
+          color:0xb8e620,emissive:0x355000,emissiveIntensity:.55,
+          metalness:.25,roughness:.42,transparent:true,opacity:.92
+        });
+        const darkMat=new THREE.MeshStandardMaterial({
+          color:0x102a20,metalness:.35,roughness:.52,transparent:true,opacity:.88
+        });
+        const addCommanderInsignia=()=>{
+          if(!spine) return;
+          const rig=new THREE.Group();
+          rig.name='AgWorldStrategicCommanderInsignia';
+
+          // Narrow command chest panel.
+          const chest=new THREE.Mesh(new THREE.BoxGeometry(.42,.19,.025),darkMat);
+          chest.position.set(0,.12,-.20);
+          rig.add(chest);
+
+          // Three objective/rank bars.
+          for(let i=0;i<3;i++){
+            const bar=new THREE.Mesh(new THREE.BoxGeometry(.09,.018,.028),accentMat);
+            bar.position.set(-.11+i*.11,.16,-.225);
+            rig.add(bar);
+          }
+
+          // Small central command badge.
+          const badge=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.018,20),accentMat);
+          badge.rotation.x=Math.PI/2;
+          badge.position.set(0,.02,-.22);
+          rig.add(badge);
+
+          // Restrained shoulder command tabs.
+          const shoulderL=new THREE.Mesh(new THREE.BoxGeometry(.15,.025,.08),accentMat);
+          shoulderL.position.set(.32,.34,-.02);
+          shoulderL.rotation.z=-.12;
+          rig.add(shoulderL);
+          const shoulderR=shoulderL.clone();
+          shoulderR.position.x=-.32;
+          shoulderR.rotation.z=.12;
+          rig.add(shoulderR);
+
+          spine.add(rig);
+        };
+        addCommanderInsignia();
+
         const clock=new THREE.Clock();
         const baseline={
           head:head?head.rotation.clone():null,
@@ -247,14 +298,14 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
           };
           if(mode==='sleep'){
             model.rotation.z=Math.sin(t*.55)*.018;
-            model.position.y=-1.62+Math.sin(t*1.15)*.025;
+            model.position.y=-1.76+Math.sin(t*1.15)*.025;
             lerpBone(head,baseline.head,.34,0,0,.045);
             lerpBone(rightArm,baseline.right,.10,0,-.08,.05);
             lerpBone(leftArm,baseline.left,.10,0,.08,.05);
             lerpBone(spine,baseline.spine,.05,0,0,.05);
           }else if(mode==='talk'){
             model.rotation.z=Math.sin(t*1.3)*.012;
-            model.position.y=-1.62+Math.sin(t*2.2)*.012;
+            model.position.y=-1.76+Math.sin(t*2.2)*.012;
             lerpBone(head,baseline.head,Math.sin(t*2.7)*.035,Math.sin(t*1.9)*.025,0,.14);
             lerpBone(rightArm,baseline.right,.22+Math.sin(t*3.0)*.16,0,-.30-Math.sin(t*2.1)*.18,.12);
             lerpBone(leftArm,baseline.left,.12+Math.sin(t*2.1)*.09,0,.16+Math.sin(t*2.7)*.12,.12);
@@ -263,7 +314,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
             const wakeElapsed=wakeStart?(performance.now()-wakeStart)/1000:99;
             const kick=wakeElapsed<.8?Math.sin(Math.min(1,wakeElapsed/.8)*Math.PI)*.22:0;
             model.rotation.z=Math.sin(t*.72)*.01;
-            model.position.y=-1.62+Math.sin(t*1.25)*.015;
+            model.position.y=-1.76+Math.sin(t*1.25)*.015;
             lerpBone(head,baseline.head,-kick*.9,0,0,.09);
             lerpBone(rightArm,baseline.right,kick*.9,0,-kick*.7,.1);
             lerpBone(leftArm,baseline.left,kick*.75,0,kick*.55,.1);
