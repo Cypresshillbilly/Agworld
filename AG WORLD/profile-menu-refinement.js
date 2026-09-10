@@ -175,7 +175,15 @@ const SIDEBAR_MENU=[
  ['logout','Logout']
 ];
 function menuKey(el){
- const raw=(el.dataset.menu||el.dataset.view||el.id||el.getAttribute('aria-label')||el.textContent||'').toLowerCase();
+ // IDs are implementation details (e.g. agCampaignCommandButton); labels are
+ // the canonical navigation identity, so consider all sources together.
+ const raw=[
+   el.dataset&&el.dataset.menu,
+   el.dataset&&el.dataset.view,
+   el.getAttribute&&el.getAttribute('aria-label'),
+   el.textContent,
+   el.id
+ ].filter(Boolean).join(' ').toLowerCase();
  return raw.replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
 }
 function ensureTerritoryCampaignMenuItem(nav){
@@ -230,12 +238,15 @@ function removeMapPlayerProfile(){
  });
 }
 function removeExplicitlyObsoleteSidebarItems(nav){
- if(!nav)return;
+ const s=document.querySelector('.sidebar');if(!s)return;
  const obsolete=/^(company commands?|company controls?|developer mode)$/i;
- const candidates=Array.from(nav.querySelectorAll('button,a,[role="button"],.nav-item,.menu-item,.nav-link,[data-view],[data-menu]'));
- candidates.forEach(el=>{
+ // Some legacy versions render these as section headings outside .nav, so scan
+ // the entire sidebar and remove the smallest exact-label container.
+ Array.from(s.querySelectorAll('*')).forEach(el=>{
    const label=(el.textContent||'').replace(/\s+/g,' ').trim();
-   if(obsolete.test(label)) el.remove();
+   if(!obsolete.test(label))return;
+   if(el.querySelector('button,a,[role="button"],.nav-item,.menu-item,.nav-link')) el.remove();
+   else el.remove();
  });
 }
 function forceMapProfileRemoval(){
