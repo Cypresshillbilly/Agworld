@@ -549,6 +549,185 @@ html body.ag-profile-mode .missions #agAdvisorBay *{
 }
 
 }
+
+/* === CANONICAL PLAYER LANDING QA LOCK — READABILITY + ADVISOR SCALE ===
+   Locked requirements:
+   Player Profile → Skill Profile → one Current/Next Mission → Advisor Bay.
+   The Advisor Bay remains geometrically aligned to the Command Center. */
+@media (min-width:1500px){
+  html body.ag-profile-mode .app-shell,
+  html body.ag-game-mode .app-shell,
+  html body.ag-premium-mode .app-shell{
+    grid-template-columns:210px 198px minmax(0,1fr)!important;
+  }
+  html body.ag-profile-mode .missions,
+  html body.ag-game-mode .missions,
+  html body.ag-premium-mode .missions{
+    width:198px!important;min-width:198px!important;
+  }
+}
+
+html body.ag-profile-mode .missions #agPlayerMissionProfile,
+html body.ag-game-mode .missions #agPlayerMissionProfile{
+  z-index:70!important;
+}
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-profile-mode .missions .ag-mission-skill-profile,
+html body.ag-game-mode .missions #agMissionSkillProfile,
+html body.ag-game-mode .missions .ag-mission-skill-profile{
+  position:relative!important;z-index:65!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  position:relative!important;z-index:60!important;
+}
+
+/* Player profile: increase usable type hierarchy and contrast. */
+html body.ag-profile-mode .missions .ag-player-kicker,
+html body.ag-game-mode .missions .ag-player-kicker{
+  font-size:8px!important;letter-spacing:1.45px!important;color:#d7f58a!important;
+}
+html body.ag-profile-mode .missions .ag-player-name,
+html body.ag-game-mode .missions .ag-player-name{
+  font-size:18px!important;line-height:1.12!important;letter-spacing:.5px!important;
+}
+html body.ag-profile-mode .missions .ag-player-role,
+html body.ag-game-mode .missions .ag-player-role{
+  font-size:9.4px!important;line-height:1.28!important;color:#d6e5e8!important;
+}
+html body.ag-profile-mode .missions .ag-player-level,
+html body.ag-game-mode .missions .ag-player-level,
+html body.ag-profile-mode .missions .ag-player-chapter,
+html body.ag-game-mode .missions .ag-player-chapter{
+  font-size:8.8px!important;padding:4px 8px!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-label,
+html body.ag-game-mode .missions .ag-player-xp-label{
+  font-size:8.2px!important;color:#d7e4e7!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-label b,
+html body.ag-game-mode .missions .ag-player-xp-label b{
+  font-size:9px!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-text,
+html body.ag-game-mode .missions .ag-player-xp-text{
+  font-size:8.8px!important;color:#d8e4e7!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-track,
+html body.ag-game-mode .missions .ag-player-xp-track{
+  height:11px!important;
+}
+
+/* Skill profile: remove the miniature-dashboard feel. */
+html body.ag-profile-mode .missions .ag-mission-skill-head span,
+html body.ag-game-mode .missions .ag-mission-skill-head span{
+  font-size:8.5px!important;letter-spacing:1.1px!important;color:#c8dfe4!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head b,
+html body.ag-game-mode .missions .ag-mission-skill-head b{
+  font-size:15px!important;line-height:1.15!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div,
+html body.ag-game-mode .missions .ag-mission-skill-list>div{
+  min-height:22px!important;padding:7px 8px!important;font-size:8.4px!important;
+  background:rgba(255,255,255,.095)!important;border-color:rgba(190,226,231,.22)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div b,
+html body.ag-game-mode .missions .ag-mission-skill-list>div b{
+  font-size:10.5px!important;
+}
+
+/* The landing surface contains exactly one current/next mission card. */
+html body.ag-profile-mode .missions #agLandingMissionCard,
+html body.ag-game-mode .missions #agLandingMissionCard{
+  margin:11px 10px!important;padding:15px 15px 14px!important;
+  min-height:116px!important;box-sizing:border-box!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .tag,
+html body.ag-game-mode .missions #agLandingMissionCard .tag{
+  font-size:8.8px!important;letter-spacing:1.15px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard strong,
+html body.ag-game-mode .missions #agLandingMissionCard strong{
+  font-size:15px!important;line-height:1.22!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard p,
+html body.ag-game-mode .missions #agLandingMissionCard p{
+  font-size:9.6px!important;line-height:1.48!important;color:#38535b!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .reward,
+html body.ag-game-mode .missions #agLandingMissionCard .reward{
+  font-size:8.2px!important;padding:6px 9px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard button,
+html body.ag-game-mode .missions #agLandingMissionCard button{
+  font-size:8.8px!important;padding:7px 10px!important;
+}
+
+/* Advisor Bay: larger character portals in the required 2-over-3 formation. */
+html body.ag-profile-mode .missions #agAdvisorBay,
+html body.ag-game-mode .missions #agAdvisorBay{
+  z-index:55!important;padding:12px!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head,
+html body.ag-game-mode .ag-advisor-bay-head{
+  margin-bottom:8px!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head strong,
+html body.ag-game-mode .ag-advisor-bay-head strong{
+  font-size:11px!important;letter-spacing:1.3px!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head span,
+html body.ag-game-mode .ag-advisor-bay-head span{
+  font-size:8px!important;letter-spacing:.95px!important;
+}
+html body.ag-profile-mode .ag-advisor-grid,
+html body.ag-game-mode .ag-advisor-grid{
+  gap:9px!important;
+}
+html body.ag-profile-mode .ag-advisor,
+html body.ag-game-mode .ag-advisor{
+  min-height:82px!important;padding:6px 4px 5px!important;
+}
+html body.ag-profile-mode .ag-advisor-icon,
+html body.ag-game-mode .ag-advisor-icon{
+  top:5px!important;width:60px!important;height:74px!important;
+  transform:translateX(-50%)!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .head,
+html body.ag-game-mode .ag-advisor-icon .head{
+  width:24px!important;height:26px!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .hair,
+html body.ag-game-mode .ag-advisor-icon .hair{
+  width:28px!important;height:10px!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .body,
+html body.ag-game-mode .ag-advisor-icon .body{
+  width:52px!important;height:46px!important;border-radius:16px 16px 7px 7px!important;
+}
+html body.ag-profile-mode .ag-advisor-icon .mark,
+html body.ag-game-mode .ag-advisor-icon .mark{
+  bottom:15px!important;font-size:11px!important;
+}
+html body.ag-profile-mode .ag-advisor-label,
+html body.ag-game-mode .ag-advisor-label{
+  font-size:8.8px!important;line-height:1.12!important;letter-spacing:.55px!important;
+}
+
+/* Preserve exact 2-over-3 ordering regardless of later module CSS. */
+html body.ag-profile-mode .ag-advisor:nth-child(1),
+html body.ag-game-mode .ag-advisor:nth-child(1){grid-column:2 / span 2!important;grid-row:1!important}
+html body.ag-profile-mode .ag-advisor:nth-child(2),
+html body.ag-game-mode .ag-advisor:nth-child(2){grid-column:4 / span 2!important;grid-row:1!important}
+html body.ag-profile-mode .ag-advisor:nth-child(3),
+html body.ag-game-mode .ag-advisor:nth-child(3){grid-column:1 / span 2!important;grid-row:2!important}
+html body.ag-profile-mode .ag-advisor:nth-child(4),
+html body.ag-game-mode .ag-advisor:nth-child(4){grid-column:3 / span 2!important;grid-row:2!important}
+html body.ag-profile-mode .ag-advisor:nth-child(5),
+html body.ag-game-mode .ag-advisor:nth-child(5){grid-column:5 / span 2!important;grid-row:2!important}
+
 `;
 function installStyles(){let s=document.getElementById(STYLE_ID);if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s)}if(s.textContent!==css)s.textContent=css}
 function playerData(){
