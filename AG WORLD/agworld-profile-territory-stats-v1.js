@@ -35,28 +35,28 @@ function ensureStyle(){
  if(document.getElementById(STYLE_ID))return;
  const style=document.createElement('style');style.id=STYLE_ID;
  style.textContent=
- 'body.ag-profile-mode #territoryInfoPanel,body.ag-profile-mode #territoryStatsDrawer{display:none!important}'+
+ 'html,body{width:100%!important;min-width:100%!important;min-height:100%!important}body.ag-profile-mode{width:100vw!important;min-width:100vw!important;height:100vh!important;min-height:100vh!important;margin:0!important;overflow:hidden!important}body.ag-profile-mode .app-shell{width:100vw!important;min-width:100vw!important;height:100vh!important;min-height:100vh!important;max-width:none!important;max-height:none!important;margin:0!important;transform:none!important}body.ag-profile-mode #territoryInfoPanel,body.ag-profile-mode #territoryStatsDrawer{display:none!important}'+
  '#'+ROOT_ID+'{position:absolute;right:0;top:18px;z-index:2600;height:auto;display:flex;flex-direction:row;align-items:stretch;justify-content:flex-end;pointer-events:auto}'+
  '#'+ROOT_ID+' .agpts-toggle{width:30px;min-width:30px;border:1px solid rgba(184,230,32,.48);border-left:0;border-radius:0 10px 10px 0;background:linear-gradient(180deg,#173c45,#102b36);color:#f4f3ed;cursor:pointer;padding:8px 0;display:flex;align-items:center;justify-content:center;gap:7px;writing-mode:vertical-rl;letter-spacing:1px;font:800 8px Arial,sans-serif}'+
  '#'+ROOT_ID+' .agpts-toggle b{font-size:15px;line-height:1;font-weight:400}'+
  '#'+ROOT_ID+' .agpts-panel{width:260px;min-width:260px;height:100%;overflow:hidden;border:1px solid rgba(184,230,32,.42);border-right:0;border-radius:14px 0 0 14px;background:linear-gradient(150deg,#173c45 0%,#102b36 55%,#0a2029 100%);box-shadow:0 16px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07);color:#f4f3ed}'+
  '#'+ROOT_ID+'.is-collapsed .agpts-panel{display:none}'+
- '#'+ROOT_ID+' .agpts-shell{height:100%;box-sizing:border-box;padding:13px 12px;display:flex;flex-direction:column;gap:9px;overflow:hidden}'+
+ '#'+ROOT_ID+' .agpts-shell{height:100%;box-sizing:border-box;padding:11px 12px;display:flex;flex-direction:column;gap:7px;overflow:hidden}'+
  '#'+ROOT_ID+' .agpts-head{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:9px;border-bottom:1px solid rgba(217,218,213,.16)}'+
  '#'+ROOT_ID+' .agpts-head strong{display:block;font:900 13px/1.1 Arial,sans-serif;letter-spacing:.35px}'+
  '#'+ROOT_ID+' .agpts-kicker{display:block;font:800 7px/1.2 Arial,sans-serif;letter-spacing:1.25px;color:#b8e620;margin-bottom:4px}'+
  '#'+ROOT_ID+' .agpts-live{font:800 7px Arial,sans-serif;letter-spacing:.9px;color:#cddbd2;display:flex;align-items:center;gap:4px}'+
  '#'+ROOT_ID+' .agpts-live i{width:6px;height:6px;border-radius:50%;background:#b8e620;display:inline-block;box-shadow:0 0 8px rgba(184,230,32,.7)}'+
- '#'+ROOT_ID+' .agpts-control{padding:10px;border:1px solid rgba(217,218,213,.15);border-radius:11px;background:rgba(11,44,32,.32)}'+
+ '#'+ROOT_ID+' .agpts-control{padding:8px 10px;border:1px solid rgba(217,218,213,.15);border-radius:11px;background:rgba(11,44,32,.32)}'+
  '#'+ROOT_ID+' .agpts-control-top{display:flex;justify-content:space-between;align-items:end;gap:8px}'+
  '#'+ROOT_ID+' .agpts-control-top span{font:800 7px Arial,sans-serif;letter-spacing:1px;color:#cddbd2}'+
  '#'+ROOT_ID+' .agpts-control-top b{font:900 25px/1 Arial,sans-serif;color:#b8e620}'+
  '#'+ROOT_ID+' .agpts-bar{height:7px;margin-top:8px;border-radius:99px;overflow:hidden;background:rgba(0,0,0,.34);border:1px solid rgba(217,218,213,.12)}'+
  '#'+ROOT_ID+' .agpts-bar span{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#0d6a38,#b8e620);transition:width .25s ease}'+
- '#'+ROOT_ID+' .agpts-stack{display:grid;grid-template-columns:1fr;grid-template-rows:repeat(5,minmax(0,1fr));gap:7px;flex:1 1 auto;min-height:0}'+
- '#'+ROOT_ID+' .agpts-stack article{min-height:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid rgba(217,218,213,.14);border-radius:10px;background:rgba(11,44,32,.30)}'+
+ '#'+ROOT_ID+' .agpts-stack{display:grid;grid-template-columns:1fr;grid-template-rows:repeat(5,minmax(0,1fr));gap:6px;flex:1 1 auto;min-height:0}'+
+ '#'+ROOT_ID+' .agpts-stack article{min-height:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border:1px solid rgba(217,218,213,.14);border-radius:10px;background:rgba(11,44,32,.30)}'+
  '#'+ROOT_ID+' .agpts-stack span{font:800 7px/1.2 Arial,sans-serif;letter-spacing:.9px;color:#cddbd2;max-width:56%}'+
- '#'+ROOT_ID+' .agpts-stack strong{font:900 21px/1 Arial,sans-serif;color:#f4f3ed;text-align:right;white-space:nowrap}'+
+ '#'+ROOT_ID+' .agpts-stack strong{font:900 19px/1 Arial,sans-serif;color:#f4f3ed;text-align:right;white-space:nowrap}'+
  '#'+ROOT_ID+' .agpts-stack em{font-style:normal;font-size:17px}'+
  '#'+ROOT_ID+' .agpts-stack small{font-size:11px;color:#83988e;margin:0 3px}'+
  '#'+ROOT_ID+' .agpts-legend{display:grid;grid-template-columns:1fr;gap:5px;padding-top:8px;border-top:1px solid rgba(217,218,213,.14)}'+
@@ -90,7 +90,7 @@ function layout(){
  const map=document.querySelector('.map-area'),command=document.getElementById('entityInformationSection');
  if(!map)return;
  const mr=map.getBoundingClientRect();
- const top=18,gap=16;
+ const top=18,gap=16,desiredPanelH=Math.min(430,Math.max(300,Math.round(mr.height*.58)));
  // Player Page Command Center: centred horizontally within the cropped map,
  // floating above the bottom edge with visible map on all exposed sides.
  if(command){
@@ -108,14 +108,18 @@ function layout(){
    command.style.setProperty('z-index','1500','important');
  }
  const cr=command?.getBoundingClientRect();
- let bottom=18;
+ let clearanceBottom=18;
  if(cr&&cr.width&&cr.height){
-   // Territory Stats and Command Center are physically separated: stats stop
-   // above the command center and leave a persistent visual breathing gap.
-   bottom=Math.max(18,Math.round(mr.bottom-cr.top)+gap);
+   // Territory Stats and Command Center are physically separated.
+   clearanceBottom=Math.max(18,Math.round(mr.bottom-cr.top)+gap);
  }
- root.style.top=top+'px';root.style.bottom=bottom+'px';root.style.height='auto';
- root.dataset.commandClearance=String(bottom);
+ // Shorter vertical pop-out: use a deliberate capped height, but never allow
+ // its lower edge to enter the Command Center clearance zone.
+ const maxTopForClearance=Math.max(top,Math.round(mr.height-clearanceBottom-desiredPanelH));
+ const actualTop=Math.min(Math.max(top,18),maxTopForClearance);
+ const actualH=Math.max(220,Math.min(desiredPanelH,Math.round(mr.height-clearanceBottom-actualTop)));
+ root.style.top=actualTop+'px';root.style.bottom='auto';root.style.height=actualH+'px';
+ root.dataset.commandClearance=String(clearanceBottom);
 }
 function refresh(){if(!isProfile())return;ensure();update();layout();}
 function start(){
