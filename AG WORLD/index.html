@@ -282,8 +282,10 @@ html,body{visibility:hidden}
 (function(){
   function openDeveloperMode(){ window.open('developer-mode.html','agworldDeveloperMode'); }
   function ensureDeveloperModeButton(){
-    const mapArea=document.querySelector('.map-area');
+    const mapArea=document.querySelector('.map-area')||document.querySelector('.map-panel')||document.querySelector('.map-section')||document.querySelector('.map-container');
     if(!mapArea) return false;
+    // Ensure an absolute-positioned child has a reliable positioning context.
+    if(getComputedStyle(mapArea).position==='static') mapArea.style.position='relative';
     let btn=document.getElementById('developerModeBtn');
     if(!btn){
       btn=document.createElement('button');
@@ -305,6 +307,13 @@ html,body{visibility:hidden}
     btn.style.setProperty('visibility','visible','important');
     btn.style.setProperty('opacity','1','important');
     btn.style.setProperty('pointer-events','auto','important');
+    btn.style.setProperty('background','#173a2b','important');
+    btn.style.setProperty('color','#e9f8ec','important');
+    btn.style.setProperty('border','1px solid rgba(110,210,125,.65)','important');
+    btn.style.setProperty('border-radius','6px','important');
+    btn.style.setProperty('padding','5px 9px','important');
+    btn.style.setProperty('font-size','8px','important');
+    btn.style.setProperty('font-weight','800','important');
     return true;
   }
   ensureDeveloperModeButton();
