@@ -19,15 +19,20 @@ body.ag-profile-mode .sidebar,.app-shell .sidebar{
 body.ag-profile-mode .sidebar .menu-user,.app-shell .sidebar .menu-user{display:none!important}
 body.ag-profile-mode .sidebar .profile,.app-shell .sidebar .profile{display:none!important}
 
-/* Official AG World logo remains at the top of the grey sidebar. */
+/* Official AG World logo owns the complete top header band of the sidebar.
+   Its bottom edge is synchronised to the bottom of the My Missions player card,
+   so navigation can never climb into or clip the logo/tagline artwork. */
 body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{
   order:1!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  width:100%!important;height:106px!important;min-height:106px!important;flex:0 0 106px!important;
-  margin:0 0 3px!important;padding:4px 0 5px!important;box-sizing:border-box!important;overflow:visible!important;
+  width:100%!important;height:var(--ag-sidebar-brand-header-h,112px)!important;
+  min-height:var(--ag-sidebar-brand-header-h,112px)!important;
+  flex:0 0 var(--ag-sidebar-brand-header-h,112px)!important;
+  margin:0!important;padding:6px 0!important;box-sizing:border-box!important;overflow:hidden!important;
 }
 body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{
-  display:block!important;width:min(100%,300px)!important;height:98px!important;max-width:none!important;max-height:none!important;
-  object-fit:contain!important;object-position:center!important;filter:drop-shadow(0 3px 5px rgba(0,0,0,.28))!important;
+  display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;
+  object-fit:contain!important;object-position:center center!important;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.28))!important;
 }
 
 /* Mission profile is deliberately above the eyebrow and My Missions heading. */
@@ -308,6 +313,18 @@ function forceMapProfileRemoval(){
    if(nearTop&&nearRight) removeCandidate(el);
  });
 }
+function syncSidebarBrandHeader(){
+ const sidebar=document.querySelector('.sidebar');
+ const card=document.querySelector('.missions #agPlayerMissionProfile');
+ if(!sidebar||!card)return;
+ const sidebarRect=sidebar.getBoundingClientRect();
+ const cardRect=card.getBoundingClientRect();
+ // Reserve the entire top-left header from the screen top down to the bottom
+ // edge of the live My Missions player profile. This is geometry, not a fixed
+ // guess, so it remains aligned when responsive scaling changes.
+ const aligned=Math.max(112,Math.round(cardRect.bottom-sidebarRect.top+1));
+ sidebar.style.setProperty('--ag-sidebar-brand-header-h',aligned+'px','important');
+}
 function correctSidebar(){
  const s=document.querySelector('.sidebar');if(!s)return;
  // Remove legacy duplicate player blocks only. The official sidebar brand is retained.
@@ -322,6 +339,10 @@ function correctSidebar(){
  ensureTerritoryCampaignMenuItem(nav);
  normaliseSidebarMenu(nav);
  ensureMissionsPlayerProfile();
+ // Measure after the card exists; a second animation-frame pass catches fonts
+ // and responsive layout settling before the user sees the navigation.
+ syncSidebarBrandHeader();
+ requestAnimationFrame(syncSidebarBrandHeader);
  removeMapPlayerProfile();
  forceMapProfileRemoval();
  document.querySelectorAll('.map-area .ag-world-map-logo').forEach(el=>el.remove());
