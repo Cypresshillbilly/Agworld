@@ -346,19 +346,6 @@ html body.ag-profile-mode .missions [data-mission],
 html body.ag-profile-mode .missions [data-mission-id]{
   display:none!important;
 }
-html body.ag-profile-mode .missions #agLandingMissionCard,
-html body.ag-profile-mode .missions .mission.ag-landing-mission,
-html body.ag-profile-mode .missions .mission-card.ag-landing-mission,
-html body.ag-profile-mode .missions .mission-item.ag-landing-mission,
-html body.ag-profile-mode .missions [data-mission].ag-landing-mission,
-html body.ag-profile-mode .missions [data-mission-id].ag-landing-mission{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  margin:10px 10px 9px!important;
-  position:relative!important;
-  z-index:55!important;
-}
 html body.ag-profile-mode .missions{
   position:relative!important;
 }
@@ -449,32 +436,7 @@ html body.ag-profile-mode .missions .ag-mission-skill-list>div b{
   color:#ddf47d!important;font-size:9.5px!important;
 }
 
-/* Dedicated current / next mission card */
-html body.ag-profile-mode .missions #agLandingMissionCard{
-  padding:14px 14px 13px!important;
-  background:linear-gradient(145deg,#ffffff 0%,#f7faf9 58%,#edf4f2 100%)!important;
-  border-color:rgba(166,190,193,.95)!important;
-  box-shadow:0 12px 26px rgba(2,15,20,.24),inset 0 1px 0 #ffffff!important;
-}
-html body.ag-profile-mode .missions #agLandingMissionCard .tag{
-  color:#28796f!important;font-size:8px!important;line-height:1.2!important;letter-spacing:1.1px!important;
-}
-html body.ag-profile-mode .missions #agLandingMissionCard strong{
-  display:block!important;color:#102a33!important;font-size:13px!important;line-height:1.25!important;
-  letter-spacing:.2px!important;padding-right:0!important;margin-top:4px!important;
-}
-html body.ag-profile-mode .missions #agLandingMissionCard p{
-  color:#435e66!important;font-size:8.5px!important;line-height:1.5!important;margin:6px 0 8px!important;
-}
-html body.ag-profile-mode .missions #agLandingMissionCard .reward{
-  color:#355d1c!important;background:#e5f4bd!important;font-size:7.5px!important;padding:5px 8px!important;
-}
-html body.ag-profile-mode .missions #agLandingMissionCard button{
-  color:#ffffff!important;background:#2c7f70!important;border:1px solid rgba(17,83,75,.75)!important;
-  font-size:8px!important;font-weight:900!important;letter-spacing:.65px!important;padding:6px 9px!important;
-  box-shadow:0 3px 8px rgba(20,73,68,.18)!important;
-}
-
+/* Mission card styling is now owned exclusively by agMissionCardV2. */
 /* Advisor Bay */
 html body.ag-profile-mode .missions #agAdvisorBay{
   background:linear-gradient(145deg,#193f49 0%,#112f39 62%,#0a222b 100%)!important;
@@ -837,58 +799,6 @@ function ensureMissionsPlayerProfile(){
  return card;
 }
 
-function progressionMissionData(){
- const progression=window.AGWorldProgression;
- const state=progression?.getState?.();
- const chapters=progression?.getChapters?.();
- if(!state||!Array.isArray(chapters))return null;
- const chapterId=Number(state.currentChapter||1);
- const chapter=chapters.find(c=>Number(c.id)===chapterId)||chapters[0];
- const list=Array.isArray(chapter?.missions)?chapter.missions:[];
- const completed=state.completed||{};
- const index=list.findIndex(m=>!completed[m.id]);
- if(index<0)return null;
- return {chapter,mission:list[index],index,state};
-}
-
-function ensureLandingMissionCard(){
- const missions=document.querySelector('.missions');if(!missions)return null;
- let card=missions.querySelector('#agLandingMissionCard');
- const data=progressionMissionData();
-
- if(!card){
-   card=document.createElement('section');
-   card.id='agLandingMissionCard';
-   card.className='mission ag-landing-mission';
-   card.setAttribute('aria-label','Current or next mission');
- }
- if(data){
-   const {chapter,mission}=data;
-   card.dataset.chapterMission=String(mission.id||'');
-   card.dataset.status='current';
-   card.innerHTML=
-     '<div class="tag">CHAPTER '+String(chapter.id)+' · '+String(mission.type||'MISSION')+'</div>'+
-     '<strong>'+String(mission.title||'Current Mission')+'</strong>'+
-     '<p>'+String(mission.objective||'Continue your current assignment.')+'</p>'+
-     '<div class="reward">+'+Number(mission.xp||0).toLocaleString()+' XP</div>'+
-     '<button type="button" data-landing-mission-start="'+String(mission.id||'')+'">START MISSION</button>';
-   const button=card.querySelector('[data-landing-mission-start]');
-   if(button&&!button.dataset.agLandingBound){
-     button.dataset.agLandingBound='1';
-     button.addEventListener('click',()=>window.AGWorldProgression?.completeMission?.(button.dataset.landingMissionStart));
-   }
- }else{
-   card.dataset.status='loading';
-   card.innerHTML='<div class="tag">MISSION COMMAND</div><strong>Mission briefing loading…</strong><p>Preparing your current assignment.</p>';
- }
- card.classList.add('ag-landing-mission');
- card.removeAttribute('aria-hidden');
- if(card.parentElement!==missions)missions.appendChild(card);
- const skill=missions.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
- if(skill)skill.insertAdjacentElement('afterend',card);
- else if(card.previousElementSibling!==missions.querySelector('#agPlayerMissionProfile'))missions.querySelector('#agPlayerMissionProfile')?.insertAdjacentElement('afterend',card);
- return card;
-}
 function missionCardCandidates(root){
  if(!root)return [];
  return Array.from(root.querySelectorAll('.mission,.mission-card,.mission-item,[data-mission],[data-mission-id]'))
@@ -904,7 +814,6 @@ function ensureAdvisorBay(){
    m.setAttribute('aria-hidden','true');
    m.style.setProperty('display','none','important');
  });
- ensureLandingMissionCard();
 
  let bay=missions.querySelector('#agAdvisorBay');
  if(!bay){
@@ -954,38 +863,8 @@ function syncAdvisorBayGeometry(){
  missions.style.setProperty('--ag-advisor-height',height+'px');
  bay.style.setProperty('top',top+'px','important');
  bay.style.setProperty('height',height+'px','important');
- syncMissionStackFit();
 }
 
-
-function syncMissionStackFit(){
- const missions=document.querySelector('.missions');
- const player=missions?.querySelector('#agPlayerMissionProfile');
- const skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
- const mission=missions?.querySelector('#agLandingMissionCard');
- const bay=missions?.querySelector('#agAdvisorBay');
- if(!missions||!player||!skill||!mission||!bay)return;
- const mr=missions.getBoundingClientRect(),pr=player.getBoundingClientRect(),br=bay.getBoundingClientRect();
- if(!mr.height||!pr.height||!br.height)return;
- const stackTop=Math.max(0,Math.round(pr.top-mr.top));
- const bayTop=Math.max(0,Math.round(br.top-mr.top));
- const usable=Math.max(0,bayTop-stackTop-12);
- if(usable<180)return;
- let playerH=Math.max(66,Math.min(88,Math.round(usable*.31)));
- let skillH=Math.max(58,Math.min(82,Math.round(usable*.28)));
- let missionH=usable-playerH-skillH;
- if(missionH<68){
-   const shortfall=68-missionH;
-   const reducePlayer=Math.min(shortfall,Math.max(0,playerH-66));
-   playerH-=reducePlayer;
-   skillH-=Math.min(shortfall-reducePlayer,Math.max(0,skillH-58));
-   missionH=usable-playerH-skillH;
- }
- if(missionH<64)return;
- missions.style.setProperty('--ag-player-card-h',playerH+'px');
- missions.style.setProperty('--ag-skill-card-h',skillH+'px');
- missions.style.setProperty('--ag-landing-card-h',missionH+'px');
-}
 
 function ensureMissionHub(){
  let hub=document.getElementById('agMissionHub');
