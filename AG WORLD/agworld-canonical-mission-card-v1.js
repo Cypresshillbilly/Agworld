@@ -274,9 +274,10 @@
     window.addEventListener('agworld:canonical-mission-action',queue);
 
     setInterval(()=>{
-      const card=document.getElementById(CARD_ID);
-      if(!card||!card.isConnected||!card.closest('.missions'))queue();
-      else positionSlot();
+      // The mission engine may initialise after the UI. Re-render from the
+      // canonical engine source and remove only positively identified legacy
+      // visual roots; no generic mission-engine records are touched.
+      render();
     },1000);
   }
 
