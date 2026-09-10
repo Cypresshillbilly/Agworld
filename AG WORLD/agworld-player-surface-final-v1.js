@@ -199,70 +199,107 @@
   document.head.appendChild(style);
 })();
 
-/* Runtime lock: the previous territory/command script uses inline !important
-   paint operations and a MutationObserver. CSS alone cannot beat those.
-   This runs after it and writes the approved Player/Skill/Mission surface
-   directly onto the live elements, also after future DOM mutations. */
+/* Runtime lock: use the ACTIVE PLAYER CARD as the single live visual source.
+   No hard-coded lighter panel values are allowed here. Every primary Command
+   Center and Territory surface copies the Player Profile's actual computed
+   material so there can be no top-to-bottom colour drift. */
 (()=>{
-  const set=(el,p,v)=>{ if(el) el.style.setProperty(p,v,'important'); };
-  const panel='linear-gradient(145deg,#1a4650 0%,#123640 62%,#0d2831 100%)';
-  const inset='rgba(255,255,255,.055)';
-  const line='rgba(81,157,124,.48)';
-  const inner='rgba(176,210,198,.16)';
-  const shadow='0 10px 22px rgba(13,40,47,.15),inset 0 1px 0 rgba(255,255,255,.08)';
+  const set=(el,p,v)=>{ if(el && v!==undefined && v!==null) el.style.setProperty(p,v,'important'); };
+  const sourceId='agPlayerMissionProfile';
 
-  function paint(el){
-    if(!el) return;
-    set(el,'background',panel);
-    set(el,'border','1px solid '+line);
-    set(el,'border-radius','14px');
-    set(el,'box-shadow',shadow);
+  function sourceMaterial(){
+    const source=document.getElementById(sourceId);
+    if(!source) return null;
+    const cs=getComputedStyle(source);
+    return {
+      background: cs.backgroundImage && cs.backgroundImage!=='none'
+        ? cs.backgroundImage
+        : cs.backgroundColor,
+      backgroundColor: cs.backgroundColor,
+      borderTop: cs.borderTop,
+      borderRight: cs.borderRight,
+      borderBottom: cs.borderBottom,
+      borderLeft: cs.borderLeft,
+      radius: cs.borderRadius,
+      shadow: cs.boxShadow
+    };
+  }
+
+  function paintExact(el,m){
+    if(!el || !m) return;
+    set(el,'background',m.background);
+    set(el,'background-color',m.backgroundColor);
+    set(el,'border-top',m.borderTop);
+    set(el,'border-right',m.borderRight);
+    set(el,'border-bottom',m.borderBottom);
+    set(el,'border-left',m.borderLeft);
+    set(el,'border-radius',m.radius);
+    set(el,'box-shadow',m.shadow);
     set(el,'overflow','hidden');
   }
-  function paintInset(root,selector){
-    root?.querySelectorAll(selector).forEach(el=>{
-      set(el,'background',inset);
-      set(el,'border','1px solid '+inner);
-      set(el,'border-radius','12px');
-      set(el,'box-shadow','inset 0 1px 0 rgba(255,255,255,.06)');
-    });
-  }
-  function run(){
-    const territory=document.getElementById('territoryInfoPanel');
-    paint(territory);
-    territory?.querySelectorAll('.agworld-territory-stats-heading,.territory-info-header').forEach(el=>{
-      set(el,'background','transparent');
-      set(el,'border-radius','0');
-      set(el,'border-bottom','1px solid '+inner);
-    });
-    paintInset(territory,'.territory-info-grid>div,.territory-national-scope,.territory-info-empty,.territory-info-control,.territory-info-footer');
-    territory?.querySelectorAll('.territory-national-left,.territory-national-right').forEach(el=>{
-      set(el,'background','transparent');
-      set(el,'border','0');
-    });
-    const toggle=document.getElementById('territoryStatsToggle');
-    paint(toggle);
 
+  function paintFlat(el,m){
+    if(!el || !m) return;
+    // Internal cards stay in the same Player Profile colour family, without
+    // introducing progressively lighter backgrounds down the page.
+    set(el,'background',m.background);
+    set(el,'background-color',m.backgroundColor);
+    set(el,'border','1px solid rgba(176,210,198,.16)');
+    set(el,'border-radius','12px');
+    set(el,'box-shadow','inset 0 1px 0 rgba(255,255,255,.045)');
+  }
+
+  function run(){
+    const m=sourceMaterial();
+    if(!m) return;
+
+    // The Command Center stage must never introduce its own pale surface.
     const section=document.getElementById('entityInformationSection');
     if(section){
-      set(section,'background','#F4F3ED');
+      set(section,'background','transparent');
+      set(section,'background-color','transparent');
       set(section,'border','0');
       set(section,'box-shadow','none');
       set(section,'padding','8px 10px 10px');
     }
+
     const heading=document.getElementById('entityCommandCentreHeading');
-    paint(heading);
+    paintExact(heading,m);
     if(heading) set(heading,'margin','0 0 8px 0');
 
     const card=document.getElementById('farmCard');
-    paint(card);
+    paintExact(card,m);
     if(card){
-      card.querySelectorAll('.company-command-split').forEach(el=>{
-        set(el,'background','transparent'); set(el,'border','0'); set(el,'box-shadow','none');
+      card.querySelectorAll('.company-command-split,.company-command-left-pane').forEach(el=>{
+        set(el,'background','transparent');
+        set(el,'background-color','transparent');
+        set(el,'border','0');
+        set(el,'box-shadow','none');
       });
-      paintInset(card,'.company-command-stats-pane,.company-command-right-pane,.company-command-facility-side,.company-command-skills-pane,.company-skill-chart-expanded,.company-skill-chart-main,.company-skill-visual,.company-command-kpis>div,.company-stats-summary>div,.company-facility-row,.stats,.stat,.farm-extra,.farm-extra>div,#agworldV2FarmDetailHost,.agworld-v2-detail-tabs,.agworld-v2-detail-content,#farmActions');
+      card.querySelectorAll('.company-command-stats-pane,.company-command-right-pane,.company-command-facility-side,.company-command-skills-pane,.company-skill-chart-expanded,.company-skill-chart-main,.company-skill-visual,.company-command-kpis>div,.company-stats-summary>div,.company-facility-row,.stats,.stat,.farm-extra,.farm-extra>div,#agworldV2FarmDetailHost,.agworld-v2-detail-tabs,.agworld-v2-detail-content,#farmActions').forEach(el=>paintFlat(el,m));
     }
-    document.querySelectorAll('#entityInformationSection .agworld-company-entity-card,#entityInformationSection .agworld-entity-command-interface').forEach(paint);
+
+    document.querySelectorAll('#entityInformationSection .agworld-company-entity-card,#entityInformationSection .agworld-entity-command-interface').forEach(el=>paintExact(el,m));
+
+    const territory=document.getElementById('territoryInfoPanel');
+    paintExact(territory,m);
+    if(territory){
+      territory.querySelectorAll('.agworld-territory-stats-heading,.territory-info-header').forEach(el=>{
+        set(el,'background','transparent');
+        set(el,'background-color','transparent');
+        set(el,'border-radius','0');
+        set(el,'border-bottom','1px solid rgba(176,210,198,.16)');
+      });
+      territory.querySelectorAll('.territory-info-grid>div,.territory-national-scope,.territory-info-empty,.territory-info-control,.territory-info-footer').forEach(el=>paintFlat(el,m));
+      territory.querySelectorAll('.territory-national-left,.territory-national-right').forEach(el=>{
+        set(el,'background','transparent');
+        set(el,'background-color','transparent');
+        set(el,'border','0');
+        set(el,'box-shadow','none');
+      });
+    }
+
+    paintExact(document.getElementById('territoryStatsToggle'),m);
   }
 
   run();
