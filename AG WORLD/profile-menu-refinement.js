@@ -382,6 +382,129 @@ html body.ag-profile-mode .missions .ag-advisor{
 html body.ag-profile-mode .ag-advisor-icon{transform:translateX(-50%) scale(1.02)!important;transform-origin:top center!important;top:4px!important}
 html body.ag-profile-mode .ag-advisor-label{font-size:6.1px!important}
 
+/* === READABILITY PASS — PLAYER LANDING PANELS ===
+   Increase hierarchy, contrast and usable type size without changing the
+   locked Player → Skill → Current/Next Mission → Advisor Bay geometry. */
+
+/* Player profile */
+html body.ag-profile-mode .missions .ag-player-mission-profile{
+  background:linear-gradient(145deg,#173844 0%,#0d252e 58%,#081b23 100%)!important;
+  border-color:rgba(143,196,203,.68)!important;
+  box-shadow:0 9px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.10),inset 0 0 28px rgba(75,148,155,.045)!important;
+}
+html body.ag-profile-mode .missions .ag-player-name,
+html body.ag-game-mode .missions .ag-player-name{
+  color:#ffffff!important;font-size:17px!important;line-height:1.15!important;
+  letter-spacing:.45px!important;text-shadow:0 2px 4px rgba(0,0,0,.6)!important;
+}
+html body.ag-profile-mode .missions .ag-player-role,
+html body.ag-game-mode .missions .ag-player-role{
+  color:#c9dbe0!important;font-size:8.6px!important;line-height:1.25!important;
+  letter-spacing:.7px!important;
+}
+html body.ag-profile-mode .missions .ag-player-level,
+html body.ag-game-mode .missions .ag-player-level,
+html body.ag-profile-mode .missions .ag-player-chapter,
+html body.ag-game-mode .missions .ag-player-chapter{
+  font-size:8px!important;padding:4px 7px!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-label,
+html body.ag-game-mode .missions .ag-player-xp-label{
+  color:#c3d1d5!important;font-size:7.5px!important;letter-spacing:.75px!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-label b,
+html body.ag-game-mode .missions .ag-player-xp-label b{color:#e1f68e!important;font-size:8.4px!important}
+html body.ag-profile-mode .missions .ag-player-xp-text,
+html body.ag-game-mode .missions .ag-player-xp-text{
+  color:#d2e0e3!important;font-size:8px!important;
+}
+html body.ag-profile-mode .missions .ag-player-xp-track,
+html body.ag-game-mode .missions .ag-player-xp-track{
+  height:10px!important;border-color:rgba(189,218,224,.45)!important;background:#07151b!important;
+}
+
+/* Skill profile */
+html body.ag-profile-mode .missions #agMissionSkillProfile,
+html body.ag-profile-mode .missions .ag-mission-skill-profile{
+  background:linear-gradient(145deg,#193e48 0%,#102d37 60%,#091f28 100%)!important;
+  border-color:rgba(135,203,210,.52)!important;
+  box-shadow:0 12px 25px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.10)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head{
+  border-bottom-color:rgba(199,229,232,.24)!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head span{
+  color:#b9d5da!important;font-size:7.8px!important;letter-spacing:1.15px!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-head b{
+  color:#ffffff!important;font-size:13.5px!important;line-height:1.1!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list{gap:6px!important}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div{
+  padding:6px 7px!important;background:rgba(255,255,255,.075)!important;
+  border-color:rgba(180,224,229,.18)!important;color:#d7e6e9!important;
+  font-size:7.5px!important;line-height:1.2!important;letter-spacing:.3px!important;
+}
+html body.ag-profile-mode .missions .ag-mission-skill-list>div b{
+  color:#ddf47d!important;font-size:9.5px!important;
+}
+
+/* Dedicated current / next mission card */
+html body.ag-profile-mode .missions #agLandingMissionCard{
+  padding:14px 14px 13px!important;
+  background:linear-gradient(145deg,#ffffff 0%,#f7faf9 58%,#edf4f2 100%)!important;
+  border-color:rgba(166,190,193,.95)!important;
+  box-shadow:0 12px 26px rgba(2,15,20,.24),inset 0 1px 0 #ffffff!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .tag{
+  color:#28796f!important;font-size:8px!important;line-height:1.2!important;letter-spacing:1.1px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard strong{
+  display:block!important;color:#102a33!important;font-size:13px!important;line-height:1.25!important;
+  letter-spacing:.2px!important;padding-right:0!important;margin-top:4px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard p{
+  color:#435e66!important;font-size:8.5px!important;line-height:1.5!important;margin:6px 0 8px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard .reward{
+  color:#355d1c!important;background:#e5f4bd!important;font-size:7.5px!important;padding:5px 8px!important;
+}
+html body.ag-profile-mode .missions #agLandingMissionCard button{
+  color:#ffffff!important;background:#2c7f70!important;border:1px solid rgba(17,83,75,.75)!important;
+  font-size:8px!important;font-weight:900!important;letter-spacing:.65px!important;padding:6px 9px!important;
+  box-shadow:0 3px 8px rgba(20,73,68,.18)!important;
+}
+
+/* Advisor Bay */
+html body.ag-profile-mode .missions #agAdvisorBay{
+  background:linear-gradient(145deg,#193f49 0%,#112f39 62%,#0a222b 100%)!important;
+  border-color:rgba(116,196,132,.60)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.11)!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head strong{
+  color:#ffffff!important;font-size:10px!important;letter-spacing:1.2px!important;
+}
+html body.ag-profile-mode .ag-advisor-bay-head span{
+  color:#c6ddd5!important;font-size:7px!important;letter-spacing:.85px!important;
+}
+html body.ag-profile-mode .ag-advisor{
+  border-color:rgba(190,224,214,.28)!important;
+  background:linear-gradient(155deg,rgba(255,255,255,.11),rgba(4,20,26,.46))!important;
+}
+html body.ag-profile-mode .ag-advisor-label{
+  color:#f4faf7!important;font-size:7.8px!important;line-height:1.15!important;
+  letter-spacing:.5px!important;text-shadow:0 1px 2px rgba(0,0,0,.72)!important;
+}
+html body.ag-profile-mode .ag-advisor.is-active .ag-advisor-label{color:#e2f78b!important}
+
+/* Never allow the small global mission typography rules to override the landing card. */
+html body.ag-profile-mode .missions #agLandingMissionCard *,
+html body.ag-profile-mode .missions .ag-player-mission-profile *,
+html body.ag-profile-mode .missions #agMissionSkillProfile *,
+html body.ag-profile-mode .missions #agAdvisorBay *{
+  -webkit-font-smoothing:antialiased!important;text-rendering:optimizeLegibility!important;
+}
+
 /* Full Missions command panel. */
 #agMissionHub{
   position:fixed!important;inset:0!important;z-index:2200000000!important;
