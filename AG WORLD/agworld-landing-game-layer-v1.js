@@ -1,0 +1,217 @@
+/* AG WORLD — Landing surface + full-screen game layer.
+   The landing screen is the player's control layer. The map remains the live
+   world underneath it, and Enter AgWorld promotes that same live map into the
+   full-screen game HUD without rebuilding or duplicating the world. */
+(()=>{
+  'use strict';
+
+  const css=`
+  /* Recess the live map into the landing surface. The left and lower edges
+     behave like a shallow frame, giving the map a physically indented depth. */
+  body:not(.ag-full-game-mode) .map-area{
+    isolation:isolate!important;
+    overflow:hidden!important;
+    background:#dfe7e4!important;
+    box-shadow:
+      inset 13px 0 20px rgba(7,31,38,.28),
+      inset 0 -16px 24px rgba(7,31,38,.24),
+      0 12px 26px rgba(8,27,33,.13)!important;
+  }
+  body:not(.ag-full-game-mode) .map-area::before,
+  body:not(.ag-full-game-mode) .map-area::after{
+    content:''!important;position:absolute!important;pointer-events:none!important;
+    z-index:7200!important;
+  }
+  body:not(.ag-full-game-mode) .map-area::before{
+    left:0!important;top:0!important;bottom:0!important;width:18px!important;
+    background:linear-gradient(90deg,
+      rgba(255,255,255,.96) 0%,
+      rgba(247,249,248,.9) 22%,
+      rgba(211,221,217,.52) 58%,
+      rgba(38,67,72,.12) 78%,
+      transparent 100%)!important;
+    box-shadow:inset -8px 0 12px rgba(10,39,46,.18)!important;
+  }
+  body:not(.ag-full-game-mode) .map-area::after{
+    left:0!important;right:0!important;bottom:0!important;height:19px!important;
+    background:linear-gradient(180deg,
+      rgba(12,41,48,.14) 0%,
+      rgba(199,211,207,.42) 35%,
+      rgba(245,247,246,.9) 72%,
+      rgba(255,255,255,.98) 100%)!important;
+    box-shadow:inset 0 8px 14px rgba(10,37,44,.18)!important;
+  }
+  body:not(.ag-full-game-mode) .map-area #map{
+    box-shadow:inset 0 0 0 1px rgba(8,34,40,.14)!important;
+  }
+
+  /* Entry control belongs to the live world, not to a duplicate screen. */
+  #agEnterWorldBtn{
+    position:absolute!important;right:12px!important;top:10px!important;z-index:7600!important;
+    display:inline-flex!important;align-items:center!important;gap:7px!important;
+    min-height:28px!important;padding:0 12px!important;
+    border:1px solid rgba(114,184,74,.62)!important;border-radius:9px!important;
+    background:linear-gradient(145deg,#173c45,#102b36 68%,#0a2029)!important;
+    color:#efffd2!important;font-size:9px!important;font-weight:900!important;
+    letter-spacing:.9px!important;cursor:pointer!important;
+    box-shadow:0 8px 20px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.08)!important;
+  }
+  #agEnterWorldBtn:hover{border-color:#c2e95d!important;box-shadow:0 0 0 1px rgba(194,233,93,.2),0 10px 24px rgba(0,0,0,.3)!important}
+  #agEnterWorldBtn::before{content:'◉';color:#c2e95d!important;font-size:10px!important}
+
+  /* Full AgWorld mode: promote the existing live map into a true game HUD. */
+  body.ag-full-game-mode{overflow:hidden!important;background:#081d25!important}
+  body.ag-full-game-mode .app-shell{
+    position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;
+    max-width:none!important;max-height:none!important;overflow:hidden!important;
+    background:#081d25!important;box-shadow:none!important;
+  }
+  body.ag-full-game-mode .sidebar,
+  body.ag-full-game-mode .missions,
+  body.ag-full-game-mode .bottom.user-profile-section{display:none!important}
+  body.ag-full-game-mode .map-area{
+    position:fixed!important;inset:0!important;left:0!important;right:0!important;
+    top:0!important;bottom:0!important;width:100vw!important;height:100vh!important;
+    z-index:500!important;overflow:hidden!important;background:#081d25!important;
+    box-shadow:none!important;border:0!important;
+  }
+  body.ag-full-game-mode .map-area::before,
+  body.ag-full-game-mode .map-area::after{display:none!important}
+  body.ag-full-game-mode .map-area #map{
+    position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+    box-shadow:none!important;
+  }
+  body.ag-full-game-mode .map-header{
+    left:18px!important;right:18px!important;top:14px!important;z-index:540!important;
+  }
+  body.ag-full-game-mode .map-header .map-tools{max-width:72vw!important}
+  body.ag-full-game-mode #agEnterWorldBtn{
+    position:fixed!important;right:18px!important;top:18px!important;z-index:10020!important;
+  }
+  body.ag-full-game-mode #agEnterWorldBtn::before{content:'←'!important}
+  body.ag-full-game-mode #agEnterWorldBtn{font-size:0!important}
+  body.ag-full-game-mode #agEnterWorldBtn::after{
+    content:'PLAYER VIEW'!important;font-size:9px!important;letter-spacing:.9px!important;
+  }
+
+  /* The two live game systems become HUD surfaces over the full map. */
+  body.ag-full-game-mode #entityInformationSection{
+    position:fixed!important;left:50%!important;top:50%!important;bottom:auto!important;
+    transform:translate(-50%,-50%)!important;
+    width:min(680px,calc(100vw - 620px))!important;min-width:460px!important;
+    max-height:62vh!important;overflow:auto!important;
+    z-index:10000!important;padding:0!important;
+    background:transparent!important;border:0!important;box-shadow:none!important;
+  }
+  body.ag-full-game-mode #entityCommandCentreHeading{
+    position:sticky!important;top:0!important;z-index:2!important;
+  }
+  body.ag-full-game-mode #entityInformationSection #farmCard,
+  body.ag-full-game-mode #entityInformationSection .farm-card{
+    border-radius:14px!important;overflow:hidden!important;
+  }
+  body.ag-full-game-mode #territoryStatsDrawer{
+    position:fixed!important;right:18px!important;left:auto!important;top:92px!important;bottom:auto!important;
+    width:min(300px,calc(100vw - 36px))!important;max-height:calc(100vh - 120px)!important;
+    z-index:10010!important;
+  }
+  body.ag-full-game-mode #territoryStatsDrawerContent{
+    max-height:calc(100vh - 170px)!important;overflow:auto!important;
+  }
+  body.ag-full-game-mode #territoryStatsToggle{
+    border-radius:12px!important;
+  }
+  @media(max-width:1050px){
+    body.ag-full-game-mode #entityInformationSection{
+      left:18px!important;right:18px!important;bottom:18px!important;top:auto!important;
+      transform:none!important;width:auto!important;min-width:0!important;max-height:38vh!important;
+    }
+    body.ag-full-game-mode #territoryStatsDrawer{right:12px!important;top:72px!important;width:270px!important}
+  }
+  `;
+
+  function inject(){
+    if(document.getElementById('agworld-landing-game-layer-style')) return;
+    const s=document.createElement('style');
+    s.id='agworld-landing-game-layer-style';
+    s.textContent=css;
+    document.head.appendChild(s);
+  }
+
+  function playerName(){
+    const p=window.AGWorldPlayer||{};
+    return String(p.display_name||'NICO VAN ROOYEN').trim().toUpperCase();
+  }
+
+  /* Remove the stray duplicate identity HUD only. The canonical player card in
+     My Missions and the normal sidebar/profile surfaces are explicitly kept. */
+  function purgeDuplicatePlayerOverlay(){
+    const name=playerName();
+    const keepRoots=[
+      document.getElementById('agPlayerMissionProfile'),
+      document.querySelector('.missions'),
+      document.querySelector('.sidebar'),
+      document.querySelector('.bottom.user-profile-section')
+    ].filter(Boolean);
+
+    [...document.querySelectorAll('body *')].forEach(el=>{
+      if(!el || el.id==='agPlayerMissionProfile') return;
+      if(keepRoots.some(root=>root.contains(el))) return;
+      const txt=(el.textContent||'').trim().replace(/\s+/g,' ').toUpperCase();
+      if(txt!==name) return;
+      const mapClone=el.closest('.ag-leader,.ag-player-hud,.player-hud,.game-player-card,.hud-player-card,[data-agworld-player-overlay]') ||
+        el.parentElement?.closest('.ag-leader,.ag-player-hud,.player-hud,.game-player-card,.hud-player-card,[data-agworld-player-overlay]');
+      const positioned=mapClone || (()=>{let n=el.parentElement;while(n&&n!==document.body){const cs=getComputedStyle(n);if((cs.position==='absolute'||cs.position==='fixed')&&!keepRoots.some(root=>root.contains(n))) return n;n=n.parentElement;}return null;})();
+      if(positioned && !positioned.matches('#entityInformationSection,#territoryStatsDrawer,.map-header')) positioned.remove();
+    });
+  }
+
+  function ensureButton(){
+    const area=document.querySelector('.map-area');
+    if(!area) return null;
+    let btn=document.getElementById('agEnterWorldBtn');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.id='agEnterWorldBtn';
+      btn.type='button';
+      btn.setAttribute('aria-label','Enter full AgWorld game mode');
+      btn.textContent='ENTER AGWORLD';
+      area.appendChild(btn);
+      btn.addEventListener('click',()=>toggleGameMode());
+    }
+    return btn;
+  }
+
+  function refreshMap(){
+    setTimeout(()=>{
+      window.dispatchEvent(new Event('resize'));
+      const candidates=[window.map,window.agMap,window.AGWorldMap,window.leafletMap];
+      candidates.forEach(m=>{try{m&&typeof m.invalidateSize==='function'&&m.invalidateSize({animate:false});}catch(e){}});
+    },80);
+    setTimeout(()=>window.dispatchEvent(new Event('resize')),350);
+  }
+
+  function toggleGameMode(force){
+    const next=typeof force==='boolean'?force:!document.body.classList.contains('ag-full-game-mode');
+    document.body.classList.toggle('ag-full-game-mode',next);
+    const btn=ensureButton();
+    if(btn){
+      btn.setAttribute('aria-label',next?'Return to Player View':'Enter full AgWorld game mode');
+      btn.textContent=next?'PLAYER VIEW':'ENTER AGWORLD';
+    }
+    refreshMap();
+    window.dispatchEvent(new CustomEvent('agworld:game-mode-changed',{detail:{mode:next?'game':'player'}}));
+  }
+
+  function run(){
+    inject();
+    ensureButton();
+    purgeDuplicatePlayerOverlay();
+  }
+
+  window.AGWorldGameLayer={enter:()=>toggleGameMode(true),exit:()=>toggleGameMode(false),toggle:()=>toggleGameMode()};
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run,{once:true}); else run();
+  window.addEventListener('agworld:player-profile',()=>{setTimeout(purgeDuplicatePlayerOverlay,0);setTimeout(purgeDuplicatePlayerOverlay,300);});
+  const observer=new MutationObserver(()=>purgeDuplicatePlayerOverlay());
+  observer.observe(document.documentElement,{childList:true,subtree:true});
+})();
