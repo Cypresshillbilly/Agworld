@@ -1874,14 +1874,108 @@
 })();
 
 
-/* AG World v49 Command Center tablet frame — stronger visual-only bezel. */
+/* AG World v62 Command Center canonical surface.
+   The v49 tablet/bezel experiment is intentionally removed. The floating
+   Command Center remains a map overlay, but it is a clean game panel with no
+   silver frame, metallic outline, pseudo-bezel, or tablet chrome. */
 (function(){
-  const style=document.createElement('style');
-  style.id='agworldCommandCenterTabletFrameV49';
-  style.textContent=
-    /* Visual treatment only: no sizing, grid, DOM or positioning rules are changed. */
-    '#entityInformationSection{isolation:isolate!important;border-radius:22px!important;overflow:hidden!important;outline:1px solid rgba(238,245,247,.42)!important;outline-offset:3px!important;box-shadow:0 0 0 2px rgba(186,198,202,.72),0 0 0 4px rgba(73,84,91,.98),0 0 0 7px rgba(24,32,37,.98),0 0 0 10px rgba(93,106,112,.92),0 0 0 12px rgba(20,26,30,.92),0 16px 34px rgba(0,0,0,.48),0 3px 8px rgba(255,255,255,.10)!important}'+
-    '#entityInformationSection:after{content:""!important;position:absolute!important;inset:0!important;z-index:30!important;pointer-events:none!important;border-radius:22px!important;box-sizing:border-box!important;background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(255,255,255,0) 16%,rgba(0,0,0,0) 72%,rgba(0,0,0,.32)),linear-gradient(90deg,rgba(166,178,182,.26),rgba(255,255,255,.08) 12%,rgba(0,0,0,.10) 50%,rgba(255,255,255,.07) 86%,rgba(50,60,66,.34))!important;border:6px solid rgba(69,82,88,.96)!important;box-shadow:inset 2px 2px 0 rgba(255,255,255,.30),inset -2px -2px 0 rgba(0,0,0,.72),inset 0 0 0 2px rgba(176,190,194,.20),inset 0 0 20px rgba(0,0,0,.32)!important}'+
-    '#entityInformationSection .farm-card{border-radius:15px!important;box-shadow:inset 0 0 0 1px rgba(200,215,219,.12)!important}';
-  document.head.appendChild(style);
+  const STYLE_ID='agworldCommandCenterCanonicalV62';
+
+  function canonicaliseHeading(){
+    const section=document.getElementById('entityInformationSection');
+    if(!section) return null;
+
+    let heading=document.getElementById('entityCommandCentreHeading');
+    if(!heading){
+      heading=document.createElement('div');
+      heading.id='entityCommandCentreHeading';
+      section.insertBefore(heading,section.firstChild);
+    }
+
+    // One canonical heading DOM. The label and LIVE status are deliberately
+    // independent so LIVE can never influence the geometric centre point.
+    heading.className='agworld-command-center-heading-canonical';
+    heading.innerHTML=
+      '<span class="agworld-command-center-label-canonical">COMMAND CENTER</span>'+
+      '<span class="agworld-command-center-live-canonical"><i></i><span>LIVE</span></span>';
+    return heading;
+  }
+
+  function removeLegacyTabletFrame(){
+    document.getElementById('agworldCommandCenterTabletFrameV49')?.remove();
+  }
+
+  function installCanonicalSurface(){
+    removeLegacyTabletFrame();
+    document.getElementById(STYLE_ID)?.remove();
+
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=
+      /* Clean outer panel: no tablet bezel, silver outline or metallic frame. */
+      '#entityInformationSection{'+
+        'isolation:isolate!important;'+
+        'border:0!important;outline:0!important;'+
+        'border-radius:14px!important;'+
+        'box-shadow:none!important;'+
+        'overflow:hidden!important;'+
+      '}'+
+      '#entityInformationSection:after{'+
+        'content:none!important;display:none!important;'+
+      '}'+
+      /* Preserve only the game-surface treatment inside the clean panel. */
+      '#entityInformationSection>#entityCommandCentreHeading.agworld-command-center-heading-canonical{'+
+        'position:absolute!important;left:0!important;right:0!important;top:0!important;'+
+        'width:100%!important;height:34px!important;min-height:34px!important;'+
+        'margin:0!important;padding:0!important;box-sizing:border-box!important;'+
+        'display:block!important;'+
+        'background:linear-gradient(180deg,rgba(16,29,34,.98),rgba(9,19,24,.96))!important;'+
+        'border:0!important;border-bottom:1px solid rgba(126,167,148,.18)!important;'+
+        'border-radius:14px 14px 0 0!important;'+
+        'box-shadow:0 6px 14px rgba(0,0,0,.12)!important;'+
+        'color:#edf8f0!important;text-transform:uppercase!important;z-index:8!important;'+
+      '}'+
+      /* Exact centre of the entire heading bar, independent of LIVE width. */
+      '#entityCommandCentreHeading .agworld-command-center-label-canonical{'+
+        'position:absolute!important;left:50%!important;top:50%!important;'+
+        'transform:translate(-50%,-50%)!important;'+
+        'margin:0!important;padding:0!important;'+
+        'font-family:inherit!important;font-size:16px!important;line-height:1!important;'+
+        'letter-spacing:1.6px!important;font-weight:900!important;'+
+        'color:#edf8f0!important;white-space:nowrap!important;text-align:center!important;'+
+      '}'+
+      /* LIVE is anchored separately at the far right and cannot shift the title. */
+      '#entityCommandCentreHeading .agworld-command-center-live-canonical{'+
+        'position:absolute!important;right:12px!important;left:auto!important;top:50%!important;'+
+        'transform:translateY(-50%)!important;margin:0!important;'+
+        'display:flex!important;align-items:center!important;gap:6px!important;'+
+        'padding:5px 8px!important;box-sizing:border-box!important;'+
+        'border:1px solid rgba(117,224,132,.24)!important;border-radius:999px!important;'+
+        'background:rgba(117,224,132,.07)!important;color:#a9efb2!important;'+
+        'font-size:8px!important;font-weight:900!important;letter-spacing:1px!important;line-height:1!important;'+
+        'white-space:nowrap!important;'+
+      '}'+
+      '#entityCommandCentreHeading .agworld-command-center-live-canonical i{'+
+        'display:block!important;width:6px!important;height:6px!important;flex:0 0 6px!important;'+
+        'border-radius:50%!important;background:#75e084!important;'+
+        'box-shadow:0 0 10px rgba(117,224,132,.9)!important;'+
+      '}'+
+      /* Keep the content directly below the canonical 34px heading. */
+      '#entityInformationSection #farmCard{'+
+        'top:42px!important;height:calc(100% - 42px)!important;'+
+        'border-radius:11px!important;'+
+        'box-shadow:inset 0 1px 0 rgba(255,255,255,.08)!important;'+
+      '}';
+    document.head.appendChild(style);
+  }
+
+  function apply(){
+    removeLegacyTabletFrame();
+    installCanonicalSurface();
+    canonicaliseHeading();
+  }
+
+  apply();
+  document.addEventListener('DOMContentLoaded',apply,{once:true});
+  window.addEventListener('load',apply,{once:true});
 })();
