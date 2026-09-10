@@ -149,18 +149,23 @@
     // bottom panels with different start heights.
     const shellH=shell.clientHeight||820;
     const shellW=shell.clientWidth||1280;
-    // Command Center is now a floating object inside the map, with deliberate
-    // map breathing room visible on its left and below.
-    const commandBottomGap=Math.max(18,Math.round(shellH*0.028));
-    const commandLeftInset=Math.max(18,Math.round((shellW)*0.018));
-    const commandH=Math.round(shellH*(192/820));
-    const commandTop=shellH-commandBottomGap-commandH;
-    const commandW=Math.round((shellW-(Math.round(shellW*(215/1280))+Math.round(shellW*(250/1280)))-commandLeftInset));
-    const bottomH=commandH;
-    const topH=commandTop;
+    // FULL GAME VIEW ONLY:
+    // The Command Center is an independent floating world overlay. It is centred
+    // left-to-right inside the playable map stage and has map visible on BOTH
+    // sides and below. Player Profile Command Center geometry is owned by the
+    // profile renderer and is intentionally not touched here.
     const sidebarW=Math.round(shellW*(215/1280));
     const missionsW=Math.round(shellW*(250/1280));
     const leftStage=sidebarW+missionsW;
+    const mapStageW=shellW-leftStage;
+    const commandBottomGap=Math.max(18,Math.round(shellH*0.028));
+    const commandSideGap=Math.max(22,Math.round(mapStageW*0.055));
+    const commandH=Math.round(shellH*(192/820));
+    const commandTop=shellH-commandBottomGap-commandH;
+    const commandW=Math.max(360,Math.round(mapStageW-commandSideGap*2));
+    const commandLeft=leftStage+Math.round((mapStageW-commandW)/2);
+    const bottomH=commandH;
+    const topH=commandTop;
     const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
     const frame=(el,left,top,width,height)=>{
       if(!el) return;
@@ -181,7 +186,7 @@
     // The map is now the full-height tactical background for the right stage.
     // Command Center overlays it instead of reserving a separate strip below it.
     frame(mapArea,leftStage,0,shellW-leftStage,shellH);
-    frame(entity,leftStage+commandLeftInset,topH,commandW,bottomH);
+    frame(entity,commandLeft,topH,commandW,bottomH);
     if(entity){
       important(entity,'z-index','1500');
       important(entity,'pointer-events','auto');
