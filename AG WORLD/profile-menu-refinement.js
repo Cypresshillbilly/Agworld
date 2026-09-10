@@ -181,6 +181,8 @@ function menuKey(el){
 function ensureTerritoryCampaignMenuItem(nav){
  if(!nav)return null;
  let campaign=document.getElementById('agCampaignCommandButton');
+ // Chapter 3 may load after this refinement. Retry via the health check until
+ // the real functional button exists, then move that same element.
  if(!campaign)return null;
  // Re-home the existing functional button rather than cloning it, preserving its
  // campaign click handler and all Chapter 3 behaviour.
@@ -198,7 +200,7 @@ function ensureTerritoryCampaignMenuItem(nav){
 function normaliseSidebarMenu(nav){
  if(!nav)return;
  ensureTerritoryCampaignMenuItem(nav);
- const nodes=Array.from(nav.querySelectorAll('button,a,[role="button"]'));
+ const nodes=Array.from(nav.querySelectorAll('button,a,[role="button"],.nav-item,.menu-item,.nav-link,[data-view],[data-menu]'));
  const matched=new Map();
  nodes.forEach(el=>{
    const key=menuKey(el);
@@ -227,6 +229,33 @@ function removeMapPlayerProfile(){
    if((/player|profile|avatar|user/.test(cls)) && (text.length<=40||/NICO VAN ROOYEN/.test(text)))el.remove();
  });
 }
+function removeExplicitlyObsoleteSidebarItems(nav){
+ if(!nav)return;
+ const obsolete=/^(company commands?|company controls?|developer mode)$/i;
+ const candidates=Array.from(nav.querySelectorAll('button,a,[role="button"],.nav-item,.menu-item,.nav-link,[data-view],[data-menu]'));
+ candidates.forEach(el=>{
+   const label=(el.textContent||'').replace(/\s+/g,' ').trim();
+   if(obsolete.test(label)) el.remove();
+ });
+}
+function forceMapProfileRemoval(){
+ const mapArea=document.querySelector('.map-area');if(!mapArea)return;
+ // The small top-right Nico chip can be injected inside the map header by late
+ // game scripts, so remove matching descendants rather than only direct children.
+ const candidates=Array.from(mapArea.querySelectorAll('*'));
+ candidates.forEach(el=>{
+   if(el.id==='developerModeBtn')return;
+   const text=(el.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
+   const cls=((el.id||'')+' '+(typeof el.className==='string'?el.className:'')).toLowerCase();
+   if((/NICO VAN ROOYEN|AG WORLD PLAYER/.test(text) || /map.*(player|profile|avatar|user)|(player|profile|avatar|user).*map/.test(cls)) &&
+      !el.closest('.missions') && !el.closest('#farmCard')){
+     // Remove the smallest matching container to avoid touching the map itself.
+     const parent=el.parentElement;
+     if(parent && parent!==mapArea && parent.children.length<=6) parent.remove();
+     else el.remove();
+   }
+ });
+}
 function correctSidebar(){
  const s=document.querySelector('.sidebar');if(!s)return;
  // Remove legacy duplicate player blocks only. The official sidebar brand is retained.
@@ -236,8 +265,13 @@ function correctSidebar(){
  if(s.firstElementChild!==brand)s.prepend(brand);
  if(nav && brand.nextElementSibling!==nav)brand.insertAdjacentElement('afterend',nav);
  normaliseSidebarMenu(nav);
+ removeExplicitlyObsoleteSidebarItems(nav);
+ // Campaign can appear late; move it again after all other menu cleanup.
+ ensureTerritoryCampaignMenuItem(nav);
+ normaliseSidebarMenu(nav);
  ensureMissionsPlayerProfile();
  removeMapPlayerProfile();
+ forceMapProfileRemoval();
  document.querySelectorAll('.map-area .ag-world-map-logo').forEach(el=>el.remove());
 }
 function refreshPlayerUI(){
