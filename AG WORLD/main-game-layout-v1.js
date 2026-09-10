@@ -149,8 +149,15 @@
     // bottom panels with different start heights.
     const shellH=shell.clientHeight||820;
     const shellW=shell.clientWidth||1280;
-    const bottomH=Math.round(shellH*(210/820));
-    const topH=shellH-bottomH;
+    // Command Center is now a floating object inside the map, with deliberate
+    // map breathing room visible on its left and below.
+    const commandBottomGap=Math.max(18,Math.round(shellH*0.028));
+    const commandLeftInset=Math.max(18,Math.round((shellW)*0.018));
+    const commandH=Math.round(shellH*(192/820));
+    const commandTop=shellH-commandBottomGap-commandH;
+    const commandW=Math.round((shellW-(Math.round(shellW*(215/1280))+Math.round(shellW*(250/1280)))-commandLeftInset));
+    const bottomH=commandH;
+    const topH=commandTop;
     const sidebarW=Math.round(shellW*(215/1280));
     const missionsW=Math.round(shellW*(250/1280));
     const leftStage=sidebarW+missionsW;
@@ -174,11 +181,12 @@
     // The map is now the full-height tactical background for the right stage.
     // Command Center overlays it instead of reserving a separate strip below it.
     frame(mapArea,leftStage,0,shellW-leftStage,shellH);
-    frame(entity,leftStage,topH,shellW-leftStage,bottomH);
+    frame(entity,leftStage+commandLeftInset,topH,commandW,bottomH);
     if(entity){
       important(entity,'z-index','1500');
       important(entity,'pointer-events','auto');
       important(entity,'background','transparent');
+      important(entity,'overflow','visible');
     }
     if(territory) important(territory,'display','none');
     if(territoryDrawer){
@@ -188,7 +196,7 @@
       important(territoryDrawer,'left','auto');
       important(territoryDrawer,'top','74px');
       important(territoryDrawer,'right','0');
-      important(territoryDrawer,'bottom','14px');
+      important(territoryDrawer,'bottom',(commandH+commandBottomGap+14)+'px');
       important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round((shellW-leftStage)*0.235)))+'px');
       important(territoryDrawer,'height','auto');
       important(territoryDrawer,'transform','none');
