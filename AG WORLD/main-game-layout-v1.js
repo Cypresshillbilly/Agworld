@@ -171,8 +171,15 @@
     // Territory Stats is an overlay drawer on the map instead of a bottom-left panel.
     frame(sidebar,0,0,sidebarW,shellH);
     frame(missions,sidebarW,0,missionsW,shellH);
-    frame(mapArea,leftStage,0,shellW-leftStage,topH);
+    // The map is now the full-height tactical background for the right stage.
+    // Command Center overlays it instead of reserving a separate strip below it.
+    frame(mapArea,leftStage,0,shellW-leftStage,shellH);
     frame(entity,leftStage,topH,shellW-leftStage,bottomH);
+    if(entity){
+      important(entity,'z-index','1500');
+      important(entity,'pointer-events','auto');
+      important(entity,'background','transparent');
+    }
     if(territory) important(territory,'display','none');
     if(territoryDrawer){
       // Territory Stats remains a right-side pop-out, reshaped into a tall,
@@ -188,9 +195,8 @@
       important(territoryDrawer,'z-index','2200');
     }
 
-    // The Entity Command card is the sole visual surface for the entire
-    // bottom-right allocation. Force it to occupy the exact geometry owned
-    // by entityInformationSection rather than retaining any legacy card size.
+    // The Command Center remains locked to its approved bottom-right geometry,
+    // but now floats as an overlay on top of the full-height map background.
     const entityCard=$('farmCard');
     if(entity && entityCard){
       important(entity,'overflow','hidden');
