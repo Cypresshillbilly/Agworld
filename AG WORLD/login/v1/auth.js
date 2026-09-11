@@ -27,6 +27,8 @@
   const AG_REMEMBER_FLAG = 'agworld.remembered.enabled';
   const LEGACY_REMEMBER_PASS = 'gamechanger.master.remembered.password';
   const LEGACY_AG_REMEMBER_PASS = 'agworld.remembered.password';
+  const rememberedUsername=localStorage.getItem(AG_REMEMBER_USER)||'';
+  const rememberedEnabled=localStorage.getItem(AG_REMEMBER_FLAG)==='1'||!!rememberedUsername;
 
   async function sha256(text){
     const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
@@ -225,6 +227,8 @@
               localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
             }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
+          error.textContent='LOADING AGWORLD…';
+          if(window.__AGWORLD_BOOT_RUNTIME__) await window.__AGWORLD_BOOT_RUNTIME__();
           gate.remove();
           reveal();
           window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
