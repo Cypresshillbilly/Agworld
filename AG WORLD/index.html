@@ -27,7 +27,10 @@ body.agworld-layout-ready .app-shell{
   content:"";position:absolute;inset:0;
   background:linear-gradient(180deg,rgba(4,7,6,.05),rgba(4,7,6,.12));
 }
-</style></head><body><div id="ag-login-boot-shield" aria-hidden="true"></div><script>
+</style><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
+<script src="login/v1/auth.js?v=login-v1-security-hardening-v1-20260910-2145"></script>
+<script src="login/v1/gate.js?v=login-v1-locked-20260909"></script>
+</head><body><div id="ag-login-boot-shield" aria-hidden="true"></div><script>
 /* AG WORLD — canonical landing boot lock.
    Prevents the underlying legacy app from flashing through during refresh or
    authentication. Only the approved Player View is released. */
@@ -221,26 +224,45 @@ body.agworld-layout-ready .app-shell{
 .farm-info-step .farm-wizard-actions button{flex:1}
 @media(max-width:900px){.farm-info-grid,.farm-checklist-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.farm3d-modal{padding:8px}.farm-create-window{width:100%!important;max-height:calc(100vh - 16px)!important}.farm-create-window .farm-wizard{padding:14px}.farm-info-grid,.farm-checklist-grid{grid-template-columns:1fr}.farm-info-step .farm-wizard-actions{flex-direction:column}}
-</style><script src="https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js"></script><script src="core/role-config.js?v=master-architecture-v1"></script><script src="core/bootstrap.js?v=playable-loop-v1"></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1"></script><script src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1"></script><script src="api-bridge.js?v=20260902"></script><script src="config-gis-v4.js"></script>
-<script src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305"></script>
-<script src="app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425"></script>
-<script src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045"></script>
-<script src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818"></script><script src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907"></script><script src="farm-zoom-visual.js?v=manual-only-farm-visual-v2"></script><script src="game-hud.js?v=20260903-dupfix"></script><script src="game-view-mode.js?v=full-game-transition-v46-20260910-0945"></script>
-<script src="agworld-system-guide-v1.js?v=sales-advisor-controlled-v4-20260910-2225"></script>\n<script src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010"></script><script src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018"></script><script src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022"></script><script src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213"></script><script src="menu-map-navigation.js?v=20260903"></script><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
-<script src="login/v1/auth.js?v=login-v1-security-hardening-v1-20260910-2145"></script><script src="user-profile-modal.js?v=20260912"></script><script src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745"></script><script src="province-boundaries.js?v=20260904"></script><script src="game-map-filters-v2.js?v=demo-farm-cleanup-v1"></script><script src="menu-settings-logout.js?v=supabase-signout-fix-v1-20260909"></script>
-<script src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1"></script>
-<script src="territory-missions-v26.js?v=20260906-stable-v26"></script>
-<script src="player-progression-v27.js?v=20260906-live-profile-missions-v47"></script>
-<script src="interactive-onboarding-v28.js?v=20260906-interactive-onboarding-v1"></script>
+</style><script>
+  // Performance baseline: the heavy 3D runtime is loaded only when the
+  // authenticated application is being entered. Login V1 stays lightweight.
+  window.__agworldEnsureThree = window.__agworldEnsureThree || (() => new Promise((resolve, reject) => {
+    if (window.THREE) return resolve(window.THREE);
+    const existing = document.querySelector('script[data-agworld-three]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve(window.THREE), { once:true });
+      existing.addEventListener('error', reject, { once:true });
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js';
+    script.async = true;
+    script.dataset.agworldThree = 'true';
+    script.onload = () => resolve(window.THREE);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  }));
+</script><script src="core/role-config.js?v=master-architecture-v1" defer></script><script src="core/bootstrap.js?v=playable-loop-v1" defer></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1" defer></script><script src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1" defer></script><script src="api-bridge.js?v=20260902" defer></script><script src="config-gis-v4.js" defer></script>
+<script src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305" defer></script>
+<script src="app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425" defer></script>
+<script src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045" defer></script>
+<script src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818" defer></script><script src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907" defer></script><script src="farm-zoom-visual.js?v=manual-only-farm-visual-v2" defer></script><script src="game-hud.js?v=20260903-dupfix" defer></script><script src="game-view-mode.js?v=full-game-transition-v46-20260910-0945" defer></script>
+<script src="agworld-system-guide-v1.js?v=sales-advisor-controlled-v4-20260910-2225" defer></script>\n<script src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010" defer></script><script src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018" defer></script><script src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022" defer></script><script src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213" defer></script><script src="menu-map-navigation.js?v=20260903" defer></script>
+<script src="user-profile-modal.js?v=20260912" defer></script><script src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745" defer></script><script src="province-boundaries.js?v=20260904" defer></script><script src="game-map-filters-v2.js?v=demo-farm-cleanup-v1" defer></script><script src="menu-settings-logout.js?v=supabase-signout-fix-v1-20260909" defer></script>
+<script src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1" defer></script>
+<script src="territory-missions-v26.js?v=20260906-stable-v26" defer></script>
+<script src="player-progression-v27.js?v=20260906-live-profile-missions-v47" defer></script>
+<script src="interactive-onboarding-v28.js?v=20260906-interactive-onboarding-v1" defer></script>
 <!-- Chapter mission sidebar renderer temporarily disabled for stability -->
-<script src="interactive-field-learning-v29.js?v=20260906-interactive-field-learning-v1"></script>
-<script src="precise-chapter2-v30.js?v=20260906-precise-chapter2-v1"></script>
-<script src="stateful-chapter2-v31.js?v=20260906-stateful-chapter2-v1"></script>
-<script src="chapter2-director-career-v32.js?v=20260906-chapter2-director-career-v1"></script>
-<script src="chapter3-campaign-v33.js?v=20260906-chapter3-campaign-v1"></script>
-<script src="chapter3-verification-v34.js?v=20260906-chapter3-verification-v1"></script>
+<script src="interactive-field-learning-v29.js?v=20260906-interactive-field-learning-v1" defer></script>
+<script src="precise-chapter2-v30.js?v=20260906-precise-chapter2-v1" defer></script>
+<script src="stateful-chapter2-v31.js?v=20260906-stateful-chapter2-v1" defer></script>
+<script src="chapter2-director-career-v32.js?v=20260906-chapter2-director-career-v1" defer></script>
+<script src="chapter3-campaign-v33.js?v=20260906-chapter3-campaign-v1" defer></script>
+<script src="chapter3-verification-v34.js?v=20260906-chapter3-verification-v1" defer></script>
 
-<script src="territory-control-unified-v1.js?v=farms-contractors-control-v2-20260908-1045"></script>
+<script src="territory-control-unified-v1.js?v=farms-contractors-control-v2-20260908-1045" defer></script>
 
 <style id="agworld-territory-info-style">
 #territoryInfoPanel{position:absolute;right:22px;top:92px;width:330px;z-index:1200;background:rgba(10,18,22,.96);border:1px solid rgba(142,181,101,.42);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.45);padding:18px;color:#f4f7f1;backdrop-filter:blur(14px);display:none}
@@ -271,27 +293,27 @@ body.agworld-layout-ready .app-shell{
 </style>
 <div id="territoryInfoPanel" aria-live="polite"></div>
 
-<script src="core/entities/entity.schema.js"></script>
-<script src="core/entities/entity-types.js"></script>
-<script src="core/entities/entity.repository.js?v=api-base-v1-20260908-1130"></script>
-<script src="core/entities/entity.service.js?v=entity-service-v1-20260908-1130"></script>
-<script src="core/entities/farm.entity.js"></script>
-<script src="core/relationships/relationship.schema.js"></script>
-<script src="core/relationships/relationship.repository.js?v=relationship-manager-v30-20260907-1349"></script>
-<script src="core/relationships/entity-interaction-engine-v1.js?v=entity-interaction-v1-20260907-2155"></script>
-<script src="core/events/world-event-consequence-engine-v1.js?v=world-events-v1-20260907-2210"></script>
-<script src="world-events-management-v1.js?v=world-events-ui-v1-20260907-2225"></script>
-<script src="core/ui/entity-detail-panel-v2.js?v=management-tabs-only-v2-20260908-1545"></script>
-<script src="core/ui/farm-detail-panel-v2.js?v=farm-details-canonical-v4-20260908-1456"></script>
-<script src="relationship-network-canonical-v2.js?v=relationship-diagnostics-hidden-20260907-2015"></script>
+<script src="core/entities/entity.schema.js" defer></script>
+<script src="core/entities/entity-types.js" defer></script>
+<script src="core/entities/entity.repository.js?v=api-base-v1-20260908-1130" defer></script>
+<script src="core/entities/entity.service.js?v=entity-service-v1-20260908-1130" defer></script>
+<script src="core/entities/farm.entity.js" defer></script>
+<script src="core/relationships/relationship.schema.js" defer></script>
+<script src="core/relationships/relationship.repository.js?v=relationship-manager-v30-20260907-1349" defer></script>
+<script src="core/relationships/entity-interaction-engine-v1.js?v=entity-interaction-v1-20260907-2155" defer></script>
+<script src="core/events/world-event-consequence-engine-v1.js?v=world-events-v1-20260907-2210" defer></script>
+<script src="world-events-management-v1.js?v=world-events-ui-v1-20260907-2225" defer></script>
+<script src="core/ui/entity-detail-panel-v2.js?v=management-tabs-only-v2-20260908-1545" defer></script>
+<script src="core/ui/farm-detail-panel-v2.js?v=farm-details-canonical-v4-20260908-1456" defer></script>
+<script src="relationship-network-canonical-v2.js?v=relationship-diagnostics-hidden-20260907-2015" defer></script>
 <script>
   // V2.8 is wired directly to the GIS loader's canonical agworld:farm-selected
   // event. No window.selectFarm wrapper is used because the live selector is
   // module-scoped inside app-gis-loader-v24.js.
 </script>
-<script src="shared-backend-v37.js?v=player-profile-level1-v38-20260909-2335"></script>
-<script src="shared-farm-world-v38.js?v=shared-cache-v4-20260907"></script>
-<script src="login/v1/gate.js?v=login-v1-locked-20260909"></script>
+<script src="shared-backend-v37.js?v=player-profile-level1-v38-20260909-2335" defer></script>
+<script src="shared-farm-world-v38.js?v=shared-cache-v4-20260907" defer></script>
+
 
 <style id="fleetModalVisibilityFix">
   /* Fleet modals must be true application overlays, not normal document content. */
@@ -411,7 +433,7 @@ body.agworld-layout-ready .app-shell{
   purge();
   document.addEventListener('DOMContentLoaded',purge,{once:true});
 })();
-</script><script src="main-game-layout-v1.js?v=player-command-center-clean-surface-v62-20260910-2338"></script><script src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039"></script><style id="agworld-unified-surface-style">
+</script><script src="main-game-layout-v1.js?v=player-command-center-clean-surface-v62-20260910-2338" defer></script><script src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039" defer></script><style id="agworld-unified-surface-style">
 :root{--ag-navy:#102b36;--ag-teal:#1d7d82;--ag-green:#72b84a;--ag-lime:#c2e95d;--ag-line:#d8e2de}
 body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{padding:10px 5px!important}
 body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{width:100%!important;max-width:100%!important;height:auto!important;max-height:132px!important;object-fit:contain!important;object-position:center center!important}
@@ -447,4 +469,4 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
   window.addEventListener('agworld:player-profile',apply);document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));setInterval(apply,1000);
 })();
 </script>
-<script src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052"></script><script src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102"></script><script src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125"></script><script src="profile-menu-refinement.js?v=advisor-layout-owner-clean-v2-20260910-2225"></script><script src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155"></script><script src="agworld-mission-control-card-polish-v1.js?v=advisor-photo-tabs-sales-map-hologram-v3-20260910-2225"></script></body></html>
+<script src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052" defer></script><script src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102" defer></script><script src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125" defer></script><script src="profile-menu-refinement.js?v=advisor-layout-owner-clean-v2-20260910-2225" defer></script><script src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155" defer></script><script src="agworld-mission-control-card-polish-v1.js?v=advisor-photo-tabs-sales-map-hologram-v3-20260910-2225" defer></script></body></html>
