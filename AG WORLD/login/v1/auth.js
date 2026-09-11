@@ -45,6 +45,44 @@
     document.documentElement.style.visibility='visible';
     document.body.style.visibility='visible';
   }
+  let __agworldSupabasePromise=null;
+  function ensureAgworldSupabase(){
+    if(window.__AGWORLD_SUPABASE_DB__) return Promise.resolve(window.__AGWORLD_SUPABASE_DB__);
+    if(__agworldSupabasePromise) return __agworldSupabasePromise;
+    __agworldSupabasePromise=new Promise((resolve,reject)=>{
+      const create=()=>{
+        try{
+          if(!window.supabase?.createClient) throw new Error('Supabase client unavailable');
+          const db=window.supabase.createClient('https://vcnkspaljmsjvonftfcw.supabase.co','sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o');
+          window.__AGWORLD_SUPABASE_DB__=db;
+          resolve(db);
+        }catch(err){reject(err);}
+      };
+      if(window.supabase?.createClient){create();return;}
+      const existing=document.querySelector('script[data-agworld-supabase]');
+      if(existing){
+        existing.addEventListener('load',create,{once:true});
+        existing.addEventListener('error',reject,{once:true});
+        return;
+      }
+      const s=document.createElement('script');
+      s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.async=true;
+      s.dataset.agworldSupabase='1';
+      s.onload=create;
+      s.onerror=reject;
+      document.head.appendChild(s);
+    });
+    return __agworldSupabasePromise;
+  }
+
+  function prewarmAgworldAuth(){
+    if(master || window.__AGWORLD_SUPABASE_DB__ || __agworldSupabasePromise) return;
+    const warm=()=>ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
+    if('requestIdleCallback' in window) window.requestIdleCallback(warm,{timeout:1200});
+    else setTimeout(warm,80);
+  }
+
   function showGate(){
     if(document.getElementById('ag-login-gate')) return;
     const gate=document.createElement('div');
@@ -68,6 +106,7 @@
     const style=document.createElement('style');
     style.textContent='#ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;font-family:Arial,Helvetica,sans-serif;color:#f4f3eb}#ag-login-gate.gc-master-login{background:radial-gradient(circle at 78% 12%,rgba(123,161,29,.16),transparent 32%),linear-gradient(145deg,#070b08,#111812)}.ag-login-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);width:min(442px,calc(100vw - 36px));box-sizing:border-box;padding:21px 31px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78));box-shadow:0 18px 55px rgba(0,0,0,.6);backdrop-filter:blur(6px)}.gc-master-login .ag-login-panel{top:50%;background:linear-gradient(145deg,rgba(15,23,17,.97),rgba(8,13,10,.95))}.gc-login-brand{text-align:center;margin-bottom:18px;text-transform:uppercase}.gc-login-brand strong{display:block;font-size:26px;font-weight:950;letter-spacing:2.5px}.gc-login-brand strong span{color:#cfe85b}.gc-login-brand small{display:block;margin-top:8px;font-size:8px;font-weight:900;letter-spacing:2.4px}.gc-login-brand em{display:block;margin-top:7px;font-size:8px;font-style:normal;color:#c8cdc3}.ag-input-wrap{display:block;margin-bottom:13px;font-size:9px;font-weight:800;letter-spacing:1.3px;color:#bfc2b9}.ag-input-wrap>span{display:block;margin-bottom:5px}.ag-input-wrap input{width:100%;height:49px;box-sizing:border-box;border:1px solid rgba(190,198,180,.34);border-radius:8px;background:rgba(0,0,0,.38);color:#fff;padding:0 13px}.ag-password-row{position:relative}.ag-password-row input{padding-right:44px}.ag-eye{position:absolute;right:4px;top:4px;width:36px;height:41px;border:0;background:transparent;color:#cfe05c;cursor:pointer}.ag-remember{display:flex;align-items:center;gap:8px;margin:2px 0 15px;font-size:9px;font-weight:700}.ag-remember input{position:absolute;opacity:0}.ag-remember span{width:16px;height:16px;border:1px solid rgba(207,224,92,.65);border-radius:3px}.ag-remember input:checked+span{background:#cfe05c;box-shadow:inset 0 0 0 3px #151a13}.ag-login-button{width:100%;height:50px;border:0;border-radius:8px;background:linear-gradient(180deg,#cfe85b,#8cad21);color:#11160b;font-weight:900;letter-spacing:1.35px;cursor:pointer}.ag-login-error{min-height:13px;margin-top:7px;text-align:center;color:#f0a08c;font-size:9px;font-weight:700}';
     document.head.appendChild(style); document.body.appendChild(gate); reveal();
+    prewarmAgworldAuth();
 
     // The boot shield is present in index.html before any application code can
     // reveal the underlying game. Remove it only after the real login gate has
@@ -158,14 +197,10 @@
         const error=gate.querySelector('.ag-login-error');
         error.textContent='SIGNING IN…';
         try{
-          if(!window.supabase?.createClient){
-            await new Promise((resolve,reject)=>{
-              const existing=document.querySelector('script[data-agworld-supabase]');
-              if(existing){existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true});return;}
-              const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';s.dataset.agworldSupabase='1';s.onload=resolve;s.onerror=reject;document.head.appendChild(s);
-            });
-          }
-          const db=window.supabase.createClient('https://vcnkspaljmsjvonftfcw.supabase.co','sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o');
+          // The client is normally already warm by the time the user clicks
+          // Enter AgWorld. Reuse the shared promise if the prewarm is still
+          // finishing instead of downloading/initialising during the click.
+          const db=await ensureAgworldSupabase();
           const email=username.value.trim();
           const pass=password.value;
           if(!email||!pass){error.textContent='ENTER YOUR EMAIL AND PASSWORD';return;}
@@ -260,5 +295,9 @@
     if(ok&&role){reveal();return;}
     showGate();
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install); else install();
+  // Login V1 is a first-class boot path. Start as soon as the body exists
+  // instead of waiting for DOMContentLoaded, which can be delayed by deferred
+  // map/GIS/game modules.
+  if(document.body) install();
+  else document.addEventListener('readystatechange',()=>{if(document.body) install();},{once:true});
 })();
