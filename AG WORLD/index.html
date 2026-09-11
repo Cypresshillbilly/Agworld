@@ -28,7 +28,7 @@ body.agworld-layout-ready .app-shell{
   background:linear-gradient(180deg,rgba(4,7,6,.05),rgba(4,7,6,.12));
 }
 </style><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
-<script src="login/v1/auth.js?v=login-v1-security-hardening-v1-20260910-2145"></script>
+<script src="login/v1/auth.js?v=login-v1-1-0-1-20260911-1438"></script>
 <script src="login/v1/gate.js?v=login-v1-locked-20260909"></script>
 </head><body><div id="ag-login-boot-shield" aria-hidden="true"></div><script>
 /* AG WORLD — canonical landing boot lock.
@@ -58,6 +58,12 @@ body.agworld-layout-ready .app-shell{
     document.documentElement.style.visibility='visible';
     document.body.style.visibility='visible';
     document.body.classList.add('agworld-layout-ready');
+    const shield=document.getElementById('ag-login-boot-shield');
+    if(shield){
+      shield.style.opacity='0';
+      shield.style.pointerEvents='none';
+      setTimeout(()=>shield.remove(),180);
+    }
     document.dispatchEvent(new CustomEvent('agworld:landing-layout-ready'));
     observer&&observer.disconnect();
   }
