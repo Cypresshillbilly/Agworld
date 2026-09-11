@@ -30,6 +30,7 @@ body.agworld-layout-ready .app-shell{
 </style><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
 <script src="login/v1/auth.js?v=login-v1-1-0-1-20260911-1438"></script>
 <script src="login/v1/gate.js?v=login-v1-locked-20260909"></script>
+<script>window.AGWORLD_LOGIN_VERSION='1.0.1';window.AGWORLD_PLAYER_BOOT_VERSION='1.0.1-staged';</script>
 </head><body><div id="ag-login-boot-shield" aria-hidden="true"></div><script>
 /* AG WORLD — canonical landing boot lock.
    Prevents the underlying legacy app from flashing through during refresh or
@@ -249,7 +250,8 @@ body.agworld-layout-ready .app-shell{
     script.onerror = reject;
     document.head.appendChild(script);
   }));
-</script><script src="core/role-config.js?v=master-architecture-v1" defer></script><script src="core/bootstrap.js?v=playable-loop-v1" defer></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1" defer></script><script src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1" defer></script><script src="api-bridge.js?v=20260902" defer></script><script src="config-gis-v4.js" defer></script>
+</script><template id="agworld-runtime-template">
+<script src="core/role-config.js?v=master-architecture-v1" defer></script><script src="core/bootstrap.js?v=playable-loop-v1" defer></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1" defer></script><script src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1" defer></script><script src="api-bridge.js?v=20260902" defer></script><script src="config-gis-v4.js" defer></script>
 <script src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305" defer></script>
 <script src="app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425" defer></script>
 <script src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045" defer></script>
@@ -475,4 +477,79 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
   window.addEventListener('agworld:player-profile',apply);document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));setInterval(apply,1000);
 })();
 </script>
-<script src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052" defer></script><script src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102" defer></script><script src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125" defer></script><script src="profile-menu-refinement.js?v=advisor-layout-owner-clean-v2-20260910-2225" defer></script><script src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155" defer></script><script src="agworld-mission-control-card-polish-v1.js?v=advisor-photo-tabs-sales-map-hologram-v3-20260910-2225" defer></script></body></html>
+<script src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052" defer></script><script src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102" defer></script><script src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125" defer></script><script src="profile-menu-refinement.js?v=advisor-layout-owner-clean-v2-20260910-2225" defer></script><script src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155" defer></script><script src="agworld-mission-control-card-polish-v1.js?v=advisor-photo-tabs-sales-map-hologram-v3-20260910-2225" defer></script>
+</template>
+<script>
+/*
+  AG WORLD — Login V1.0.1 / Player V1 staged runtime boot.
+  Login remains lightweight. After authentication we activate the canonical
+  runtime in its original source order. The player layout is released as soon
+  as the existing canonical layout-ready signal fires; secondary systems can
+  continue initialising without blocking the login interaction.
+*/
+(function(){
+  let bootPromise=null;
+
+  function activateRuntime(){
+    const template=document.getElementById('agworld-runtime-template');
+    if(!template) return Promise.resolve();
+    const nodes=[...template.content.childNodes].filter(n=>!(n.nodeType===Node.TEXT_NODE&&!n.textContent.trim()));
+    let chain=Promise.resolve();
+
+    for(const node of nodes){
+      if(node.nodeType!==Node.ELEMENT_NODE) continue;
+      if(node.tagName!=='SCRIPT') continue;
+
+      chain=chain.then(()=>new Promise((resolve,reject)=>{
+        const s=document.createElement('script');
+        for(const attr of [...node.attributes]){
+          // Dynamic scripts use async=false for deterministic dependency order.
+          if(attr.name.toLowerCase()!=='defer') s.setAttribute(attr.name,attr.value);
+        }
+
+        if(node.src){
+          s.async=false;
+          s.onload=resolve;
+          s.onerror=()=>reject(new Error('AgWorld runtime module failed: '+node.src));
+          document.body.appendChild(s);
+        }else{
+          s.text=node.textContent;
+          document.body.appendChild(s);
+          resolve();
+        }
+      }));
+    }
+    return chain;
+  }
+
+  window.__AGWORLD_BOOT_RUNTIME__=function(){
+    if(bootPromise) return bootPromise;
+
+    bootPromise=new Promise((resolve,reject)=>{
+      let settled=false;
+      const finish=()=>{
+        if(settled) return;
+        settled=true;
+        document.removeEventListener('agworld:landing-layout-ready',finish);
+        resolve();
+      };
+
+      // Existing canonical layout code emits this when the official Player V1
+      // surface is ready. Do not invent a second layout readiness mechanism.
+      document.addEventListener('agworld:landing-layout-ready',finish,{once:true});
+
+      activateRuntime().then(()=>{
+        // Some cached/fast paths may have already produced the canonical state.
+        if(document.body.classList.contains('agworld-layout-ready')) finish();
+        // Do not keep the authenticated user trapped behind the gate forever
+        // if a non-critical module owns a late event listener.
+        setTimeout(finish,1800);
+      }).catch(err=>{
+        if(!settled) reject(err);
+      });
+    });
+
+    return bootPromise;
+  };
+})();
+</script></body></html>
