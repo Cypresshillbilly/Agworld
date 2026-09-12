@@ -344,6 +344,7 @@
   window.AGWorldBackend={
     sync,
     getUser:()=>user,
+    getClient:()=>db,
     getPlayer:()=>window.AGWorldPlayer||null,
     refreshPlayer:async()=>{
       if(!user) return null;

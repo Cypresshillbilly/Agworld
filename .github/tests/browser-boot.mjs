@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
+import {exercisePlayerCommand} from './player-command.mjs';
 import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
 import {exerciseSidebarDiagnostics} from './sidebar-diagnostics.mjs';
@@ -9,7 +10,7 @@ import {exerciseReferenceTheme} from './reference-theme.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../AG WORLD');
-const types={'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.json':'application/json','.geojson':'application/json','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'};
+const types={'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.json':'application/json','.geojson':'application/json','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2','.mp3':'audio/mpeg'};
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/__test-events'){req.resume();res.writeHead(204).end();return;}
@@ -117,6 +118,8 @@ try{
   await exerciseReferenceTheme(good.page);
   results.push('Reference theme: self-hosted assets, five real skill values, all menu routes, protected geometry at two widths, advisors, territory ring and entity editor');
   await exercisePlayerMenu(good.page);
+  await exercisePlayerCommand(good.page);
+  results.push('Returning player: five skills in Profile, safety mission without scrolling, completion requirements, male Administrator audio and controls, six advisors, map menu and collapsed territory drawer');
   await exerciseSidebarDiagnostics(good.page);
   results.push('Branded sidebar preserves geometry; Developer Mode connects to the game, detects errors, preserves filters and reports API success/failure');
   results.push('Dashboard default, all menu panel routes, Profile badges/skills, late hydration, keyboard navigation, preserved Dashboard nodes and responsive bounds');

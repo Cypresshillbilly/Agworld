@@ -881,7 +881,8 @@ function ensureAdvisorBay(){
    bay=document.createElement('section');
    bay.id='agAdvisorBay';
    bay.setAttribute('aria-label','AgWorld advisor bay');
-   bay.innerHTML='<div class="ag-advisor-bay-head"><strong>ADVISOR BAY</strong><span>SELECT A DISCIPLINE</span></div><div class="ag-advisor-grid">'+[
+   bay.innerHTML='<div class="ag-advisor-bay-head"><strong>ADVISOR BAY</strong><span>YOUR GUIDE + FIVE SPECIALISTS</span></div><div class="ag-advisor-grid">'+[
+     ['system-administrator','⌘','SYSTEM ADMINISTRATOR'],
      ['compliance','C','COMPLIANCE'],
      ['sales','S','SALES'],
      ['product','P','PRODUCT'],
@@ -1195,7 +1196,7 @@ function syncSidebarBrandHeader(){
  // The logo and player profile are equal-status hero elements. They intentionally
  // share one generous header height so neither is visually treated as secondary.
  const shellH=document.querySelector('.app-shell')?.clientHeight||820;
- const heroHeight=Math.max(160,Math.min(190,Math.round(shellH*0.207)));
+ const heroHeight=Math.max(150,Math.min(184,Math.round(shellH*0.207)));
  document.documentElement.style.setProperty('--ag-hero-header-h',heroHeight+'px');
  sidebar.style.setProperty('--ag-sidebar-brand-header-h',heroHeight+'px','important');
  card.style.setProperty('height',heroHeight+'px','important');
@@ -1286,6 +1287,9 @@ function start(){
  observer.observe(document.body,{childList:true,subtree:true});
 
  window.addEventListener('resize',syncAdvisorBayGeometry);
+ window.addEventListener('resize',syncSidebarBrandHeader);
+ const shell=document.querySelector('.app-shell');
+ if(shell&&'ResizeObserver' in window)new ResizeObserver(syncSidebarBrandHeader).observe(shell);
  [0,100,300,700,1500,3000,6000].forEach(ms=>setTimeout(syncAdvisorBayGeometry,ms));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

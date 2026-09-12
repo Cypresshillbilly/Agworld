@@ -45,8 +45,8 @@
     add('navigation','Sidebar & panel navigation',required(!missing.length&&selection&&correctPanel),[
       ['Current screen',report.screen],['Routes available',routes.length-missing.length+' / '+routes.length],['One matching selection',selection],['Panel visibility matches selection',correctPanel],['Missing routes',missing.join(', ')||'None']
     ]);
-    const dashboard=['agPlayerMissionProfile','agCanonicalSkillProfile','agCanonicalMissionCard','agAdvisorBay'];
-    add('dashboard','Dashboard components',required(dashboard.every(id=>!!byId(id)?.isConnected)),dashboard.map(id=>[{'agPlayerMissionProfile':'Player profile','agCanonicalSkillProfile':'Skills profile','agCanonicalMissionCard':'Mission card','agAdvisorBay':'Advisor pane'}[id],!!byId(id)?.isConnected]),'Panels remain mounted while another menu screen is open.');
+    const dashboard=['agPlayerMissionProfile','agPlayerSalesFunnel','agCanonicalMissionCard','agAdvisorBay'];
+    add('dashboard','Dashboard components',required(dashboard.every(id=>!!byId(id)?.isConnected)),dashboard.map(id=>[{'agPlayerMissionProfile':'Player profile','agPlayerSalesFunnel':'Sales funnel','agCanonicalMissionCard':'Mission card','agAdvisorBay':'Advisor pane'}[id],!!byId(id)?.isConnected]),'Panels remain mounted while another menu screen is open.');
     const rect=el=>el?.getBoundingClientRect(),side=rect(q('.sidebar')),mission=rect(q('.missions')),map=rect(q('.map-area'));
     const joined=!!side&&!!mission&&!!map&&Math.abs(side.right-mission.left)<3&&Math.abs(mission.right-map.left)<3;
     add('layout','Screen layout',required(joined&&!!byId('entityInformationSection')&&!!byId('territoryStatsDrawer')),[

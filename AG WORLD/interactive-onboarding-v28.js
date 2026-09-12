@@ -115,6 +115,8 @@
     window.AGWorldProgression?.completeMission(id);
   }
 
+  window.AGWorldOnboarding={startMission(id){if(!data[id])return false;open(id);return true;}};
+
   // Capture clicks before the progression engine's direct onclick handler.
   document.addEventListener('click', event => {
     const button = event.target.closest('[data-progression-complete]');

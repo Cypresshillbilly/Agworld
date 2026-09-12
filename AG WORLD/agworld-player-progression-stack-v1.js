@@ -3,9 +3,9 @@
 // LOCKED BASELINE — MY MISSIONS / MISSION CONTROL
 // These production boundary dimensions are intentional and must not be changed
 // without an explicit approved redesign of the entire Mission Control panel.
-const SID='agworld-progression-stack-v1-style',STACK='agPlayerProgressionStack',SKILL='agCanonicalSkillProfile',CARD='agCanonicalMissionCard';
+const SID='agworld-progression-stack-v1-style',STACK='agPlayerProgressionStack',SKILL='agPlayerSalesFunnel',CARD='agCanonicalMissionCard';
 const MISSION_CONTROL_BASELINE=Object.freeze({
-  VERSION:'locked-v1-20260910',
+  VERSION:'player-command-v2-20260912',
   SIDE_INSET:10,
   PROFILE_TO_CONTROL_GAP:10,
   CONTROL_TO_ADVISOR_GAP:14,
@@ -44,10 +44,35 @@ function missionStars(d){const total=d.chs.flatMap(c=>c.missions||[]).length||1,
 function missionSkillRewards(m){const raw=m?.skillRewards??m?.starRewards??m?.rewards?.skills??m?.rewards?.skillStars??m?.rewards?.stars??window.AG_WORLD_SKILLS?.rewards?.[m?.id]??null;let list=[];if(Array.isArray(raw))list=raw.map(x=>typeof x==='string'?{skill:x,stars:1}:{skill:x.skill||x.name||x.id,stars:+(x.stars||x.count||x.amount||1)});else if(raw&&typeof raw==='object')list=Object.entries(raw).map(([skill,stars])=>({skill,stars:+stars||1}));if(!list.length&&m?.skill)list=[{skill:m.skill,stars:+(m.skillStars||m.stars||1)||1}];return list.filter(x=>x.skill).map(x=>({skill:String(x.skill),stars:Math.max(1,Math.min(5,Math.round(x.stars||1)))}))}
 function rewardMarkup(m){const rewards=missionSkillRewards(m),xp=Number(m?.rewards?.xp??m?.xp??0);return '<div class="agpc-reward-block" aria-label="Mission rewards"><span class="agpc-xp">+'+xp.toLocaleString()+' XP</span><div class="agpc-skill-rewards">'+(rewards.length?rewards.map(r=>'<span class="agpc-skill-reward" title="'+r.stars+' '+esc(r.skill)+' star'+(r.stars===1?'':'s')+'"><span class="stars">'+Array.from({length:r.stars},()=> '★').join('')+'</span>'+esc(r.skill).toUpperCase()+'</span>').join(''):'<span class="agpc-skill-reward">SKILL REWARD PENDING</span>')+'</div></div>'}
 function starMarkup(x){return '<div class="agpc-stars"><div class="agpc-star-row">'+Array.from({length:x.available},(_,i)=>'<span class="agpc-star '+(i<x.count?'earned':'')+'">★</span>').join('')+'</div><div class="agpc-star-info"><b>'+x.count+' / '+x.available+' SKILL STARS EARNED</b><span>Earn stars by completing missions and strengthening your player capability.</span></div></div>'}
-function renderMission(el,d){const stars=missionStars(d);const m=d.m;if(!m){el.innerHTML='<div class="agpc-kicker"><span>MISSION STATUS</span><i></i></div><h2>CHAPTER COMPLETE</h2><p>No active mission is currently waiting in this chapter.</p>'+starMarkup(stars)+'<div class="agpc-meta"><span class="agpc-reward">PROGRESSION UPDATED</span></div><div class="agpc-spacer"></div><button disabled>NO ACTIVE MISSION</button>';return}el.innerHTML='<div class="agpc-heading">CURRENT MISSION</div><div class="agpc-art"><img src="assets/missions/field-drone.webp" alt="Agricultural drone over a maize field at sunset" width="768" height="512"><span>CHAPTER '+esc(d.ch.id||1)+' · '+esc(d.ch.title||'PLAYER PROGRESSION')+'</span></div><div class="agpc-copy"><h2>'+esc(m.title)+'</h2><p>'+esc(m.objective||'Complete this mission to continue your progression.')+'</p></div><div class="agpc-rewards-heading">MISSION REWARDS</div>'+rewardMarkup(m)+'<div class="agpc-spacer"></div><button data-id="'+esc(m.id)+'"><span aria-hidden="true">▶</span> START MISSION</button>';el.querySelector('button').onclick=async e=>{const b=e.currentTarget,id=b.dataset.id;if(b.disabled)return;window.dispatchEvent(new CustomEvent('agworld:mission-start',{detail:{missionId:id,source:CARD}}));if(typeof window.AGWorldProgression?.completeMission==='function'){b.disabled=true;try{await window.AGWorldProgression.completeMission(id)}finally{schedule()}}}}
+const missionSignatures=new WeakMap();
+function renderMission(el,d){
+ const signature=JSON.stringify([d.m,d.ch.id,d.ch.title]);
+ if(missionSignatures.get(el)===signature&&el.firstElementChild)return;
+ missionSignatures.set(el,signature);
+ const m=d.m;
+ if(!m){el.innerHTML='<div class="agpc-heading">CURRENT MISSION</div><div class="agpc-copy"><h2>CHAPTER COMPLETE</h2><p>Your chapter record is up to date. Open Missions to review your journey.</p></div><button type="button" data-mission-history>VIEW MISSIONS</button>';el.querySelector('button').onclick=()=>window.AGWorldPlayerMenu?.select?.('mission-history');return;}
+ const safety=m.id==='c1-safety',portrait=m.id==='c1-welcome'||m.id==='c2-profile';
+ const src=safety?'assets/missions/safety-training.webp':portrait?'assets/advisors/system-administrator.webp':'assets/brand/sidebar-farmland.webp';
+ const alt=safety?'Company instructor briefing agricultural employees on field safety and protective equipment':portrait?'AgWorld System Administrator welcomes the player':'Agricultural territory and working fields';
+ el.innerHTML='<div class="agpc-heading">CURRENT MISSION <span>'+esc(m.type||'ASSIGNMENT')+'</span></div><div class="agpc-art"><img src="'+src+'" alt="'+alt+'" width="768" height="512"></div><div class="agpc-copy"><span class="agpc-chapter">CHAPTER '+esc(d.ch.id||1)+' · '+esc(d.ch.title||'PLAYER PROGRESSION')+'</span><h2>'+esc(m.title)+'</h2><p>'+esc(m.objective||'Complete this mission to continue your progression.')+'</p><span class="agpc-next">'+(safety?'3 questions · Training assessment':'Your next assignment')+'</span></div>'+rewardMarkup(m)+'<button type="button" data-id="'+esc(m.id)+'"><span aria-hidden="true">▶</span> START MISSION</button>';
+ el.querySelector('button').onclick=()=>{
+   window.AG_WORLD_GUIDE?.stopBriefing?.();
+   if(String(m.id).startsWith('c1-')){
+     if(window.AGWorldOnboarding?.startMission?.(m.id))return;
+     window.AG_WORLD_GUIDE?.briefMission?.({title:'Mission unavailable',copy:'Please refresh AgWorld to load the training experience. Your progress has not changed.'});return;
+   }
+   const launch=document.querySelector('[data-progression-complete="'+m.id+'"]');
+   if(launch){launch.click();return;}
+   window.dispatchEvent(new CustomEvent('agworld:start-mission',{detail:{missionId:m.id,chapter:d.ch.id}}));
+   window.AG_WORLD_GUIDE?.briefMission?.({title:m.title,copy:m.objective});
+ };
+}
+window.AGWorldPlayerCards={skillMarkup(){const el=document.createElement('section');renderSkill(el,data());return el.innerHTML;}};
+const salesSignatures=new WeakMap();
+function renderSales(el){const markup=window.AGWorldSalesDashboard?.cardMarkup?.()||'<div class="agsf-head"><strong>SALES FUNNEL</strong></div><p>Connecting your activity…</p>';const old=salesSignatures.get(el);if(old?.markup===markup&&old.content===el.firstElementChild)return;el.innerHTML=markup;salesSignatures.set(el,{markup,content:el.firstElementChild});}
 function clearOld(m){m.querySelectorAll(':scope > #agMissionSkillProfile,:scope > .ag-mission-skill-profile,:scope > #agMissionCardV2,:scope > #agLandingMissionCard').forEach(x=>x.remove());m.querySelectorAll(':scope > .mission,:scope > .mission-card,:scope > .mission-item').forEach(x=>{x.setAttribute('aria-hidden','true');x.style.setProperty('display','none','important')})}
 function ensure(m){let s=m.querySelector(':scope > #'+STACK);if(!s){s=document.createElement('section');s.id=STACK;s.setAttribute('aria-label','Player progression')}s.dataset.missionControlBaseline=MISSION_CONTROL_BASELINE.VERSION;s.style.setProperty('--agps-side-inset',MISSION_CONTROL_BASELINE.SIDE_INSET+'px');let k=s.querySelector('#'+SKILL);if(!k){k=document.createElement('section');k.id=SKILL;s.appendChild(k)}let c=s.querySelector('#'+CARD);if(!c){c=document.createElement('article');c.id=CARD;s.appendChild(c)}return{s,k,c}}
-function layout(){const m=document.querySelector('.missions');if(!m)return;clearOld(m);const{s,k,c}=ensure(m),player=m.querySelector(':scope > #agPlayerMissionProfile'),advisor=m.querySelector(':scope > #agAdvisorBay');if(player&&player.nextElementSibling!==s)player.insertAdjacentElement('afterend',s);else if(!s.parentElement)m.appendChild(s);if(advisor&&s.nextElementSibling!==advisor)s.insertAdjacentElement('afterend',advisor);const d=data();renderSkill(k,d);renderMission(c,d);const mr=m.getBoundingClientRect(),pr=player?.getBoundingClientRect(),ar=advisor?.getBoundingClientRect();if(!mr.height||!pr?.height)return;
+function layout(){const m=document.querySelector('.missions');if(!m)return;clearOld(m);const{s,k,c}=ensure(m),player=m.querySelector(':scope > #agPlayerMissionProfile'),advisor=m.querySelector(':scope > #agAdvisorBay');if(player&&player.nextElementSibling!==s)player.insertAdjacentElement('afterend',s);else if(!s.parentElement)m.appendChild(s);if(advisor&&s.nextElementSibling!==advisor)s.insertAdjacentElement('afterend',advisor);const d=data();renderSales(k);renderMission(c,d);const mr=m.getBoundingClientRect(),pr=player?.getBoundingClientRect(),ar=advisor?.getBoundingClientRect();if(!mr.height||!pr?.height)return;
 // LOCKED GEOMETRY CONTRACT:
 // top boundary = Player Profile bottom + 10px
 // side boundaries = 10px from the Mission Control column edges
@@ -59,6 +84,6 @@ m.dataset.agProgressionStack='canonical-v1';
 m.dataset.agMissionControlBaseline=MISSION_CONTROL_BASELINE.VERSION;
 m.dataset.agMissionControlGeometry='locked';}
 function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;layout()})}
-function start(){install();schedule();['agworld:player-ready','agworld:mission-completed','agworld:player-state','agworld:advisor-selected','agworld:landing-layout-ready'].forEach(e=>addEventListener(e,schedule));addEventListener('resize',schedule,{passive:true});mo?.disconnect();mo=new MutationObserver(rs=>{if(rs.some(r=>r.type==='childList'))schedule()});mo.observe(document.querySelector('.missions')||document.body,{childList:true,subtree:false});if('ResizeObserver'in window){ro?.disconnect();ro=new ResizeObserver(schedule);const m=document.querySelector('.missions');if(m)ro.observe(m)}}
+function start(){install();schedule();['agworld:sales-data','agworld:player-ready','agworld:mission-completed','agworld:player-state','agworld:advisor-selected','agworld:landing-layout-ready'].forEach(e=>addEventListener(e,schedule));addEventListener('resize',schedule,{passive:true});mo?.disconnect();mo=new MutationObserver(rs=>{if(rs.some(r=>r.type==='childList'))schedule()});mo.observe(document.querySelector('.missions')||document.body,{childList:true,subtree:false});if('ResizeObserver'in window){ro?.disconnect();ro=new ResizeObserver(schedule);const m=document.querySelector('.missions');if(m){ro.observe(m);[m.querySelector('#agPlayerMissionProfile'),m.querySelector('#agAdvisorBay')].forEach(el=>{if(el)ro.observe(el)});}}}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
