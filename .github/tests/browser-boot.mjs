@@ -126,7 +126,10 @@ try{
   assert.equal(await good.page.locator('#territoryStatsToggle').getAttribute('aria-expanded'),'true');
   await good.page.reload();await ready(good.page);
   await good.page.getByRole('button',{name:'Logout',exact:true}).click();
-  await good.page.locator('#agUsername').waitFor({state:'visible'});
+  try{await good.page.locator('#agUsername').waitFor({state:'visible',timeout:10000});}
+  catch(error){
+    console.error('Logout diagnostic',await good.page.evaluate(()=>({url:location.href,screen:document.querySelector('.missions')?.dataset.agScreen,explicitAuth:window.__AGWORLD_EXPLICIT_AUTH__,session:sessionStorage.getItem('gamechanger.authenticated'),accountLogout:window.agWorldLogout?.toString().includes('db.auth.signOut'),logout:document.querySelector('.nav [data-menu="logout"]')?.outerHTML,loader:document.querySelector('#agworld-game-loader')?.className})));throw error;
+  }
   await login(good.page);await ready(good.page);
   assert.deepEqual(good.errors,[]);
   results.push('fresh login, responsive territory toggle, refresh, logout, second login');
@@ -144,3 +147,4 @@ try{
   await failed.context.close();
   console.log('AGWORLD BROWSER BOOT PASS\n'+JSON.stringify(results,null,2));
 }finally{await browser.close();server.close();}
+
