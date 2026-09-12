@@ -1262,7 +1262,7 @@ async function loadFarms() {
       // farm or municipal overlays during initial player boot.
       updateZoomStage();
       $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded · loading municipal and town GIS…`;
-      reportAgWorldBootPhase('populate', 97, 'POPULATING MAP');
+      reportAgWorldBootPhase('populate', 92, 'POPULATING MAP');
     }
 
     // Remote GIS layers load independently of both the map and local datasets.
@@ -1276,11 +1276,17 @@ async function loadFarms() {
   }
 }
 
-async function fetchWithTimeout(url, timeoutMs) {
+async function fetchWithTimeout(url, timeoutMs, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(url, { signal: controller.signal, cache: 'no-store' });
+    // These boot datasets are static, versioned application assets. Reusing the
+    // browser cache removes an avoidable network round-trip from every login
+    // while preserving the existing data model and retry behaviour.
+    return await fetch(url, {
+      signal: controller.signal,
+      cache: options.cache || 'force-cache'
+    });
   } finally {
     clearTimeout(timeout);
   }
@@ -1380,7 +1386,7 @@ function loadSpatialLayerOnce(kind) {
         countries[0].properties = record.properties;
       }
       if (map) countries.forEach(addTerritory);
-      reportAgWorldBootPhase('world', 94, 'LOADING SOUTH AFRICA');
+      reportAgWorldBootPhase('world', 76, 'LOADING SOUTH AFRICA');
     }
     if (kind === 'provinces') {
       const records = normaliseSpatialFeatures(layer, 'province');
@@ -1477,7 +1483,7 @@ function renderGoogleMap() {
 }
 
 function initMap() {
-  reportAgWorldBootPhase('map', 90, 'LOADING MAP ENGINE');
+  reportAgWorldBootPhase('map', 58, 'LOADING MAP ENGINE');
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
     $('mapStatus').textContent = 'Google satellite mapping is inactive: no API key is available to the dashboard.';
     return;
