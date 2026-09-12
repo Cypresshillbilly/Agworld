@@ -290,22 +290,50 @@ body.agworld-layout-ready .app-shell{
 </style><script>
   // Performance baseline: the heavy 3D runtime is loaded only when the
   // authenticated application is being entered. Login V1 stays lightweight.
-  window.__agworldEnsureThree = window.__agworldEnsureThree || (() => new Promise((resolve, reject) => {
-    if (window.THREE) return resolve(window.THREE);
-    const existing = document.querySelector('script[data-agworld-three]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.THREE), { once:true });
-      existing.addEventListener('error', reject, { once:true });
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js';
-    script.async = true;
-    script.dataset.agworldThree = 'true';
-    script.onload = () => resolve(window.THREE);
-    script.onerror = reject;
-    document.head.appendChild(script);
-  }));
+  // V1.1 boot: THREE remains lazy, but it may never be allowed to leave the
+  // player on an unchanging loading screen if a CDN request stalls.
+  window.__agworldEnsureThree = window.__agworldEnsureThree || (() => {
+    if (window.THREE) return Promise.resolve(window.THREE);
+
+    const sources=[
+      'https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js',
+      'https://unpkg.com/three@0.178.0/build/three.min.js'
+    ];
+
+    const loadSource=(src,index)=>new Promise((resolve,reject)=>{
+      if(window.THREE) return resolve(window.THREE);
+
+      const existing=document.querySelector('script[data-agworld-three="'+index+'"]');
+      if(existing){
+        existing.addEventListener('load',()=>resolve(window.THREE),{once:true});
+        existing.addEventListener('error',reject,{once:true});
+        return;
+      }
+
+      const script=document.createElement('script');
+      const timeout=setTimeout(()=>{
+        script.remove();
+        reject(new Error('THREE load timed out: '+src));
+      },12000);
+
+      script.src=src;
+      script.async=true;
+      script.dataset.agworldThree=String(index);
+      script.onload=()=>{
+        clearTimeout(timeout);
+        if(window.THREE) resolve(window.THREE);
+        else reject(new Error('THREE loaded without global runtime: '+src));
+      };
+      script.onerror=()=>{
+        clearTimeout(timeout);
+        script.remove();
+        reject(new Error('THREE failed: '+src));
+      };
+      document.head.appendChild(script);
+    });
+
+    return loadSource(sources[0],0).catch(()=>loadSource(sources[1],1));
+  });
 </script><template id="agworld-runtime-template">
 <script src="core/role-config.js?v=master-architecture-v1" defer></script><script src="core/bootstrap.js?v=playable-loop-v1" defer></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1" defer></script><script src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1" defer></script><script src="api-bridge.js?v=20260902" defer></script><script src="config-gis-v4.js" defer></script>
 <script src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305" defer></script>
@@ -624,12 +652,17 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
       // 2. load every canonical V1 module in its original source order;
       // 3. allow the late V1 composition passes to settle;
       // 4. explicitly release the canonical layout lock.
+      // Emit progress before any external CDN dependency is awaited. This keeps
+      // Loading Page V0 truthful and makes a stalled dependency visible instead
+      // of looking like authentication has frozen at 1%.
+      reportGameLoad(2,'PREPARING PLAYER SCREEN V1');
+
       Promise.resolve()
-        .then(()=>window.__agworldEnsureThree ? window.__agworldEnsureThree() : null)
         .then(()=>{
-          reportGameLoad(3,'STARTING PLAYER SCREEN V1');
-          return activateRuntime();
+          reportGameLoad(3,'LOADING PLAYER SCREEN V1 RUNTIME');
+          return window.__agworldEnsureThree ? window.__agworldEnsureThree() : null;
         })
+        .then(()=>activateRuntime())
         .then(async()=>{
           reportGameLoad(92,'FINALISING PLAYER SCREEN V1');
 
@@ -666,6 +699,11 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
         })
         .catch(err=>{
           window.__AGWORLD_V11_BOOT_ACTIVE__=false;
+          window.dispatchEvent(new CustomEvent('agworld:load-progress',{detail:{
+            progress:100,
+            status:'UNABLE TO COMPLETE PLAYER SCREEN BOOT'
+          }}));
+          console.error('AG World V1.1 boot failed',err);
           if(!settled) reject(err);
         });
     });
