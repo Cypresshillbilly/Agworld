@@ -1213,6 +1213,7 @@ function seedDemoFarms() {
 }
 
 let farmLoadInFlight = null;
+let farmDataBooted = false;
 
 async function loadFarms() {
   // The GIS module can receive authentication, refresh and map-ready signals
@@ -1238,6 +1239,7 @@ async function loadFarms() {
 
     const farmData = await farmResult.value.json();
     const base = farmData.farms || [];
+    farmDataBooted = true;
     let territoryData = { territories: [] };
     if (territoryResult.status === 'fulfilled' && territoryResult.value.ok) {
       territoryData = await territoryResult.value.json();
@@ -3463,6 +3465,13 @@ window.addEventListener('resize', () => { const host = $('farmScene'); if (rende
 // retry the GIS load if the first background request raced the login flow.
 function refreshMapAfterAuthentication() {
   if (!map) {
+    // The map API can still be in flight while the deferred source chain
+    // completes. Do not restart the full farm/world fetch just to retry map
+    // creation; the original callback will render it when Google Maps arrives.
+    if (farmDataBooted) {
+      initMap();
+      return;
+    }
     loadFarms().catch(error => console.warn('AG World map retry failed', error));
     return;
   }
