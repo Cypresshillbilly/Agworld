@@ -79,20 +79,29 @@
   }
 
   let __agworldPrewarmTimer=0;
+  let __agworldPrewarmIdle=0;
   function cancelAgworldAuthPrewarm(){
     if(__agworldPrewarmTimer){ clearTimeout(__agworldPrewarmTimer); __agworldPrewarmTimer=0; }
+    if(__agworldPrewarmIdle && 'cancelIdleCallback' in window){
+      cancelIdleCallback(__agworldPrewarmIdle);
+      __agworldPrewarmIdle=0;
+    }
   }
-  function prewarmAgworldAuth(delay=900){
+  function prewarmAgworldAuth(delay=1800){
     if(master || window.__AGWORLD_SUPABASE_DB__ || __agworldSupabasePromise) return;
     cancelAgworldAuthPrewarm();
     __agworldPrewarmTimer=setTimeout(()=>{
       __agworldPrewarmTimer=0;
-      // Never start SDK parsing while the player is actively editing a field.
       const active=document.activeElement;
-      if(active&&active.matches&&active.matches('#agUsername,#agPassword')){
-        return;
-      }
-      ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
+      if(active&&active.matches&&active.matches('#agUsername,#agPassword')) return;
+      const warm=()=>{
+        __agworldPrewarmIdle=0;
+        const focused=document.activeElement;
+        if(focused&&focused.matches&&focused.matches('#agUsername,#agPassword')) return;
+        ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
+      };
+      if('requestIdleCallback' in window) __agworldPrewarmIdle=requestIdleCallback(warm,{timeout:4000});
+      else __agworldPrewarmTimer=setTimeout(warm,600);
     },delay);
   }
 
@@ -119,7 +128,6 @@
     const style=document.createElement('style');
     style.textContent='#ag-login-gate{position:fixed;inset:0;z-index:100000;overflow:hidden;background:#070a09;font-family:Arial,Helvetica,sans-serif;color:#f4f3eb}#ag-login-gate.gc-master-login{background:radial-gradient(circle at 78% 12%,rgba(123,161,29,.16),transparent 32%),linear-gradient(145deg,#070b08,#111812)}.ag-login-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ag-login-panel{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);width:min(442px,calc(100vw - 36px));box-sizing:border-box;padding:21px 31px;border:1px solid rgba(207,224,92,.72);border-radius:15px;background:linear-gradient(145deg,rgba(8,13,11,.94),rgba(10,13,11,.78));box-shadow:0 18px 55px rgba(0,0,0,.6);backdrop-filter:blur(6px)}.gc-master-login .ag-login-panel{top:50%;background:linear-gradient(145deg,rgba(15,23,17,.97),rgba(8,13,10,.95))}.gc-login-brand{text-align:center;margin-bottom:18px;text-transform:uppercase}.gc-login-brand strong{display:block;font-size:26px;font-weight:950;letter-spacing:2.5px}.gc-login-brand strong span{color:#cfe85b}.gc-login-brand small{display:block;margin-top:8px;font-size:8px;font-weight:900;letter-spacing:2.4px}.gc-login-brand em{display:block;margin-top:7px;font-size:8px;font-style:normal;color:#c8cdc3}.ag-input-wrap{display:block;margin-bottom:13px;font-size:9px;font-weight:800;letter-spacing:1.3px;color:#bfc2b9}.ag-input-wrap>span{display:block;margin-bottom:5px}.ag-input-wrap input{width:100%;height:49px;box-sizing:border-box;border:1px solid rgba(190,198,180,.34);border-radius:8px;background:rgba(0,0,0,.38);color:#fff;padding:0 13px}.ag-password-row{position:relative}.ag-password-row input{padding-right:44px}.ag-eye{position:absolute;right:4px;top:4px;width:36px;height:41px;border:0;background:transparent;color:#cfe05c;cursor:pointer}.ag-remember{display:flex;align-items:center;gap:8px;margin:2px 0 15px;font-size:9px;font-weight:700}.ag-remember input{position:absolute;opacity:0}.ag-remember span{width:16px;height:16px;border:1px solid rgba(207,224,92,.65);border-radius:3px}.ag-remember input:checked+span{background:#cfe05c;box-shadow:inset 0 0 0 3px #151a13}.ag-login-button{width:100%;height:50px;border:0;border-radius:8px;background:linear-gradient(180deg,#cfe85b,#8cad21);color:#11160b;font-weight:900;letter-spacing:1.35px;cursor:pointer}.ag-login-error{min-height:13px;margin-top:7px;text-align:center;color:#f0a08c;font-size:9px;font-weight:700}';
     document.head.appendChild(style); document.body.appendChild(gate); reveal();
-    prewarmAgworldAuth();
 
     // The boot shield is present in index.html before any application code can
     // reveal the underlying game. Remove it only after the real login gate has
@@ -139,18 +147,19 @@
     // wins over background SDK work. Resume the existing warm-up only after the
     // player leaves the fields.
     [username,password].forEach(field=>{
+      field.addEventListener('pointerdown',cancelAgworldAuthPrewarm,{passive:true});
+      field.addEventListener('keydown',cancelAgworldAuthPrewarm);
       field.addEventListener('focus',cancelAgworldAuthPrewarm,{passive:true});
       field.addEventListener('input',cancelAgworldAuthPrewarm,{passive:true});
-      field.addEventListener('blur',()=>prewarmAgworldAuth(700),{passive:true});
+      field.addEventListener('blur',()=>prewarmAgworldAuth(1800),{passive:true});
     });
+    // If the player never interacts, warm only after the initial login render
+    // has been stable for a while.
+    setTimeout(()=>prewarmAgworldAuth(0),2200);
 
     // Restore credentials only when this browser/profile has explicitly
     // been told to remember them.
     try{
-      // One-time hygiene for the old implementation: remove any legacy
-      // plaintext password values that may still exist from prior versions.
-      localStorage.removeItem(LEGACY_REMEMBER_PASS);
-      localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
       if(master){
         const remembered=localStorage.getItem(REMEMBER_FLAG)==='1';
         if(remembered){
