@@ -1287,6 +1287,9 @@ function start(){
  observer.observe(document.body,{childList:true,subtree:true});
 
  window.addEventListener('resize',syncAdvisorBayGeometry);
+ window.addEventListener('resize',syncSidebarBrandHeader);
+ const shell=document.querySelector('.app-shell');
+ if(shell&&'ResizeObserver' in window)new ResizeObserver(syncSidebarBrandHeader).observe(shell);
  [0,100,300,700,1500,3000,6000].forEach(ms=>setTimeout(syncAdvisorBayGeometry,ms));
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
