@@ -1185,6 +1185,13 @@
 
       setTimeout(()=>{
         if(token!==entityCommandSelectionToken) return;
+        // A quick Update click may already have opened this entity's editor.
+        // Keep that live form when the delayed selection handoff catches up.
+        const visiblePanel=host?.querySelector('[data-entity-id]');
+        if(visiblePanel?.dataset.entityId===entityId && visiblePanel.querySelector('.agworld-entity-editor')){
+          entityCommandDiag('V2 HANDOFF PRESERVED EDITOR',{entityId});
+          return;
+        }
         entityCommandDiag('V2 HANDOFF EXECUTING',{isFarm,entityId,entityType});
         if(isFarm && typeof window.openV2FarmDetail==='function') window.openV2FarmDetail(entity);
         else if(!isFarm && typeof window.openV2DynamicEntityDetail==='function') window.openV2DynamicEntityDetail(entity);
