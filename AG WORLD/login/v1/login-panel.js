@@ -186,3 +186,15 @@
   install();
   if(document.getElementById('ag-login-gate')) observer.disconnect();
 })();
+
+// Performance code is isolated from the approved V1 presentation above. The
+// module may warm network resources and collect diagnostics, but it does not own
+// or modify Login V1, Loading V0 or Player V1 geometry.
+(()=>{
+  if(document.querySelector('script[data-agworld-boot-performance]')) return;
+  const script=document.createElement('script');
+  script.src='boot/v1/performance.js?v=boot-performance-v1-20260912';
+  script.async=true;
+  script.dataset.agworldBootPerformance='1';
+  document.head.appendChild(script);
+})();
