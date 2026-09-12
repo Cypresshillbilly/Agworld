@@ -195,6 +195,9 @@
 
     gate.querySelector('form').addEventListener('submit',async e=>{
       e.preventDefault();
+      const submitButton=gate.querySelector('.ag-login-button');
+      if(submitButton?.dataset.busy==='1') return;
+      if(submitButton){submitButton.dataset.busy='1';submitButton.disabled=true;}
       if(!master){
         const error=gate.querySelector('.ag-login-error');
         error.textContent='SIGNING IN…';
@@ -228,72 +231,121 @@
             }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
           /*
-           * Controlled game handoff.
-           * Keep the user on a branded progress screen while the canonical
-           * Player V1 runtime loads. This replaces the white intermediate page.
+           * Canonical post-auth handoff.
+           *
+           * The approved Player Screen V1 is already loading underneath the
+           * login boundary using its original source-order boot contract.
+           * Authentication must therefore never reconstruct V1 dynamically.
+           *
+           * Critical paint rule:
+           *   1. activate Loading Page V0;
+           *   2. yield a real browser paint;
+           *   3. only then remove the login and fire heavy authenticated
+           *      application listeners.
+           *
+           * This prevents the browser from showing an unpainted/white frame
+           * while synchronous V1 listeners initialise.
            */
           const gameLoader=document.getElementById('agworld-game-loader');
           const bar=document.getElementById('agworld-game-loader-bar');
           const percent=document.getElementById('agworld-game-loader-percent');
           const status=document.getElementById('agworld-game-loader-status');
+          const stages=['auth','interface','systems','map','world','populate','finalise'];
+
           const setProgress=(progress,text)=>{
             const p=Math.max(0,Math.min(100,Number(progress)||0));
             if(bar) bar.style.width=p+'%';
             if(percent) percent.textContent=Math.round(p)+'%';
             if(status&&text) status.textContent=text;
           };
-          const onProgress=(event)=>{
-            const detail=event.detail||{};
-            setProgress(detail.progress,detail.status);
-          };
+
           let highestChecklistStage=-1;
-          const onChecklist=(event)=>{
-            const stage=(event.detail||{}).stage;
-            const order=['auth','interface','systems','map','world','populate','finalise'];
-            const requested=order.indexOf(stage);
+          const setStage=(stage)=>{
+            const requested=stages.indexOf(stage);
             if(requested<0) return;
-            // Boot UI is monotonic: a late event may enrich diagnostics but can
-            // never untick or rewind a completed phase.
             highestChecklistStage=Math.max(highestChecklistStage,requested);
             const current=highestChecklistStage;
             document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
-              const index=order.indexOf(item.dataset.loadStage);
+              const index=stages.indexOf(item.dataset.loadStage);
               item.classList.toggle('is-complete',index<current);
               item.classList.toggle('is-loading',index===current);
             });
           };
-          window.addEventListener('agworld:load-progress',onProgress);
-          window.addEventListener('agworld:load-checklist',onChecklist);
+
+          const nextPaint=()=>new Promise(resolve=>{
+            requestAnimationFrame(()=>setTimeout(resolve,0));
+          });
+
+          // Listen before dispatching authentication lifecycle events. The
+          // canonical V1 boot lock owns this event and emits it only when the
+          // approved Player V1 surface is genuinely composed and ready.
+          const playerReady=new Promise(resolve=>{
+            document.addEventListener('agworld:landing-layout-ready',resolve,{once:true});
+          });
 
           error.textContent='LOADING AGWORLD…';
           setProgress(1,'AUTHENTICATION COMPLETE');
-          onChecklist({detail:{stage:'auth'}});
-          gate.remove();
+          setStage('auth');
+
           if(gameLoader) gameLoader.classList.add('is-active');
 
+          // Give Loading Page V0 an actual paint while it is above the login.
+          // Removing the gate or running game initialisers before this point was
+          // the direct cause of the white intermediate frame.
+          await nextPaint();
+
+          gate.remove();
+
+          setProgress(12,'LOADING GAME INTERFACE');
+          setStage('interface');
+          await nextPaint();
+
+          setProgress(28,'INITIALISING GAME SYSTEMS');
+          setStage('systems');
+
+          // These events resume the canonical V1 lifecycle. They are deliberately
+          // fired only after Loading Page V0 is visible on screen.
           window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
           window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user:data.user}}));
 
+          setProgress(52,'LOADING MAP ENGINE');
+          setStage('map');
+
+          // The V1 source stack continues underneath the loader. Progress phases
+          // remain monotonic and the screen is never exposed until canonical V1
+          // confirms its own layout-ready event.
+          await nextPaint();
+          setProgress(68,'LOADING SOUTH AFRICA');
+          setStage('world');
+          await nextPaint();
+          setProgress(82,'POPULATING MAP');
+          setStage('populate');
+
           try{
-            if(window.__AGWORLD_BOOT_RUNTIME__) await window.__AGWORLD_BOOT_RUNTIME__();
+            await playerReady;
+            setProgress(94,'FINALISING PLAYER SCREEN');
+            setStage('finalise');
+
+            // Allow the already-approved V1 to paint one complete frame beneath
+            // the overlay before removing Loading Page V0.
+            await nextPaint();
             setProgress(100,'AGWORLD READY');
             await new Promise(resolve=>setTimeout(resolve,180));
+
             if(gameLoader) gameLoader.classList.remove('is-active');
             reveal();
-          } finally {
-            window.removeEventListener('agworld:load-progress',onProgress);
-            window.removeEventListener('agworld:load-checklist',onChecklist);
           }
         }catch(err){
           console.error('AG World sign-in failed',err);
           error.textContent='UNABLE TO CONNECT TO THE COMPANY ACCOUNT SERVICE';
+          if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}
         }
         return;
       }
       const account=(master ? MASTER_USERS : AGWORLD_USERS)[username.value.trim()];
       const error=gate.querySelector('.ag-login-error');
       error.textContent='';
-      if(!account || await sha256(password.value)!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';return;}
+      if(!account || await sha256(password.value)!==account.passwordSha256){error.textContent='INVALID USERNAME OR PASSWORD';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
 
       // Persist Master Admin credentials only after a successful login and only
       // when the user has explicitly ticked Remember Me. Unticking it on a
