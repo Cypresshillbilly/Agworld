@@ -52,7 +52,14 @@
     if(window.__AGWORLD_SUPABASE_DB__) return Promise.resolve(window.__AGWORLD_SUPABASE_DB__);
     if(__agworldSupabasePromise) return __agworldSupabasePromise;
     __agworldSupabasePromise=new Promise((resolve,reject)=>{
+      let timer;
+      const fail=()=>{
+        clearTimeout(timer);
+        document.querySelector('script[data-agworld-supabase]')?.remove();
+        reject(new Error('Unable to connect to the account service. Please retry.'));
+      };
       const create=()=>{
+        clearTimeout(timer);
         try{
           if(!window.supabase?.createClient) throw new Error('Supabase client unavailable');
           const db=window.supabase.createClient('https://vcnkspaljmsjvonftfcw.supabase.co','sb_publishable_azAO3PoKko79ccwSJFjkhQ_L67ZM85o');
@@ -61,10 +68,11 @@
         }catch(err){reject(err);}
       };
       if(window.supabase?.createClient){create();return;}
+      timer=setTimeout(fail,15000);
       const existing=document.querySelector('script[data-agworld-supabase]');
       if(existing){
         existing.addEventListener('load',create,{once:true});
-        existing.addEventListener('error',reject,{once:true});
+        existing.addEventListener('error',fail,{once:true});
         return;
       }
       const s=document.createElement('script');
@@ -72,9 +80,9 @@
       s.async=true;
       s.dataset.agworldSupabase='1';
       s.onload=create;
-      s.onerror=reject;
+      s.onerror=fail;
       document.head.appendChild(s);
-    });
+    }).catch(error=>{__agworldSupabasePromise=null;throw error;});
     return __agworldSupabasePromise;
   }
 
@@ -92,7 +100,7 @@
     const status=document.getElementById('agworld-game-loader-status');
     const retry=document.getElementById('agworld-game-loader-retry');
     const stages=['auth','interface','systems','map','world','populate','finalise'];
-    const progress=[8,22,40,58,76,92,98];
+    const progress=[8,12,70,78,86,94,98];
     const labels=['AUTHENTICATION COMPLETE','LOADING GAME INTERFACE','INITIALISING GAME SYSTEMS','LOADING MAP ENGINE','LOADING SOUTH AFRICA','POPULATING MAP','FINALISING PLAYER SCREEN'];
     const checks=[...document.querySelectorAll('#agworld-game-loader-checklist .agl-check')];
     const pendingStages=new Set();
@@ -138,6 +146,12 @@
       // A late map event cannot overwrite the status of a later completed stage.
       if(sourcesReady&&Number.isFinite(value)&&value>=highestProgress&&value<=progress[highestStage]) setProgress(value,detail.status);
     };
+    const onSourceProgress=event=>{
+      const {completed,total}=event.detail||{};
+      if(!sourcesReady&&total>0&&completed>=0&&completed<=total){
+        setProgress(progress[1]+(progress[2]-progress[1])*completed/total,labels[1]);
+      }
+    };
     let resolvePlayer;
     const onPlayerReady=()=>resolvePlayer();
     let bootError=null;
@@ -159,6 +173,7 @@
     document.addEventListener('agworld:landing-layout-ready',onPlayerReady,{once:true});
     window.addEventListener('agworld:load-checklist',onChecklist);
     window.addEventListener('agworld:load-progress',onProgress);
+    window.addEventListener('agworld:source-progress',onSourceProgress);
     if(retry){retry.hidden=true;retry.onclick=()=>location.reload();}
     if(loader) loader.classList.add('is-active');
     advance('auth');
@@ -199,7 +214,132 @@
       document.removeEventListener('agworld:landing-layout-ready',onPlayerReady);
       window.removeEventListener('agworld:load-checklist',onChecklist);
       window.removeEventListener('agworld:load-progress',onProgress);
+      window.removeEventListener('agworld:source-progress',onSourceProgress);
     }
+  }
+
+  async function startPlayerSession(user,gate){
+    const username=user.user_metadata?.display_name||user.email;
+    window.__AGWORLD_EXPLICIT_AUTH__=true;
+    sessionStorage.setItem('gamechanger.authenticated','1');
+    sessionStorage.setItem('gamechanger.role','agriculture_sales');
+    sessionStorage.setItem('gamechanger.username',username);
+    return bootPlayer({gate,username,role:'agriculture_sales',user});
+  }
+
+  // Registration belongs to the login boundary; no game services need to run
+  // before the player can create an account. The database signup trigger owns
+  // profile creation, just as it does for the existing company account form.
+  function showAccountCreation(gate){
+    if(document.getElementById('agAccountDialog')) return;
+    const dialog=document.createElement('dialog');
+    dialog.id='agAccountDialog';
+    dialog.setAttribute('aria-labelledby','agAccountTitle');
+    dialog.innerHTML=`<style>
+      #agAccountDialog{box-sizing:border-box;width:min(472px,92vw);max-height:90vh;overflow:auto;padding:26px;border-radius:15px;border:1px solid #78884b;background:linear-gradient(145deg,#10191c,#0a1012);color:#edf5ef;font-family:Arial,Helvetica,sans-serif;box-shadow:0 24px 80px #0009}
+      #agAccountDialog::backdrop{background:#000c}
+      #agAccountDialog h2{margin:0 32px 8px 0}#agAccountDialog p{color:#aab5ad;font-size:12px;line-height:1.5}
+      #agAccountDialog label{display:grid;gap:5px;margin:12px 0;font-size:10px;letter-spacing:1px;font-weight:700;color:#c5cec1}
+      #agAccountDialog input,#agAccountDialog select,#agAccountDialog button{box-sizing:border-box;width:100%;padding:11px;border-radius:7px;border:1px solid #39443e;background:#091013;color:#fff}
+      #agAccountDialog button{margin-top:9px;cursor:pointer;font-weight:700}#agAccountDialog button:disabled{opacity:.6;cursor:wait}
+      #agAccountDialog [type=submit]{background:linear-gradient(#cfe85b,#8cad21);color:#11160b;border:0}
+      #agAccountDialog [data-close]{position:absolute;right:12px;top:4px;width:34px;padding:6px;background:transparent;border:0;font-size:22px}
+      #agAccountDialog [data-msg]{display:block;min-height:32px;font-size:12px;line-height:1.5;margin-top:12px}
+    </style>
+    <button data-close type="button" aria-label="Close create account">×</button>
+    <h2 id="agAccountTitle">Join the Company</h2>
+    <p>Create your employee account and connect yourself to your Company Facility.</p>
+    <form>
+      <label>FULL NAME<input name="fullName" autocomplete="name" required maxlength="120"></label>
+      <label>EMAIL ADDRESS<input name="email" type="email" autocomplete="email" required></label>
+      <label>PASSWORD<input name="password" type="password" autocomplete="new-password" minlength="6" required></label>
+      <label>COMPANY FACILITY<select name="facility" required disabled><option value="">Loading Company Facilities…</option></select></label>
+      <button data-retry type="button" hidden>RETRY FACILITY LIST</button>
+      <button type="submit" disabled>CREATE ACCOUNT</button>
+      <button data-signin type="button">ALREADY HAVE AN ACCOUNT? SIGN IN</button>
+      <button data-resend type="button" hidden>RESEND CONFIRMATION EMAIL</button>
+      <small data-msg role="status" aria-live="polite">Connecting to the Company account service…</small>
+    </form>`;
+    document.body.appendChild(dialog);
+    const form=dialog.querySelector('form');
+    const fields=form.elements;
+    const submit=form.querySelector('[type=submit]');
+    const retry=form.querySelector('[data-retry]');
+    const resend=form.querySelector('[data-resend]');
+    const signin=form.querySelector('[data-signin]');
+    const msg=text=>{dialog.querySelector('[data-msg]').textContent=text;};
+    let busy=false,db,confirmedEmail='';
+    const close=()=>{if(!busy)dialog.close();};
+    dialog.querySelector('[data-close]').onclick=close;
+    dialog.addEventListener('cancel',event=>{if(busy)event.preventDefault();});
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+    signin.onclick=()=>{
+      if(busy)return;
+      gate.querySelector('#agUsername').value=fields.email.value.trim();
+      close();
+      gate.querySelector('#agPassword').focus();
+    };
+    const setBusy=value=>{
+      busy=value;
+      submit.disabled=value||!fields.facility.options.length||fields.facility.disabled||!!confirmedEmail;
+      signin.disabled=resend.disabled=dialog.querySelector('[data-close]').disabled=value;
+    };
+    async function loadFacilities(){
+      retry.hidden=true;
+      fields.facility.disabled=submit.disabled=true;
+      msg('Loading Company Facilities…');
+      try{
+        db=await ensureAgworldSupabase();
+        const {data,error}=await db.from('company_facilities').select('id,name,details').order('name',{ascending:true}).abortSignal(AbortSignal.timeout(15000));
+        if(error)throw error;
+        const rows=(data||[]).filter(row=>!/^demo /i.test(row.name||''));
+        fields.facility.replaceChildren(new Option('Select your Company Facility',''));
+        for(const row of rows)fields.facility.add(new Option(row.name+(row.details?.nearestTown?' · '+row.details.nearestTown:''),row.id));
+        if(!rows.length)throw new Error('No Company Facilities are currently available.');
+        fields.facility.disabled=false;
+        submit.disabled=false;
+        msg('');
+      }catch(error){
+        fields.facility.replaceChildren(new Option('Company Facilities unavailable',''));
+        msg(error.message||'Unable to load Company Facilities. Please retry.');
+        retry.hidden=false;
+      }
+    }
+    retry.onclick=loadFacilities;
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      if(busy||!db||confirmedEmail||!form.reportValidity())return;
+      const name=fields.fullName.value.trim();
+      if(!name){msg('Enter your full name.');return;}
+      setBusy(true);submit.textContent='CREATING ACCOUNT…';
+      msg('Creating your Company account…');
+      try{
+        const email=fields.email.value.trim();
+        const {data,error}=await db.auth.signUp({email,password:fields.password.value,options:{data:{
+          display_name:name,company_facility_id:fields.facility.value,company_facility_name:fields.facility.selectedOptions[0].textContent
+        }}});
+        if(error)throw error;
+        if(!data?.user)throw new Error('Unable to create the account. Please try again.');
+        fields.password.value='';
+        if(data.session){dialog.close();await startPlayerSession(data.user,gate);return;}
+        confirmedEmail=email;
+        resend.hidden=false;
+        msg('Check your email to confirm your account, then return here and sign in.');
+      }catch(error){msg(error.message||'Unable to create the account. Please try again.');}
+      finally{setBusy(false);submit.textContent=confirmedEmail?'CHECK YOUR EMAIL':'CREATE ACCOUNT';}
+    };
+    resend.onclick=async()=>{
+      if(busy||!confirmedEmail)return;
+      setBusy(true);msg('Requesting a new confirmation email…');
+      try{
+        const {error}=await db.auth.resend({type:'signup',email:confirmedEmail});
+        if(error)throw error;
+        msg('Confirmation email requested. Check your inbox and spam/junk folder.');
+      }catch(error){msg(error.message||'Unable to resend the confirmation email.');}
+      finally{setBusy(false);}
+    };
+    dialog.showModal();
+    loadFacilities();
   }
 
   function showGate(){
@@ -294,20 +434,10 @@
 
     gate.querySelector('.ag-eye').onclick=()=>password.type=password.type==='password'?'text':'password';
 
-    // Create Account is part of the initial login DOM so it renders in the same
-    // frame as Enter AgWorld. The click handler resolves the backend lazily,
-    // allowing the account service to load later without delaying the button.
+    // Registration is available before the deferred game backend executes.
     const createAccount=gate.querySelector('[data-company-login]');
     if(createAccount){
-      createAccount.onclick=()=>{
-        if(window.AGWorldBackend?.openAccountCreation){
-          window.AGWorldBackend.openAccountCreation();
-        }else{
-          const a=document.querySelector('#agAuth button');
-          if(a) a.click();
-        }
-        setTimeout(()=>{const m=document.getElementById('agAuthModal');if(m)m.style.zIndex='200000'},50);
-      };
+      createAccount.onclick=()=>showAccountCreation(gate);
     }
 
     gate.querySelector('form').addEventListener('submit',async e=>{
@@ -329,11 +459,6 @@
           const {data,error:authError}=await db.auth.signInWithPassword({email,password:pass});
           if(authError){error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
           if(!data?.user){error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
-          const displayName=data.user.user_metadata?.display_name||email;
-          window.__AGWORLD_EXPLICIT_AUTH__=true;
-          sessionStorage.setItem('gamechanger.authenticated','1');
-          sessionStorage.setItem('gamechanger.role','agriculture_sales');
-          sessionStorage.setItem('gamechanger.username',displayName);
           if(remember.checked){
             try{
               localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
@@ -347,7 +472,7 @@
               localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
             }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
-          await bootPlayer({gate,username:displayName,role:'agriculture_sales',user:data.user});
+          await startPlayerSession(data.user,gate);
         }catch(err){
           console.error('AG World sign-in failed',err);
           error.textContent='UNABLE TO CONNECT TO THE COMPANY ACCOUNT SERVICE';
