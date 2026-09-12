@@ -1286,8 +1286,6 @@ async function loadFarms() {
       : (error?.message || 'unknown error');
     $('mapStatus').textContent = `Satellite map active · farm records failed to load (${detail})`;
   }
-}
-
   })();
 
   try {
