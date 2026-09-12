@@ -15,7 +15,7 @@
    const state=window.agWorldGetLayerState?.()||{};
    details.innerHTML='<summary>MAP LAYERS</summary><div class="ag-layer-grid">'+layers.map(([id,label])=>'<label><input type="checkbox" data-map-layer="'+id+'" '+(state[id]!==false?'checked':'')+'><span>'+label+'</span></label>').join('')+'</div><p>Farm icons, contractors and assets appear at farm zoom.</p>';
    details.addEventListener('change',e=>{if(e.target.dataset.mapLayer)window.agWorldSetLayerVisibility(e.target.dataset.mapLayer,e.target.checked);});
-   details.addEventListener('toggle',()=>window.AGWorldDrawers?.layout());header.append(details);
+   details.addEventListener('toggle',()=>{window.AGWorldDrawers?.layout();syncAdvisors();});header.append(details);
   }
  }
  function syncAdvisors(){
@@ -50,7 +50,8 @@
   const activate=e=>{if(missions.dataset.agScreen!=='dashboard')return;const card=e.target.closest('[data-open-screen]');if(!card)return;if(e.target!==card&&e.target.closest('button,a,input,select,textarea'))return;if(e.type==='keydown'&&!['Enter',' '].includes(e.key))return;e.preventDefault();e.stopImmediatePropagation();window.AGWorldPlayerMenu?.select(card.dataset.openScreen);};
   missions.addEventListener('click',activate,true);missions.addEventListener('keydown',activate,true);decorate();new MutationObserver(decorate).observe(missions,{childList:true,subtree:false});
  }
- function start(){setupMapMenu();setupAdvisors();dashboardNavigation();}
+ let headerObserver;
+ function start(){setupMapMenu();setupAdvisors();dashboardNavigation();if(!headerObserver&&'ResizeObserver'in window){headerObserver=new ResizeObserver(syncAdvisors);const header=document.querySelector('.map-header');if(header)headerObserver.observe(header);}}
  window.AGWorldMapAdvisors={isOpen:()=>advisorsOpen};
  addEventListener('agworld:drawers-changed',syncAdvisors);addEventListener('resize',syncAdvisors,{passive:true});
  for(const e of ['agworld:advisor-selected','agworld:advisor-deselected'])addEventListener(e,syncAdvisors);

@@ -302,6 +302,8 @@ html[data-ag-drawers] #territoryInfoPanel .territory-national-right{flex-directi
 html[data-ag-drawers] #territoryInfoPanel .ag-territory-basis{font:400 10px/1.4 AgWorldCondensed,sans-serif!important;color:#a9ccd2!important;padding:8px 2px!important;flex:0 0 auto!important}
 
 /* Dashboard floats above a clean white workspace; game cards keep their materials. */
+html[data-ag-drawers] .ag-exploration-menu{pointer-events:auto!important}
+html[data-ag-drawers] .ag-exploration-menu.ag-drawer-closed{pointer-events:none!important}
 html[data-ag-drawers] #territoryInfoPanel .territory-national-right{flex:none!important;min-height:0!important}
 html[data-ag-drawers] #territoryInfoPanel .territory-info-grid{height:auto!important;grid-template-rows:repeat(3,minmax(51px,auto)) auto!important;flex:none!important}
 html[data-ag-drawers] .ag-exploration-menu .map-tools>button{background:linear-gradient(#06323b,#001a22)!important;border:1px solid #32636c!important;color:#dff2f6!important;border-radius:4px!important;min-height:28px!important;font:600 10px/1 AgWorldCondensed,sans-serif!important;cursor:pointer!important}
