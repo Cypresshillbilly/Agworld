@@ -30,7 +30,8 @@ export async function exerciseReferenceTheme(page){
     assert.ok(Math.abs(g.advisor.y-g.command.y)<3,'Advisors remain aligned to the Command Center');
     assert.ok(g.start.bottom<=g.mission.bottom+1,'Mission action is visible within its card: '+JSON.stringify({size,mission:g.mission,start:g.start}));
     assert.equal(await page.locator('#agCanonicalMissionCard').evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Whole mission fits without scrolling');
-    assert.equal(await page.locator('#agCanonicalMissionCard .agpc-copy').evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Mission brief fits without clipping');
+    const brief=await page.locator('#agCanonicalMissionCard .agpc-copy').evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,text:el.textContent,children:[...el.children].map(x=>({height:x.getBoundingClientRect().height,margin:getComputedStyle(x).marginTop,font:getComputedStyle(x).font}))}));
+    assert.ok(brief.scroll<=brief.height+1,'Mission brief fits without clipping: '+JSON.stringify({size,brief,mission:g.mission,player:g.player,stack:g.stack}));
     const portraits=await page.locator('.ag-advisor-portrait').evaluateAll(els=>els.map(el=>({loaded:el.complete&&el.naturalWidth>0,rect:el.getBoundingClientRect().toJSON()})));
     assert.equal(portraits.length,6);assert.ok(portraits.every(p=>p.loaded));
     assert.ok(Math.max(...portraits.map(p=>p.rect.y))-Math.min(...portraits.map(p=>p.rect.y))<2,'One aligned row of photographic advisors');
