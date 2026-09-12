@@ -775,6 +775,12 @@ function initMap() {
   document.head.appendChild(script);
 }
 
+function territoryLabelIcon(name){
+  const width=Math.min(200,Math.max(54,String(name||'').length*7));
+  // A transparent, nonzero footprint gives text labels a mouse and keyboard target.
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="24"><rect width="100%" height="100%" fill="transparent"/></svg>';
+  return {url:'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(width,24),anchor:new google.maps.Point(width/2,12),labelOrigin:new google.maps.Point(width/2,12)};
+}
 function addTerritory(territory) {
   if (!map || !territory.boundary?.length) return;
   if (territory._polygon) {
@@ -825,12 +831,7 @@ function addTerritory(territory) {
       title: territory.name,
       clickable: !creatingFarm,
       zIndex: 7,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 0.01,
-        fillOpacity: 0,
-        strokeOpacity: 0
-      },
+      icon: territoryLabelIcon(municipalityDisplayName(territory.name)),
       label: {
         text: municipalityDisplayName(territory.name),
         color: '#ffffff',
@@ -846,7 +847,7 @@ function addTerritory(territory) {
       map,
       title: territory.name,
       clickable: !creatingFarm,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:0,fillOpacity:0,strokeOpacity:0},
+      icon:territoryLabelIcon(territory.regions?.[0]||territory.name),
       label: { text: String(territory.regions?.[0]||territory.name).toUpperCase(), color: '#eff9fc', fontSize: '12px', fontWeight: '700' }
     });
     marker.addListener('click', () => selectTerritory(territory, false));

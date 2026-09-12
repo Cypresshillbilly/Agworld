@@ -9,7 +9,7 @@ export async function panels(page,wanted={player:true,workspace:true,map:true,co
   if(await button.getAttribute('aria-expanded')!==String(wanted[key]))await button.click();
  }
  await page.waitForTimeout(340);
- await page.waitForFunction(()=>{const s=window.AGWorldDrawers?.getState(),g=window.AGWorldDrawers?.geometry();if(!s||!g)return false;const map=document.querySelector('.map-area').getBoundingClientRect();return Math.abs(map.left-g.leftStage)<1&&Math.abs(map.width-g.mapW)<1;});
+ await page.waitForFunction(()=>{const s=window.AGWorldDrawers?.getState(),g=window.AGWorldDrawers?.geometry();if(!s||!g)return false;const map=document.querySelector('.map-area').getBoundingClientRect(),stats=document.getElementById('territoryStatsDrawer'),r=stats.getBoundingClientRect();return Math.abs(map.left-g.leftStage)<1&&Math.abs(map.width-g.mapW)<1&&Math.abs(r.top-map.top-parseFloat(stats.style.top))<1&&Math.abs(r.height-parseFloat(stats.style.height))<1;});
 }
 const closed={player:false,workspace:false,map:false,territory:false,command:false};
 export async function exerciseDrawers(page){

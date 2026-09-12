@@ -119,7 +119,7 @@ try{
   const board=await newTest();
   await board.page.goto(base+'/index.html');await login(board.page);await ready(board.page);
   await exerciseTerritoryBoard(board.page);assert.deepEqual(board.errors,[]);await board.context.close();
-  results.push('South Africa framed and selected, country-only startup, click-selected provincial/municipal statistics, consistent farm/contractor colors and shared detail zoom');
+  results.push('SADC startup with 16 flags, 48-country Africa board, country-to-province drill-down, explicit province/municipality selection, country data isolation, live market colors and shared farm/contractor zoom');
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
