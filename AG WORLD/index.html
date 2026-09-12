@@ -158,9 +158,8 @@ body.agworld-layout-ready .app-shell{
             resolve();
           }
           script.dataset.agworldBootLoaded='1';
-          node.replaceWith(script);
-          if(node.src) document.head.appendChild(script);
-          else document.head.appendChild(script);
+          document.head.appendChild(script);
+          node.remove();
         });
       }
       window.__AGWORLD_GAME_BOOTED__=true;
