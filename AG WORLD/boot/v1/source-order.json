@@ -20,7 +20,7 @@
   "agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022",
   "agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213",
   "menu-map-navigation.js?v=20260903",
-  "login/v1/login-panel.js?v=login-refinement-20260912",
+  "login/v1/login-panel.js?v=brand-diagnostics-20260912",
   "login/v1/auth.js?v=login-refinement-20260912",
   "user-profile-modal.js?v=20260912",
   "skill-tree.js?v=command-center-readable-radar-v45-20260908-1745",
@@ -60,8 +60,9 @@
   "agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052",
   "agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102",
   "agworld-final-layer-cleanup-v2.js?v=boot-repair-20260912",
-  "profile-menu-refinement.js?v=dashboard-menu-20260912",
+  "profile-menu-refinement.js?v=brand-sidebar-20260912",
   "agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155",
   "agworld-mission-control-card-polish-v1.js?v=boot-repair-20260912",
-  "player-menu-panels.js?v=dashboard-menu-20260912"
+  "player-menu-panels.js?v=dashboard-menu-20260912",
+  "branded-sidebar.js?v=brand-diagnostics-20260912"
 ]

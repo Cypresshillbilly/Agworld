@@ -4,6 +4,7 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
+import {exerciseSidebarDiagnostics} from './sidebar-diagnostics.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../AG WORLD');
@@ -113,6 +114,8 @@ try{
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
   await exercisePlayerMenu(good.page);
+  await exerciseSidebarDiagnostics(good.page);
+  results.push('Branded sidebar preserves geometry; Developer Mode connects to the game, detects errors, preserves filters and reports API success/failure');
   results.push('Dashboard default, all menu panel routes, Profile badges/skills, late hydration, keyboard navigation, preserved Dashboard nodes and responsive bounds');
   // Let late observers and timers run, then exercise a real control.
   await good.page.evaluate(()=>{
@@ -147,4 +150,3 @@ try{
   await failed.context.close();
   console.log('AGWORLD BROWSER BOOT PASS\n'+JSON.stringify(results,null,2));
 }finally{await browser.close();server.close();}
-

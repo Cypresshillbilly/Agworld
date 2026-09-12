@@ -1,6 +1,6 @@
 /* AG WORLD — Profile menu. Profile Summary ALWAYS stays to the right of the avatar. */
 (()=>{
-const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=primary-horizontal-readable-v1';
+const LOGO_SRC='brand/logos/PNG_Transparent/AgWorld_Stacked_Vertical.png?v=brand-sidebar-20260912';
 const STYLE_ID='ag-profile-menu-refinement-style';
 const css=`
 :root{--ag-hero-header-h:170px;--ag-logo-fit-width:142px;}
