@@ -116,11 +116,24 @@ body.agworld-layout-ready .app-shell{
   }
 
   function authReady(){
+    // V1.1: authentication now hands off to the canonical Player V1 boot
+    // controller. Do not expose an intermediate shell while its source-ordered
+    // V1 modules are still composing.
+    if(window.__AGWORLD_V11_BOOT_ACTIVE__===true) return;
     settle();
     setTimeout(settle,80);
     setTimeout(settle,350);
     setTimeout(settle,900);
   }
+
+  // The V1.1 controller explicitly releases the same canonical lock only after
+  // the complete approved Player V1 source stack has settled.
+  window.addEventListener('agworld:v11-player-ready',()=>{
+    if(loginIsPresent()) return;
+    settle();
+    setTimeout(settle,80);
+    setTimeout(settle,350);
+  });
 
   window.addEventListener('gamechanger:authenticated',authReady);
   window.addEventListener('agworld:supabase-authenticated',authReady);
@@ -519,7 +532,7 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
 </template>
 <script>
 /*
-  AG WORLD — Login V1.0.1 / Player V1 staged runtime boot.
+  AG WORLD — Login V1.1 / Canonical Player V1 staged runtime boot.
   Login remains lightweight. After authentication we activate the canonical
   runtime in its original source order. The player layout is released as soon
   as the existing canonical layout-ready signal fires; secondary systems can
@@ -583,33 +596,72 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
   window.__AGWORLD_BOOT_RUNTIME__=function(){
     if(bootPromise) return bootPromise;
 
+    window.__AGWORLD_V11_BOOT_ACTIVE__=true;
+
     bootPromise=new Promise((resolve,reject)=>{
       let settled=false;
+
       const finish=()=>{
         if(settled) return;
         settled=true;
         document.removeEventListener('agworld:landing-layout-ready',finish);
+        window.__AGWORLD_V11_BOOT_ACTIVE__=false;
         reportGameChecklist('finalise');
         reportGameLoad(100,'AGWORLD READY');
         resolve();
       };
 
-      // Existing canonical layout code emits this when the official Player V1
-      // surface is ready. Do not invent a second layout readiness mechanism.
       document.addEventListener('agworld:landing-layout-ready',finish,{once:true});
 
-      activateRuntime().then(()=>{
-        // Do not mark map population complete here. The GIS runtime emits that
-        // phase when its actual initial data has been applied.
-        reportGameLoad(92,'WAITING FOR GAME WORLD');
-        // Some cached/fast paths may have already produced the canonical state.
-        if(document.body.classList.contains('agworld-layout-ready')) finish();
-        // Do not keep the authenticated user trapped behind the gate forever
-        // if a non-critical module owns a late event listener.
-        setTimeout(finish,1800);
-      }).catch(err=>{
-        if(!settled) reject(err);
-      });
+      // Restore the approved V1 boot contract:
+      // 1. load THREE first, exactly as the locked baseline did;
+      // 2. load every canonical V1 module in its original source order;
+      // 3. allow the late V1 composition passes to settle;
+      // 4. explicitly release the canonical layout lock.
+      Promise.resolve()
+        .then(()=>window.__agworldEnsureThree ? window.__agworldEnsureThree() : null)
+        .then(()=>{
+          reportGameLoad(3,'STARTING PLAYER SCREEN V1');
+          return activateRuntime();
+        })
+        .then(async()=>{
+          reportGameLoad(92,'FINALISING PLAYER SCREEN V1');
+
+          // The approved V1 baseline loaded these modules before the user ever
+          // authenticated. V1.1 keeps the login lightweight but gives the exact
+          // same source stack time to perform its late geometry/composition work
+          // underneath Loading Page V0 before anything is revealed.
+          await new Promise(requestAnimationFrame);
+          await new Promise(requestAnimationFrame);
+          await new Promise(resolve=>setTimeout(resolve,900));
+
+          const required=[
+            '.app-shell',
+            '.sidebar',
+            '.missions',
+            '#agPlayerMissionProfile',
+            '#agPlayerProgressionStack',
+            '#agCanonicalSkillProfile',
+            '#agCanonicalMissionCard',
+            '#agAdvisorBay',
+            '.map-area',
+            '#entityInformationSection',
+            '#territoryStatsDrawer'
+          ];
+
+          const missing=required.filter(selector=>!document.querySelector(selector));
+          if(missing.length){
+            throw new Error('Approved Player Screen V1 did not finish composing: '+missing.join(', '));
+          }
+
+          // This is the only post-auth release signal. No selector guard and no
+          // timeout is allowed to reveal an intermediate variation.
+          window.dispatchEvent(new CustomEvent('agworld:v11-player-ready'));
+        })
+        .catch(err=>{
+          window.__AGWORLD_V11_BOOT_ACTIVE__=false;
+          if(!settled) reject(err);
+        });
     });
 
     return bootPromise;
