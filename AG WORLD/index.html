@@ -137,7 +137,7 @@ body.agworld-layout-ready .app-shell{
 
   window.addEventListener('gamechanger:authenticated',authReady);
   window.addEventListener('agworld:supabase-authenticated',authReady);
-  window.addEventListener('agworld:game-mode-changed',()=>{ if(!released) settle(); });
+  window.addEventListener('agworld:game-mode-changed',()=>{ if(!released && window.__AGWORLD_V11_BOOT_ACTIVE__!==true) settle(); });
 
   function watch(){
     observer=new MutationObserver(()=>{
@@ -146,10 +146,10 @@ body.agworld-layout-ready .app-shell{
         document.body.classList.remove('agworld-layout-ready');
         return;
       }
-      if(window.__AGWORLD_EXPLICIT_AUTH__===true) settle();
+      if(window.__AGWORLD_EXPLICIT_AUTH__===true && window.__AGWORLD_V11_BOOT_ACTIVE__!==true) settle();
     });
     observer.observe(document.documentElement,{childList:true,subtree:true});
-    if(window.__AGWORLD_EXPLICIT_AUTH__===true) settle();
+    if(window.__AGWORLD_EXPLICIT_AUTH__===true && window.__AGWORLD_V11_BOOT_ACTIVE__!==true) settle();
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',watch,{once:true});
