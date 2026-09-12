@@ -229,11 +229,13 @@
         const preAuthBar=document.getElementById('agworld-game-loader-bar');
         const preAuthPercent=document.getElementById('agworld-game-loader-percent');
         const preAuthStatus=document.getElementById('agworld-game-loader-status');
+        const authChecklistItem=document.querySelector('#agworld-game-loader-checklist .agl-check[data-load-stage="auth"]');
         const resetPreAuthLoader=()=>{
           if(preAuthLoader) preAuthLoader.classList.remove('is-active');
           if(preAuthBar) preAuthBar.style.width='0%';
           if(preAuthPercent) preAuthPercent.textContent='0%';
-          if(preAuthStatus) preAuthStatus.textContent='AUTHENTICATION COMPLETE';
+          if(preAuthStatus) preAuthStatus.textContent='READY TO AUTHENTICATE';
+          if(authChecklistItem) authChecklistItem.textContent='AUTHENTICATION';
           document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
             item.classList.remove('is-loading','is-complete');
           });
@@ -242,6 +244,7 @@
         if(preAuthBar) preAuthBar.style.width='2%';
         if(preAuthPercent) preAuthPercent.textContent='2%';
         if(preAuthStatus) preAuthStatus.textContent='AUTHENTICATING SECURE SESSION';
+        if(authChecklistItem) authChecklistItem.textContent='AUTHENTICATING SECURE SESSION';
         document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
           item.classList.remove('is-complete');
           item.classList.toggle('is-loading',item.dataset.loadStage==='auth');
@@ -272,6 +275,7 @@
             return;
           }
           try{performance.mark('agworld-auth-complete');}catch(_){}
+          if(authChecklistItem) authChecklistItem.textContent='AUTHENTICATION COMPLETE';
           const displayName=data.user.user_metadata?.display_name||email;
           window.__AGWORLD_EXPLICIT_AUTH__=true;
           sessionStorage.setItem('gamechanger.authenticated','1');
