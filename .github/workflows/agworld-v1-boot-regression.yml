@@ -1,6 +1,7 @@
 name: AG World V1 Boot Regression
 
 on:
+  workflow_call:
   push:
     paths:
       - 'AG WORLD/index.html'
@@ -13,6 +14,12 @@ on:
       - 'AG WORLD/agworld-final-layer-cleanup-v2.js'
       - 'AG WORLD/agworld-player-progression-stack-v1.js'
       - 'AG WORLD/agworld-mission-control-card-polish-v1.js'
+      - 'AG WORLD/shared-farm-world-v38.js'
+      - 'AG WORLD/menu-settings-logout.js'
+      - 'AG WORLD/profile-menu-refinement.js'
+      - 'AG WORLD/agworld-system-guide-v1.js'
+      - '.github/tests/**'
+      - '.github/workflows/agworld-v1-boot-regression.yml'
   pull_request:
     paths:
       - 'AG WORLD/index.html'
@@ -25,6 +32,12 @@ on:
       - 'AG WORLD/agworld-final-layer-cleanup-v2.js'
       - 'AG WORLD/agworld-player-progression-stack-v1.js'
       - 'AG WORLD/agworld-mission-control-card-polish-v1.js'
+      - 'AG WORLD/shared-farm-world-v38.js'
+      - 'AG WORLD/menu-settings-logout.js'
+      - 'AG WORLD/profile-menu-refinement.js'
+      - 'AG WORLD/agworld-system-guide-v1.js'
+      - '.github/tests/**'
+      - '.github/workflows/agworld-v1-boot-regression.yml'
 
 permissions:
   contents: read
@@ -32,11 +45,23 @@ permissions:
 jobs:
   verify-v1-boot:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Verify canonical boot contract
-        run: node 'AG WORLD/boot/v1/verify.mjs'
+        run: |
+          node 'AG WORLD/boot/v1/verify.mjs'
+          node --check 'AG WORLD/boot/v1/three.mjs'
+          node 'AG WORLD/boot/v1/boot.test.mjs'
+          node 'AG WORLD/boot/v1/verify-dependencies.mjs'
+      - name: Install pinned browser test tooling
+        run: |
+          npm install --prefix "$RUNNER_TEMP/agworld-tests" --ignore-scripts --no-audit --no-fund playwright@1.58.2
+          "$RUNNER_TEMP/agworld-tests/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Exercise login, refresh, logout and failed-load recovery
+        env:
+          PLAYWRIGHT_MODULE_PATH: ${{ runner.temp }}/agworld-tests/node_modules/playwright/index.mjs
+        run: node .github/tests/browser-boot.mjs

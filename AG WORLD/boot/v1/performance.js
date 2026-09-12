@@ -7,12 +7,13 @@
 
   if(window.AGWorldBootDiagnostics?.version==='1.0.0') return;
 
-  const START=performance.now();
+  const bootMarks=window.__AGWORLD_BOOT_MARKS__||(window.__AGWORLD_BOOT_MARKS__={});
+  const START=bootMarks.submit??bootMarks.auth??performance.now();
   const stageOrder=['submit','auth','interface','systems','map','world','populate','ready'];
   const diagnostics={
     version:'1.0.0',
     startedAt:START,
-    marks:{},
+    marks:bootMarks,
     durations:{},
     regression:null,
     sourceWarmup:{started:false,complete:false,failed:[]},
@@ -21,8 +22,7 @@
   window.AGWorldBootDiagnostics=diagnostics;
 
   const mark=(name)=>{
-    if(diagnostics.marks[name]!=null) return diagnostics.marks[name];
-    const t=performance.now();
+    const t=diagnostics.marks[name]??performance.now();
     diagnostics.marks[name]=t;
     try{ performance.mark('agworld-'+name); }catch(_){ }
     if(name!=='submit' && diagnostics.marks.submit!=null){
@@ -32,7 +32,7 @@
   };
 
   const CRITICAL=[
-    'https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js',
+    'boot/v1/three.mjs?v=three-r178-module-20260912',
     'core/role-config.js?v=master-architecture-v1',
     'core/bootstrap.js?v=playable-loop-v1',
     'builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1',
@@ -40,8 +40,10 @@
     'api-bridge.js?v=20260902',
     'config-gis-v4.js',
     'world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305',
-    'app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425'
+    'app-gis-loader-v24.js?v=boot-repair-20260912'
   ];
+
+  diagnostics.mark=mark;
 
   function warmConnections(){
     [
@@ -83,7 +85,7 @@
   }
 
   function attachSubmitWarmup(){
-    const form=document.querySelector('#ag-login-gate .ag-login-form');
+    const form=document.querySelector('#ag-login-gate form');
     if(!form) return false;
     if(form.dataset.agworldPerfBound==='1') return true;
     form.dataset.agworldPerfBound='1';
@@ -100,15 +102,8 @@
   gateObserver.observe(document.documentElement,{childList:true,subtree:true});
   attachSubmitWarmup();
 
-  window.addEventListener('agworld:load-checklist',event=>{
-    const stage=event.detail?.stage;
-    if(stage==='auth') mark('auth');
-    else if(stage==='interface') mark('interface');
-    else if(stage==='systems') mark('systems');
-    else if(stage==='map') mark('map');
-    else if(stage==='world') mark('world');
-    else if(stage==='populate') mark('populate');
-  });
+  // The auth handoff marks visible stages after their prerequisites are met.
+  // Raw GIS events can arrive while interface sources are still executing.
 
   function geometry(el){
     if(!el) return null;
@@ -168,7 +163,7 @@
     if(!pass) console.error('AG World V1 boot regression audit failed',diagnostics.regression,diagnostics.snapshot);
   }
 
-  document.addEventListener('agworld:landing-layout-ready',()=>{
+  window.addEventListener('agworld:player-visible',()=>{
     mark('ready');
     requestAnimationFrame(()=>requestAnimationFrame(runRegressionAudit));
   },{once:true});
