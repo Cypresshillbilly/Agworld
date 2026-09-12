@@ -208,10 +208,10 @@
           const db=await ensureAgworldSupabase();
           const email=username.value.trim();
           const pass=password.value;
-          if(!email||!pass){error.textContent='ENTER YOUR EMAIL AND PASSWORD';return;}
+          if(!email||!pass){error.textContent='ENTER YOUR EMAIL AND PASSWORD';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
           const {data,error:authError}=await db.auth.signInWithPassword({email,password:pass});
-          if(authError){error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';return;}
-          if(!data?.user){error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';return;}
+          if(authError){error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
+          if(!data?.user){error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
           const displayName=data.user.user_metadata?.display_name||email;
           window.__AGWORLD_EXPLICIT_AUTH__=true;
           sessionStorage.setItem('gamechanger.authenticated','1');
