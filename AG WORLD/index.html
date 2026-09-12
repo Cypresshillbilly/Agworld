@@ -27,11 +27,32 @@ body.agworld-layout-ready .app-shell{
   content:"";position:absolute;inset:0;
   background:linear-gradient(180deg,rgba(4,7,6,.05),rgba(4,7,6,.12));
 }
+#agworld-game-loader{position:fixed;inset:0;z-index:2147483646;display:none;align-items:center;justify-content:center;background:#070a09 url("assets/backround%20v1.3.png") center/cover no-repeat;color:#fff}
+#agworld-game-loader.is-active{display:flex}
+#agworld-game-loader .agl-backdrop{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,7,6,.42),rgba(4,7,6,.86))}
+#agworld-game-loader .agl-card{position:relative;width:min(520px,86vw);padding:34px 36px 30px;border:1px solid rgba(122,211,120,.28);background:rgba(8,14,12,.84);box-shadow:0 22px 80px rgba(0,0,0,.52);backdrop-filter:blur(12px);text-align:center}
+#agworld-game-loader .agl-title{font-size:30px;letter-spacing:.16em;font-weight:800;margin-bottom:8px}
+#agworld-game-loader .agl-sub{font-size:12px;letter-spacing:.18em;color:rgba(255,255,255,.68);margin-bottom:28px}
+#agworld-game-loader .agl-progress-track{height:10px;background:rgba(255,255,255,.10);overflow:hidden;border-radius:999px}
+#agworld-game-loader .agl-progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#5dbd6c,#b8e26c);transition:width .22s ease}
+#agworld-game-loader .agl-progress-row{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;letter-spacing:.08em}
+#agworld-game-loader .agl-status{color:rgba(255,255,255,.72);text-align:left}
+#agworld-game-loader .agl-percent{font-weight:800;color:#b8e26c}
+
 </style><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
 <script src="login/v1/auth.js?v=login-v1-1-0-1-20260911-1438"></script>
 <script src="login/v1/gate.js?v=login-v1-locked-20260909"></script>
 <script>window.AGWORLD_LOGIN_VERSION='1.0.1';window.AGWORLD_PLAYER_BOOT_VERSION='1.0.1-staged';</script>
-</head><body><div id="ag-login-boot-shield" aria-hidden="true"></div><script>
+</head><body><div id="ag-login-boot-shield" aria-hidden="true"></div>
+<div id="agworld-game-loader" role="status" aria-live="polite" aria-label="Loading AgWorld">
+  <div class="agl-backdrop"></div>
+  <div class="agl-card">
+    <div class="agl-title">LOADING AGWORLD</div>
+    <div class="agl-sub">PREPARING YOUR GAME WORLD</div>
+    <div class="agl-progress-track"><div class="agl-progress-bar" id="agworld-game-loader-bar"></div></div>
+    <div class="agl-progress-row"><span class="agl-status" id="agworld-game-loader-status">AUTHENTICATION COMPLETE</span><span class="agl-percent" id="agworld-game-loader-percent">0%</span></div>
+  </div>
+</div><script>
 /* AG WORLD — canonical landing boot lock.
    Prevents the underlying legacy app from flashing through during refresh or
    authentication. Only the approved Player View is released. */
@@ -490,15 +511,21 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
 (function(){
   let bootPromise=null;
 
+  function reportGameLoad(progress,status){
+    const pct=Math.max(0,Math.min(100,Math.round(progress)));
+    window.dispatchEvent(new CustomEvent('agworld:load-progress',{detail:{progress:pct,status:status||'LOADING'}}));
+  }
+
   function activateRuntime(){
     const template=document.getElementById('agworld-runtime-template');
     if(!template) return Promise.resolve();
-    const nodes=[...template.content.childNodes].filter(n=>!(n.nodeType===Node.TEXT_NODE&&!n.textContent.trim()));
+    const nodes=[...template.content.childNodes].filter(n=>n.nodeType===Node.ELEMENT_NODE&&n.tagName==='SCRIPT');
+    const total=Math.max(1,nodes.length);
+    let loaded=0;
+    reportGameLoad(3,'STARTING AGWORLD SYSTEMS');
     let chain=Promise.resolve();
 
     for(const node of nodes){
-      if(node.nodeType!==Node.ELEMENT_NODE) continue;
-      if(node.tagName!=='SCRIPT') continue;
 
       chain=chain.then(()=>new Promise((resolve,reject)=>{
         const s=document.createElement('script');
@@ -509,12 +536,13 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
 
         if(node.src){
           s.async=false;
-          s.onload=resolve;
+          s.onload=()=>{ loaded++; reportGameLoad(5+(loaded/total)*82,'LOADING GAME SYSTEMS'); resolve(); };
           s.onerror=()=>reject(new Error('AgWorld runtime module failed: '+node.src));
           document.body.appendChild(s);
         }else{
           s.text=node.textContent;
           document.body.appendChild(s);
+          loaded++; reportGameLoad(5+(loaded/total)*82,'INITIALISING GAME SYSTEMS');
           resolve();
         }
       }));
@@ -531,6 +559,7 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
         if(settled) return;
         settled=true;
         document.removeEventListener('agworld:landing-layout-ready',finish);
+        reportGameLoad(100,'AGWORLD READY');
         resolve();
       };
 
@@ -539,6 +568,7 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
       document.addEventListener('agworld:landing-layout-ready',finish,{once:true});
 
       activateRuntime().then(()=>{
+        reportGameLoad(92,'FINALISING PLAYER SCREEN');
         // Some cached/fast paths may have already produced the canonical state.
         if(document.body.classList.contains('agworld-layout-ready')) finish();
         // Do not keep the authenticated user trapped behind the gate forever
