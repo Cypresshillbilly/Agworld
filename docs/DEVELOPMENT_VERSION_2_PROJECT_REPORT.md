@@ -14,7 +14,9 @@ The current product direction is an immersive map with independently retractable
 
 ## 2 Planning references and decisions
 
-The available earlier planning reference is `AG WORLD/ARCHITECTURE_AUDIT.md`, supported by the Agriculture build manifests and the September 10 code audit. It specifies a reusable Game Changer core, separate builds and roles, a single mission repository, central authentication, component ownership and progressive removal of historical patches. The original commercial project plan has not yet been independently identified; its milestones and dates require reconciliation before this roadmap can be described as an exact reproduction of that plan.
+The original functional proposal located for this handover is `AG_World_Web_Platform_Developer_Proposal_Revised_Full_Page_Screenshots-2.pdf` in the owner’s Desktop / GAME CHANGER / AG WORLD folder. Its ten pages were reviewed: pages 2-8 contain screen concepts, page 9 defines eight functional systems, and page 10 sets out the five-MVP roadmap. The source index, exact path and SHA-256 are recorded in `docs/planning/original-proposal-index.md`. No delivery dates are specified in that proposal. If an earlier contracted plan is supplied, reconcile it as an additional authority.
+
+`AG WORLD/ARCHITECTURE_AUDIT.md`, the Agriculture manifests and the September 10 audit provide the later implementation direction: reusable Game Changer core, separate builds and roles, one mission repository, central authentication, component ownership and progressive removal of historical patches. **Development Version 2 is the current release label; it is not the same as MVP 2 in the original proposal.**
 
 The product owner’s subsequent decisions take precedence over earlier screen documents:
 
@@ -245,10 +247,25 @@ The earlier checkpoint `baseline/official-2026-09-12` preserves the last accepte
 
 ## 13 Roadmap
 
+The original proposal’s page 10 sequence remains the long-term delivery framework. Current progress spans several workstreams; no full MVP is certified complete merely because some of its features exist.
+
+| Original stage | Current position | Remaining acceptance work |
+|---|---|---|
+| MVP 1 - Foundation | Player auth, farm records, boundaries, map/search and detail are working | Trusted administrator roles, permission migration and production access tests |
+| MVP 2 - Visual Farm | Progressive detail, object layers and recorded farm assets exist | Consistent interactive farm scenes, complete asset interactions and scene performance verification |
+| MVP 3 - Gamification | Persisted onboarding, missions, XP, skills, badges and personal evidence are working | Approval queues, full role dashboards, configured rules and reviewed assessments |
+| MVP 4 - Sales | First scouting-to-meeting sequence and personal activity records are working | Recurring assignments, proposals/quotes, opportunity progression and verified sale closure |
+| MVP 5 - Technician | Technical source conversation is available on demand | Component training, virtual repair lab, repair evidence, assessment and certification |
+| Later expansion | 3D production requirements and conversational AI foundation exist | Rigged 3D assets, mobile/PWA, AI data enrichment and predictive opportunity scoring |
+
+The proposal’s field-detail concepts also include soil analysis, weather and imagery links; those require defined data providers and operational integration before being represented as complete. Its dedicated technician role remains planned, even though the current sales onboarding deliberately omits mandatory technical training.
+
+The following implementation priorities combine that original sequence with the owner’s more recent decisions.
+
 | Priority | Workstream | Delivery condition |
 |---|---|---|
 | Current | Development V2 journey and visual checkpoint | Reviewed source, database checks, browser checks and live deployment verification recorded |
-| Next | Reconcile the original project plan | Identify the original plan; map each requirement to delivered, changed, deferred or cancelled work |
+| Next | Maintain plan traceability | Use the located proposal and source index; reconcile any earlier contracted plan supplied by the owner |
 | Next | Trusted administration | Server-verified roles, protected admin actions, permission tests and migration for existing administrators |
 | Next | Product academy | Curated decks/images for each sold model, approved benefits/tradeoffs, reviewed assessments and versioned sources |
 | Next | Compliance operations | Required-document rules by role, secure review queue, retention/deletion policy and review status |
@@ -259,7 +276,7 @@ The earlier checkpoint `baseline/official-2026-09-12` preserves the last accepte
 | Later | Platform expansion | Implement a second build without importing Agriculture-specific assets or rules into Game Changer core |
 | Later | Production operations | Custom domain, release environments, rollback rehearsal, monitoring, backups and production access review |
 
-No dates or commercial commitments are assigned where the original plan has not been reconciled. Technical remains on demand for the current salesman experience; a technical training curriculum is a separate future decision.
+No dates or commercial commitments are invented; the located original proposal supplies an order of work rather than a dated schedule. Technical remains on demand for the current salesman experience; a technical training curriculum is a separate future decision.
 
 ## 14 Continuation memory
 
