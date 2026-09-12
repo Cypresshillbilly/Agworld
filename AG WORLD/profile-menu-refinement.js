@@ -900,7 +900,7 @@ function syncAdvisorBayGeometry(){
  const bay=missions?.querySelector('#agAdvisorBay');
  const command=document.getElementById('entityInformationSection');
  if(!missions||!bay||!command)return;
- const mr=missions.getBoundingClientRect(),cr=command.getBoundingClientRect();
+ const mr=missions.getBoundingClientRect(),model=window.AGWorldDrawers?.geometry?.(),cr=model?{top:mr.top+model.advisorTop,height:model.advisorHeight}:command.getBoundingClientRect();
  if(!mr.height||!cr.height)return;
  // Match the Advisor Bay exactly to the Command Center's vertical footprint.
  // This makes the two lower surfaces read as one aligned row.

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import {panels} from './drawers.mjs';
 
 export async function exerciseReferenceTheme(page){
+  await panels(page);
   assert.equal(await page.locator('html').getAttribute('data-ag-game-theme'),'reference');
   assert.equal(await page.evaluate(()=>document.fonts.check('500 14px AgWorldCondensed')),true,'Self-hosted font loaded');
   const art=await page.locator('.agpc-art img').evaluate(el=>({loaded:el.complete&&el.naturalWidth>0,width:el.getBoundingClientRect().width,parent:el.parentElement.getBoundingClientRect().width}));
@@ -17,7 +19,7 @@ export async function exerciseReferenceTheme(page){
   await page.locator('#agAdvisorBay [data-advisor="sales"]').click();
   for(const size of [{width:1600,height:1000},{width:1280,height:900},{width:1280,height:720}]){
     await page.setViewportSize(size);
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(350);
     const g=await page.evaluate(()=>{
       const r=q=>document.querySelector(q).getBoundingClientRect().toJSON();
       return {shell:r('.app-shell'),side:r('.sidebar'),missions:r('.missions'),map:r('.map-area'),player:r('#agPlayerMissionProfile'),stack:r('#agPlayerProgressionStack'),advisor:r('#agAdvisorBay'),command:r('#entityInformationSection'),start:r('#agCanonicalMissionCard button'),mission:r('#agCanonicalMissionCard')};
@@ -27,7 +29,7 @@ export async function exerciseReferenceTheme(page){
     assert.ok(Math.abs(g.map.x-g.missions.right)<3,'Original main column geometry');
     assert.ok(Math.abs(g.stack.y-g.player.bottom-10)<3,'Protected player-to-progression gap');
     assert.ok(Math.abs(g.stack.bottom-g.advisor.y+14)<3,'Protected progression-to-advisor gap');
-    assert.ok(Math.abs(g.advisor.y-g.command.y)<3,'Advisors remain aligned to the Command Center');
+    assert.ok(Math.abs(g.advisor.y-g.command.y-28)<3,'Command Center has 28px additional height for its thicker frame');
     assert.ok(g.start.bottom<=g.mission.bottom+1,'Mission action is visible within its card: '+JSON.stringify({size,mission:g.mission,start:g.start}));
     assert.equal(await page.locator('#agCanonicalMissionCard').evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Whole mission fits without scrolling');
     const brief=await page.locator('#agCanonicalMissionCard .agpc-copy').evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,text:el.textContent,children:[...el.children].map(x=>({height:x.getBoundingClientRect().height,margin:getComputedStyle(x).marginTop,font:getComputedStyle(x).font}))}));
@@ -54,7 +56,12 @@ export async function exerciseReferenceTheme(page){
   await page.getByRole('button',{name:'UPDATE ENTITY INFO',exact:true}).click();
   const editor=await page.locator('.agworld-entity-editor').evaluate(el=>({bg:getComputedStyle(el.querySelector('input')).backgroundColor,text:getComputedStyle(el.querySelector('input')).color,summary:getComputedStyle(document.querySelector('.agworld-entity-command-summary')).backgroundImage}));
   assert.equal(editor.bg,'rgb(0, 21, 29)');assert.equal(editor.text,'rgb(229, 245, 249)');assert.match(editor.summary,/gradient/);
+  const field=page.locator('.agworld-entity-editor input').first();
+  await field.fill('Unsaved drawer check');
+  await panels(page,{command:false});await panels(page,{command:true});
+  assert.equal(await field.inputValue(),'Unsaved drawer check','Closing Command Center preserves unsaved editor input');
   await page.getByRole('button',{name:'Cancel',exact:true}).click();
   await page.reload();
   await page.waitForFunction(()=>window.AGWorldBootDiagnostics?.regression?.pass===true);
+  await panels(page);
 }

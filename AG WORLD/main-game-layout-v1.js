@@ -46,6 +46,7 @@
       territoryDrawer.innerHTML='<button id="territoryStatsToggle" type="button" aria-label="Toggle Territory Stats" aria-expanded="false"><span class="ag-territory-toggle-label">TERRITORY STATS</span><span class="ag-territory-toggle-arrow">›</span></button><div id="territoryStatsDrawerContent"></div>';
       mapArea.appendChild(territoryDrawer);
       territoryDrawer.querySelector('#territoryStatsToggle').addEventListener('click',()=>{
+        if(window.AGWorldDrawers){window.AGWorldDrawers.toggle('territory');return;}
         const collapsed=territoryDrawer.classList.toggle('collapsed');
         territoryDrawer.querySelector('#territoryStatsToggle').setAttribute('aria-expanded',String(!collapsed));
         territoryDrawer.style.setProperty('width',collapsed?'28px':Math.min(272,Math.max(228,Math.round(mapArea.clientWidth*.29)))+'px','important');
@@ -141,6 +142,7 @@
   }
 
   function lockGeometry(){
+    if(window.AGWorldDrawers){window.AGWorldDrawers.layout();return;}
     // PLAYER PROFILE — rebuilt directly from the stable geometry model.
     // No fixed shell, no independent absolute map script, and no second layout owner.
     // The only changes from the stable state are:

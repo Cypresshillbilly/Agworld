@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
+import {panels} from './drawers.mjs';
 
 export async function exerciseSidebarDiagnostics(page){
+  await panels(page);
   const launcher=page.getByRole('button',{name:'Open Developer Mode diagnostics',exact:true});
   await launcher.waitFor();
   const shape=await page.evaluate(()=>{

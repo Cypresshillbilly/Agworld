@@ -1,5 +1,7 @@
 # AgWorld Player Command — Version 2
 
+Historical baseline. [Immersive Drawers V3](PLAYER_SCREEN_V3_BASELINE.md) supersedes the visibility, Enter AgWorld, sidebar landscape and aluminum-frame rules below.
+
 Approved by the product owner on 12 September 2026. This explicitly updates the V1 geometry and component rules; the reference image continues to govern color, typography, photography and diagrams.
 
 - Keep the navigation, player workspace, dominant map and floating Command Center arrangement.

@@ -3,6 +3,7 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {exercisePlayerCommand} from './player-command.mjs';
+import {exerciseDrawers,panels} from './drawers.mjs';
 import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
 import {exerciseSidebarDiagnostics} from './sidebar-diagnostics.mjs';
@@ -115,6 +116,8 @@ try{
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
+  await exerciseDrawers(good.page);
+  results.push('Four independent drawers: all 16 combinations, immersive login/refresh, map identity, preserved workspace, accessible hidden panels and aluminum texture');
   await exerciseReferenceTheme(good.page);
   results.push('Reference theme: self-hosted assets, five real skill values, all menu routes, protected geometry at two widths, advisors, territory ring and entity editor');
   await exercisePlayerMenu(good.page);
@@ -134,6 +137,7 @@ try{
   await good.page.getByRole('button',{name:'Toggle Territory Stats',exact:true}).click();
   assert.equal(await good.page.locator('#territoryStatsToggle').getAttribute('aria-expanded'),'true');
   await good.page.reload();await ready(good.page);
+  await panels(good.page);
   await good.page.getByRole('button',{name:'Logout',exact:true}).click();
   try{await good.page.locator('#agUsername').waitFor({state:'visible',timeout:10000});}
   catch(error){

@@ -3,7 +3,7 @@
  'use strict';
  if(document.documentElement.dataset.agGameTheme==='reference')return;
  document.documentElement.dataset.agGameTheme='reference';
- const link=document.createElement('link');link.rel='stylesheet';link.href='game-reference-theme.css?v=player-command-20260912';link.id='agworld-reference-theme';window.AGWorldReferenceThemeReady=new Promise((resolve,reject)=>{
+ const link=document.createElement('link');link.rel='stylesheet';link.href='game-reference-theme.css?v=immersive-drawers-20260912';link.id='agworld-reference-theme';window.AGWorldReferenceThemeReady=new Promise((resolve,reject)=>{
    const timer=setTimeout(()=>reject(new Error('The game styling did not finish loading. Please retry.')),12000);
    link.onload=()=>{clearTimeout(timer);Promise.race([document.fonts.load('500 14px AgWorldCondensed'),new Promise(r=>setTimeout(r,1800))]).then(resolve,resolve);};
    link.onerror=()=>{clearTimeout(timer);reject(new Error('The game styling could not be loaded. Please retry.'));};
