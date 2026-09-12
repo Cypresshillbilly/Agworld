@@ -4980,14 +4980,35 @@ $('dynamicFinish').onclick = async () => {
   finally { button.disabled = false; }
 };
 
-window.addEventListener('agworld:supabase-authenticated', () => setTimeout(loadDynamicLayers, 0));
-window.addEventListener('agworld:player-ready', () => setTimeout(loadDynamicLayers, 0));
-window.addEventListener('gamechanger:authenticated', () => setTimeout(loadDynamicLayers, 0));
-window.addEventListener('pageshow', () => setTimeout(loadDynamicLayers, 300));
-// Initial hydration covers an already-authenticated player who opened the game
-// without triggering a fresh auth event in this page lifecycle.
-setTimeout(() => loadDynamicLayers().catch(() => {}), 1200);
-setInterval(() => { if (map) loadDynamicLayers().catch(() => {}); }, 5000);
+// Dynamic entities are database-backed and comparatively expensive to hydrate.
+// Do not compete with the login fields or the critical Player V1 boot path.
+// Authentication can emit several compatibility events in one turn, so collapse
+// them into one deferred hydration after the player surface is ready.
+let dynamicLayerLoadQueued=false;
+let dynamicLayerLoadRunning=false;
+function scheduleDynamicLayerLoad(delay=0){
+  if(dynamicLayerLoadQueued || dynamicLayerLoadRunning) return;
+  dynamicLayerLoadQueued=true;
+  setTimeout(async ()=>{
+    dynamicLayerLoadQueued=false;
+    if(!window.__AGWORLD_EXPLICIT_AUTH__) return;
+    dynamicLayerLoadRunning=true;
+    try{ await loadDynamicLayers(); }
+    catch(error){ console.warn('Dynamic layer load failed',error); }
+    finally{ dynamicLayerLoadRunning=false; }
+  },delay);
+}
+window.addEventListener('agworld:supabase-authenticated', () => scheduleDynamicLayerLoad(120));
+window.addEventListener('gamechanger:authenticated', () => scheduleDynamicLayerLoad(120));
+window.addEventListener('agworld:player-ready', () => scheduleDynamicLayerLoad(0));
+window.addEventListener('pageshow', () => {
+  if(window.__AGWORLD_EXPLICIT_AUTH__) scheduleDynamicLayerLoad(300);
+});
+// Initial hydration is only valid for an already-authenticated page lifecycle.
+if(window.__AGWORLD_EXPLICIT_AUTH__) scheduleDynamicLayerLoad(1200);
+setInterval(() => {
+  if(map && window.__AGWORLD_EXPLICIT_AUTH__) scheduleDynamicLayerLoad(0);
+},5000);
 
 window.AG_WORLD_WORLD.getContractors = () => contractors;
 window.AG_WORLD_WORLD.getCompetitors = () => competitors;
