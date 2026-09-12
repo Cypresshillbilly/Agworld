@@ -58,11 +58,11 @@
     const dynamicMax=company?Math.max(5,...vals.map(v=>Math.ceil(v/5)*5)):MAX;
     const companyLarge=company&&compact;
     // Command Center Company radar gets a larger dedicated canvas.
-    const w=companyLarge?440:(compact?280:360),
-      h=companyLarge?280:(compact?220:300),
-      cx=companyLarge?220:(compact?140:160),
-      cy=companyLarge?136:(compact?108:145),
-      r=companyLarge?128:(compact?76:104);
+    const w=companyLarge?480:(compact?280:360),
+      h=companyLarge?320:(compact?220:300),
+      cx=companyLarge?240:(compact?140:160),
+      cy=companyLarge?162:(compact?108:145),
+      r=companyLarge?96:(compact?76:104);
     let grid='';
     for(let level=1;level<=5;level++){const rr=r*level/5;grid+='<polygon points="'+SKILLS.map((_,i)=>polar(cx,cy,rr,i).map(n=>n.toFixed(1)).join(',')).join(' ')+'"/>';}
     const axes=SKILLS.map((_,i)=>{const p=polar(cx,cy,r,i);return '<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0].toFixed(1)+'" y2="'+p[1].toFixed(1)+'"/>';}).join('');

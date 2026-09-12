@@ -1,5 +1,9 @@
 # AgWorld Colour System
 
+## Game interface - V1.4
+
+Use the dark teal, lime and gold interface tokens in [Game Visual System](game-visual-system.md) for all game panels, cards, controls and diagrams. This supersedes the earlier light dashboard treatment. The master identity formulas below continue to govern logos and print; do not use them to recolor supplied logo artwork.
+
 ## Source-of-truth hierarchy
 
 1. **Digital products:** HEX values are authoritative.

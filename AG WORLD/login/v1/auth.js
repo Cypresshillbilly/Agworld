@@ -199,6 +199,7 @@
       ]);
       if(bootError) throw bootError;
       advance('finalise');
+      await window.AGWorldReferenceThemeReady;
       await nextPaint();
       if(bootError) throw bootError;
       setProgress(100,'AGWORLD READY');

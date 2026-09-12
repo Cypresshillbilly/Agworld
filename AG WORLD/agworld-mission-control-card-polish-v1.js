@@ -57,8 +57,9 @@ function canonicalPlayer(){
  const level=Math.max(1,Number(read('level')||1));
  const chapter=Math.max(1,Number(read('chapter','currentChapter')||1));
  const xp=Math.max(0,Number(read('xp','totalXp','total_xp','experience')||0));
- const next=Math.max(1000,Math.ceil((xp+1)/1000)*1000);
- const pct=Math.max(0,Math.min(100,Math.round((xp/next)*100)));
+ const floor=level<=10?(level-1)*250:2250+(level-10)*400;
+ const next=level<10?level*250:2250+(level-9)*400;
+ const pct=Math.max(0,Math.min(100,Math.round((xp-floor)/(next-floor)*100)));
  return {name,role,level,chapter,xp,next,pct,initial:(name[0]||'P')};
 }
 
@@ -68,7 +69,7 @@ function renderPlayer(){
  const d=canonicalPlayer();
  const signature=JSON.stringify(d),previous=renderedPlayers.get(card);
  if(previous?.signature===signature && previous.content===card.firstElementChild) return;
- card.innerHTML='<div class="ag-player-identity"><div class="ag-player-avatar-frame"><div class="ag-player-avatar" aria-hidden="true">'+esc(d.initial)+'</div><span class="ag-player-online-dot"></span></div><div class="ag-player-summary"><span class="ag-player-kicker">ACTIVE PLAYER</span><strong class="ag-player-name">'+esc(d.name)+'</strong><span class="ag-player-role">'+esc(d.role)+'</span><div class="ag-player-meta"><span class="ag-player-level">LVL '+d.level+'</span><span class="ag-player-chapter">CH '+d.chapter+'</span></div><div class="ag-player-xp-label"><span>XP EARNED</span><b>'+d.pct+'%</b></div><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' XP EARNED</b><b>NEXT '+d.next.toLocaleString()+'</b></span></div></div>';
+ card.innerHTML='<div class="ag-player-card-heading">PLAYER PROFILE<span aria-hidden="true">⌖</span></div><div class="ag-player-identity"><div class="ag-player-avatar-frame"><div class="ag-player-avatar" aria-hidden="true"><img src="assets/advisors/agworld_sales_commander_round(1).png" alt=""></div><span class="ag-player-level-badge"><small>LVL</small>'+d.level+'</span></div><div class="ag-player-summary"><strong class="ag-player-name">'+esc(d.name)+'</strong><span class="ag-player-role">'+esc(d.role.replace(/[_-]/g,' '))+'</span><div class="ag-player-reference-stats"><div><small>CHAPTER</small><b>'+d.chapter+'</b></div><div><small>TOTAL XP EARNED</small><b>'+d.xp.toLocaleString()+'</b></div><div><small>NEXT LEVEL</small><b>'+d.next.toLocaleString()+'</b></div></div><div class="ag-player-progress"><span class="ag-player-xp-track" role="progressbar" aria-label="Player experience" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+d.pct+'"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><b>'+d.pct+'%</b></div></div></div>';
  card.dataset.agPlayerData='canonical-v2';
  renderedPlayers.set(card,{signature,content:card.firstElementChild});
 }

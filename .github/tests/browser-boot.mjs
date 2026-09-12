@@ -5,10 +5,11 @@ import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
 import {exerciseSidebarDiagnostics} from './sidebar-diagnostics.mjs';
+import {exerciseReferenceTheme} from './reference-theme.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../AG WORLD');
-const types={'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.json':'application/json','.geojson':'application/json','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml'};
+const types={'.html':'text/html','.js':'application/javascript','.mjs':'application/javascript','.json':'application/json','.geojson':'application/json','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp','.woff2':'font/woff2'};
 const server=http.createServer((req,res)=>{
   const url=new URL(req.url,'http://localhost');
   if(url.pathname==='/__test-events'){req.resume();res.writeHead(204).end();return;}
@@ -113,6 +114,8 @@ try{
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
+  await exerciseReferenceTheme(good.page);
+  results.push('Reference theme: self-hosted assets, five real skill values, all menu routes, protected geometry at two widths, advisors, territory ring and entity editor');
   await exercisePlayerMenu(good.page);
   await exerciseSidebarDiagnostics(good.page);
   results.push('Branded sidebar preserves geometry; Developer Mode connects to the game, detects errors, preserves filters and reports API success/failure');
@@ -148,5 +151,14 @@ try{
   await failed.page.locator('#agworld-game-loader-retry').click();await ready(failed.page);
   results.push('missing dependency remains hidden, shows retry, successful clean recovery');
   await failed.context.close();
+  const missingStyle=await newTest();
+  await missingStyle.context.route('**/game-reference-theme.css*',route=>route.fulfill({status:404,body:'Missing stylesheet'}));
+  await missingStyle.page.goto(base+'/index.html');await login(missingStyle.page);
+  await missingStyle.page.locator('#agworld-game-loader-retry').waitFor({state:'visible'});
+  assert.equal(await missingStyle.page.locator('.app-shell').isVisible(),false);
+  await missingStyle.context.unroute('**/game-reference-theme.css*');
+  await missingStyle.page.locator('#agworld-game-loader-retry').click();await ready(missingStyle.page);
+  results.push('Missing game stylesheet keeps the game hidden, shows retry and recovers cleanly');
+  await missingStyle.context.close();
   console.log('AGWORLD BROWSER BOOT PASS\n'+JSON.stringify(results,null,2));
 }finally{await browser.close();server.close();}

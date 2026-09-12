@@ -481,6 +481,7 @@
   const insetBg='rgba(11,44,32,.34)';
 
   function paint(){
+    if(document.documentElement.dataset.agGameTheme==='reference')return;
     const territory=document.getElementById('territoryInfoPanel');
     if(territory){
       set(territory,'background',panelBg);

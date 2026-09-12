@@ -193,7 +193,7 @@
 (()=>{
   if(document.querySelector('script[data-agworld-boot-performance]')) return;
   const script=document.createElement('script');
-  script.src='boot/v1/performance.js?v=brand-diagnostics-20260912';
+  script.src='boot/v1/performance.js?v=reference-game-20260912';
   script.async=true;
   script.dataset.agworldBootPerformance='1';
   document.head.appendChild(script);

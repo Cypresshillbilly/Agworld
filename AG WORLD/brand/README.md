@@ -2,6 +2,10 @@
 
 This folder is the canonical source of truth for AgWorld branding used by the AgWorld platform.
 
+## Current game styling edition - V1.4
+
+The whole game follows the product owner's supplied cinematic reference. See [Game Visual System](game-visual-system.md) and [Brand Guide V1.4](guides/AgWorld_Brand_Guide_V1.4_Game_Visual_System.pdf). These replace V1.3's light dashboard guidance for the game while preserving the approved screen geometry and logo identity rules below. The game surface tokens are distinct from the master logo and print palette.
+
 ## Approved production logo assets
 
 Store and use these exact transparent PNG master files:
