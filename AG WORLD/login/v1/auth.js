@@ -78,11 +78,22 @@
     return __agworldSupabasePromise;
   }
 
-  function prewarmAgworldAuth(){
+  let __agworldPrewarmTimer=0;
+  function cancelAgworldAuthPrewarm(){
+    if(__agworldPrewarmTimer){ clearTimeout(__agworldPrewarmTimer); __agworldPrewarmTimer=0; }
+  }
+  function prewarmAgworldAuth(delay=900){
     if(master || window.__AGWORLD_SUPABASE_DB__ || __agworldSupabasePromise) return;
-    const warm=()=>ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
-    if('requestIdleCallback' in window) window.requestIdleCallback(warm,{timeout:1200});
-    else setTimeout(warm,80);
+    cancelAgworldAuthPrewarm();
+    __agworldPrewarmTimer=setTimeout(()=>{
+      __agworldPrewarmTimer=0;
+      // Never start SDK parsing while the player is actively editing a field.
+      const active=document.activeElement;
+      if(active&&active.matches&&active.matches('#agUsername,#agPassword')){
+        return;
+      }
+      ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
+    },delay);
   }
 
   function showGate(){
@@ -123,6 +134,15 @@
     const username=gate.querySelector('#agUsername');
     const password=gate.querySelector('#agPassword');
     const remember=gate.querySelector('#agRemember');
+
+    // Performance guard for the approved V1 login: credential entry always
+    // wins over background SDK work. Resume the existing warm-up only after the
+    // player leaves the fields.
+    [username,password].forEach(field=>{
+      field.addEventListener('focus',cancelAgworldAuthPrewarm,{passive:true});
+      field.addEventListener('input',cancelAgworldAuthPrewarm,{passive:true});
+      field.addEventListener('blur',()=>prewarmAgworldAuth(700),{passive:true});
+    });
 
     // Restore credentials only when this browser/profile has explicitly
     // been told to remember them.
@@ -166,9 +186,15 @@
       }
     };
     if(!master){
+      let rememberWriteTimer=0;
+      const scheduleRememberWrite=()=>{
+        if(rememberWriteTimer) clearTimeout(rememberWriteTimer);
+        rememberWriteTimer=setTimeout(persistAgRemember,180);
+      };
       remember.addEventListener('change',persistAgRemember);
-      username.addEventListener('input',persistAgRemember);
-      password.addEventListener('input',persistAgRemember);
+      username.addEventListener('input',scheduleRememberWrite);
+      // Password input never changes persisted data. Do not perform synchronous
+      // localStorage work for each keystroke.
     }
 
     // Login fields are ordinary inputs. Do not clear, lock, reset or mutate them
