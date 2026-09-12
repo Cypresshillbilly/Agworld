@@ -252,8 +252,11 @@
           const status=document.getElementById('agworld-game-loader-status');
           const stages=['auth','interface','systems','map','world','populate','finalise'];
 
+          let highestProgress=0;
           const setProgress=(progress,text)=>{
-            const p=Math.max(0,Math.min(100,Number(progress)||0));
+            const requested=Math.max(0,Math.min(100,Number(progress)||0));
+            highestProgress=Math.max(highestProgress,requested);
+            const p=highestProgress;
             if(bar) bar.style.width=p+'%';
             if(percent) percent.textContent=Math.round(p)+'%';
             if(status&&text) status.textContent=text;
