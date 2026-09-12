@@ -22,7 +22,7 @@
     const {s,chapter}=ctx;
 
     // Chapter 3 uses the dynamic Territory Campaign mission generator.
-    if(Number(s.currentChapter)>=3) {
+    if(Number(s.currentChapter)>=3 && !chapter.missions.length) {
       document.getElementById('chapterMissionList')?.remove();
       return true;
     }
@@ -52,6 +52,7 @@
     box.querySelectorAll('[data-start-chapter-mission]').forEach(btn=>{
       btn.onclick=()=>{
         const id=btn.dataset.startChapterMission;
+        if(window.AGWorldJourney?.start(id))return;
         const card=btn.closest('.chapter-mission-card');
         // The interactive Chapter 1/2 engines listen for the selected mission event.
         window.dispatchEvent(new CustomEvent('agworld:chapter-mission-selected',{detail:{missionId:id,chapter:s.currentChapter}}));
@@ -69,7 +70,7 @@
     const ctx=current(), box=document.querySelector('.ag-hud .ag-missions');
     if(!ctx||!box||!ctx.chapter) return;
     const {s,chapter}=ctx, completed=s.completed||{};
-    if(Number(s.currentChapter)>=3) return;
+    if(Number(s.currentChapter)>=3 && !chapter.missions.length) return;
     box.innerHTML='<div class="ag-missions-head"><strong>CHAPTER '+chapter.id+' · '+chapter.title+'</strong><span>PLAYER MISSIONS</span></div>'+
       chapter.missions.map((m,i)=>{
         const done=!!completed[m.id], currentMission=!done&&!chapter.missions.slice(0,i).some(x=>!completed[x.id]);

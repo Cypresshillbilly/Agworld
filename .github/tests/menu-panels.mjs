@@ -50,7 +50,7 @@ export async function exercisePlayerMenu(page){
   assert.equal(await page.locator('#agMenuPanel .agmp-hero h2').textContent(),'Fixture <b>Commander</b>');
   assert.equal(await page.locator('#agMenuPanel .agmp-hero h2 b').count(),0,'Player text must not become HTML');
   assert.equal(await page.getByRole('progressbar',{name:'Progress to next level',exact:true}).getAttribute('aria-valuenow'),'48');
-  assert.equal(await page.getByRole('progressbar',{name:'Company Knowledge',exact:true}).getAttribute('aria-valuenow'),'50');
+  assert.equal(await page.locator('#agMenuPanel .agmp-skill').getByRole('progressbar',{name:'Operations',exact:true}).getAttribute('aria-valuenow'),'100','The completed orientation contributes to its current mission-mastery category');
   await page.evaluate(()=>{window.AGWorldProgression.getState=window.originalMenuState;window.dispatchEvent(new CustomEvent('agworld:player-state'));});
 
   // Exercise each menu using a keyboard and preserve the original Dashboard.

@@ -28,9 +28,8 @@
   function render(){
     let e=document.getElementById('agAuth');
     if(!e){e=document.createElement('div');e.id='agAuth';document.body.appendChild(e);}
-    e.innerHTML=user
-      ?'<button data-open>👤 '+(user.user_metadata?.display_name||user.email)+'</button>'
-      :'<button data-open>JOIN / SIGN IN</button>';
+    e.innerHTML='<button data-open></button>';
+    e.querySelector('[data-open]').textContent=user?'👤 '+(user.user_metadata?.display_name||user.email):'JOIN / SIGN IN';
     e.querySelector('[data-open]').onclick=()=>user?menu():login('create');
   }
 
@@ -58,7 +57,7 @@
   async function loadPlayer(currentUser){
     if(!db||!currentUser) return null;
     const {data,error}=await db.from('ag_players')
-      .select('id,display_name,company_facility_id,level,xp,chapter')
+      .select('id,display_name,company_facility_id,level,xp,current_chapter')
       .eq('id',currentUser.id)
       .maybeSingle();
     if(error){
@@ -75,7 +74,7 @@
       company_facility_id:player?.company_facility_id||currentUser?.user_metadata?.company_facility_id||null,
       level:Number(player?.level||1),
       xp:Number(player?.xp||0),
-      chapter:Number(player?.chapter||1)
+      chapter:Number(player?.current_chapter||1)
     };
     window.AGWorldPlayer=profile;
     window.dispatchEvent(new CustomEvent('agworld:player-profile',{detail:profile}));

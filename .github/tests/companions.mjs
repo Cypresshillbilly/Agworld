@@ -27,6 +27,11 @@ export async function exerciseCompanions(page){
  await page.locator('.ag-guide-play').click();await page.waitForFunction(()=>document.getElementById('agWorldSystemGuide').dataset.playback==='playing');
  await page.evaluate(()=>speechFake.finish());
  await page.locator('.ag-guide-hologram').click();
+ // A returning player can explicitly replay the panel tour; arrival itself uses
+ // the persisted phased introduction instead of replaying this tour every login.
+ await page.evaluate(()=>AGWorldCompanions.startTour());
+ await page.waitForFunction(()=>document.getElementById('agWorldSystemGuide').dataset.playback==='playing');
+ await page.evaluate(()=>speechFake.finish());
  for(const [selector,next]of [['#agPlayerDrawerToggle','Your Dashboard'],['.sidebar [data-ag-screen=dashboard]','Map controls'],['#agMapDrawerToggle','Territory intelligence'],['#territoryStatsToggle','The Command Center'],['#agCommandDrawerToggle','Ready to take command.']]){
   await page.locator(selector).click();await page.waitForFunction(title=>document.querySelector('.ag-guide-title').textContent.includes(title),next);
   assert.equal(await page.locator('.ag-guide-card').isVisible(),false,'Tour speech preserves closed dialogue');

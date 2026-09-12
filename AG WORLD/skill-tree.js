@@ -13,7 +13,7 @@
   const REWARDS={
     // Company foundation: governance and people-facing work now contribute
     // to Compliance and Sales instead of the retired Management/People axes.
-    'c1-welcome':{compliance:1,sales:1},
+    'c2-product-compare':{product:2,sales:1},'c3-contractors':{sales:2,operations:1},'c3-competitors':{sales:2,operations:1},'c3-meeting':{sales:3},'c3-follow-up':{sales:2,compliance:1},'c1-welcome':{compliance:1,sales:1},
     'c1-hr':{sales:2,compliance:1},
     'c1-documents':{compliance:2,operations:1},
     'c1-safety':{technical:2,compliance:1},
