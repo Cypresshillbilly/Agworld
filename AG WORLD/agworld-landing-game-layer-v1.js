@@ -27,7 +27,7 @@
    button('agMapDrawerToggle','map',header.id,'MAP MENU');
    button('agCommandDrawerToggle','command','entityInformationSection','COMMAND CENTER');
    const auth=$('agAuth'),tools=header.querySelector('.map-tools');
-   if(auth&&tools&&auth.parentElement!==tools)tools.appendChild(auth);
+   if(auth&&tools&&!tools.contains(auth))tools.appendChild(auth);
    return true;
  }
  function layout(){
@@ -44,7 +44,7 @@
    if(state.player&&!state.workspace)set(missions,'transform','translateX(-'+workspace+'px)');
    access(missions,state.player&&state.workspace);
    frame(map,left,0,mapW,h);set(map,'z-index','1');set(map,'overflow','clip');set(map,'transform','none');
-   set(header,'position','absolute');set(header,'left','14px');set(header,'right','14px');set(header,'top','12px');set(header,'width','auto');set(header,'height','auto');set(header,'bottom','auto');
+   set(header,'position','absolute');set(header,'left','14px');set(header,'right','118px');set(header,'top','12px');set(header,'width','auto');set(header,'height','auto');set(header,'bottom','auto');
    const headerH=Math.max(64,header.offsetHeight);
    set(header,'transform',state.map?'translateY(0)':'translateY(-'+(headerH+14)+'px)');access(header,state.map);
    frame(command,commandLeft,commandTop,commandW,commandH);set(command,'z-index','1800');set(command,'padding','0');set(command,'overflow','hidden');set(command,'transform',state.command?'translateY(0)':'translateY('+(commandH+bottom+2)+'px)');access(command,state.command);
@@ -73,8 +73,8 @@
    if(key==='player'&&open)state.workspace=false;
    if(key==='player'&&!open)state.workspace=false;
    if(key==='workspace'&&open)state.player=true;
-   if(key==='player'&&open)window.AG_WORLD_GUIDE?.hide?.();
-   if((key==='player'||key==='workspace')&&!open)window.AG_WORLD_GUIDE?.hide?.();
+   if(key==='player'&&open)if(!window.AGWorldCompanions?.tourActive?.())window.AG_WORLD_GUIDE?.hide?.();
+   if((key==='player'||key==='workspace')&&!open)if(!window.AGWorldCompanions?.tourActive?.())window.AG_WORLD_GUIDE?.hide?.();
    layout();window.dispatchEvent(new Event('resize'));
    window.dispatchEvent(new CustomEvent('agworld:drawers-changed',{detail:{...state}}));
    window.dispatchEvent(new CustomEvent('agworld:game-mode-changed',{detail:{mode:Object.values(state).some(Boolean)?'panels':'game'}}));

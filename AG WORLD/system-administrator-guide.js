@@ -42,8 +42,8 @@
    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){playback('error');return;}
    const utterance=new SpeechSynthesisUtterance(text);speech=utterance;
    const voices=window.speechSynthesis.getVoices(),english=voices.filter(v=>/^en/i.test(v.lang));
-   utterance.voice=english.find(v=>/David|Ryan|Daniel|Mark|Guy|George/i.test(v.name))||english.find(v=>v.lang==='en-ZA')||english[0]||null;
-   utterance.lang=utterance.voice?.lang||'en-ZA';utterance.rate=.95;utterance.pitch=.93;
+   const female=['product','compliance'].includes(root.dataset.advisor);utterance.voice=english.find(v=>(female?/Samantha|Sonia|Susan|Zira|Victoria/i:/David|Ryan|Daniel|Mark|Guy|George/i).test(v.name))||english.find(v=>v.lang==='en-ZA')||english[0]||null;
+   utterance.lang=utterance.voice?.lang||'en-ZA';utterance.rate=.95;utterance.pitch=female?1.04:.93;
    utterance.onstart=()=>{if(sequence===token)playback('playing');};
    utterance.onend=()=>{if(sequence===token){speech=null;playback('idle');}};
    utterance.onerror=()=>{if(sequence===token){speech=null;playback('error');}};
@@ -54,7 +54,7 @@
    if(root.dataset.playback==='paused'){if(speech){window.speechSynthesis.resume();playback('playing');}else audio.play().catch(()=>playback('error'));return;}
    stop();const token=sequence,b=briefing(section);playback('loading');
    if(b.audio){audio.src=b.audio;audio.play().catch(()=>{if(sequence===token&&root.classList.contains('show'))speakText(b.spoken||b.copy,token);});}
-   else speakText(b.spoken||b.copy,token);
+   else if(window.AGWorldCompanions?.speakBriefing)window.AGWorldCompanions.speakBriefing(b.spoken||b.copy,token);else speakText(b.spoken||b.copy,token);
  }
  function select(key,options={}){ensure();stop();section=SECTIONS.includes(key)?key:'welcome';render();if(options.show!==false)show();if(options.autoplay)play();}
  function ensure(){
@@ -70,8 +70,9 @@
    audio.addEventListener('error',()=>{if(root.dataset.playback==='loading'&&!speech)playback('error');});
    render();
  }
+ window.AGWorldVoiceBridge={isCurrent:token=>sequence===token&&root?.classList.contains('show'),load:(url,token)=>{if(sequence!==token||!root?.classList.contains('show'))return;audio.src=url;audio.play().catch(()=>{if(sequence===token)playback('error');});},error:token=>{if(sequence===token)playback('error');}};
  window.AGWorldStrategicCommander={show:()=>show({compact:true}),hide,isVisible:()=>!!root?.classList.contains('show')};
- window.AG_WORLD_GUIDE={show:()=>show(),showAvatar:()=>show({compact:true}),hide,select,welcome:({speak=false}={})=>select('welcome',{autoplay:speak}),current:()=>section,stopBriefing:stop,
+ window.AG_WORLD_GUIDE={show:()=>show(),showAvatar:()=>show({compact:true}),hide,select,welcome:({speak=false}={})=>select('welcome',{autoplay:speak}),current:()=>section,stopBriefing:stop,play,
    briefMission:({title,copy,audioSrc}={})=>{ensure();stop();custom={title:title||'Mission briefing',copy:copy||'',audio:audioSrc};section='custom';show();},
    setBriefing:({title,copy,audioSrc,show:visible=true}={})=>{ensure();stop();custom={title:title||'Administrator briefing',copy:copy||'',audio:audioSrc};section='custom';render();if(visible)show();}
  };

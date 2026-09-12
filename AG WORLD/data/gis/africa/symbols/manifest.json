@@ -1,0 +1,367 @@
+{
+  "artDirection": "Sculpted flag-wrapped AgWorld symbols. Provincial palettes are artistic, not official flags or coats of arms.",
+  "countries": [
+    {
+      "country": "Angola",
+      "iso2": "ao",
+      "symbol": "Giant sable antelope",
+      "asset": "ao.svg"
+    },
+    {
+      "country": "Benin",
+      "iso2": "bj",
+      "symbol": "Palm",
+      "asset": "bj.svg"
+    },
+    {
+      "country": "Botswana",
+      "iso2": "bw",
+      "symbol": "Diamond",
+      "asset": "bw.svg"
+    },
+    {
+      "country": "Burkina Faso",
+      "iso2": "bf",
+      "symbol": "Guiding star",
+      "asset": "bf.svg"
+    },
+    {
+      "country": "Burundi",
+      "iso2": "bi",
+      "symbol": "Royal drum",
+      "asset": "bi.svg"
+    },
+    {
+      "country": "Cameroon",
+      "iso2": "cm",
+      "symbol": "Lion",
+      "asset": "cm.svg"
+    },
+    {
+      "country": "Cape Verde",
+      "iso2": "cv",
+      "symbol": "Island sailing boat",
+      "asset": "cv.svg"
+    },
+    {
+      "country": "Central African Republic",
+      "iso2": "cf",
+      "symbol": "Forest elephant",
+      "asset": "cf.svg"
+    },
+    {
+      "country": "Chad",
+      "iso2": "td",
+      "symbol": "Desert antelope",
+      "asset": "td.svg"
+    },
+    {
+      "country": "Comoros",
+      "iso2": "km",
+      "symbol": "Ylang-ylang flower",
+      "asset": "km.svg"
+    },
+    {
+      "country": "Democratic Republic of the Congo",
+      "iso2": "cd",
+      "symbol": "Forest gorilla",
+      "asset": "cd.svg"
+    },
+    {
+      "country": "Equatorial Guinea",
+      "iso2": "gq",
+      "symbol": "Silk-cotton tree inspired sculpture",
+      "asset": "gq.svg"
+    },
+    {
+      "country": "Eritrea",
+      "iso2": "er",
+      "symbol": "Red Sea dhow",
+      "asset": "er.svg"
+    },
+    {
+      "country": "Eswatini",
+      "iso2": "sz",
+      "symbol": "Shield",
+      "asset": "sz.svg"
+    },
+    {
+      "country": "Ethiopia",
+      "iso2": "et",
+      "symbol": "Aksum inspired obelisk",
+      "asset": "et.svg"
+    },
+    {
+      "country": "Gabon",
+      "iso2": "ga",
+      "symbol": "Gorilla",
+      "asset": "ga.svg"
+    },
+    {
+      "country": "Ghana",
+      "iso2": "gh",
+      "symbol": "Black Star inspired sculpture",
+      "asset": "gh.svg"
+    },
+    {
+      "country": "Guinea",
+      "iso2": "gn",
+      "symbol": "Drum",
+      "asset": "gn.svg"
+    },
+    {
+      "country": "Guinea-Bissau",
+      "iso2": "gw",
+      "symbol": "Coastal palm",
+      "asset": "gw.svg"
+    },
+    {
+      "country": "Ivory Coast",
+      "iso2": "ci",
+      "symbol": "Cocoa pod",
+      "asset": "ci.svg"
+    },
+    {
+      "country": "Kenya",
+      "iso2": "ke",
+      "symbol": "Lion",
+      "asset": "ke.svg"
+    },
+    {
+      "country": "Lesotho",
+      "iso2": "ls",
+      "symbol": "Mokorotlo hat",
+      "asset": "ls.svg"
+    },
+    {
+      "country": "Liberia",
+      "iso2": "lr",
+      "symbol": "Lone Star inspired sculpture",
+      "asset": "lr.svg"
+    },
+    {
+      "country": "Madagascar",
+      "iso2": "mg",
+      "symbol": "Baobab",
+      "asset": "mg.svg"
+    },
+    {
+      "country": "Malawi",
+      "iso2": "mw",
+      "symbol": "Lake fish",
+      "asset": "mw.svg"
+    },
+    {
+      "country": "Mali",
+      "iso2": "ml",
+      "symbol": "Sahel tower inspired sculpture",
+      "asset": "ml.svg"
+    },
+    {
+      "country": "Mauritania",
+      "iso2": "mr",
+      "symbol": "Desert gazelle",
+      "asset": "mr.svg"
+    },
+    {
+      "country": "Mauritius",
+      "iso2": "mu",
+      "symbol": "Dodo",
+      "asset": "mu.svg"
+    },
+    {
+      "country": "Mozambique",
+      "iso2": "mz",
+      "symbol": "Sailing dhow",
+      "asset": "mz.svg"
+    },
+    {
+      "country": "Namibia",
+      "iso2": "na",
+      "symbol": "Oryx",
+      "asset": "na.svg"
+    },
+    {
+      "country": "Niger",
+      "iso2": "ne",
+      "symbol": "Giraffe",
+      "asset": "ne.svg"
+    },
+    {
+      "country": "Nigeria",
+      "iso2": "ng",
+      "symbol": "Eagle",
+      "asset": "ng.svg"
+    },
+    {
+      "country": "Republic of the Congo",
+      "iso2": "cg",
+      "symbol": "Gorilla",
+      "asset": "cg.svg"
+    },
+    {
+      "country": "Rwanda",
+      "iso2": "rw",
+      "symbol": "Mountain gorilla",
+      "asset": "rw.svg"
+    },
+    {
+      "country": "S\u00e3o Tom\u00e9 and Pr\u00edncipe",
+      "iso2": "st",
+      "symbol": "Cocoa pod",
+      "asset": "st.svg"
+    },
+    {
+      "country": "Senegal",
+      "iso2": "sn",
+      "symbol": "Baobab",
+      "asset": "sn.svg"
+    },
+    {
+      "country": "Seychelles",
+      "iso2": "sc",
+      "symbol": "Giant tortoise",
+      "asset": "sc.svg"
+    },
+    {
+      "country": "Sierra Leone",
+      "iso2": "sl",
+      "symbol": "Lion",
+      "asset": "sl.svg"
+    },
+    {
+      "country": "Somalia",
+      "iso2": "so",
+      "symbol": "Star",
+      "asset": "so.svg"
+    },
+    {
+      "country": "South Africa",
+      "iso2": "za",
+      "symbol": "Springbok",
+      "asset": "za.svg"
+    },
+    {
+      "country": "South Sudan",
+      "iso2": "ss",
+      "symbol": "Fish eagle",
+      "asset": "ss.svg"
+    },
+    {
+      "country": "Sudan",
+      "iso2": "sd",
+      "symbol": "Nubian tower inspired sculpture",
+      "asset": "sd.svg"
+    },
+    {
+      "country": "Tanzania",
+      "iso2": "tz",
+      "symbol": "Kilimanjaro",
+      "asset": "tz.svg"
+    },
+    {
+      "country": "The Gambia",
+      "iso2": "gm",
+      "symbol": "River palm",
+      "asset": "gm.svg"
+    },
+    {
+      "country": "Togo",
+      "iso2": "tg",
+      "symbol": "Palm",
+      "asset": "tg.svg"
+    },
+    {
+      "country": "Uganda",
+      "iso2": "ug",
+      "symbol": "Crested bird inspired sculpture",
+      "asset": "ug.svg"
+    },
+    {
+      "country": "Zambia",
+      "iso2": "zm",
+      "symbol": "Fish eagle",
+      "asset": "zm.svg"
+    },
+    {
+      "country": "Zimbabwe",
+      "iso2": "zw",
+      "symbol": "Zimbabwe bird inspired sculpture",
+      "asset": "zw.svg"
+    }
+  ],
+  "provinces": {
+    "westerncape": {
+      "symbol": "Table Mountain",
+      "palette": [
+        "#005984",
+        "#e7d3a2",
+        "#147a45"
+      ]
+    },
+    "northerncape": {
+      "symbol": "Diamond",
+      "palette": [
+        "#a55735",
+        "#edc96b",
+        "#2a7580"
+      ]
+    },
+    "easterncape": {
+      "symbol": "Elephant",
+      "palette": [
+        "#145b45",
+        "#e6b552",
+        "#276580"
+      ]
+    },
+    "kwazulunatal": {
+      "symbol": "Shield",
+      "palette": [
+        "#9e2e30",
+        "#f3dcab",
+        "#182b43"
+      ]
+    },
+    "gauteng": {
+      "symbol": "City skyline",
+      "palette": [
+        "#24599a",
+        "#e7bd46",
+        "#c7dde0"
+      ]
+    },
+    "freestate": {
+      "symbol": "Maize",
+      "palette": [
+        "#d5ac39",
+        "#f1e0a4",
+        "#1a7654"
+      ]
+    },
+    "northwest": {
+      "symbol": "Sunflower",
+      "palette": [
+        "#237f61",
+        "#eabf34",
+        "#475c83"
+      ]
+    },
+    "mpumalanga": {
+      "symbol": "Rising sun",
+      "palette": [
+        "#f5bc3d",
+        "#d36533",
+        "#23634c"
+      ]
+    },
+    "limpopo": {
+      "symbol": "Baobab",
+      "palette": [
+        "#8e4631",
+        "#dcb855",
+        "#3b814e"
+      ]
+    }
+  }
+}

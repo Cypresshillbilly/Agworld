@@ -3,6 +3,7 @@ import {panels} from './drawers.mjs';
 
 export async function exerciseSidebarDiagnostics(page){
   await panels(page);
+  await page.locator('[data-map-tab=settings]').click();
   const launcher=page.getByRole('button',{name:'Open Developer Mode diagnostics',exact:true});
   await launcher.waitFor();
   const shape=await page.evaluate(()=>{

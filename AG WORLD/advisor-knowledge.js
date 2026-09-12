@@ -53,7 +53,7 @@
   }catch(_){if(token===sequence)status('Search could not complete. Please try again.');}
   finally{if(token===sequence)q('form button').disabled=false;}
  }
- addEventListener('agworld:advisor-selected',e=>{if(profiles[e.detail?.id])open(e.detail.id);else if(root&&!root.hidden)close();});
+ addEventListener('agworld:advisor-selected',e=>{if(profiles[e.detail?.id]&&!window.AGWorldCompanions)open(e.detail.id);else if(root&&!root.hidden)close();});
  addEventListener('agworld:advisor-deselected',()=>{if(root&&!root.hidden)close();});
  addEventListener('agworld:panel-changed',()=>{if(root&&!root.hidden)close();});
  window.AGWorldKnowledge={open,close:()=>{if(root)close();}};

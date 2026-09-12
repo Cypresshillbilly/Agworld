@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><title>Senegal · Baobab</title><defs>
+ <path id="body" d="M43 101L49 78L48 56L27 58L18 48L19 35L28 28L39 30L42 16L57 11L67 18L80 14L96 21L97 31L109 38L109 51L98 60L80 57L74 65L78 88L88 101L69 99L61 93L55 100Z"/><clipPath id="face"><use href="#body"/></clipPath>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a4d4da"/><stop offset=".2" stop-color="#183742"/><stop offset=".6" stop-color="#061421"/><stop offset="1" stop-color="#81a8a9"/></linearGradient>
+ <linearGradient id="glaze" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".24" stop-color="#fff" stop-opacity=".06"/><stop offset=".49" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#001b2e" stop-opacity=".35"/><stop offset="1" stop-color="#001321" stop-opacity=".65"/></linearGradient>
+ <radialGradient id="shadow"><stop stop-color="#001019" stop-opacity=".75"/><stop offset="1" stop-color="#001019" stop-opacity="0"/></radialGradient>
+ </defs><ellipse cx="76" cy="127" rx="65" ry="13" fill="url(#shadow)"/>
+ <g transform="translate(6 5) matrix(.95 -.12 .05 .99 0 8)">
+ <use href="#body" transform="translate(7 9)" fill="url(#metal)" stroke="#04121c" stroke-width="4" stroke-linejoin="round"/>
+ <use href="#body" transform="translate(4 5)" fill="url(#metal)" stroke="#4f7a80" stroke-width="3" stroke-linejoin="round"/>
+ <use href="#body" fill="url(#metal)" stroke="#b5d9d5" stroke-width="3" stroke-linejoin="round"/>
+ <g clip-path="url(#face)"><svg x="8" y="8" width="116" height="102" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="flag-icons-sn" viewBox="0 0 640 480">
+  <g fill-rule="evenodd" stroke-width="1pt">
+    <path fill="#0b7226" d="M0 0h213.3v480H0z"/>
+    <path fill="#ff0" d="M213.3 0h213.3v480H213.3z"/>
+    <path fill="#bc0000" d="M426.6 0H640v480H426.6z"/>
+  </g>
+  <path fill="#0b7226" d="M342 218.8h71.8l-56.6 43.6 20.7 69.3-56.6-43.6-56.6 41.6 20.7-67.3-56.6-43.6h69.8l22.7-71.3z"/>
+</svg>
+<use href="#body" fill="url(#glaze)"/>
+ <path d="M0 0H132V28Q71 22 0 74Z" fill="#fff" opacity=".12"/></g>
+ <path d="M43 101L49 78L48 56L27 58L18 48L19 35L28 28L39 30L42 16L57 11L67 18L80 14L96 21L97 31L109 38L109 51L98 60L80 57L74 65L78 88L88 101L69 99L61 93L55 100Z" fill="none" stroke="#eaffff" stroke-width="1.4" stroke-opacity=".45" stroke-linejoin="round"/>
+ </g></svg>

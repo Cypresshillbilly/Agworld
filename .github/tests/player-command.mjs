@@ -32,14 +32,11 @@ export async function exercisePlayerCommand(page){
   assert.equal(await page.locator('#agInteractiveFinish').isEnabled(),true);
   await page.locator('.ag-interactive-close').click();
   await page.locator('#agAdvisorBay [data-advisor="system-administrator"]').click();
-  await page.waitForFunction(()=>document.getElementById('agWorldGuideAudio').currentTime>0);
-  assert.equal(await page.locator('#agWorldSystemGuide').getAttribute('data-playback'),'playing');
+  assert.equal(await page.locator('#agWorldSystemGuide').getAttribute('data-commander'),'portrait');
   assert.match(await page.locator('.ag-guide-copy').textContent(),/level 2.*460 XP.*3 completed missions/);
-  await page.locator('.ag-guide-play').click();assert.equal(await page.locator('#agWorldSystemGuide').getAttribute('data-playback'),'paused');
-  await page.locator('.ag-guide-play').click();await page.waitForFunction(()=>document.getElementById('agWorldSystemGuide').dataset.playback==='playing');
   await page.locator('#agAdvisorBay [data-advisor="sales"]').click();
-  assert.equal(await page.locator('#agWorldSystemGuide').isVisible(),false,'Sales does not own the Administrator hologram');
-  assert.equal(await page.locator('#agWorldGuideAudio').evaluate(el=>el.paused),true);
+  assert.equal(await page.locator('#agWorldSystemGuide').getAttribute('data-advisor'),'sales','Each selected advisor owns its own character');
+  await page.waitForFunction(()=>document.getElementById('agWorldSystemGuide').dataset.playback==='playing');
   await page.locator('#agAdvisorBay [data-advisor="sales"]').click();
   for(let i=0;i<2;i++){
     await page.locator('#territoryStatsToggle').click();

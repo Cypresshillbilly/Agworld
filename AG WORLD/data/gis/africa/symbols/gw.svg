@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><title>Guinea-Bissau · Coastal palm</title><defs>
+ <path id="body" d="M59 102L64 48Q39 61 18 51Q32 34 58 40Q41 15 29 18Q52 5 70 33Q78 11 102 17L78 38Q106 30 117 48Q93 56 75 48L78 102Z"/><clipPath id="face"><use href="#body"/></clipPath>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a4d4da"/><stop offset=".2" stop-color="#183742"/><stop offset=".6" stop-color="#061421"/><stop offset="1" stop-color="#81a8a9"/></linearGradient>
+ <linearGradient id="glaze" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".24" stop-color="#fff" stop-opacity=".06"/><stop offset=".49" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#001b2e" stop-opacity=".35"/><stop offset="1" stop-color="#001321" stop-opacity=".65"/></linearGradient>
+ <radialGradient id="shadow"><stop stop-color="#001019" stop-opacity=".75"/><stop offset="1" stop-color="#001019" stop-opacity="0"/></radialGradient>
+ </defs><ellipse cx="76" cy="127" rx="65" ry="13" fill="url(#shadow)"/>
+ <g transform="translate(6 5) matrix(.95 -.12 .05 .99 0 8)">
+ <use href="#body" transform="translate(7 9)" fill="url(#metal)" stroke="#04121c" stroke-width="4" stroke-linejoin="round"/>
+ <use href="#body" transform="translate(4 5)" fill="url(#metal)" stroke="#4f7a80" stroke-width="3" stroke-linejoin="round"/>
+ <use href="#body" fill="url(#metal)" stroke="#b5d9d5" stroke-width="3" stroke-linejoin="round"/>
+ <g clip-path="url(#face)"><svg x="8" y="8" width="116" height="102" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="flag-icons-gw" viewBox="0 0 640 480">
+  <path fill="#ce1126" d="M0 0h220v480H0z"/>
+  <path fill="#fcd116" d="M220 0h420v240H220z"/>
+  <path fill="#009e49" d="M220 240h420v240H220z"/>
+  <g id="gw-b" transform="matrix(80 0 0 80 110 240)">
+    <path id="gw-a" fill="#000001" d="M0-1v1h.5" transform="rotate(18 0 -1)"/>
+    <use xlink:href="#gw-a" width="100%" height="100%" transform="scale(-1 1)"/>
+  </g>
+  <use xlink:href="#gw-b" width="100%" height="100%" transform="rotate(72 110 240)"/>
+  <use xlink:href="#gw-b" width="100%" height="100%" transform="rotate(144 110 240)"/>
+  <use xlink:href="#gw-b" width="100%" height="100%" transform="rotate(-144 110 240)"/>
+  <use xlink:href="#gw-b" width="100%" height="100%" transform="rotate(-72 110 240)"/>
+</svg>
+<use href="#body" fill="url(#glaze)"/>
+ <path d="M0 0H132V28Q71 22 0 74Z" fill="#fff" opacity=".12"/></g>
+ <path d="M59 102L64 48Q39 61 18 51Q32 34 58 40Q41 15 29 18Q52 5 70 33Q78 11 102 17L78 38Q106 30 117 48Q93 56 75 48L78 102Z" fill="none" stroke="#eaffff" stroke-width="1.4" stroke-opacity=".45" stroke-linejoin="round"/>
+ </g></svg>

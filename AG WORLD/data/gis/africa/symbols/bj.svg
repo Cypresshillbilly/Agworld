@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><title>Benin · Palm</title><defs>
+ <path id="body" d="M59 102L64 48Q39 61 18 51Q32 34 58 40Q41 15 29 18Q52 5 70 33Q78 11 102 17L78 38Q106 30 117 48Q93 56 75 48L78 102Z"/><clipPath id="face"><use href="#body"/></clipPath>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a4d4da"/><stop offset=".2" stop-color="#183742"/><stop offset=".6" stop-color="#061421"/><stop offset="1" stop-color="#81a8a9"/></linearGradient>
+ <linearGradient id="glaze" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".24" stop-color="#fff" stop-opacity=".06"/><stop offset=".49" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#001b2e" stop-opacity=".35"/><stop offset="1" stop-color="#001321" stop-opacity=".65"/></linearGradient>
+ <radialGradient id="shadow"><stop stop-color="#001019" stop-opacity=".75"/><stop offset="1" stop-color="#001019" stop-opacity="0"/></radialGradient>
+ </defs><ellipse cx="76" cy="127" rx="65" ry="13" fill="url(#shadow)"/>
+ <g transform="translate(6 5) matrix(.95 -.12 .05 .99 0 8)">
+ <use href="#body" transform="translate(7 9)" fill="url(#metal)" stroke="#04121c" stroke-width="4" stroke-linejoin="round"/>
+ <use href="#body" transform="translate(4 5)" fill="url(#metal)" stroke="#4f7a80" stroke-width="3" stroke-linejoin="round"/>
+ <use href="#body" fill="url(#metal)" stroke="#b5d9d5" stroke-width="3" stroke-linejoin="round"/>
+ <g clip-path="url(#face)"><svg x="8" y="8" width="116" height="102" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" id="flag-icons-bj" viewBox="0 0 640 480">
+  <defs>
+    <clipPath id="bj-a">
+      <path fill="gray" d="M67.6-154h666v666h-666z"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#bj-a)" transform="matrix(.961 0 0 .7207 -65 111)">
+    <g fill-rule="evenodd" stroke-width="1pt">
+      <path fill="#319400" d="M0-154h333v666H0z"/>
+      <path fill="#ffd600" d="M333-154h666v333H333z"/>
+      <path fill="#de2110" d="M333 179h666v333H333z"/>
+    </g>
+  </g>
+</svg>
+<use href="#body" fill="url(#glaze)"/>
+ <path d="M0 0H132V28Q71 22 0 74Z" fill="#fff" opacity=".12"/></g>
+ <path d="M59 102L64 48Q39 61 18 51Q32 34 58 40Q41 15 29 18Q52 5 70 33Q78 11 102 17L78 38Q106 30 117 48Q93 56 75 48L78 102Z" fill="none" stroke="#eaffff" stroke-width="1.4" stroke-opacity=".45" stroke-linejoin="round"/>
+ </g></svg>

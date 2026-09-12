@@ -5,6 +5,7 @@ export async function exerciseCommanderKnowledge(page){
  await page.evaluate(()=>accountTest.knowledge={approved:false,calls:[]});
  await page.getByRole('button',{name:'Toggle AgWorld advisors',exact:true}).click();
  await page.locator('#agMapAdvisors [data-map-advisor=product]').click();
+ await page.locator('.ag-guide-library').click();
  const pane=page.locator('#agCommanderKnowledge');
  await pane.getByText(/available to approved company staff/).waitFor();
  assert.equal(await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).isDisabled(),true);
