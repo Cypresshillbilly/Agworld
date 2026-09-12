@@ -3468,10 +3468,24 @@ function refreshMapAfterAuthentication() {
     }, 350);
   }
 }
-window.addEventListener('gamechanger:authenticated', refreshMapAfterAuthentication);
-window.addEventListener('agworld:supabase-authenticated', refreshMapAfterAuthentication);
-window.addEventListener('agworld:player-ready', refreshMapAfterAuthentication);
-window.addEventListener('pageshow', () => setTimeout(refreshMapAfterAuthentication, 100));
+// The official V1 handoff emits both authentication events for compatibility.
+// Coalesce events arriving in the same turn so map resize, database hydration
+// and GIS retry work are never executed twice for a single login.
+let authRefreshQueued=false;
+function scheduleRefreshMapAfterAuthentication(){
+  if(authRefreshQueued) return;
+  authRefreshQueued=true;
+  const run=()=>{
+    authRefreshQueued=false;
+    refreshMapAfterAuthentication();
+  };
+  if(typeof queueMicrotask==='function') queueMicrotask(run);
+  else Promise.resolve().then(run);
+}
+window.addEventListener('gamechanger:authenticated', scheduleRefreshMapAfterAuthentication);
+window.addEventListener('agworld:supabase-authenticated', scheduleRefreshMapAfterAuthentication);
+window.addEventListener('agworld:player-ready', scheduleRefreshMapAfterAuthentication);
+window.addEventListener('pageshow', () => setTimeout(scheduleRefreshMapAfterAuthentication, 100));
 loadFarms();
 window.AG_WORLD_WORLD = {
   get countries(){ return countries; },
