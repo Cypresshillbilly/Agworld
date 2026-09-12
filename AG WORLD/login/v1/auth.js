@@ -246,10 +246,23 @@
             const detail=event.detail||{};
             setProgress(detail.progress,detail.status);
           };
+          const onChecklist=(event)=>{
+            const stage=(event.detail||{}).stage;
+            const order=['auth','interface','systems','map','world','populate','finalise'];
+            const current=order.indexOf(stage);
+            if(current<0) return;
+            document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
+              const index=order.indexOf(item.dataset.loadStage);
+              item.classList.toggle('is-complete',index<current);
+              item.classList.toggle('is-loading',index===current);
+            });
+          };
           window.addEventListener('agworld:load-progress',onProgress);
+          window.addEventListener('agworld:load-checklist',onChecklist);
 
           error.textContent='LOADING AGWORLD…';
           setProgress(1,'AUTHENTICATION COMPLETE');
+          onChecklist({detail:{stage:'auth'}});
           gate.remove();
           if(gameLoader) gameLoader.classList.add('is-active');
 
@@ -264,6 +277,7 @@
             reveal();
           } finally {
             window.removeEventListener('agworld:load-progress',onProgress);
+            window.removeEventListener('agworld:load-checklist',onChecklist);
           }
         }catch(err){
           console.error('AG World sign-in failed',err);
