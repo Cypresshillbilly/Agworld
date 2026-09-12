@@ -505,7 +505,9 @@ function normaliseSpatialFeatures(geojson, level) {
   const features = geojson?.features || [];
   return features.map((feature, index) => {
     const p = feature.properties || {};
-    const name = p.shapeName || p.MAP_TITLE || p.PROVINCE || p.MUNICNAME || p.NameCode || p.S12_NAME || p.SGADMIN || p.SGTOWN || p.TOWN || p.SHRT_ENGL || p.NAME || p.name || `${level} ${index + 1}`;
+    const sourceName = p.shapeName || p.MAP_TITLE || p.PROVINCE || p.MUNICNAME || p.NameCode || p.S12_NAME || p.SGADMIN || p.SGTOWN || p.TOWN || p.SHRT_ENGL || p.NAME || p.name || `${level} ${index + 1}`;
+    // Correct the upstream display typo while retaining the original properties.
+    const name = level==='province'&&p.iso==='ZAF'&&sourceName==='Nothern Cape'?'Northern Cape':sourceName;
     const sourceId = p.code || p.shapeID || p.iso || p.ISO3_CODE || p.MUNICCODE || p.MUNICCD || p.CODE || p.AG_SGAD_ID || p.OBJECTID || index + 1;
     const boundary = geometryToBoundary(feature.geometry);
     const center = boundary.length

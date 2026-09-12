@@ -25,6 +25,7 @@ export async function exerciseTerritoryBoard(page){
  assert.equal(await page.locator('#territoryInfoPanel').getAttribute('data-company-control'),'25');
  await page.evaluate(()=>google.maps.event.trigger(countries[0]._marker,'click'));
  await page.waitForFunction(()=>territories.filter(t=>t.countryCode==='ZAF'&&t._polygon).length===9);
+ assert.equal(await page.evaluate(()=>territories.filter(t=>t.name==='Northern Cape').length),1,'Northern Cape keeps its canonical province identity');
  assert.ok(await page.evaluate(()=>map.getZoom()>=5.5&&map.getZoom()<8),'Country flag drills into province view');
  await page.evaluate(()=>map.setZoom(6.5));
  await page.waitForFunction(()=>spatialLayerState.provinces.status==='loaded');
