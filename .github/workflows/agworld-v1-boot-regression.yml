@@ -1,0 +1,42 @@
+name: AG World V1 Boot Regression
+
+on:
+  push:
+    paths:
+      - 'AG WORLD/index.html'
+      - 'AG WORLD/login/v1/**'
+      - 'AG WORLD/boot/v1/**'
+      - 'AG WORLD/app-gis-loader-v24.js'
+      - 'AG WORLD/main-game-layout-v1.js'
+      - 'AG WORLD/agworld-player-surface-final-v1.js'
+      - 'AG WORLD/agworld-landing-game-layer-v1.js'
+      - 'AG WORLD/agworld-final-layer-cleanup-v2.js'
+      - 'AG WORLD/agworld-player-progression-stack-v1.js'
+      - 'AG WORLD/agworld-mission-control-card-polish-v1.js'
+  pull_request:
+    paths:
+      - 'AG WORLD/index.html'
+      - 'AG WORLD/login/v1/**'
+      - 'AG WORLD/boot/v1/**'
+      - 'AG WORLD/app-gis-loader-v24.js'
+      - 'AG WORLD/main-game-layout-v1.js'
+      - 'AG WORLD/agworld-player-surface-final-v1.js'
+      - 'AG WORLD/agworld-landing-game-layer-v1.js'
+      - 'AG WORLD/agworld-final-layer-cleanup-v2.js'
+      - 'AG WORLD/agworld-player-progression-stack-v1.js'
+      - 'AG WORLD/agworld-mission-control-card-polish-v1.js'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-v1-boot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify canonical boot contract
+        run: node 'AG WORLD/boot/v1/verify.mjs'
