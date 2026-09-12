@@ -169,7 +169,7 @@ html.ag-reference-compact .agpc-art{flex-basis:46px!important;min-height:42px!im
 .agpc-chapter{font-size:9px!important;line-height:1.1!important;color:#c2ed35!important;letter-spacing:.35px!important}
 #agCanonicalMissionCard h2{font-size:18px!important;line-height:1.05!important;font-weight:700!important;margin:0!important;text-transform:uppercase!important;letter-spacing:.1px!important}
 #agCanonicalMissionCard p{font-size:13px!important;line-height:1.28!important;font-weight:400!important;color:#c2dfe7!important;margin:0!important}
-.agpc-next{margin-top:auto!important;font-size:10px!important;color:#9bbec5!important;line-height:1.15!important}
+.agpc-next{margin-top:0!important;font-size:10px!important;color:#9bbec5!important;line-height:1.15!important}
 #agCanonicalMissionCard .agpc-reward-block{grid-row:3!important;grid-column:1/-1!important;display:flex!important;align-items:center!important;gap:8px!important;padding:4px 0!important;margin:0!important;background:transparent!important;border:0!important;min-height:0!important}
 #agCanonicalMissionCard .agpc-xp{min-height:22px!important;padding:2px 8px!important;font-size:17px!important;line-height:1!important;color:#bced2c!important;background:#08352c!important;border-color:#42834c!important;white-space:nowrap!important}
 #agCanonicalMissionCard .agpc-skill-rewards{flex-wrap:wrap!important;gap:3px 7px!important}
@@ -202,6 +202,10 @@ html.ag-reference-compact .agpc-art{flex-basis:46px!important;min-height:42px!im
 #territoryStatsDrawer.collapsed #territoryStatsDrawerContent{display:none!important;visibility:hidden!important}
 #agEnterWorldBtn{position:relative!important;inset:auto!important;transform:none!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;width:auto!important;min-width:0!important;height:30px!important;min-height:30px!important;margin:0!important;padding:0 9px!important;border-radius:4px!important;background:linear-gradient(#204b35,#032b2a)!important;border:1px solid #83b741!important;box-shadow:inset 0 0 9px #77b82b22!important;color:#dffbad!important;font-size:11px!important;font-weight:600!important;letter-spacing:.4px!important;z-index:auto!important}
 #agEnterWorldBtn::before{content:'⌖'!important;font-size:16px!important;margin-right:5px!important}.map-tools{align-items:center!important;gap:4px!important;flex-wrap:wrap!important}
+#agEnterWorldBtn::after{content:none!important}
+body.ag-full-game-mode .app-shell{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important}
+body.ag-full-game-mode :is(#agPrimarySidebar,.missions){display:none!important}
+body.ag-full-game-mode #entityInformationSection{transform:none!important;min-width:0!important}
 #agPrimarySidebar{position:relative!important;background:#00151c!important}
 #agPrimarySidebar .brand{height:178px!important;min-height:178px!important;flex-basis:178px!important;justify-content:flex-start!important;padding:32px 9px 0!important;background:transparent!important}
 #agPrimarySidebar .brand .brand-logo{width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;clip-path:inset(0 0 16% 0)!important;margin-bottom:-16%!important}

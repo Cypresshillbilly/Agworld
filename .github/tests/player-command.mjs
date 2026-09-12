@@ -48,8 +48,14 @@ export async function exercisePlayerCommand(page){
   assert.equal(await page.locator('.map-tools #agEnterWorldBtn').count(),1);
   await page.locator('#agEnterWorldBtn').click();
   assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('ag-full-game-mode')),true);
+  await page.waitForFunction(()=>document.querySelector('.map-area').getBoundingClientRect().left===0);
+  assert.equal(await page.locator('.sidebar').isVisible(),false);
+  assert.equal(await page.locator('.missions').isVisible(),false);
+  assert.equal(await page.locator('.map-area').evaluate(el=>Math.round(el.getBoundingClientRect().width)),1600);
   await page.locator('#agEnterWorldBtn').click();
   assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('ag-full-game-mode')),false);
+  await page.waitForFunction(()=>document.querySelector('.sidebar').getBoundingClientRect().width>0);
+  assert.equal(await page.locator('.sidebar').isVisible(),true);
   await page.goto(new URL('/index.html',page.url()).href);
   await page.waitForFunction(()=>window.AGWorldBootDiagnostics?.regression?.pass===true);
 }

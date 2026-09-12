@@ -181,8 +181,9 @@
       const shellH=shell.clientHeight||820;
       const shellW=shell.clientWidth||1280;
       const canonicalScale=shellW/1280;
-      const sidebarW=Math.round(180*canonicalScale);
-      const missionsW=Math.round(350*canonicalScale);
+      const fullGame=document.body.classList.contains('ag-full-game-mode');
+      const sidebarW=fullGame?0:Math.round(180*canonicalScale);
+      const missionsW=fullGame?0:Math.round(350*canonicalScale);
       const leftStage=sidebarW+missionsW;
       const mapW=Math.max(320,shellW-leftStage);
       const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
@@ -201,6 +202,8 @@
       // Restore the stable Player Profile left stage exactly.
       frame(sidebar,0,0,sidebarW,shellH);
       frame(missions,sidebarW,0,missionsW,shellH);
+      if(fullGame){important(sidebar,'display','none');important(missions,'display','none');}
+      else{sidebar.style.removeProperty('display');missions.style.removeProperty('display');}
 
       // The map keeps its stable left edge and simply extends to the bottom.
       frame(mapArea,leftStage,0,mapW,shellH);
@@ -227,11 +230,11 @@
       const commandTop=Math.max(0,shellH-commandH-commandBottom);
       const commandLeft=leftStage+Math.round((mapW-commandW)/2);
       frame(entity,commandLeft,commandTop,commandW,commandH);
+      important(entity,'transform','none');
       important(entity,'z-index','1800');
       important(entity,'overflow','hidden');
-      important(entity,'background','transparent');
-      important(entity,'border','0');
-      important(entity,'box-shadow','none');
+      // The theme owns the device finish; geometry must not erase its rim.
+      ['background','border','box-shadow'].forEach(prop=>entity.style.removeProperty(prop));
       important(entity,'padding','0');
 
       ensureEntityCommandHeading(entity);
