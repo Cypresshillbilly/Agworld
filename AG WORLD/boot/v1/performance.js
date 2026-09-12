@@ -20,6 +20,31 @@
   };
   window.AGWorldBootDiagnostics=diagnostics;
 
+  // Capture from the game itself, including errors before Developer Mode opens.
+  // Keep only short, redacted messages in memory; never read session storage.
+  if(!window.AGWorldRuntimeEvents){
+    const events=[];
+    const clean=text=>String(text||'Unknown error')
+      .replace(/https?:\/\/[^\s)]+/g,url=>{try{const u=new URL(url);return u.origin+u.pathname}catch(_){return '[URL]'}})
+      .replace(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/gi,'[email]')
+      .replace(/Bearer\s+\S+/gi,'Bearer [redacted]')
+      .replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g,'[token]')
+      .replace(/((?:password|token|secret|api[_-]?key)\s*[:=]\s*)[^\s,;]+/gi,'$1[redacted]').slice(0,400);
+    const capture=(type,message,level='error')=>{
+      events.push({time:new Date().toISOString(),type,message:clean(message),level});
+      if(events.length>50)events.shift();
+    };
+    window.addEventListener('error',event=>{
+      if(event.target&&event.target!==window){
+        const target=event.target,source=target.getAttribute?.('src')||target.getAttribute?.('href');
+        if(source)capture('Resource',source,'warn');
+      }else capture('JavaScript',event.message||'Script error');
+    },true);
+    window.addEventListener('unhandledrejection',event=>capture('Promise',event.reason?.message||event.reason));
+    window.addEventListener('agworld:world-failed',event=>capture('World',event.detail?.message||'World loading failed'));
+    window.AGWorldRuntimeEvents={getEvents:()=>events.map(event=>({...event}))};
+  }
+
   const mark=(name)=>{
     const t=diagnostics.marks[name]??performance.now();
     diagnostics.marks[name]=t;

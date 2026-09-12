@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AG World · Developer Mode</title>
-<link rel="stylesheet" href="developer-mode.css?v=20260908-3">
+<link rel="stylesheet" href="developer-mode.css?v=brand-diagnostics-20260912">
 </head>
 <body>
 <header class="dev-head">
-  <div><span class="eyebrow">AG WORLD · INTERNAL</span><h1>DEVELOPER MODE</h1><p>Live diagnostics for AG World systems. This page is intended for testing and screenshot-based troubleshooting.</p></div>
-  <div class="head-actions"><span id="connectionState" class="status">CONNECTING…</span><button id="refreshDiagnostics">↻ REFRESH</button><button id="toggleAuto">AUTO REFRESH: ON</button></div>
+  <div><span class="eyebrow">AG WORLD · INTERNAL</span><h1>DEVELOPER MODE</h1><p>Live component checks for the connected game. Review loading, navigation and world readiness before and after each change.</p></div>
+  <div class="head-actions"><span id="connectionState" class="status">CONNECTING…</span><button id="refreshDiagnostics">↻ REFRESH</button><button id="checkApi">CHECK API</button><button id="saveDiagnosticReport">SAVE REPORT</button><button id="toggleAuto" aria-pressed="true">AUTO REFRESH: ON</button></div>
 </header>
 <main>
   <section class="summary-grid">
     <article class="summary"><span>APP</span><strong id="appStatus">CHECKING</strong></article>
     <article class="summary"><span>MAP / GIS</span><strong id="mapStatus">CHECKING</strong></article>
     <article class="summary"><span>ENTITY TOTAL</span><strong id="entityTotal">—</strong></article>
-    <article class="summary"><span>RELATIONSHIPS</span><strong id="relationshipTotal">—</strong></article>
-    <article class="summary"><span>ACTIVE EVENTS</span><strong id="eventTotal">—</strong></article>
+    <article class="summary"><span>CHECKS PASSED</span><strong id="relationshipTotal">—</strong></article>
+    <article class="summary"><span>NEEDS REVIEW</span><strong id="eventTotal">—</strong></article>
     <article class="summary"><span>CAPTURED ERRORS</span><strong id="errorTotal">0</strong></article>
   </section>
 
@@ -30,6 +30,11 @@
     <button id="collapseAll">COLLAPSE ALL</button>
   </section>
 
+  <p id="diagnosticTimestamp" class="check-note" aria-live="polite"></p>
+  <div id="diagnosticPanels" class="diagnostic-grid"></div>
+  <section class="panel full"><div class="panel-title"><h2>Startup timeline</h2><span class="check-note">Elapsed from startup</span></div><div id="bootTimeline" class="boot-timeline"></div></section>
+  <section class="panel full"><div class="panel-title"><h2>Game runtime log</h2><button id="clearErrors">CLEAR VIEW</button></div><pre id="errorLog">Waiting for game diagnostics.</pre></section>
+  <details id="advancedDiagnostics"><summary>Advanced component tests &amp; maintenance</summary><p class="check-note">These existing tools act on the connected game only when you choose an action. Routine diagnostics do not repair or create records.</p>
   <section class="panel full developer-population">
   <div class="panel-title"><div><span class="eyebrow">MOVED FROM LIVE MAP</span><h2>CONTROLLED WORLD POPULATION</h2><p>Create the approved demo entities only from Developer Mode. Nothing runs automatically when AG World starts.</p></div></div>
   <div id="populationStatus" class="population-status">Waiting for connection to the AG World tab…</div>
@@ -63,18 +68,12 @@
   <div id="entitySelectionDiagnostic" class="entity-command-diagnostic">Select an entity in AG World, then return here.</div>
 </section>
 
-<div id="diagnosticPanels" class="diagnostic-grid"></div>
-
-  <section class="panel full">
-    <div class="panel-title"><div><span class="eyebrow">CAPTURED RUNTIME OUTPUT</span><h2>ERROR & EVENT LOG</h2></div><button id="clearErrors">CLEAR</button></div>
-    <pre id="errorLog">No errors captured.</pre>
-  </section>
-
   <section class="panel full">
     <div class="panel-title"><div><span class="eyebrow">STORAGE INSPECTION</span><h2>LOCAL APPLICATION STATE</h2></div><button id="refreshStorage">REFRESH STORAGE</button></div>
     <div id="storageState" class="kv"></div>
   </section>
-</main>
-<script src="developer-mode.js?v=entity-command-handoff-diagnostic-v4-20260908-1500"></script>
+</details></main>
+<script src="developer-diagnostics.js?v=brand-diagnostics-20260912"></script>
+<script src="developer-mode.js?v=brand-diagnostics-20260912"></script>
 </body>
 </html>
