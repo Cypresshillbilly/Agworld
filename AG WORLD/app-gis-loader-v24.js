@@ -1214,6 +1214,11 @@ function seedDemoFarms() {
 
 let farmLoadInFlight = null;
 let farmDataBooted = false;
+let resolveInitialMap, rejectInitialMap, mapAuthorisationError=null;
+const initialMapReady = new Promise((resolve,reject)=>{resolveInitialMap=resolve;rejectInitialMap=reject;});
+// A fast map failure may arrive before the rest of the source stack is loaded.
+initialMapReady.catch(()=>{});
+window.__AGWORLD_WORLD_BOOTED__ = false;
 
 async function loadFarms() {
   // The GIS module can receive authentication, refresh and map-ready signals
@@ -1225,7 +1230,6 @@ async function loadFarms() {
   // Player-first boot: the map starts immediately, while farm data is deferred
   // until the player actually reaches FARM & ASSET level.
   initMap();
-  loadSpatialLayersInBackground();
 
   try {
     const [farmResult, territoryResult] = await Promise.allSettled([
@@ -1239,11 +1243,8 @@ async function loadFarms() {
 
     const farmData = await farmResult.value.json();
     const base = farmData.farms || [];
-    farmDataBooted = true;
-    let territoryData = { territories: [] };
-    if (territoryResult.status === 'fulfilled' && territoryResult.value.ok) {
-      territoryData = await territoryResult.value.json();
-    }
+    if (territoryResult.status !== 'fulfilled' || !territoryResult.value.ok) throw new Error('territory data');
+    const territoryData = await territoryResult.value.json();
 
     let stored = [];
     try { stored = JSON.parse(localStorage.getItem('agworld-farms-v2') || '[]'); } catch (_) {}
@@ -1256,6 +1257,7 @@ async function loadFarms() {
     territories = territoryData.territories || [];
     municipalities = territoryData.municipalities || [];
     towns = territoryData.towns || [];
+    farmDataBooted = true;
 
     // Backfill territory links for existing farm records before the map starts.
     farms.forEach(farm => {
@@ -1275,6 +1277,9 @@ async function loadFarms() {
       updateZoomStage();
       $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded · loading municipal and town GIS…`;
     }
+    const countryLayer = await loadSpatialLayerOnce('country');
+    if (!countryLayer) throw new Error('South Africa boundary data');
+    await initialMapReady;
     reportAgWorldBootPhase('populate', 92, 'POPULATING MAP');
 
     // Remote GIS layers load independently of both the map and local datasets.
@@ -1285,6 +1290,7 @@ async function loadFarms() {
       ? 'request timed out'
       : (error?.message || 'unknown error');
     $('mapStatus').textContent = `Satellite map active · farm records failed to load (${detail})`;
+    throw error;
   }
   })();
 
@@ -1448,6 +1454,7 @@ function loadSpatialLayerOnce(kind) {
 }
 
 function ensureSpatialLayersForZoom(zoom) {
+  if (!farmDataBooted) return;
   const stage = progressiveStageForZoom(zoom);
   // Stage 1: South Africa only. Each deeper layer starts only when required.
   loadSpatialLayerOnce('country');
@@ -1463,10 +1470,12 @@ async function loadSpatialLayersInBackground() {
 }
 
 function renderGoogleMap() {
+  if (map) return;
   if (!window.google?.maps?.Map) {
     const message = 'Google Maps JavaScript API finished loading but the Map constructor is unavailable. Check Maps JavaScript API activation and API-key restrictions.';
     console.error('AG World map:', message, window.google);
     $('mapStatus').textContent = message;
+    rejectInitialMap(new Error(message));
     return;
   }
 
@@ -1484,6 +1493,9 @@ function renderGoogleMap() {
       rotateControl: false
     });
 
+    // Idle can fire before Google validates the key. Wait for rendered tiles.
+    google.maps.event.addListenerOnce(map, 'tilesloaded', resolveInitialMap);
+    if (spatialLayerState.country.status === 'loaded') countries.forEach(addTerritory);
     map.addListener('zoom_changed', updateZoomStage);
     map.addListener('idle', () => {
       const zoom = map.getZoom();
@@ -1499,6 +1511,7 @@ function renderGoogleMap() {
   } catch (error) {
     console.error('AG World Google Maps initialisation failed:', error);
     $('mapStatus').textContent = `Google Maps initialisation failed: ${error.message}`;
+    rejectInitialMap(error);
   }
 }
 
@@ -1506,6 +1519,7 @@ function initMap() {
   reportAgWorldBootPhase('map', 58, 'LOADING MAP ENGINE');
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
     $('mapStatus').textContent = 'Google satellite mapping is inactive: no API key is available to the dashboard.';
+    rejectInitialMap(new Error('Google Maps is not configured.'));
     return;
   }
 
@@ -1525,6 +1539,10 @@ function initMap() {
 
   window.gm_authFailure = () => {
     $('mapStatus').textContent = 'Google Maps authorisation failed. Check the Maps JavaScript API, billing and GitHub Pages HTTP referrer restriction.';
+    window.__AGWORLD_WORLD_BOOTED__ = false;
+    mapAuthorisationError = new Error('Google Maps authorisation failed.');
+    window.dispatchEvent(new CustomEvent('agworld:world-failed',{detail:{message:'Google Maps authorisation failed.'}}));
+    rejectInitialMap(new Error('Google Maps authorisation failed.'));
   };
 
   // Deliberately use the same simple loader pattern as the earlier V1 build.
@@ -1535,6 +1553,7 @@ function initMap() {
   script.defer = true;
   script.onerror = () => {
     $('mapStatus').textContent = 'Google Maps script could not be downloaded.';
+    rejectInitialMap(new Error('Google Maps could not be downloaded.'));
   };
   document.head.appendChild(script);
 }
@@ -3519,7 +3538,12 @@ window.addEventListener('gamechanger:authenticated', scheduleRefreshMapAfterAuth
 window.addEventListener('agworld:supabase-authenticated', scheduleRefreshMapAfterAuthentication);
 window.addEventListener('agworld:player-ready', scheduleRefreshMapAfterAuthentication);
 window.addEventListener('pageshow', () => setTimeout(scheduleRefreshMapAfterAuthentication, 100));
-loadFarms();
+window.__AGWORLD_WORLD_READY__ = Promise.all([loadFarms(), initialMapReady]).then(()=>{
+  if (mapAuthorisationError) throw mapAuthorisationError;
+  window.__AGWORLD_WORLD_BOOTED__ = true;
+  window.dispatchEvent(new CustomEvent('agworld:world-ready'));
+});
+window.__AGWORLD_WORLD_READY__.catch(()=>{});
 window.AG_WORLD_WORLD = {
   get countries(){ return countries; },
   get provinces(){ return territories; },

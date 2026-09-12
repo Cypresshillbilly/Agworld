@@ -85,6 +85,123 @@
     else setTimeout(warm,80);
   }
 
+  async function bootPlayer({gate,username,role,user,restored=false}){
+    const loader=document.getElementById('agworld-game-loader');
+    const bar=document.getElementById('agworld-game-loader-bar');
+    const percent=document.getElementById('agworld-game-loader-percent');
+    const status=document.getElementById('agworld-game-loader-status');
+    const retry=document.getElementById('agworld-game-loader-retry');
+    const stages=['auth','interface','systems','map','world','populate','finalise'];
+    const progress=[8,22,40,58,76,92,98];
+    const labels=['AUTHENTICATION COMPLETE','LOADING GAME INTERFACE','INITIALISING GAME SYSTEMS','LOADING MAP ENGINE','LOADING SOUTH AFRICA','POPULATING MAP','FINALISING PLAYER SCREEN'];
+    const checks=[...document.querySelectorAll('#agworld-game-loader-checklist .agl-check')];
+    const pendingStages=new Set();
+    const marks=window.__AGWORLD_BOOT_MARKS__||(window.__AGWORLD_BOOT_MARKS__={});
+    let highestStage=-1,highestProgress=0,sourcesReady=false,readyTimer;
+    const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+    const setProgress=(value,text)=>{
+      if(bootError) return;
+      if(value<highestProgress) return;
+      highestProgress=Math.max(highestProgress,Math.min(100,value));
+      if(bar) bar.style.width=highestProgress+'%';
+      if(percent) percent.textContent=Math.round(highestProgress)+'%';
+      if(status&&text) status.textContent=text;
+    };
+    const advance=(stage)=>{
+      if(bootError) return;
+      const index=stages.indexOf(stage);
+      if(index<0||index<highestStage) return;
+      highestStage=index;
+      checks.forEach(item=>{
+        const i=stages.indexOf(item.dataset.loadStage);
+        item.classList.toggle('is-complete',i<highestStage);
+        item.classList.toggle('is-loading',i===highestStage);
+      });
+      setProgress(progress[index],labels[index]);
+      if(marks[stage]==null) marks[stage]=performance.now();
+      window.AGWorldBootDiagnostics?.mark?.(stage);
+    };
+    const flushStages=()=>{
+      // Downloads can overlap; the visible checklist still follows real prerequisites.
+      for(const stage of ['map','world','populate']){
+        if(!pendingStages.has(stage)) break;
+        advance(stage);
+      }
+    };
+    const onChecklist=event=>{
+      if(['map','world','populate'].includes(event.detail?.stage)) pendingStages.add(event.detail.stage);
+      if(sourcesReady) flushStages();
+    };
+    const onProgress=event=>{
+      const detail=event.detail||{};
+      const value=Number(detail.progress);
+      // A late map event cannot overwrite the status of a later completed stage.
+      if(sourcesReady&&Number.isFinite(value)&&value>=highestProgress&&value<=progress[highestStage]) setProgress(value,detail.status);
+    };
+    let resolvePlayer;
+    const onPlayerReady=()=>resolvePlayer();
+    let bootError=null;
+    const showFailure=error=>{
+      if(bootError) return;
+      bootError=error;
+      console.error('AG World player boot failed',error);
+      document.body.classList.remove('agworld-layout-ready');
+      if(loader) loader.classList.add('is-active');
+      if(status) status.textContent='UNABLE TO LOAD AGWORLD. PLEASE RETRY.';
+      if(retry) retry.hidden=false;
+      checks.forEach(item=>item.classList.remove('is-loading'));
+      window.dispatchEvent(new CustomEvent('agworld:boot-failed',{detail:{message:error.message,stage:stages[highestStage]}}));
+    };
+    // Google can report a key error after its first render. Keep this listener
+    // for the page lifetime so that a late failure cannot leave a false ready UI.
+    window.addEventListener('agworld:world-failed',event=>showFailure(new Error(event.detail.message)),{once:true});
+    const playerReady=new Promise(resolve=>{resolvePlayer=resolve;});
+    document.addEventListener('agworld:landing-layout-ready',onPlayerReady,{once:true});
+    window.addEventListener('agworld:load-checklist',onChecklist);
+    window.addEventListener('agworld:load-progress',onProgress);
+    if(retry){retry.hidden=true;retry.onclick=()=>location.reload();}
+    if(loader) loader.classList.add('is-active');
+    advance('auth');
+    try{
+      // Refresh has a shield above the loader. Reveal the painted loader first.
+      reveal();
+      await nextPaint();
+      document.getElementById('ag-login-boot-shield')?.remove();
+      gate?.remove();
+      advance('interface');
+      await nextPaint();
+      if(typeof window.__AGWORLD_BOOT_GAME__!=='function') throw new Error('Game loader is unavailable.');
+      await window.__AGWORLD_BOOT_GAME__();
+      sourcesReady=true;
+      advance('systems');
+      flushStages();
+      window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role,restored}}));
+      if(user) window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user}}));
+      if(!window.__AGWORLD_WORLD_READY__) throw new Error('World loader is unavailable.');
+      await Promise.race([
+        Promise.all([window.__AGWORLD_WORLD_READY__,playerReady]),
+        new Promise((_,reject)=>{readyTimer=setTimeout(()=>reject(new Error('The game world did not finish loading. Please retry.')),45000);})
+      ]);
+      if(bootError) throw bootError;
+      advance('finalise');
+      await nextPaint();
+      if(bootError) throw bootError;
+      setProgress(100,'AGWORLD READY');
+      checks.forEach(item=>{item.classList.remove('is-loading');item.classList.add('is-complete');});
+      await nextPaint();
+      if(bootError) throw bootError;
+      if(loader) loader.classList.remove('is-active');
+      window.dispatchEvent(new CustomEvent('agworld:player-visible'));
+    }catch(error){
+      showFailure(error);
+    }finally{
+      clearTimeout(readyTimer);
+      document.removeEventListener('agworld:landing-layout-ready',onPlayerReady);
+      window.removeEventListener('agworld:load-checklist',onChecklist);
+      window.removeEventListener('agworld:load-progress',onProgress);
+    }
+  }
+
   function showGate(){
     if(document.getElementById('ag-login-gate')) return;
     const gate=document.createElement('div');
@@ -230,133 +347,7 @@
               localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
             }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
-          /*
-           * Canonical post-auth handoff.
-           *
-           * The approved Player Screen V1 sources remain inert behind the login
-           * boundary until authentication succeeds. The boot contract preserves
-           * their original source order and executes them exactly once through
-           * the canonical deferred boot orchestrator.
-           *
-           * Critical paint rule:
-           *   1. activate Loading Page V0;
-           *   2. yield a real browser paint;
-           *   3. only then remove the login and fire heavy authenticated
-           *      application listeners.
-           *
-           * This prevents the browser from showing an unpainted/white frame
-           * while synchronous V1 listeners initialise.
-           */
-          const gameLoader=document.getElementById('agworld-game-loader');
-          const bar=document.getElementById('agworld-game-loader-bar');
-          const percent=document.getElementById('agworld-game-loader-percent');
-          const status=document.getElementById('agworld-game-loader-status');
-          const stages=['auth','interface','systems','map','world','populate','finalise'];
-          const stageProgress={auth:8,interface:22,systems:40,map:58,world:76,populate:92,finalise:98};
-          const stageStatus={
-            auth:'AUTHENTICATION COMPLETE',
-            interface:'LOADING GAME INTERFACE',
-            systems:'INITIALISING GAME SYSTEMS',
-            map:'LOADING MAP ENGINE',
-            world:'LOADING SOUTH AFRICA',
-            populate:'POPULATING MAP',
-            finalise:'FINALISING PLAYER SCREEN'
-          };
-
-          let highestProgress=0;
-          let highestChecklistStage=-1;
-          const setProgress=(progress,text)=>{
-            highestProgress=Math.max(highestProgress,Math.max(0,Math.min(100,Number(progress)||0)));
-            if(bar) bar.style.width=highestProgress+'%';
-            if(percent) percent.textContent=Math.round(highestProgress)+'%';
-            if(status&&text) status.textContent=text;
-          };
-          const setStage=(stage)=>{
-            const requested=stages.indexOf(stage);
-            if(requested<0) return;
-            highestChecklistStage=Math.max(highestChecklistStage,requested);
-            document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
-              const index=stages.indexOf(item.dataset.loadStage);
-              item.classList.toggle('is-complete',index<highestChecklistStage);
-              item.classList.toggle('is-loading',index===highestChecklistStage);
-            });
-          };
-          const advanceStage=(stage)=>{
-            setStage(stage);
-            setProgress(stageProgress[stage]??highestProgress,stageStatus[stage]||'');
-          };
-          const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
-
-          // GIS/world phases publish actual completion milestones. Consume both
-          // the status and the monotonic progress value so Loading Page V0 tracks
-          // real boot work rather than an artificial timer.
-          const onProgress=(event)=>{
-            const detail=event.detail||{};
-            const progress=Number(detail.progress);
-            if(Number.isFinite(progress)) setProgress(progress,detail.status||'');
-            else if(detail.status) setProgress(highestProgress,detail.status);
-          };
-          const onChecklist=(event)=>{
-            const detail=event.detail||{};
-            if(detail.stage) advanceStage(detail.stage,stageStatus[detail.stage]);
-          };
-          window.addEventListener('agworld:load-progress',onProgress);
-          window.addEventListener('agworld:load-checklist',onChecklist);
-
-          // Listen before dispatching authentication lifecycle events. The
-          // canonical V1 boot lock owns this event and emits it only when the
-          // approved Player V1 surface is genuinely composed and ready.
-          const playerReady=new Promise(resolve=>{
-            document.addEventListener('agworld:landing-layout-ready',resolve,{once:true});
-          });
-
-          error.textContent='LOADING AGWORLD…';
-          const authItem=document.querySelector('#agworld-game-loader-checklist .agl-check[data-load-stage="auth"]');
-          if(authItem) authItem.textContent='AUTHENTICATION COMPLETE';
-          advanceStage('auth');
-
-          if(gameLoader) gameLoader.classList.add('is-active');
-
-          // Give Loading Page V0 an actual paint while it is above the login.
-          // Removing the gate or running game initialisers before this point was
-          // the direct cause of the white intermediate frame.
-          await nextPaint();
-
-          gate.remove();
-
-          advanceStage('interface');
-          await nextPaint();
-
-          // Loading Page V0 is the genuine boot boundary. Execute the exact
-          // approved V1 sources only after the loader is visibly painted.
-          if(typeof window.__AGWORLD_BOOT_GAME__!=='function') throw new Error('AgWorld game boot orchestrator unavailable');
-          await window.__AGWORLD_BOOT_GAME__();
-
-          advanceStage('systems');
-
-          // Resume the canonical V1 lifecycle only after its source stack exists.
-          window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
-          window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user:data.user}}));
-
-          // The V1 source stack continues underneath the loader. The GIS engine
-          // now drives MAP → WORLD → POPULATE using its real phased events.
-          // The screen is never exposed until canonical V1 confirms readiness.
-          try{
-            await playerReady;
-            advanceStage('finalise');
-
-            // Allow the already-approved V1 to paint one complete frame beneath
-            // the overlay before removing Loading Page V0.
-            await nextPaint();
-            setProgress(100,'AGWORLD READY');
-            await new Promise(resolve=>setTimeout(resolve,80));
-
-            if(gameLoader) gameLoader.classList.remove('is-active');
-            reveal();
-          } finally {
-            window.removeEventListener('agworld:load-progress',onProgress);
-            window.removeEventListener('agworld:load-checklist',onChecklist);
-          }
+          await bootPlayer({gate,username:displayName,role:'agriculture_sales',user:data.user});
         }catch(err){
           console.error('AG World sign-in failed',err);
           error.textContent='UNABLE TO CONNECT TO THE COMPANY ACCOUNT SERVICE';
@@ -404,92 +395,7 @@
         // deferred V1 source stack is still loading.
         window.__AGWORLD_EXPLICIT_AUTH__=true;
 
-        const gameLoader=document.getElementById('agworld-game-loader');
-        const bar=document.getElementById('agworld-game-loader-bar');
-        const percent=document.getElementById('agworld-game-loader-percent');
-        const status=document.getElementById('agworld-game-loader-status');
-        const checks=[...document.querySelectorAll('#agworld-game-loader-checklist .agl-check')];
-        const stages=['auth','interface','systems','map','world','populate','finalise'];
-        const stageProgress={auth:8,interface:22,systems:40,map:58,world:76,populate:92,finalise:98};
-        const stageStatus={
-          auth:'AUTHENTICATION COMPLETE',
-          interface:'LOADING GAME INTERFACE',
-          systems:'INITIALISING GAME SYSTEMS',
-          map:'LOADING MAP ENGINE',
-          world:'LOADING SOUTH AFRICA',
-          populate:'POPULATING MAP',
-          finalise:'FINALISING PLAYER SCREEN'
-        };
-        let highest=0,highestStage=-1;
-        const setProgress=(value,text)=>{
-          highest=Math.max(highest,Math.max(0,Math.min(100,Number(value)||0)));
-          if(bar) bar.style.width=highest+'%';
-          if(percent) percent.textContent=Math.round(highest)+'%';
-          if(status&&text) status.textContent=text;
-        };
-        const advance=(stage)=>{
-          const index=stages.indexOf(stage);
-          if(index<0) return;
-          highestStage=Math.max(highestStage,index);
-          checks.forEach(item=>{
-            const i=stages.indexOf(item.dataset.loadStage);
-            item.classList.toggle('is-complete',i<highestStage);
-            item.classList.toggle('is-loading',i===highestStage);
-          });
-          setProgress(stageProgress[stage]??highest,stageStatus[stage]||'');
-        };
-        const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
-        const onProgress=event=>{
-          const detail=event.detail||{};
-          const progress=Number(detail.progress);
-          if(Number.isFinite(progress)) setProgress(progress,detail.status||'');
-          else if(detail.status) setProgress(highest,detail.status);
-        };
-        const onChecklist=event=>{
-          const detail=event.detail||{};
-          if(detail.stage) advance(detail.stage);
-        };
-        const playerReady=new Promise(resolve=>document.addEventListener('agworld:landing-layout-ready',resolve,{once:true}));
-
-        window.addEventListener('agworld:load-progress',onProgress);
-        window.addEventListener('agworld:load-checklist',onChecklist);
-        advance('auth');
-        if(gameLoader) gameLoader.classList.add('is-active');
-
-        (async()=>{
-          try{
-            await nextPaint();
-            advance('interface');
-            await nextPaint();
-
-            if(typeof window.__AGWORLD_BOOT_GAME__!=='function'){
-              throw new Error('AgWorld game boot orchestrator unavailable');
-            }
-            await window.__AGWORLD_BOOT_GAME__();
-
-            advance('systems');
-            const username=sessionStorage.getItem(USER)||'PLAYER';
-            const role=sessionStorage.getItem(ROLE)||'agriculture_sales';
-            window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username,role,restored:true}}));
-
-            await playerReady;
-            advance('finalise');
-            await nextPaint();
-            setProgress(100,'AGWORLD READY');
-            await new Promise(resolve=>setTimeout(resolve,80));
-
-            if(gameLoader) gameLoader.classList.remove('is-active');
-            const shield=document.getElementById('ag-login-boot-shield');
-            if(shield) shield.remove();
-            reveal();
-          }catch(err){
-            console.error('AG World refresh boot failed',err);
-            if(status) status.textContent='UNABLE TO COMPLETE PLAYER SCREEN BOOT';
-          }finally{
-            window.removeEventListener('agworld:load-progress',onProgress);
-            window.removeEventListener('agworld:load-checklist',onChecklist);
-          }
-        })();
+        bootPlayer({username:sessionStorage.getItem(USER)||'PLAYER',role:sessionStorage.getItem(ROLE)||'agriculture_sales',restored:true});
         return;
       }
       window.__AGWORLD_EXPLICIT_AUTH__=false;

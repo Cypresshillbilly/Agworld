@@ -292,8 +292,8 @@
        * anchored to the far-right edge and is mathematically capped above the
        * Command Center, guaranteeing a visible gap at every supported size.
        */
+      const gap=Math.max(18,Math.round(18*canonicalScale));
       if(territoryDrawer){
-        const gap=Math.max(18,Math.round(18*canonicalScale));
         const topInset=Math.max(70,Math.round(74*canonicalScale));
         const maxDrawerBottom=commandTop-gap;
         const preferredH=Math.round(Math.min(360*canonicalScale,shellH*.44));
@@ -624,7 +624,8 @@
     window.__AGWORLD_TERRITORY_STARTUP__='NATIONAL_THEN_TERRITORY';
   });
   window.addEventListener('load',()=>{ setTimeout(initialiseNational,400); setTimeout(initialiseNational,1200); setTimeout(initialiseNational,3000); });
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(initialiseNational,250));
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initialiseNational,{once:true});
+  else initialiseNational();
   window.__AGWORLD_RENDER_NATIONAL_TERRITORY__=()=>{userSelected=false;return renderNationalPanel()};
 })();
 
@@ -807,6 +808,11 @@
         }).join('')
       : '<div class="company-facility-empty">No Company facilities available.</div>';
 
+    // Polling for facilities must not rebuild an unchanged card and wake every
+    // layout observer. Data changes and switching back from an entity still render.
+    const signature=JSON.stringify([facilityRows,employees,active,provinces]);
+    if(card.dataset.companyRenderSignature===signature && card.classList.contains('agworld-company-entity-card') && card.querySelector('.company-command-split')) return true;
+    card.dataset.companyRenderSignature=signature;
     card.classList.add('show','agworld-company-entity-card');
     card.dataset.entityCommandDefault='company';
     card.innerHTML=
@@ -1187,7 +1193,8 @@
   window.addEventListener('agworld:dynamic-entity-selected',selectEntityScope);
   window.addEventListener('agworld:v2-entity-selected',selectEntityScope);
   window.addEventListener('load',()=>{setTimeout(waitForFacilities,350);setTimeout(waitForFacilities,1400);setTimeout(waitForFacilities,3200);});
-  document.addEventListener('DOMContentLoaded',()=>setTimeout(waitForFacilities,150));
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',waitForFacilities,{once:true});
+  else waitForFacilities();
   window.addEventListener('agworld:dynamic-layer-updated',()=>{if(companyCardActive) renderCompanyCard();});
   window.__AGWORLD_RENDER_COMPANY_ENTITY_CARD__=()=>{companyCardActive=true;return renderCompanyCard();};
 
@@ -1681,7 +1688,8 @@
       observer.observe(panel,{childList:true});
     }
   }
-  document.addEventListener('DOMContentLoaded',start);
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',start,{once:true});
+  else start();
   window.addEventListener('load',()=>{start();setTimeout(ensureHeading,300);setTimeout(ensureHeading,1200);setTimeout(ensureHeading,3000)});
   window.addEventListener('agworld:territory-selected',()=>setTimeout(ensureHeading,0));
   window.__AGWORLD_ENSURE_TERRATORY_STATS__=ensureHeading;

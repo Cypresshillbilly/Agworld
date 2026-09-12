@@ -32,7 +32,7 @@ const css=String.raw`
 
 `;
 
-function installStyle(){let el=document.getElementById(SID);if(!el){el=document.createElement('style');el.id=SID;document.head.appendChild(el)}el.textContent=css}
+function installStyle(){let el=document.getElementById(SID);if(!el){el=document.createElement('style');el.id=SID;el.textContent=css;document.head.appendChild(el)}}
 
 function progressionState(){
  const p=window.AGWorldProgression;
@@ -62,11 +62,15 @@ function canonicalPlayer(){
  return {name,role,level,chapter,xp,next,pct,initial:(name[0]||'P')};
 }
 
+const renderedPlayers=new WeakMap();
 function renderPlayer(){
  const card=document.getElementById(PLAYER_CARD);if(!card)return;
  const d=canonicalPlayer();
+ const signature=JSON.stringify(d),previous=renderedPlayers.get(card);
+ if(previous?.signature===signature && previous.content===card.firstElementChild) return;
  card.innerHTML='<div class="ag-player-identity"><div class="ag-player-avatar-frame"><div class="ag-player-avatar" aria-hidden="true">'+esc(d.initial)+'</div><span class="ag-player-online-dot"></span></div><div class="ag-player-summary"><span class="ag-player-kicker">ACTIVE PLAYER</span><strong class="ag-player-name">'+esc(d.name)+'</strong><span class="ag-player-role">'+esc(d.role)+'</span><div class="ag-player-meta"><span class="ag-player-level">LVL '+d.level+'</span><span class="ag-player-chapter">CH '+d.chapter+'</span></div><div class="ag-player-xp-label"><span>XP EARNED</span><b>'+d.pct+'%</b></div><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' XP EARNED</b><b>NEXT '+d.next.toLocaleString()+'</b></span></div></div>';
  card.dataset.agPlayerData='canonical-v2';
+ renderedPlayers.set(card,{signature,content:card.firstElementChild});
 }
 
 const ADVISOR_ASSETS={
@@ -84,7 +88,7 @@ function installAdvisorPortraits(){
    let img=btn.querySelector('.ag-advisor-portrait');
    if(!img){img=document.createElement('img');img.className='ag-advisor-portrait';img.alt=label+' Commander';btn.prepend(img)}
    img.onerror=()=>{btn.dataset.agAdvisorAssetError='true';img.removeAttribute('src')};
-   img.src=d.file;
+   if(img.getAttribute('src')!==d.file) img.src=d.file;
    img.dataset.agPortraitSource=d.file;
    btn.classList.add('ag-advisor-photo-tab');
  });
@@ -132,7 +136,12 @@ function bindAdvisors(){
 function run(){installStyle();renderPlayer();bindAdvisors()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
 ['agworld:player-ready','agworld:player-state','agworld:mission-completed','agworld:landing-layout-ready'].forEach(e=>addEventListener(e,()=>setTimeout(run,0)));
-const observer=new MutationObserver(()=>requestAnimationFrame(run));
+let runQueued=false;
+const observer=new MutationObserver(()=>{
+ if(runQueued) return;
+ runQueued=true;
+ requestAnimationFrame(()=>{runQueued=false;run();});
+});
 observer.observe(document.documentElement,{childList:true,subtree:true});
 setInterval(renderPlayer,1500);
 })();

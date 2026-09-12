@@ -30,6 +30,7 @@ body.agworld-layout-ready .app-shell{
 
 #agworld-game-loader{position:fixed;inset:0;z-index:2147483646;display:none;align-items:center;justify-content:center;background:#070a09 url("assets/backround%20v1.3.png") center/cover no-repeat;color:#fff}
 #agworld-game-loader.is-active{display:flex}
+#agworld-game-loader-retry{margin-top:20px;padding:12px 24px;border:1px solid #b8e26c;background:#152519;color:#b8e26c;cursor:pointer;font:inherit}
 #agworld-game-loader .agl-backdrop{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,7,6,.42),rgba(4,7,6,.86))}
 #agworld-game-loader .agl-card{position:relative;width:min(520px,86vw);padding:34px 36px 30px;border:1px solid rgba(122,211,120,.28);background:rgba(8,14,12,.84);box-shadow:0 22px 80px rgba(0,0,0,.52);backdrop-filter:blur(12px);text-align:center}
 #agworld-game-loader .agl-title{font-size:30px;letter-spacing:.16em;font-weight:800;margin-bottom:8px}
@@ -63,6 +64,7 @@ body.agworld-layout-ready .app-shell{
       <div class="agl-check" data-load-stage="populate">POPULATING MAP</div>
       <div class="agl-check" data-load-stage="finalise">FINALISING PLAYER SCREEN</div>
     </div>
+    <button id="agworld-game-loader-retry" type="button" hidden>RETRY LOADING</button>
   </div>
 </div><script>
 /* AG WORLD — canonical landing boot lock.
@@ -86,9 +88,9 @@ body.agworld-layout-ready .app-shell{
   }
 
   function unlock(){
-    if(released||loginIsPresent()||!hasCanonicalLanding()) return;
+    if(released||loginIsPresent()||!window.__AGWORLD_GAME_BOOTED__||!window.__AGWORLD_WORLD_BOOTED__||!hasCanonicalLanding()) return;
     released=true;
-    clearTimeout(releaseTimer);
+    releaseTimer=0;
     document.documentElement.style.visibility='visible';
     document.body.style.visibility='visible';
     document.body.classList.add('agworld-layout-ready');
@@ -97,10 +99,12 @@ body.agworld-layout-ready .app-shell{
   }
 
   function settle(){
-    if(released||loginIsPresent()) return;
-    clearTimeout(releaseTimer);
+    if(released||loginIsPresent()||releaseTimer) return;
+    // Coalesce mutations. Continuous map updates must not reset a quiet timer forever.
+    releaseTimer=1;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      releaseTimer=setTimeout(unlock,260);
+      releaseTimer=0;
+      unlock();
     }));
   }
 
@@ -111,6 +115,8 @@ body.agworld-layout-ready .app-shell{
     setTimeout(settle,900);
   }
 
+  window.addEventListener('agworld:game-sources-ready',settle);
+  window.addEventListener('agworld:world-ready',settle);
   window.addEventListener('gamechanger:authenticated',authReady);
   window.addEventListener('agworld:supabase-authenticated',authReady);
   window.addEventListener('agworld:game-mode-changed',()=>{ if(!released) settle(); });
@@ -118,7 +124,7 @@ body.agworld-layout-ready .app-shell{
   function watch(){
     observer=new MutationObserver(()=>{
       if(loginIsPresent()){
-        clearTimeout(releaseTimer);
+        releaseTimer=0;
         document.body.classList.remove('agworld-layout-ready');
         return;
       }
@@ -144,22 +150,39 @@ body.agworld-layout-ready .app-shell{
   window.__AGWORLD_BOOT_GAME__=function(){
     if(bootPromise) return bootPromise;
     bootPromise=(async()=>{
+      if(document.readyState==='loading') await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
       const nodes=[...document.querySelectorAll('script[type="'+TYPE+'"]')];
       for(const node of nodes){
         await new Promise((resolve,reject)=>{
           const script=document.createElement('script');
+          const source=node.getAttribute('data-agworld-src')||node.src||'inline game source';
+          let timer,finished=false;
+          const finish=error=>{
+            if(finished) return;
+            finished=true;
+            clearTimeout(timer);
+            window.removeEventListener('error',onError);
+            script.onload=script.onerror=null;
+            if(error){script.remove();reject(error);}
+            else {node.remove();resolve();}
+          };
+          const onError=event=>{
+            if(event.filename===script.src||(document.currentScript===script)) finish(new Error('Unable to execute '+source+': '+event.message));
+          };
+          window.addEventListener('error',onError);
+          if(node.dataset.agworldType) script.type=node.dataset.agworldType;
+          script.dataset.agworldBootLoaded='1';
           if(node.src){
-            script.src=node.src;
             script.async=false;
-            script.onload=resolve;
-            script.onerror=()=>reject(new Error('Failed to load '+node.getAttribute('data-agworld-src')));
+            script.src=node.src;
+            script.onload=()=>finish();
+            script.onerror=()=>finish(new Error('Failed to load '+source));
+            timer=setTimeout(()=>finish(new Error('Timed out loading '+source)),20000);
           }else{
             script.text=node.textContent||'';
-            resolve();
           }
-          script.dataset.agworldBootLoaded='1';
           document.head.appendChild(script);
-          node.remove();
+          if(!node.src) finish();
         });
       }
       window.__AGWORLD_GAME_BOOTED__=true;
@@ -295,13 +318,13 @@ body.agworld-layout-ready .app-shell{
 .farm-info-step .farm-wizard-actions button{flex:1}
 @media(max-width:900px){.farm-info-grid,.farm-checklist-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.farm3d-modal{padding:8px}.farm-create-window{width:100%!important;max-height:calc(100vh - 16px)!important}.farm-create-window .farm-wizard{padding:14px}.farm-info-grid,.farm-checklist-grid{grid-template-columns:1fr}.farm-info-step .farm-wizard-actions{flex-direction:column}}
-</style><script data-agworld-src="https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js" type="text/agworld-deferred-script" src="https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js"></script><script data-agworld-src="core/role-config.js?v=master-architecture-v1" type="text/agworld-deferred-script" src="core/role-config.js?v=master-architecture-v1"></script><script data-agworld-src="core/bootstrap.js?v=playable-loop-v1" type="text/agworld-deferred-script" src="core/bootstrap.js?v=playable-loop-v1"></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script data-agworld-src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1" type="text/agworld-deferred-script" src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1"></script><script data-agworld-src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1" type="text/agworld-deferred-script" src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1"></script><script data-agworld-src="api-bridge.js?v=20260902" type="text/agworld-deferred-script" src="api-bridge.js?v=20260902"></script><script data-agworld-src="config-gis-v4.js" type="text/agworld-deferred-script" src="config-gis-v4.js"></script>
+</style><script data-agworld-type="module" data-agworld-src="boot/v1/three.mjs?v=three-r178-module-20260912" type="text/agworld-deferred-script" src="boot/v1/three.mjs?v=three-r178-module-20260912"></script><script data-agworld-src="core/role-config.js?v=master-architecture-v1" type="text/agworld-deferred-script" src="core/role-config.js?v=master-architecture-v1"></script><script data-agworld-src="core/bootstrap.js?v=playable-loop-v1" type="text/agworld-deferred-script" src="core/bootstrap.js?v=playable-loop-v1"></script><script>window.__AGWORLD_USE_PLAYER_PROGRESSION=true;</script><script data-agworld-src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1" type="text/agworld-deferred-script" src="builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1"></script><script data-agworld-src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1" type="text/agworld-deferred-script" src="builds/agriculture/profile/profile.module.js?v=playable-loop-v1"></script><script data-agworld-src="api-bridge.js?v=20260902" type="text/agworld-deferred-script" src="api-bridge.js?v=20260902"></script><script data-agworld-src="config-gis-v4.js" type="text/agworld-deferred-script" src="config-gis-v4.js"></script>
 <script data-agworld-src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305" type="text/agworld-deferred-script" src="world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305"></script>
-<script data-agworld-src="app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425" type="text/agworld-deferred-script" src="app-gis-loader-v24.js?v=canonical-farm-edit-export-v2-20260908-1425"></script>
+<script data-agworld-src="app-gis-loader-v24.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="app-gis-loader-v24.js?v=boot-repair-20260912"></script>
 <script data-agworld-src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045" type="text/agworld-deferred-script" src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045"></script>
 <script data-agworld-src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818" type="text/agworld-deferred-script" src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818"></script><script data-agworld-src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907" type="text/agworld-deferred-script" src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907"></script><script data-agworld-src="farm-zoom-visual.js?v=manual-only-farm-visual-v2" type="text/agworld-deferred-script" src="farm-zoom-visual.js?v=manual-only-farm-visual-v2"></script><script data-agworld-src="game-hud.js?v=20260903-dupfix" type="text/agworld-deferred-script" src="game-hud.js?v=20260903-dupfix"></script><script data-agworld-src="game-view-mode.js?v=full-game-transition-v46-20260910-0945" type="text/agworld-deferred-script" src="game-view-mode.js?v=full-game-transition-v46-20260910-0945"></script>
-<script data-agworld-src="agworld-system-guide-v1.js?v=sales-advisor-controlled-v4-20260910-2225" type="text/agworld-deferred-script" src="agworld-system-guide-v1.js?v=sales-advisor-controlled-v4-20260910-2225"></script>\n<script data-agworld-src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010" type="text/agworld-deferred-script" src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010"></script><script data-agworld-src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018" type="text/agworld-deferred-script" src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018"></script><script data-agworld-src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022" type="text/agworld-deferred-script" src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022"></script><script data-agworld-src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213" type="text/agworld-deferred-script" src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213"></script><script data-agworld-src="menu-map-navigation.js?v=20260903" type="text/agworld-deferred-script" src="menu-map-navigation.js?v=20260903"></script><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
-<script src="login/v1/auth.js?v=login-v1-refresh-session-fix-v2-20260909"></script><script data-agworld-src="user-profile-modal.js?v=20260912" type="text/agworld-deferred-script" src="user-profile-modal.js?v=20260912"></script><script data-agworld-src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745" type="text/agworld-deferred-script" src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745"></script><script data-agworld-src="province-boundaries.js?v=20260904" type="text/agworld-deferred-script" src="province-boundaries.js?v=20260904"></script><script data-agworld-src="game-map-filters-v2.js?v=demo-farm-cleanup-v1" type="text/agworld-deferred-script" src="game-map-filters-v2.js?v=demo-farm-cleanup-v1"></script><script data-agworld-src="menu-settings-logout.js?v=supabase-signout-fix-v1-20260909" type="text/agworld-deferred-script" src="menu-settings-logout.js?v=supabase-signout-fix-v1-20260909"></script>
+<script data-agworld-src="agworld-system-guide-v1.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="agworld-system-guide-v1.js?v=boot-repair-20260912"></script>\n<script data-agworld-src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010" type="text/agworld-deferred-script" src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010"></script><script data-agworld-src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018" type="text/agworld-deferred-script" src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018"></script><script data-agworld-src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022" type="text/agworld-deferred-script" src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022"></script><script data-agworld-src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213" type="text/agworld-deferred-script" src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213"></script><script data-agworld-src="menu-map-navigation.js?v=20260903" type="text/agworld-deferred-script" src="menu-map-navigation.js?v=20260903"></script><script src="login/v1/login-panel.js?v=boot-repair-20260912"></script>
+<script src="login/v1/auth.js?v=boot-repair-20260912"></script><script data-agworld-src="user-profile-modal.js?v=20260912" type="text/agworld-deferred-script" src="user-profile-modal.js?v=20260912"></script><script data-agworld-src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745" type="text/agworld-deferred-script" src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745"></script><script data-agworld-src="province-boundaries.js?v=20260904" type="text/agworld-deferred-script" src="province-boundaries.js?v=20260904"></script><script data-agworld-src="game-map-filters-v2.js?v=demo-farm-cleanup-v1" type="text/agworld-deferred-script" src="game-map-filters-v2.js?v=demo-farm-cleanup-v1"></script><script data-agworld-src="menu-settings-logout.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="menu-settings-logout.js?v=boot-repair-20260912"></script>
 <script data-agworld-src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1" type="text/agworld-deferred-script" src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1"></script>
 <script data-agworld-src="territory-missions-v26.js?v=20260906-stable-v26" type="text/agworld-deferred-script" src="territory-missions-v26.js?v=20260906-stable-v26"></script>
 <script data-agworld-src="player-progression-v27.js?v=20260906-live-profile-missions-v47" type="text/agworld-deferred-script" src="player-progression-v27.js?v=20260906-live-profile-missions-v47"></script>
@@ -364,7 +387,7 @@ body.agworld-layout-ready .app-shell{
   // module-scoped inside app-gis-loader-v24.js.
 </script>
 <script data-agworld-src="shared-backend-v37.js?v=player-profile-level1-v38-20260909-2335" type="text/agworld-deferred-script" src="shared-backend-v37.js?v=player-profile-level1-v38-20260909-2335"></script>
-<script data-agworld-src="shared-farm-world-v38.js?v=shared-cache-v4-20260907" type="text/agworld-deferred-script" src="shared-farm-world-v38.js?v=shared-cache-v4-20260907"></script>
+<script data-agworld-src="shared-farm-world-v38.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="shared-farm-world-v38.js?v=boot-repair-20260912"></script>
 <script data-agworld-src="login/v1/gate.js?v=login-v1-locked-20260909" type="text/agworld-deferred-script" src="login/v1/gate.js?v=login-v1-locked-20260909"></script>
 
 <style id="fleetModalVisibilityFix">
@@ -485,7 +508,7 @@ body.agworld-layout-ready .app-shell{
   purge();
   document.addEventListener('DOMContentLoaded',purge,{once:true});
 })();
-</script><script data-agworld-src="main-game-layout-v1.js?v=player-command-center-clean-surface-v62-20260910-2338" type="text/agworld-deferred-script" src="main-game-layout-v1.js?v=player-command-center-clean-surface-v62-20260910-2338"></script><script data-agworld-src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039" type="text/agworld-deferred-script" src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039"></script><style id="agworld-unified-surface-style">
+</script><script data-agworld-src="main-game-layout-v1.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="main-game-layout-v1.js?v=boot-repair-20260912"></script><script data-agworld-src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039" type="text/agworld-deferred-script" src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039"></script><style id="agworld-unified-surface-style">
 :root{--ag-navy:#102b36;--ag-teal:#1d7d82;--ag-green:#72b84a;--ag-lime:#c2e95d;--ag-line:#d8e2de}
 body.ag-profile-mode .sidebar .brand,.app-shell .sidebar .brand{padding:10px 5px!important}
 body.ag-profile-mode .sidebar .brand .brand-logo,.app-shell .sidebar .brand .brand-logo{width:100%!important;max-width:100%!important;height:auto!important;max-height:132px!important;object-fit:contain!important;object-position:center center!important}
@@ -521,4 +544,4 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
   window.addEventListener('agworld:player-profile',apply);document.addEventListener('DOMContentLoaded',()=>setTimeout(apply,0));setInterval(apply,1000);
 })();
 </script><script data-agworld-src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039-late" type="text/agworld-deferred-script" src="agworld-command-territory-final-v3.js?v=teal-card-family-lock-20260910-1039-late"></script>
-<script data-agworld-src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052" type="text/agworld-deferred-script" src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052"></script><script data-agworld-src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102" type="text/agworld-deferred-script" src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102"></script><script data-agworld-src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125" type="text/agworld-deferred-script" src="agworld-final-layer-cleanup-v2.js?v=final-layer-cleanup-20260910-1125"></script><script data-agworld-src="profile-menu-refinement.js?v=advisor-layout-owner-clean-v2-20260910-2225" type="text/agworld-deferred-script" src="profile-menu-refinement.js?v=advisor-layout-owner-clean-v2-20260910-2225"></script><script data-agworld-src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155" type="text/agworld-deferred-script" src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155"></script><script data-agworld-src="agworld-mission-control-card-polish-v1.js?v=advisor-photo-tabs-sales-map-hologram-v3-20260910-2225" type="text/agworld-deferred-script" src="agworld-mission-control-card-polish-v1.js?v=advisor-photo-tabs-sales-map-hologram-v3-20260910-2225"></script></body></html>
+<script data-agworld-src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052" type="text/agworld-deferred-script" src="agworld-player-surface-final-v1.js?v=player-profile-source-lock-20260910-1052"></script><script data-agworld-src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102" type="text/agworld-deferred-script" src="agworld-landing-game-layer-v1.js?v=landing-game-layer-20260910-1102"></script><script data-agworld-src="agworld-final-layer-cleanup-v2.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="agworld-final-layer-cleanup-v2.js?v=boot-repair-20260912"></script><script data-agworld-src="profile-menu-refinement.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="profile-menu-refinement.js?v=boot-repair-20260912"></script><script data-agworld-src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155" type="text/agworld-deferred-script" src="agworld-player-progression-stack-v1.js?v=mission-control-production-v5-20260910-2155"></script><script data-agworld-src="agworld-mission-control-card-polish-v1.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="agworld-mission-control-card-polish-v1.js?v=boot-repair-20260912"></script></body></html>

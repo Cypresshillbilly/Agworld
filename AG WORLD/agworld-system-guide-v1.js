@@ -209,7 +209,7 @@ body.ag-full-game-mode .ag-guide-reopen{left:18px;top:118px;right:auto;bottom:au
         const dark=new THREE.MeshStandardMaterial({color:0x172018,roughness:.78});
         const holo=new THREE.MeshBasicMaterial({color:0xb8e620,transparent:true,opacity:.30});
 
-        const torso=new THREE.Mesh(new THREE.BoxGeometry(1.72,1.62,.64,.14,.14,.14),uniform);
+        const torso=new THREE.Mesh(new THREE.BoxGeometry(1.72,1.62,.64),uniform);
         torso.position.y=-.10; commander.add(torso);
         const chest=new THREE.Mesh(new THREE.BoxGeometry(1.25,.52,.07),uniformDark);
         chest.position.set(0,.20,.35); commander.add(chest);
