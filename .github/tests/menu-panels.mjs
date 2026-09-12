@@ -22,6 +22,13 @@ export async function exercisePlayerMenu(page){
   await page.waitForTimeout(500);
   assert.equal(await active(),'profile');
   assert.equal(await page.locator('#agMenuPanel').isVisible(),true);
+  await page.evaluate(()=>{
+    window.savedNavButtons=[...document.querySelectorAll('.sidebar .nav button')];
+    window.dispatchEvent(new Event('load'));
+  });
+  await page.waitForTimeout(150);
+  assert.equal(await page.evaluate(()=>window.savedNavButtons.every(el=>el.isConnected)),true,'A late load event must not rebuild live menu buttons');
+  assert.equal(await active(),'profile');
 
   const routes={pipeline:'Sales Funnel',clients:'Client List',products:'Sales Products','after-sales':'After Sales','mission-history':'Missions','ai-assistant':'AI Assistant','territory-campaigns':'Territory Campaigns','territory-graphics':'Territory Graphics',settings:'Settings'};
   for(const [key,title]of Object.entries(routes)){

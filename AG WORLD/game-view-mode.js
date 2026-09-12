@@ -66,7 +66,10 @@ const ensureGameModeControl=()=>{
  return control;
 };
 
-const build=()=>{sidebar();footer();profile();ensureGameModeControl();window.dispatchEvent(new Event('agworld:ui-shell-ready'));};
+// The shell is mounted once. A late window load event must not replace live
+// navigation buttons after the authenticated player screen is already usable.
+let shellBuilt=false;
+const build=()=>{if(shellBuilt)return;shellBuilt=true;sidebar();footer();profile();ensureGameModeControl();window.dispatchEvent(new Event('agworld:ui-shell-ready'));};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});else build();
 window.addEventListener('load',()=>{if(window.__AG_WORLD_VIEW==='profile')build();});
 }
