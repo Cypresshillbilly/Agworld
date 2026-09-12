@@ -46,6 +46,7 @@ export async function exerciseReferenceTheme(page){
   }
   await page.locator('.sidebar .nav [data-ag-screen="dashboard"]').click();
   await page.getByRole('button',{name:'Toggle Territory Stats',exact:true}).click();
+  await page.waitForFunction(()=>{const el=document.getElementById('territoryStatsDrawer');return Math.abs(el.getBoundingClientRect().width-parseFloat(el.style.width))<1;});
   const territory=await page.locator('#territoryInfoPanel').evaluate(el=>({content:el.textContent,layout:getComputedStyle(el.querySelector('.territory-national-layout')).flexDirection,overflow:el.scrollWidth>el.clientWidth+1,ring:getComputedStyle(el.querySelector('.territory-info-control-value')).backgroundImage}));
   assert.match(territory.content,/TERRITORY STATS/);assert.equal(territory.layout,'column');assert.equal(territory.overflow,false);assert.match(territory.ring,/conic-gradient/);
   await page.getByRole('button',{name:'Toggle Territory Stats',exact:true}).click();

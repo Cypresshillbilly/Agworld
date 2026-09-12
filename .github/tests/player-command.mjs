@@ -41,6 +41,7 @@ export async function exercisePlayerCommand(page){
   await page.locator('#agAdvisorBay [data-advisor="sales"]').click();
   for(let i=0;i<2;i++){
     await page.locator('#territoryStatsToggle').click();
+    await page.waitForFunction(()=>{const el=document.getElementById('territoryStatsDrawer');return Math.abs(el.getBoundingClientRect().width-parseFloat(el.style.width))<1;});
     assert.ok(await page.locator('#territoryStatsDrawer').evaluate(el=>el.getBoundingClientRect().width>200));
     await page.locator('#territoryStatsToggle').click();
     assert.equal(await page.locator('#territoryStatsDrawer').evaluate(el=>Math.round(el.getBoundingClientRect().width)),28,'Collapsed drawer leaves only its handle');
