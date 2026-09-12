@@ -227,12 +227,23 @@
               localStorage.removeItem(LEGACY_AG_REMEMBER_PASS);
             }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
-          error.textContent='LOADING AGWORLD…';
-          if(window.__AGWORLD_BOOT_RUNTIME__) await window.__AGWORLD_BOOT_RUNTIME__();
+          /*
+           * PLAYER-FIRST HANDOFF
+           * Authentication success must never wait for the map/GIS/runtime.
+           * The locked Player V1 shell already exists in index.html, so reveal
+           * it immediately and initialise the heavy world runtime in background.
+           */
+          error.textContent='ENTERING AGWORLD…';
           gate.remove();
           reveal();
           window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
           window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user:data.user}}));
+
+          if(window.__AGWORLD_BOOT_RUNTIME__){
+            Promise.resolve()
+              .then(()=>window.__AGWORLD_BOOT_RUNTIME__())
+              .catch(err=>console.error('AG World background runtime boot failed',err));
+          }
         }catch(err){
           console.error('AG World sign-in failed',err);
           error.textContent='UNABLE TO CONNECT TO THE COMPANY ACCOUNT SERVICE';
