@@ -27,7 +27,44 @@ body.agworld-layout-ready .app-shell{
   content:"";position:absolute;inset:0;
   background:linear-gradient(180deg,rgba(4,7,6,.05),rgba(4,7,6,.12));
 }
-</style></head><body><div id="ag-login-boot-shield" aria-hidden="true"></div><script>
+
+#agworld-game-loader{position:fixed;inset:0;z-index:2147483646;display:none;align-items:center;justify-content:center;background:#070a09 url("assets/backround%20v1.3.png") center/cover no-repeat;color:#fff}
+#agworld-game-loader.is-active{display:flex}
+#agworld-game-loader .agl-backdrop{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,7,6,.42),rgba(4,7,6,.86))}
+#agworld-game-loader .agl-card{position:relative;width:min(520px,86vw);padding:34px 36px 30px;border:1px solid rgba(122,211,120,.28);background:rgba(8,14,12,.84);box-shadow:0 22px 80px rgba(0,0,0,.52);backdrop-filter:blur(12px);text-align:center}
+#agworld-game-loader .agl-title{font-size:30px;letter-spacing:.16em;font-weight:800;margin-bottom:8px}
+#agworld-game-loader .agl-sub{font-size:12px;letter-spacing:.18em;color:rgba(255,255,255,.68);margin-bottom:28px}
+#agworld-game-loader .agl-progress-track{height:10px;background:rgba(255,255,255,.10);overflow:hidden;border-radius:999px}
+#agworld-game-loader .agl-progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#5dbd6c,#b8e26c);transition:width .22s ease}
+#agworld-game-loader .agl-progress-row{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;letter-spacing:.08em}
+#agworld-game-loader .agl-status{color:rgba(255,255,255,.72);text-align:left}
+#agworld-game-loader .agl-percent{font-weight:800;color:#b8e26c}
+#agworld-game-loader .agl-checklist{margin-top:22px;text-align:left;border-top:1px solid rgba(255,255,255,.10);padding-top:14px;display:grid;gap:8px}
+#agworld-game-loader .agl-check{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.06em;color:rgba(255,255,255,.42);transition:color .18s ease}
+#agworld-game-loader .agl-check::before{content:"○";width:16px;color:rgba(255,255,255,.28);font-size:15px}
+#agworld-game-loader .agl-check.is-loading{color:#fff}
+#agworld-game-loader .agl-check.is-loading::before{content:"◌";color:#b8e26c;animation:agworldLoaderPulse .9s infinite alternate}
+#agworld-game-loader .agl-check.is-complete{color:rgba(184,226,108,.92)}
+#agworld-game-loader .agl-check.is-complete::before{content:"✓";color:#b8e26c;font-weight:900}
+@keyframes agworldLoaderPulse{from{opacity:.45;transform:scale(.9)}to{opacity:1;transform:scale(1.08)}}</style></head><body><div id="ag-login-boot-shield" aria-hidden="true"></div>
+<div id="agworld-game-loader" role="status" aria-live="polite" aria-label="Loading AgWorld">
+  <div class="agl-backdrop"></div>
+  <div class="agl-card">
+    <div class="agl-title">LOADING AGWORLD</div>
+    <div class="agl-sub">PREPARING YOUR GAME WORLD</div>
+    <div class="agl-progress-track"><div class="agl-progress-bar" id="agworld-game-loader-bar"></div></div>
+    <div class="agl-progress-row"><span class="agl-status" id="agworld-game-loader-status">AUTHENTICATION COMPLETE</span><span class="agl-percent" id="agworld-game-loader-percent">0%</span></div>
+    <div class="agl-checklist" id="agworld-game-loader-checklist">
+      <div class="agl-check" data-load-stage="auth">AUTHENTICATION COMPLETE</div>
+      <div class="agl-check" data-load-stage="interface">LOADING GAME INTERFACE</div>
+      <div class="agl-check" data-load-stage="systems">INITIALISING GAME SYSTEMS</div>
+      <div class="agl-check" data-load-stage="map">LOADING MAP ENGINE</div>
+      <div class="agl-check" data-load-stage="world">LOADING SOUTH AFRICA</div>
+      <div class="agl-check" data-load-stage="populate">POPULATING MAP</div>
+      <div class="agl-check" data-load-stage="finalise">FINALISING PLAYER SCREEN</div>
+    </div>
+  </div>
+</div><script>
 /* AG WORLD — canonical landing boot lock.
    Prevents the underlying legacy app from flashing through during refresh or
    authentication. Only the approved Player View is released. */
