@@ -12,6 +12,7 @@ import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
 import {exerciseSidebarDiagnostics} from './sidebar-diagnostics.mjs';
 import {exerciseReferenceTheme} from './reference-theme.mjs';
+import {exerciseJourney} from './journey.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../AG WORLD');
@@ -60,6 +61,9 @@ async function ready(page){
   assert.equal(report.counts.sources,1);assert.equal(report.counts.ready,1);assert.equal(report.shells,1);assert.equal(report.three,'178');assert.equal(report.world,true);assert.equal(report.status,'AGWORLD READY');assert.equal(report.checks,true);assert.equal(report.card,true);
 }
 try{
+  if(process.env.AG_TEST_FOCUS){
+    const test=await newTest();await test.page.goto(base+'/index.html');await login(test.page);await ready(test.page);await (process.env.AG_TEST_FOCUS==='player'?exercisePlayerCommand:exerciseJourney)(test.page);assert.deepEqual(test.errors,[]);await test.context.close();console.log('DEVELOPMENT V2 '+process.env.AG_TEST_FOCUS+' PASS');
+  }else{
   const progressTest=await newTest();
   let releaseFirst,releaseLast;
   const firstHeld=new Promise(resolve=>{releaseFirst=resolve;});
@@ -120,6 +124,7 @@ try{
     results.push('Create Account before game boot: facility retry, validation, account error retry, '+(immediateSession?'authenticated signup enters game':'email confirmation, resend, return to sign-in'));
   }
   const good=await newTest();
+  const journey=await newTest();await journey.page.goto(base+'/index.html');await login(journey.page);await ready(journey.page);await exerciseJourney(journey.page);assert.deepEqual(journey.errors,[]);await journey.context.close();results.push('Development V2: phased onboarding resume, private document uploads, failed-completion retry, camera cancellation, staff product training, saved scouting and quiet returning arrival');
   const board=await newTest();
   await board.page.goto(base+'/index.html');await login(board.page);await ready(board.page);
   await exerciseCompanions(board.page);
@@ -185,4 +190,5 @@ try{
   results.push('Missing game stylesheet keeps the game hidden, shows retry and recovers cleanly');
   await missingStyle.context.close();
   console.log('AGWORLD BROWSER BOOT PASS\n'+JSON.stringify(results,null,2));
+  }
 }finally{await browser.close();server.close();}

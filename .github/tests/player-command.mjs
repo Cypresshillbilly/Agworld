@@ -8,10 +8,14 @@ export async function exercisePlayerCommand(page){
   for(const size of [{width:1280,height:720},{width:1600,height:1000}]){
     await page.setViewportSize(size);await page.waitForTimeout(350);
     const card=page.locator('#agCanonicalMissionCard');
+    if(process.env.AG_TEST_ARTIFACTS)await page.screenshot({path:process.env.AG_TEST_ARTIFACTS+'/development-v2-dashboard-'+size.width+'.png'});
     assert.match(await card.textContent(),/Complete Mandatory Safety Training/i);
     assert.match(await card.locator('img').getAttribute('src'),/safety-training.webp/);
     assert.equal(await card.evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Safety card never scrolls');
     assert.equal(await card.locator('.agpc-copy').evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Entire safety brief fits');
+    const rewardSize=await card.locator('.agpc-reward-block').evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,viewport:innerHeight,classes:document.documentElement.className,style:[getComputedStyle(el).padding,getComputedStyle(el).gap],stylesheets:[...document.styleSheets].filter(s=>s.href?.includes('game-reference')).map(s=>({href:s.href,end:[...s.cssRules].slice(-3).map(r=>r.cssText)})),children:[...el.children].map(e=>({class:e.className,height:e.getBoundingClientRect().height,margin:getComputedStyle(e).margin,flex:getComputedStyle(e).flex}))}));
+    assert.ok(rewardSize.scroll<=rewardSize.height+1,'All rewards fit the white panel: '+JSON.stringify(rewardSize));
+    if(process.env.AG_TEST_ARTIFACTS)await page.screenshot({path:process.env.AG_TEST_ARTIFACTS+'/development-v2-dashboard-'+size.width+'.png'});
     const placement=await page.evaluate(()=>{const r=q=>document.querySelector(q).getBoundingClientRect().toJSON();return {footer:r('.ag-sidebar-landscape'),nav:r('.sidebar .nav'),brand:r('.sidebar .brand')};});
     assert.ok(placement.footer.top>=placement.nav.bottom-24,'Farmland stays below navigation');
     assert.ok(placement.brand.bottom<=placement.nav.top+2,'Logo stays above navigation');
@@ -23,14 +27,14 @@ export async function exercisePlayerCommand(page){
   assert.equal(await page.locator('#agMenuPanel .agmp-stat').filter({hasText:'Missions'}).locator('b').textContent(),'3');
   await page.locator('.sidebar [data-ag-screen="dashboard"]').click();
   await page.locator('#agCanonicalMissionCard button').click();
-  await page.locator('#agInteractiveMissionModal.show').waitFor();
+  await page.locator('#agJourneyMission.open').waitFor();
   assert.equal(await page.evaluate(()=>window.AGWorldProgression.getState().xp),460,'Start must never award completion');
-  assert.equal(await page.locator('#agInteractiveFinish').isEnabled(),false);
+  assert.equal(await page.locator('#agJourneyMission [data-finish]').isEnabled(),false);
   await page.locator('input[name=q1][value=b]').check();await page.locator('input[name=q2][value=b]').check();await page.locator('input[name=q3][value=a]').check();
-  assert.equal(await page.locator('#agInteractiveFinish').isEnabled(),false,'Wrong training answer cannot complete');
+  assert.equal(await page.locator('#agJourneyMission [data-finish]').isEnabled(),false,'Wrong training answer cannot complete');
   await page.locator('input[name=q1][value=a]').check();
-  assert.equal(await page.locator('#agInteractiveFinish').isEnabled(),true);
-  await page.locator('.ag-interactive-close').click();
+  assert.equal(await page.locator('#agJourneyMission [data-finish]').isEnabled(),true);
+  await page.locator('#agJourneyMission [data-close]').click();
   await page.locator('#agAdvisorBay [data-advisor="system-administrator"]').click();
   assert.equal(await page.locator('#agWorldSystemGuide').getAttribute('data-commander'),'portrait');
   assert.match(await page.locator('.ag-guide-copy').textContent(),/level 2.*460 XP.*3 completed missions/);

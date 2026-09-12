@@ -5,10 +5,10 @@
   if(window.AGWorldPlayerMenu)return;
   const TITLES={dashboard:'Dashboard',profile:'Player Profile',pipeline:'Sales Funnel',clients:'Client List',products:'Sales Products','after-sales':'After Sales','mission-history':'Missions','ai-assistant':'AI Assistant','territory-campaigns':'Territory Campaigns','territory-graphics':'Territory Graphics',settings:'Settings'};
   const BADGES=[
-    {id:'c1-welcome',name:'Company Recruit',icon:'✦',goal:'Complete Welcome to The Company.'},
-    {id:'c1-hr',name:'Ready for Duty',icon:'◈',goal:'Complete HR Onboarding.'},
+    {id:'c1-welcome',name:'Company Recruit',icon:'✦',goal:'Complete Welcome to AgWorld.'},
+    {id:'c1-hr',name:'Ready for Duty',icon:'◈',goal:'Check Your Player Information.'},
     {id:'c1-safety',name:'Safety Trained',icon:'⛨',goal:'Complete Mandatory Safety Training.'},
-    {id:'c1-company-training',name:'Company Foundations',icon:'⌂',goal:'Complete Company Foundations.'},
+    {id:'c1-company-training',name:'Product Foundations',icon:'⌂',goal:'Complete Meet Your Product Range.'},
     {id:'c2-explore',name:'Territory Explorer',icon:'⌖',goal:'Explore Your Territory.'},
     {id:'c2-survey',name:'Field Scout',icon:'◉',goal:'Survey Your First Farm.'}
   ];
@@ -39,7 +39,7 @@
     });
     return {name,initial:String(name).trim().charAt(0).toUpperCase()||'P',level,xp,next,
       percent:Math.max(0,Math.min(100,Math.round((xp-floor)/(next-floor)*100))),remaining:Math.max(0,next-xp),
-      role:String(sessionStorage.getItem('gamechanger.role')||'AgWorld Player').replace(/[_-]/g,' '),
+      role:String(state.missionState?.['c1-hr']?.profile?.role||sessionStorage.getItem('gamechanger.role')||'AgWorld Player').replace(/[_-]/g,' '),
       facility:facility?.name||user?.user_metadata?.company_facility_name||'Facility not assigned',
       chapterId,chapter,catalogue,completed,skills,complete,
       badges:BADGES.map(b=>({...b,earned:!!complete[b.id]}))};
@@ -103,9 +103,11 @@
   const track=(value,label)=>'<div class="agmp-track" role="progressbar" aria-label="'+esc(label)+'" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+value+'"><i style="width:'+value+'%"></i></div>';
 
   function renderProfile(d){
+    const saved=window.AGWorldProgression?.getState?.().missionState||{},details=saved['c1-hr']?.profile;
+    const readiness=details?card('Player readiness','<p>Working region: '+esc(details.region)+'</p><p>Contact: '+esc(details.phone)+'</p><p>Private documents submitted: '+(saved['c1-documents']?.documents?.length||0)+'</p>'):'';
     const earned=d.badges.filter(b=>b.earned).length;
     return '<section class="agmp-card agmp-dark agmp-hero"><span class="agmp-chip">LEVEL '+d.level+' · CHAPTER '+d.chapterId+'</span><div class="agmp-avatar" aria-hidden="true"><span>'+esc(d.initial)+'</span></div><h2>'+esc(d.name)+'</h2><p class="agmp-role">'+esc(d.role)+'</p><p class="agmp-muted">'+esc(d.facility)+'</p><div class="agmp-stats"><div class="agmp-stat"><b>'+fmt(d.xp)+'</b><span>Total XP</span></div><div class="agmp-stat"><b>'+d.completed.length+'</b><span>Missions</span></div><div class="agmp-stat"><b>'+earned+'</b><span>Badges</span></div></div></section>'+
-      card('Your next level','<div class="agmp-row"><b>Level '+d.level+' → '+(d.level+1)+'</b><span>'+d.percent+'%</span></div>'+track(d.percent,'Progress to next level')+'<div class="agmp-row"><span>'+fmt(d.remaining)+' XP to go</span><span class="agmp-muted">'+fmt(d.next)+' XP target</span></div>',true)+
+      readiness+card('Your next level','<div class="agmp-row"><b>Level '+d.level+' → '+(d.level+1)+'</b><span>'+d.percent+'%</span></div>'+track(d.percent,'Progress to next level')+'<div class="agmp-row"><span>'+fmt(d.remaining)+' XP to go</span><span class="agmp-muted">'+fmt(d.next)+' XP target</span></div>',true)+
       '<section class="agmp-card agmp-player-skills" id="agCanonicalSkillProfile">'+(window.AGWorldPlayerCards?.skillMarkup?.()||'<h2>Skill profile</h2>')+'</section>'+
       card('Badge collection','<p class="agmp-muted">'+earned+' of '+d.badges.length+' milestones earned. Every badge comes from a completed mission.</p><div class="agmp-badges">'+d.badges.map(b=>'<article class="agmp-badge'+(b.earned?' earned':'')+'" data-badge="'+b.id+'"><div class="agmp-medal" aria-hidden="true">'+b.icon+'</div><strong>'+esc(b.name)+'</strong><small>'+(b.earned?'Earned':'Locked')+'</small><p>'+esc(b.goal)+'</p></article>').join('')+'</div>')+
       card('Mission mastery',d.skills.length?d.skills.map(s=>'<div class="agmp-skill"><div class="agmp-row"><b>'+esc(s.name)+'</b><span>'+s.percent+'%</span></div>'+track(s.percent,s.name)+'<span class="agmp-muted">'+s.earned+' / '+s.total+' training missions completed</span></div>').join(''):empty('Your skills will appear when your mission record is ready.'))+

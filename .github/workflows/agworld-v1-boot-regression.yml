@@ -31,6 +31,11 @@ on:
       - 'AG WORLD/profile-menu-refinement.js'
       - 'AG WORLD/player-menu-panels.js'
       - 'AG WORLD/player-progression-v27.js'
+      - 'AG WORLD/builds/agriculture/missions/**'
+      - 'AG WORLD/server/player-auth.js'
+      - 'AG WORLD/server/index.js'
+      - 'AG WORLD/server/development-v2*.sql'
+      - 'AG WORLD/api-bridge.js'
       - 'AG WORLD/game-view-mode.js'
       - 'AG WORLD/branded-sidebar.js'
       - 'AG WORLD/game-reference-theme.*'
@@ -75,6 +80,11 @@ on:
       - 'AG WORLD/profile-menu-refinement.js'
       - 'AG WORLD/player-menu-panels.js'
       - 'AG WORLD/player-progression-v27.js'
+      - 'AG WORLD/builds/agriculture/missions/**'
+      - 'AG WORLD/server/player-auth.js'
+      - 'AG WORLD/server/index.js'
+      - 'AG WORLD/server/development-v2*.sql'
+      - 'AG WORLD/api-bridge.js'
       - 'AG WORLD/game-view-mode.js'
       - 'AG WORLD/branded-sidebar.js'
       - 'AG WORLD/game-reference-theme.*'
@@ -111,6 +121,9 @@ jobs:
           node .github/tests/sales-dashboard.test.mjs
           node .github/tests/territory-control.test.mjs
           node .github/tests/commander-service.test.mjs
+          node .github/tests/player-auth.test.mjs
+          node .github/tests/farm-write-failures.test.mjs
+          node .github/tests/journey-catalogue.test.mjs
           node 'AG WORLD/boot/v1/verify-dependencies.mjs'
       - name: Verify knowledge classification and citations
         run: python tools/knowledge/test_ingest.py

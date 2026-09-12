@@ -1,0 +1,196 @@
+[
+  {
+    "id": 1,
+    "title": "WELCOME & PLAYER READINESS",
+    "subtitle": "Learn AgWorld, then prepare for the field with Compliance.",
+    "targetLevel": 5,
+    "missions": [
+      {
+        "id": "c1-welcome",
+        "title": "Welcome to AgWorld",
+        "owner": "system-administrator",
+        "xp": 120,
+        "objective": "Discover your menus, missions and map with your System Administrator.",
+        "kind": "orientation",
+        "type": "ORIENTATION",
+        "skill": "Operations"
+      },
+      {
+        "id": "c1-hr",
+        "title": "Check Your Player Information",
+        "owner": "compliance",
+        "xp": 180,
+        "objective": "Save your name, role, contact number and working region.",
+        "kind": "profile",
+        "type": "PROFILE",
+        "skill": "Compliance"
+      },
+      {
+        "id": "c1-documents",
+        "title": "Submit Required Documents",
+        "owner": "compliance",
+        "xp": 160,
+        "objective": "Upload your required Company documents privately for submission.",
+        "kind": "documents",
+        "type": "DOCUMENTS",
+        "skill": "Compliance"
+      },
+      {
+        "id": "c1-safety",
+        "title": "Complete Mandatory Safety Training",
+        "owner": "compliance",
+        "xp": 200,
+        "objective": "Complete the Company safety and responsible field conduct assessment.",
+        "kind": "safety",
+        "type": "SAFETY",
+        "skill": "Compliance"
+      },
+      {
+        "id": "c2-profile",
+        "title": "Create Your Profile Photograph",
+        "owner": "compliance",
+        "xp": 250,
+        "objective": "Take a webcam photograph or upload a profile picture.",
+        "kind": "photo",
+        "type": "PHOTO",
+        "skill": "Compliance"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "KNOW YOUR PRODUCTS",
+    "subtitle": "Build a sourced product pitch with the Product Commander.",
+    "targetLevel": 10,
+    "missions": [
+      {
+        "id": "c1-company-training",
+        "title": "Meet Your Product Range",
+        "owner": "product",
+        "xp": 220,
+        "objective": "Study an approved model presentation and explain its application.",
+        "kind": "product-intro",
+        "type": "PRODUCT INTRO",
+        "skill": "Product Knowledge"
+      },
+      {
+        "id": "c2-assets",
+        "title": "Match the Product to the Farm",
+        "owner": "product",
+        "xp": 300,
+        "objective": "Use model specifications to explain a benefit and a limitation for a client.",
+        "kind": "product-application",
+        "type": "PRODUCT APPLICATION",
+        "skill": "Product Knowledge"
+      },
+      {
+        "id": "c2-product-compare",
+        "title": "Build a Confident Product Pitch",
+        "owner": "product",
+        "xp": 250,
+        "objective": "Compare two models using approved sources and ask your Product Commander a question.",
+        "kind": "product-compare",
+        "type": "PRODUCT COMPARE",
+        "skill": "Product Knowledge"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "SCOUT, CONNECT & GROW",
+    "subtitle": "Build real relationships and expand Company territory with Sales.",
+    "targetLevel": null,
+    "missions": [
+      {
+        "id": "c1-briefing",
+        "title": "Your Sales Territory Briefing",
+        "owner": "sales",
+        "xp": 120,
+        "objective": "Choose an existing prospect or begin scouting your area.",
+        "kind": "sales-brief",
+        "type": "SALES BRIEF",
+        "skill": "Sales"
+      },
+      {
+        "id": "c2-explore",
+        "title": "Scout Your Working Area",
+        "owner": "sales",
+        "xp": 300,
+        "objective": "Select a province or municipality and inspect its recorded market.",
+        "kind": "scout-area",
+        "type": "SCOUT AREA",
+        "skill": "Sales"
+      },
+      {
+        "id": "c2-survey",
+        "title": "Inspect a Farm Prospect",
+        "owner": "sales",
+        "xp": 350,
+        "objective": "Select a real farm on the map and review its business information.",
+        "kind": "inspect-farm",
+        "type": "INSPECT FARM",
+        "skill": "Sales"
+      },
+      {
+        "id": "c2-create",
+        "title": "Record Your Farm Intelligence",
+        "owner": "sales",
+        "xp": 400,
+        "objective": "Create a farm if it is missing, or save updated intelligence on an existing farm.",
+        "kind": "save-farm",
+        "type": "SAVE FARM",
+        "skill": "Sales"
+      },
+      {
+        "id": "c2-intelligence",
+        "title": "Classify Your Prospect",
+        "owner": "sales",
+        "xp": 350,
+        "objective": "Record whether the selected farm is neutral, competitor-aligned or a Company client.",
+        "kind": "classify",
+        "type": "CLASSIFY",
+        "skill": "Sales"
+      },
+      {
+        "id": "c3-contractors",
+        "title": "Scout a Contractor",
+        "owner": "sales",
+        "xp": 300,
+        "objective": "Create or update a real contractor record through Map Menu Actions.",
+        "kind": "save-contractor",
+        "type": "SAVE CONTRACTOR",
+        "skill": "Sales"
+      },
+      {
+        "id": "c3-competitors",
+        "title": "Scout a Competitor",
+        "owner": "sales",
+        "xp": 300,
+        "objective": "Create or update a real competitor record through Map Menu Actions.",
+        "kind": "save-competitor",
+        "type": "SAVE COMPETITOR",
+        "skill": "Sales"
+      },
+      {
+        "id": "c3-meeting",
+        "title": "Plan a Drone Meeting",
+        "owner": "sales",
+        "xp": 400,
+        "objective": "Choose a neutral or competitor prospect and record a real meeting plan.",
+        "kind": "meeting",
+        "type": "MEETING",
+        "skill": "Sales"
+      },
+      {
+        "id": "c3-follow-up",
+        "title": "Record the Client Outcome",
+        "owner": "sales",
+        "xp": 450,
+        "objective": "Record what happened at the meeting and the agreed next step.",
+        "kind": "follow-up",
+        "type": "FOLLOW UP",
+        "skill": "Sales"
+      }
+    ]
+  }
+]

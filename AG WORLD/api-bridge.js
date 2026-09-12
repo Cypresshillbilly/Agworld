@@ -6,7 +6,13 @@
   const API_BASE = 'https://ag-world-api.onrender.com';
   const FARM_KEY = 'agworld-farms-v2';
   const nativeFetch = window.fetch.bind(window);
-  const apiFetch = (path, options = {}) => nativeFetch(`${API_BASE}${path}`, options);
+  async function apiFetch(path,options={}){
+    const headers=new Headers(options.headers||{});
+    const session=await window.__AGWORLD_SUPABASE_DB__?.auth?.getSession?.();
+    const token=session?.data?.session?.access_token;
+    if(token)headers.set('Authorization','Bearer '+token);
+    return nativeFetch(`${API_BASE}${path}`,{...options,headers});
+  }
   let apiFarmIds = new Set();
   let syncing = false;
 
@@ -85,6 +91,11 @@
         console.error('AG World API load failed', error);
         return nativeFetch(input, init);
       }
+    }
+    const target=new URL(url,location.href);
+    if(target.origin===API_BASE&&target.pathname.startsWith('/api/')){
+      const request=input instanceof Request?input:null;
+      return apiFetch(target.pathname+target.search,{...(request?{method:request.method,headers:request.headers,body:['GET','HEAD'].includes(request.method)?undefined:await request.clone().text()}:{}),...init});
     }
     return nativeFetch(input, init);
   };
