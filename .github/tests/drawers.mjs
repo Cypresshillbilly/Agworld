@@ -27,6 +27,7 @@ export async function exerciseDrawers(page){
   });
   assert.deepEqual(result.state,wanted);assert.equal(result.sameMap,true);assert.equal(result.sameProfile,true);
   assert.equal(Math.round(result.map.left),leftState===0?0:result.g.sidebarW+(leftState===2?result.g.missionsW:0));
+  assert.equal(Math.round(result.map.top),0,'The game board stays anchored while drawers slide');
   assert.deepEqual(result.inert,[!wanted.player,!wanted.workspace,!wanted.map,!wanted.territory,!wanted.command]);
   if(wanted.command)assert.ok(result.command.left>=result.map.left&&result.command.right<=result.map.right);
   if(wanted.map)assert.ok(result.header.left>=result.map.left&&result.header.right<=result.map.right);

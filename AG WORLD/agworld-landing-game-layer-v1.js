@@ -43,7 +43,7 @@
    set(missions,'transform',state.player&&state.workspace?'translateX(0)':'translateX(-'+span+'px)');
    if(state.player&&!state.workspace)set(missions,'transform','translateX(-'+workspace+'px)');
    access(missions,state.player&&state.workspace);
-   frame(map,left,0,mapW,h);set(map,'z-index','1');set(map,'overflow','hidden');set(map,'transform','none');
+   frame(map,left,0,mapW,h);set(map,'z-index','1');set(map,'overflow','clip');set(map,'transform','none');
    set(header,'position','absolute');set(header,'left','14px');set(header,'right','14px');set(header,'top','12px');set(header,'width','auto');set(header,'height','auto');set(header,'bottom','auto');
    const headerH=Math.max(64,header.offsetHeight);
    set(header,'transform',state.map?'translateY(0)':'translateY(-'+(headerH+14)+'px)');access(header,state.map);

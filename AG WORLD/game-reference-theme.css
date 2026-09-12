@@ -248,7 +248,8 @@ html.ag-reference-compact #farmCard .company-command-kpis{min-height:66px!import
 
 
 /* Immersive drawers v3. Four independent edge controls, same live map. */
-html[data-ag-drawers] .app-shell{overflow:hidden!important}
+/* Clip translated drawers without making the fixed game board a focus-scroll container. */
+html[data-ag-drawers] .app-shell{overflow:clip!important}
 html[data-ag-drawers] :is(.sidebar,.missions,.map-header,#entityInformationSection){visibility:visible!important;transition:transform .28s ease,visibility 0s!important;will-change:transform}
 html[data-ag-drawers] :is(.sidebar,.missions,.map-header,#entityInformationSection).ag-drawer-closed{visibility:hidden!important;pointer-events:none!important;transition:transform .28s ease,visibility 0s .28s!important}
 html[data-ag-drawers] .map-area{transition:left .28s ease,width .28s ease!important;border:0!important;box-shadow:none!important}
