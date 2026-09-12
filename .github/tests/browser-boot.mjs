@@ -70,6 +70,7 @@ try{
   await progressTest.context.route('**/agworld-mission-control-card-polish-v1.js*',async route=>{await lastHeld;await route.continue();});
   await progressTest.page.goto(base+'/index.html');
   await progressTest.page.waitForFunction(()=>document.querySelectorAll('link[rel=preload][as=script]').length>40);
+  if(downloads.size<=20)await progressTest.page.waitForRequest(()=>downloads.size>20,{timeout:10000});
   assert.ok(downloads.size>20,'Later downloads must start while the first dependency is held');
   assert.equal(await progressTest.page.locator('script[data-agworld-boot-loaded]').count(),0);
   releaseFirst();await login(progressTest.page);
