@@ -49,7 +49,15 @@ function renderMissions(){
   if(!side) return;
   const c=chapter(state.currentChapter)||chapter(1);
   const missions=c?.missions||[];
-  side.innerHTML=missions.map((m,i)=>{
+  // Update only this renderer's mission source. Replacing the entire workspace
+  // destroyed the selected menu panel and rebuilt the Dashboard after hydration.
+  let source=side.querySelector('#agLegacyMissionSource');
+  if(!source){
+    source=document.createElement('div');source.id='agLegacyMissionSource';
+    source.style.setProperty('display','none','important');source.setAttribute('aria-hidden','true');source.inert=true;
+    side.appendChild(source);
+  }
+  source.innerHTML=missions.map((m,i)=>{
     const done=!!state.completed[m.id];
     const unlocked=i===0||!!state.completed[missions[i-1]?.id];
     return '<div class="mission '+(done?'done':'')+' '+(!unlocked?'locked':'')+'" data-chapter-mission="'+esc(m.id)+'">'+

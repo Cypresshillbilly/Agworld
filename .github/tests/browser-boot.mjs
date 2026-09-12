@@ -3,6 +3,7 @@ import path from 'node:path';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
+import {exercisePlayerMenu} from './menu-panels.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE_PATH||'playwright');
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,'../../AG WORLD');
@@ -111,6 +112,8 @@ try{
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
+  await exercisePlayerMenu(good.page);
+  results.push('Dashboard default, all menu panel routes, Profile badges/skills, late hydration, keyboard navigation, preserved Dashboard nodes and responsive bounds');
   // Let late observers and timers run, then exercise a real control.
   await good.page.evaluate(()=>{
     window.navMutations=0;
