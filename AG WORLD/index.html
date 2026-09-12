@@ -38,6 +38,14 @@ body.agworld-layout-ready .app-shell{
 #agworld-game-loader .agl-progress-row{display:flex;justify-content:space-between;margin-top:12px;font-size:13px;letter-spacing:.08em}
 #agworld-game-loader .agl-status{color:rgba(255,255,255,.72);text-align:left}
 #agworld-game-loader .agl-percent{font-weight:800;color:#b8e26c}
+#agworld-game-loader .agl-checklist{margin-top:22px;text-align:left;border-top:1px solid rgba(255,255,255,.10);padding-top:14px;display:grid;gap:8px}
+#agworld-game-loader .agl-check{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.06em;color:rgba(255,255,255,.42);transition:color .18s ease}
+#agworld-game-loader .agl-check::before{content:"○";width:16px;color:rgba(255,255,255,.28);font-size:15px}
+#agworld-game-loader .agl-check.is-loading{color:#fff}
+#agworld-game-loader .agl-check.is-loading::before{content:"◌";color:#b8e26c;animation:agworldLoaderPulse .9s infinite alternate}
+#agworld-game-loader .agl-check.is-complete{color:rgba(184,226,108,.92)}
+#agworld-game-loader .agl-check.is-complete::before{content:"✓";color:#b8e26c;font-weight:900}
+@keyframes agworldLoaderPulse{from{opacity:.45;transform:scale(.9)}to{opacity:1;transform:scale(1.08)}}
 
 </style><script src="login/v1/login-panel.js?v=login-v1-locked-20260909"></script>
 <script src="login/v1/auth.js?v=login-v1-1-0-1-20260911-1438"></script>
@@ -51,6 +59,15 @@ body.agworld-layout-ready .app-shell{
     <div class="agl-sub">PREPARING YOUR GAME WORLD</div>
     <div class="agl-progress-track"><div class="agl-progress-bar" id="agworld-game-loader-bar"></div></div>
     <div class="agl-progress-row"><span class="agl-status" id="agworld-game-loader-status">AUTHENTICATION COMPLETE</span><span class="agl-percent" id="agworld-game-loader-percent">0%</span></div>
+    <div class="agl-checklist" id="agworld-game-loader-checklist">
+      <div class="agl-check" data-load-stage="auth">AUTHENTICATION COMPLETE</div>
+      <div class="agl-check" data-load-stage="interface">LOADING GAME INTERFACE</div>
+      <div class="agl-check" data-load-stage="systems">INITIALISING GAME SYSTEMS</div>
+      <div class="agl-check" data-load-stage="map">LOADING MAP ENGINE</div>
+      <div class="agl-check" data-load-stage="world">LOADING SOUTH AFRICA</div>
+      <div class="agl-check" data-load-stage="populate">POPULATING MAP</div>
+      <div class="agl-check" data-load-stage="finalise">FINALISING PLAYER SCREEN</div>
+    </div>
   </div>
 </div><script>
 /* AG WORLD — canonical landing boot lock.
@@ -511,6 +528,10 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
 (function(){
   let bootPromise=null;
 
+  function reportGameChecklist(stage){
+    window.dispatchEvent(new CustomEvent('agworld:load-checklist',{detail:{stage}}));
+  }
+
   function reportGameLoad(progress,status){
     const pct=Math.max(0,Math.min(100,Math.round(progress)));
     window.dispatchEvent(new CustomEvent('agworld:load-progress',{detail:{progress:pct,status:status||'LOADING'}}));
@@ -523,6 +544,7 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
     const total=Math.max(1,nodes.length);
     let loaded=0;
     reportGameLoad(3,'STARTING AGWORLD SYSTEMS');
+    reportGameChecklist('interface');
     let chain=Promise.resolve();
 
     for(const node of nodes){
@@ -536,13 +558,21 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
 
         if(node.src){
           s.async=false;
-          s.onload=()=>{ loaded++; reportGameLoad(5+(loaded/total)*82,'LOADING GAME SYSTEMS'); resolve(); };
+          s.onload=()=>{
+            loaded++;
+            const src=(node.src||'').toLowerCase();
+            if(src.includes('map')||src.includes('gis')||src.includes('google')) reportGameChecklist('map');
+            else if(src.includes('world')||src.includes('province')||src.includes('territor')) reportGameChecklist('world');
+            else reportGameChecklist('systems');
+            reportGameLoad(5+(loaded/total)*82,'LOADING GAME SYSTEMS');
+            resolve();
+          };
           s.onerror=()=>reject(new Error('AgWorld runtime module failed: '+node.src));
           document.body.appendChild(s);
         }else{
           s.text=node.textContent;
           document.body.appendChild(s);
-          loaded++; reportGameLoad(5+(loaded/total)*82,'INITIALISING GAME SYSTEMS');
+          loaded++; reportGameChecklist('systems'); reportGameLoad(5+(loaded/total)*82,'INITIALISING GAME SYSTEMS');
           resolve();
         }
       }));
@@ -559,6 +589,7 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
         if(settled) return;
         settled=true;
         document.removeEventListener('agworld:landing-layout-ready',finish);
+        reportGameChecklist('finalise');
         reportGameLoad(100,'AGWORLD READY');
         resolve();
       };
@@ -568,7 +599,8 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
       document.addEventListener('agworld:landing-layout-ready',finish,{once:true});
 
       activateRuntime().then(()=>{
-        reportGameLoad(92,'FINALISING PLAYER SCREEN');
+        reportGameChecklist('populate');
+        reportGameLoad(92,'POPULATING MAP');
         // Some cached/fast paths may have already produced the canonical state.
         if(document.body.classList.contains('agworld-layout-ready')) finish();
         // Do not keep the authenticated user trapped behind the gate forever
