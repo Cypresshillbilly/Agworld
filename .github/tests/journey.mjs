@@ -42,7 +42,11 @@ export async function exerciseJourney(page){
  await panel.locator('[data-field=benefit]').fill('Supported capacity fits the stated application.');await panel.locator('[data-field=limitation]').fill('Confirm model conditions before recommending it.');await panel.locator('[data-check=sources]').check();
  await panel.locator('[data-finish]').click();await panel.waitFor({state:'hidden'});
  assert.equal(await page.evaluate(()=>AGWorldProgression.getState().missionState['c1-company-training'].assessment),'self-attested');
- await active('c3-contractors');await panel.locator('[data-finish]').click();await panel.getByText('Complete the map action first.',{exact:true}).waitFor();
+ await active('c3-contractors');
+ await page.evaluate(()=>AGWorldDrawers.set('map',true));await panel.locator('[data-map-actions]').click();
+ assert.equal(await page.evaluate(()=>AGWorldDrawers.getState().map),true,'Open Map Actions keeps an already-open drawer open');
+ assert.equal(await page.locator('[data-map-tab="actions"]').getAttribute('aria-pressed'),'true');
+ await panel.locator('[data-minimise]').click();await panel.locator('[data-finish]').click();await panel.getByText('Complete the map action first.',{exact:true}).waitFor();
  await page.evaluate(()=>dispatchEvent(new CustomEvent('agworld:dynamic-layer-updated',{detail:{type:'contractor',id:'fixture-saved-contractor'}})));
  await panel.getByText('Map action saved. You can now complete the mission.',{exact:true}).waitFor();
  await panel.locator('[data-finish]').click();await panel.waitFor({state:'hidden'});
