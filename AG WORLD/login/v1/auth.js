@@ -81,8 +81,10 @@
   function prewarmAgworldAuth(){
     if(master || window.__AGWORLD_SUPABASE_DB__ || __agworldSupabasePromise) return;
     const warm=()=>ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
-    if('requestIdleCallback' in window) window.requestIdleCallback(warm,{timeout:1200});
-    else setTimeout(warm,80);
+    // Start immediately after the login has been mounted, not at the end of a
+    // long idle window. This moves CDN/client initialisation into the time while
+    // the player is entering credentials without delaying the first login paint.
+    requestAnimationFrame(()=>setTimeout(warm,0));
   }
 
   function showGate(){
