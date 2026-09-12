@@ -93,7 +93,7 @@ The loading stages represent authentication, interface, systems, map, world, pop
 | Login and account creation | `login/v1/auth.js`, `login-panel.js` | Supabase player authentication and pre-game registration |
 | Loading | `index.html`, `boot/v1/performance.js` | One boot promise and ordered source execution |
 | Screen geometry | `main-game-layout-v1.js` | Existing outer geometry; historical overrides remain |
-| Drawers | `game-view-mode.js`, `game-reference-theme.css` | Player navigation and workspace, Map Menu, Territory Stats, Command Center |
+| Drawers | `agworld-landing-game-layer-v1.js`, `game-reference-theme.css` | Player navigation and workspace, Map Menu, Territory Stats, Command Center; `game-view-mode.js` retains the legacy shell |
 | Player workspaces | `player-menu-panels.js` | Dashboard, Profile, Sales Funnel and other menu routes |
 | Dashboard mission | `agworld-player-progression-stack-v1.js` | Current saved mission and white reward panel |
 | Player progression | `player-progression-v27.js` | Authenticated state, current mission and persisted completion |
