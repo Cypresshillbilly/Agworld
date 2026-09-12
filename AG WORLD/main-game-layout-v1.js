@@ -1640,7 +1640,7 @@
     if(!heading){
       heading=document.createElement('div');
       heading.className='agworld-territory-stats-heading';
-      heading.innerHTML='<span class="agworld-territory-stats-label">TERRATORY STATS</span><span class="agworld-territory-stats-live"><i></i> LIVE</span>';
+      heading.innerHTML='<span class="agworld-territory-stats-label">TERRITORY STATS</span><span class="agworld-territory-stats-live"><i></i> LIVE</span>';
       panel.insertBefore(heading,panel.firstChild);
     }
     return true;

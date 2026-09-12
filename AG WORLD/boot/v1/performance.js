@@ -142,7 +142,7 @@
     const checks={
       singleAppShell:shells.length===1,
       requiredElements:missing.length===0,
-      missionsLightSurface:lightSurface(required.missions),
+      missionsSurfaceMatchesTheme:document.documentElement.dataset.agGameTheme==='reference' ? getComputedStyle(required.missions).backgroundColor==='rgb(0, 20, 27)' : lightSurface(required.missions),
       mapAreaSized:!!required.mapArea && required.mapArea.getBoundingClientRect().width>200 && required.mapArea.getBoundingClientRect().height>200,
       commandCenterPresent:!!required.commandCenter,
       territoryStatsPresent:!!required.territoryStats,

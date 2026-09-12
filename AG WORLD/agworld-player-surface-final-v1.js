@@ -250,6 +250,7 @@
   }
 
   function run(){
+    if(document.documentElement.dataset.agGameTheme==='reference')return;
     const m=sourceMaterial();
     if(!m) return;
 
