@@ -15,7 +15,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function sourceHarness({fail=false,executionError=false,parsing=false}={}){
   const window=new EventTarget();
   const document=new EventTarget();
-  const order=[],appended=[];
+  const order=[],appended=[],preloads=[];
   const nodes=[
     {src:'https://test.test/three.mjs',dataset:{agworldType:'module'}},
     {src:'https://test.test/core.js',dataset:{}},
@@ -25,9 +25,10 @@ function sourceHarness({fail=false,executionError=false,parsing=false}={}){
   nodes.forEach(node=>{node.getAttribute=()=>node.src;node.remove=()=>{node.removed=true;};});
   document.readyState=parsing?'loading':'complete';
   document.querySelectorAll=()=>nodes;
-  document.createElement=()=>({dataset:{},remove(){this.removed=true;}});
-  const context=vm.createContext({window,document,CustomEvent,setTimeout:(fn,ms)=>setTimeout(fn,ms===20000?25:ms),clearTimeout});
+  document.createElement=tag=>({tag,dataset:{},remove(){this.removed=true;}});
+  const context=vm.createContext({window,document,performance,CustomEvent,setTimeout:(fn,ms)=>setTimeout(fn,ms===20000?25:ms),clearTimeout});
   document.head={appendChild(script){
+    if(script.tag==='link'){preloads.push(script);return;}
     appended.push(script);
     if(!script.src){vm.runInContext(script.text,context);order.push('inline');return;}
     setTimeout(()=>{
@@ -41,7 +42,7 @@ function sourceHarness({fail=false,executionError=false,parsing=false}={}){
     },script.type==='module'?6:1);
   }};
   vm.runInContext(loaderSource,context);
-  return {window,document,nodes,order,appended};
+  return {window,document,nodes,order,appended,preloads};
 }
 
 test('ordered module, classic and inline execution; one shared boot promise',async()=>{
@@ -52,6 +53,15 @@ test('ordered module, classic and inline execution; one shared boot promise',asy
   assert.equal(h.appended[0].type,'module');
   assert.deepEqual(h.order,['https://test.test/three.mjs','https://test.test/core.js','inline','https://test.test/player.js']);
   assert.ok(h.nodes.every(n=>n.removed));assert.equal(ready,1);assert.equal(h.window.__AGWORLD_GAME_BOOTED__,true);
+});
+test('preloading starts all downloads without execution and is deduplicated',async()=>{
+  const h=sourceHarness(),updates=[];
+  h.window.__AGWORLD_PRELOAD_GAME__();h.window.__AGWORLD_PRELOAD_GAME__();
+  assert.equal(h.preloads.length,3);assert.equal(h.appended.length,0);
+  assert.equal(h.preloads[0].rel,'modulepreload');assert.equal(h.preloads[1].as,'script');
+  h.window.addEventListener('agworld:source-progress',e=>updates.push(e.detail.completed));
+  await h.window.__AGWORLD_BOOT_GAME__();
+  assert.equal(h.preloads.length,3);assert.deepEqual(updates,[1,2,3,4]);
 });
 test('refresh waits for HTML parsing before taking the source inventory',async()=>{
   const h=sourceHarness({parsing:true});const boot=h.window.__AGWORLD_BOOT_GAME__();

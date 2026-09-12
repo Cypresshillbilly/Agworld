@@ -193,7 +193,7 @@
 (()=>{
   if(document.querySelector('script[data-agworld-boot-performance]')) return;
   const script=document.createElement('script');
-  script.src='boot/v1/performance.js?v=boot-repair-20260912';
+  script.src='boot/v1/performance.js?v=login-refinement-20260912';
   script.async=true;
   script.dataset.agworldBootPerformance='1';
   document.head.appendChild(script);

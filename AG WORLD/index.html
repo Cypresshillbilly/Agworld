@@ -146,13 +146,30 @@ body.agworld-layout-ready .app-shell{
 (function(){
   const TYPE='text/agworld-deferred-script';
   let bootPromise=null;
+  const warmed=new Set();
+  // Download ahead without evaluating game code. Native preload requests are
+  // reused by the ordered script elements below, including in-flight requests.
+  window.__AGWORLD_PRELOAD_GAME__=function(){
+    for(const node of document.querySelectorAll('script[type="'+TYPE+'"]')){
+      if(!node.src||warmed.has(node.src)) continue;
+      warmed.add(node.src);
+      const link=document.createElement('link');
+      link.rel=node.dataset.agworldType==='module'?'modulepreload':'preload';
+      if(link.rel==='preload') link.as='script';
+      link.href=node.src;
+      document.head.appendChild(link);
+    }
+  };
   window.__AGWORLD_GAME_BOOTED__=false;
   window.__AGWORLD_BOOT_GAME__=function(){
     if(bootPromise) return bootPromise;
     bootPromise=(async()=>{
       if(document.readyState==='loading') await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
       const nodes=[...document.querySelectorAll('script[type="'+TYPE+'"]')];
+      window.__AGWORLD_PRELOAD_GAME__();
+      const timing=window.__AGWORLD_SOURCE_TIMINGS__=[];
       for(const node of nodes){
+        const started=performance.now();
         await new Promise((resolve,reject)=>{
           const script=document.createElement('script');
           const source=node.getAttribute('data-agworld-src')||node.src||'inline game source';
@@ -184,6 +201,8 @@ body.agworld-layout-ready .app-shell{
           document.head.appendChild(script);
           if(!node.src) finish();
         });
+        timing.push({src:node.src||'inline',ms:Math.round(performance.now()-started)});
+        window.dispatchEvent(new CustomEvent('agworld:source-progress',{detail:{completed:timing.length,total:nodes.length}}));
       }
       window.__AGWORLD_GAME_BOOTED__=true;
       window.dispatchEvent(new CustomEvent('agworld:game-sources-ready'));
@@ -323,8 +342,8 @@ body.agworld-layout-ready .app-shell{
 <script data-agworld-src="app-gis-loader-v24.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="app-gis-loader-v24.js?v=boot-repair-20260912"></script>
 <script data-agworld-src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045" type="text/agworld-deferred-script" src="contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045"></script>
 <script data-agworld-src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818" type="text/agworld-deferred-script" src="demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818"></script><script data-agworld-src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907" type="text/agworld-deferred-script" src="farm-visual-engine.js?v=farm-information-panel-owner-v2-20260907"></script><script data-agworld-src="farm-zoom-visual.js?v=manual-only-farm-visual-v2" type="text/agworld-deferred-script" src="farm-zoom-visual.js?v=manual-only-farm-visual-v2"></script><script data-agworld-src="game-hud.js?v=20260903-dupfix" type="text/agworld-deferred-script" src="game-hud.js?v=20260903-dupfix"></script><script data-agworld-src="game-view-mode.js?v=full-game-transition-v46-20260910-0945" type="text/agworld-deferred-script" src="game-view-mode.js?v=full-game-transition-v46-20260910-0945"></script>
-<script data-agworld-src="agworld-system-guide-v1.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="agworld-system-guide-v1.js?v=boot-repair-20260912"></script>\n<script data-agworld-src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010" type="text/agworld-deferred-script" src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010"></script><script data-agworld-src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018" type="text/agworld-deferred-script" src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018"></script><script data-agworld-src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022" type="text/agworld-deferred-script" src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022"></script><script data-agworld-src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213" type="text/agworld-deferred-script" src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213"></script><script data-agworld-src="menu-map-navigation.js?v=20260903" type="text/agworld-deferred-script" src="menu-map-navigation.js?v=20260903"></script><script src="login/v1/login-panel.js?v=boot-repair-20260912"></script>
-<script src="login/v1/auth.js?v=boot-repair-20260912"></script><script data-agworld-src="user-profile-modal.js?v=20260912" type="text/agworld-deferred-script" src="user-profile-modal.js?v=20260912"></script><script data-agworld-src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745" type="text/agworld-deferred-script" src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745"></script><script data-agworld-src="province-boundaries.js?v=20260904" type="text/agworld-deferred-script" src="province-boundaries.js?v=20260904"></script><script data-agworld-src="game-map-filters-v2.js?v=demo-farm-cleanup-v1" type="text/agworld-deferred-script" src="game-map-filters-v2.js?v=demo-farm-cleanup-v1"></script><script data-agworld-src="menu-settings-logout.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="menu-settings-logout.js?v=boot-repair-20260912"></script>
+<script data-agworld-src="agworld-system-guide-v1.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="agworld-system-guide-v1.js?v=boot-repair-20260912"></script>\n<script data-agworld-src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010" type="text/agworld-deferred-script" src="mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010"></script><script data-agworld-src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018" type="text/agworld-deferred-script" src="unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018"></script><script data-agworld-src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022" type="text/agworld-deferred-script" src="agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022"></script><script data-agworld-src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213" type="text/agworld-deferred-script" src="agworld-command-territory-surface-v2.js?v=command-territory-teal-v2-20260910-1213"></script><script data-agworld-src="menu-map-navigation.js?v=20260903" type="text/agworld-deferred-script" src="menu-map-navigation.js?v=20260903"></script><script src="login/v1/login-panel.js?v=login-refinement-20260912"></script>
+<script src="login/v1/auth.js?v=login-refinement-20260912"></script><script data-agworld-src="user-profile-modal.js?v=20260912" type="text/agworld-deferred-script" src="user-profile-modal.js?v=20260912"></script><script data-agworld-src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745" type="text/agworld-deferred-script" src="skill-tree.js?v=command-center-readable-radar-v45-20260908-1745"></script><script data-agworld-src="province-boundaries.js?v=20260904" type="text/agworld-deferred-script" src="province-boundaries.js?v=20260904"></script><script data-agworld-src="game-map-filters-v2.js?v=demo-farm-cleanup-v1" type="text/agworld-deferred-script" src="game-map-filters-v2.js?v=demo-farm-cleanup-v1"></script><script data-agworld-src="menu-settings-logout.js?v=boot-repair-20260912" type="text/agworld-deferred-script" src="menu-settings-logout.js?v=boot-repair-20260912"></script>
 <script data-agworld-src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1" type="text/agworld-deferred-script" src="territory-interaction-cleanup-v25.js?v=20260906-territory-cleanup-v1"></script>
 <script data-agworld-src="territory-missions-v26.js?v=20260906-stable-v26" type="text/agworld-deferred-script" src="territory-missions-v26.js?v=20260906-stable-v26"></script>
 <script data-agworld-src="player-progression-v27.js?v=20260906-live-profile-missions-v47" type="text/agworld-deferred-script" src="player-progression-v27.js?v=20260906-live-profile-missions-v47"></script>

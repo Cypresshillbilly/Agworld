@@ -5,18 +5,17 @@
 (()=>{
   'use strict';
 
-  if(window.AGWorldBootDiagnostics?.version==='1.0.0') return;
+  if(window.AGWorldBootDiagnostics?.version==='1.1.0') return;
 
   const bootMarks=window.__AGWORLD_BOOT_MARKS__||(window.__AGWORLD_BOOT_MARKS__={});
   const START=bootMarks.submit??bootMarks.auth??performance.now();
   const stageOrder=['submit','auth','interface','systems','map','world','populate','ready'];
   const diagnostics={
-    version:'1.0.0',
+    version:'1.1.0',
     startedAt:START,
     marks:bootMarks,
     durations:{},
     regression:null,
-    sourceWarmup:{started:false,complete:false,failed:[]},
     snapshot:null
   };
   window.AGWorldBootDiagnostics=diagnostics;
@@ -30,18 +29,6 @@
     }
     return t;
   };
-
-  const CRITICAL=[
-    'boot/v1/three.mjs?v=three-r178-module-20260912',
-    'core/role-config.js?v=master-architecture-v1',
-    'core/bootstrap.js?v=playable-loop-v1',
-    'builds/agriculture/profile/profile.manifest.js?v=playable-loop-v1',
-    'builds/agriculture/profile/profile.module.js?v=playable-loop-v1',
-    'api-bridge.js?v=20260902',
-    'config-gis-v4.js',
-    'world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305',
-    'app-gis-loader-v24.js?v=boot-repair-20260912'
-  ];
 
   diagnostics.mark=mark;
 
@@ -62,26 +49,9 @@
     });
   }
 
-  async function warmCriticalSources(){
-    if(diagnostics.sourceWarmup.started) return;
-    diagnostics.sourceWarmup.started=true;
+  function warmCriticalSources(){
     warmConnections();
-    const concurrency=4;
-    let cursor=0;
-    const worker=async()=>{
-      while(cursor<CRITICAL.length){
-        const current=CRITICAL[cursor++];
-        try{
-          const response=await fetch(current,{cache:'force-cache',credentials:'same-origin'});
-          if(!response.ok) throw new Error('HTTP '+response.status);
-          await response.arrayBuffer();
-        }catch(error){
-          diagnostics.sourceWarmup.failed.push({src:current,error:String(error?.message||error)});
-        }
-      }
-    };
-    await Promise.all(Array.from({length:concurrency},worker));
-    diagnostics.sourceWarmup.complete=true;
+    window.__AGWORLD_PRELOAD_GAME__?.();
   }
 
   function attachSubmitWarmup(){
@@ -93,6 +63,11 @@
       mark('submit');
       warmCriticalSources();
     },{capture:true});
+    // Start only once the login page is parsed and painted. Downloads stay
+    // inert; authentication remains the execution boundary.
+    const warm=()=>requestAnimationFrame(warmCriticalSources);
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',warm,{once:true});
+    else warm();
     return true;
   }
 
@@ -168,7 +143,7 @@
     requestAnimationFrame(()=>requestAnimationFrame(runRegressionAudit));
   },{once:true});
 
-  window.AGWorldBootDiagnostics.getReport=()=>JSON.parse(JSON.stringify(diagnostics));
+  window.AGWorldBootDiagnostics.getReport=()=>JSON.parse(JSON.stringify({...diagnostics,sources:window.__AGWORLD_SOURCE_TIMINGS__||[]}));
   window.AGWorldBootDiagnostics.getTimeline=()=>stageOrder
     .filter(name=>diagnostics.marks[name]!=null)
     .map(name=>({stage:name,ms:Math.round((diagnostics.marks[name]-START)*10)/10}));

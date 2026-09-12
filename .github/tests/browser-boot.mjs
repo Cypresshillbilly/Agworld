@@ -49,6 +49,64 @@ async function ready(page){
   assert.equal(report.counts.sources,1);assert.equal(report.counts.ready,1);assert.equal(report.shells,1);assert.equal(report.three,'178');assert.equal(report.world,true);assert.equal(report.status,'AGWORLD READY');assert.equal(report.checks,true);assert.equal(report.card,true);
 }
 try{
+  const progressTest=await newTest();
+  let releaseFirst,releaseLast;
+  const firstHeld=new Promise(resolve=>{releaseFirst=resolve;});
+  const lastHeld=new Promise(resolve=>{releaseLast=resolve;});
+  const downloads=new Set();
+  progressTest.page.on('request',request=>{if(/\.m?js(?:\?|$)/.test(request.url()))downloads.add(request.url());});
+  await progressTest.context.route('**/boot/v1/three.mjs*',async route=>{await firstHeld;await route.continue();});
+  await progressTest.context.route('**/agworld-mission-control-card-polish-v1.js*',async route=>{await lastHeld;await route.continue();});
+  await progressTest.page.goto(base+'/index.html');
+  await progressTest.page.waitForFunction(()=>document.querySelectorAll('link[rel=preload][as=script]').length>40);
+  assert.ok(downloads.size>20,'Later downloads must start while the first dependency is held');
+  assert.equal(await progressTest.page.locator('script[data-agworld-boot-loaded]').count(),0);
+  releaseFirst();await login(progressTest.page);
+  await progressTest.page.waitForFunction(()=>parseInt(document.getElementById('agworld-game-loader-percent').textContent)>50);
+  const partial=await progressTest.page.locator('#agworld-game-loader-percent').textContent();
+  assert.ok(parseInt(partial)<70,'Progress must not claim source completion while the last source is held');
+  assert.equal(await progressTest.page.locator('#agworld-game-loader').isVisible(),true);
+  releaseLast();await ready(progressTest.page);
+  assert.deepEqual(progressTest.errors,[]);
+  results.push('Overlapping downloads without pre-auth execution; visible progress '+partial+' while final source is held; full readiness after release');
+  await progressTest.context.close();
+  for(const immediateSession of [false,true]){
+    const signup=await newTest(),page=signup.page;
+    await page.goto(base+'/index.html');
+    await page.evaluate(session=>Object.assign(window.accountTest,{session,delay:350,facilityFailures:1}),immediateSession);
+    await page.locator('.ag-create-account-button').click();
+    const dialog=page.getByRole('dialog',{name:'Join the Company'});
+    await dialog.waitFor({state:'visible'});
+    await dialog.getByRole('button',{name:'RETRY FACILITY LIST',exact:true}).waitFor({state:'visible'});
+    await dialog.getByRole('button',{name:'RETRY FACILITY LIST',exact:true}).click();
+    await page.waitForFunction(()=>!document.querySelector('#agAccountDialog [type=submit]').disabled);
+    assert.equal(await page.locator('script[data-agworld-boot-loaded]').count(),0,'Registration must not boot the game');
+    await dialog.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();
+    assert.equal(await page.evaluate(()=>window.accountTest.signups.length),0,'Missing fields must not reach signup');
+    await dialog.getByLabel('FULL NAME',{exact:true}).fill('New Test Player');
+    await dialog.getByLabel('EMAIL ADDRESS',{exact:true}).fill('new-player@example.test');
+    await dialog.getByLabel('PASSWORD',{exact:true}).fill('test-only-password');
+    await dialog.getByRole('combobox',{name:'COMPANY FACILITY',exact:true}).selectOption('fixture-facility');
+    await page.evaluate(()=>window.accountTest.signupError='Test account error');
+    await dialog.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();
+    await dialog.getByText('Test account error',{exact:true}).waitFor();
+    await page.evaluate(()=>window.accountTest.signupError=null);
+    await dialog.getByRole('button',{name:'CREATE ACCOUNT',exact:true}).click();
+    if(immediateSession){await ready(page);}
+    else{
+      await dialog.getByText('Check your email to confirm your account, then return here and sign in.',{exact:true}).waitFor();
+      assert.equal(await page.locator('script[data-agworld-boot-loaded]').count(),0);
+      await dialog.getByRole('button',{name:'RESEND CONFIRMATION EMAIL',exact:true}).click();
+      assert.equal(await page.evaluate(()=>window.accountTest.resends[0].email),'new-player@example.test');
+      await dialog.getByRole('button',{name:'ALREADY HAVE AN ACCOUNT? SIGN IN',exact:true}).click();
+      assert.equal(await page.locator('#agUsername').inputValue(),'new-player@example.test');
+      await login(page);await ready(page);
+    }
+    assert.equal(await page.evaluate(()=>window.accountTest.signups.length),2,'One failed attempt and one successful attempt');
+    assert.deepEqual(signup.errors,[]);
+    await signup.context.close();
+    results.push('Create Account before game boot: facility retry, validation, account error retry, '+(immediateSession?'authenticated signup enters game':'email confirmation, resend, return to sign-in'));
+  }
   const good=await newTest();
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
