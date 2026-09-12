@@ -2,9 +2,9 @@
 
 This folder is the canonical source of truth for AgWorld branding used by the AgWorld platform.
 
-## Current game styling edition - V1.6
+## Current game styling edition - V1.7
 
-The whole game follows the product owner's supplied cinematic reference. The current [Game Visual System V1.6](game-visual-system.md) includes immersive drawers and photographic aluminum frames. [Brand Guide V1.4](guides/AgWorld_Brand_Guide_V1.4_Game_Visual_System.pdf) supplies the reference and original visual tokens; V1.6 and the V3 player baseline supersede its geometry and bezel rules. These replace V1.3's light dashboard guidance while preserving the logo identity rules below. Game surface tokens are distinct from the master logo and print palette.
+The whole game follows the product owner's supplied cinematic reference. The current [Game Visual System V1.7](game-visual-system.md) includes the SADC board, independent drawers, photographic aluminum frames and floating dashboard cards on white. [Brand Guide V1.4](guides/AgWorld_Brand_Guide_V1.4_Game_Visual_System.pdf) supplies the reference and original visual tokens; V1.7 and the V4 player baseline supersede its geometry and bezel rules. These replace V1.3's light dashboard guidance while preserving the logo identity rules below. Game surface tokens are distinct from the master logo and print palette.
 
 ## Approved production logo assets
 

@@ -8,6 +8,9 @@ on:
       - 'AG WORLD/login/v1/**'
       - 'AG WORLD/boot/v1/**'
       - 'AG WORLD/app-gis-loader-v24.js'
+      - 'AG WORLD/territory-board-v1.js'
+      - 'AG WORLD/game-exploration-tools.js'
+      - 'AG WORLD/data/gis/**'
       - 'AG WORLD/main-game-layout-v1.js'
       - 'AG WORLD/agworld-player-surface-final-v1.js'
       - 'AG WORLD/agworld-landing-game-layer-v1.js'
@@ -40,6 +43,9 @@ on:
       - 'AG WORLD/login/v1/**'
       - 'AG WORLD/boot/v1/**'
       - 'AG WORLD/app-gis-loader-v24.js'
+      - 'AG WORLD/territory-board-v1.js'
+      - 'AG WORLD/game-exploration-tools.js'
+      - 'AG WORLD/data/gis/**'
       - 'AG WORLD/main-game-layout-v1.js'
       - 'AG WORLD/agworld-player-surface-final-v1.js'
       - 'AG WORLD/agworld-landing-game-layer-v1.js'
@@ -85,6 +91,7 @@ jobs:
           node --check 'AG WORLD/boot/v1/three.mjs'
           node 'AG WORLD/boot/v1/boot.test.mjs'
           node .github/tests/sales-dashboard.test.mjs
+          node .github/tests/territory-control.test.mjs
           node 'AG WORLD/boot/v1/verify-dependencies.mjs'
       - name: Install pinned browser test tooling
         run: |

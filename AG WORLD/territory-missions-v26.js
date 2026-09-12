@@ -50,7 +50,7 @@
   function buildTerritoryMissions(territory) {
     if (!territory || typeof territoryGameSummary !== 'function') return [];
     const summary = territoryGameSummary(territory);
-    const farmsInTerritory = summary.farms || [];
+    const farmsInTerritory = summary.farmEntities || [];
     const enemy = farmsInTerritory.filter(f => controlType(f) === 'competitor')
       .sort((a,b) => (b.opportunityScore || 0) - (a.opportunityScore || 0));
     const neutral = farmsInTerritory.filter(f => controlType(f) === 'neutral')

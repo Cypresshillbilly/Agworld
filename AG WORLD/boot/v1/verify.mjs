@@ -39,7 +39,7 @@ assert(auth.includes('await window.__AGWORLD_BOOT_GAME__()'),'Auth must call can
 assert(auth.includes('Promise.all([window.__AGWORLD_WORLD_READY__,playerReady])'),'Auth must wait for world and canonical Player V1 readiness');
 assert(auth.indexOf('await window.__AGWORLD_BOOT_GAME__()')<auth.indexOf("window.dispatchEvent(new CustomEvent('gamechanger:authenticated'"),'V1 sources must exist before authenticated lifecycle is emitted');
 
-assert(loginPanel.includes('boot/v1/performance.js?v=reference-game-20260912'),'Performance module is not wired into Login V1 boundary');
+assert(loginPanel.includes('boot/v1/performance.js?v=africa-board-20260912'),'Performance module is not wired into Login V1 boundary');
 assert(loginPanel.includes('// Performance code is isolated from the approved V1 presentation above.'),'Performance isolation marker missing');
 assert(performanceModule.includes('AGWorldBootDiagnostics'),'Boot diagnostics API missing');
 assert(performanceModule.includes('agworld:boot-regression-pass'),'Runtime regression pass event missing');

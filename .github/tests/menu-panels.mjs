@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 export async function exercisePlayerMenu(page){
   const nav=page.locator('.sidebar .nav');
-  const choose=key=>nav.locator('[data-ag-screen="'+key+'"]').click();
+  const choose=async key=>{const b=nav.locator('[data-ag-screen="'+key+'"]');if(await b.getAttribute('aria-current')!=='page')await b.click();};
   const active=()=>nav.locator('[aria-current="page"]').getAttribute('data-ag-screen');
   assert.equal(await nav.locator('button').first().getAttribute('data-ag-screen'),'dashboard');
   assert.equal(await active(),'dashboard');

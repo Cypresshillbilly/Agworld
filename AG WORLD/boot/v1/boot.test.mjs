@@ -103,7 +103,7 @@ function handoffHarness({sourceFailure=false,worldFailure=false,stalled=false}={
 }
 for(const restored of [false,true])test((restored?'refresh':'fresh login')+' completes all stages in order and hides loader only at readiness',async()=>{
   const h=handoffHarness();await h.window.testBootPlayer({gate:restored?null:h.gate,username:'Test',role:'agriculture_sales',restored});
-  assert.deepEqual(h.history,['AUTHENTICATION COMPLETE','LOADING GAME INTERFACE','INITIALISING GAME SYSTEMS','LOADING MAP ENGINE','LOADING SOUTH AFRICA','POPULATING MAP','FINALISING PLAYER SCREEN','AGWORLD READY']);
+  assert.deepEqual(h.history,['AUTHENTICATION COMPLETE','LOADING GAME INTERFACE','INITIALISING GAME SYSTEMS','LOADING MAP ENGINE','LOADING SADC TERRITORIES','POPULATING MAP','FINALISING PLAYER SCREEN','AGWORLD READY']);
   assert.equal(h.ids['agworld-game-loader'].classList.contains('is-active'),false);
   assert.equal(h.ids['agworld-game-loader-retry'].hidden,true);
   assert.equal(h.ids['ag-login-boot-shield'].removed,true);

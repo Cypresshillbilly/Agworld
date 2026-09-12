@@ -12,7 +12,7 @@
      welcome:{title:'Welcome back, '+name.split(' ')[0]+'.',copy:'I’m your System Administrator. You’re level '+level+' with '+xp.toLocaleString()+' XP and '+completed+' completed mission'+(completed===1?'':'s')+'. '+(m?'Your next assignment is '+m.title+'. ':'Your chapter record is up to date. ')+'I’ll help you find your way around AgWorld.',audio:'assets/audio/system-administrator-welcome.mp3',spoken:WELCOME},
      player:{title:'Your player command point.',copy:'Your Dashboard shows your progress, your recorded sales activity and your next mission. Open Profile for your five skills, badges and completed milestones. The System Administrator guides you; Compliance, Sales, Product, Operations and Technical are your five specialist advisors.'},
      mission:{title:m?.title||'Your mission record.',copy:m?m.objective+' This mission awards '+Number(m.xp||0)+' XP. Start it from the Dashboard and complete its requirements to earn the reward.':'You have completed the available missions in this chapter. Open Missions to review your achievements.'},
-     game:{title:'Take command of your territory.',copy:'Select a location on the map to bring its information into the Command Center. Open Territory Stats from the right edge for the selected area. Your Player Hub slides from the left, Map Menu from the top and Command Center from the bottom. Close the four drawers to immerse yourself in the game; your map and progress remain in place.'}
+     game:{title:'Take command of your territory.',copy:'Select a location on the map to bring its information into the Command Center. Open Territory Stats from the right edge for the selected area. Your Player Hub slides from the left, Map Menu from the top and Command Center from the bottom. Use the floating AgWorld icon to open your advisors when the Player Hub is closed. Close the drawers to immerse yourself in the game; your map and progress remain in place.'}
    };
    return key==='custom'&&custom?custom:library[key]||library.welcome;
  }
@@ -26,7 +26,8 @@
  function place(){
    if(!root)return;const map=document.querySelector('.map-area')?.getBoundingClientRect();if(!map)return;
    const header=document.querySelector('.map-header')?.getBoundingClientRect();
-   root.style.left=Math.round(map.left+20)+'px';root.style.top=Math.round(Math.max(map.top+84,(header?.bottom||map.top)+12))+'px';root.style.maxWidth=Math.min(500,Math.max(260,map.width-60))+'px';
+   const advisor=document.getElementById('agMapAdvisors');const advisorRight=advisor&&!advisor.hidden?advisor.getBoundingClientRect().right+12:map.left+20;
+   root.style.left=Math.round(Math.min(advisorRight,map.right-320))+'px';root.style.top=Math.round(Math.max(map.top+84,(header?.bottom||map.top)+12))+'px';root.style.maxWidth=Math.min(500,Math.max(260,map.width-60))+'px';
  }
  function render(){
    const b=briefing(section);query('.ag-guide-title').textContent=b.title;query('.ag-guide-copy').textContent=b.copy;

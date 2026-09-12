@@ -1,5 +1,7 @@
 # AgWorld Immersive Drawers — Version 3
 
+[Territory Board and Nested Player Hub V4](PLAYER_SCREEN_V4_BASELINE.md) now governs map selection and the independent navigation/information drawers. The aluminum and landscape styling below remains current.
+
 Approved by the product owner on 12 September 2026. This supersedes V2's fixed-panel visibility, thin bezel and Enter AgWorld rules. V2's player data, mission, advisor and route requirements remain in force.
 
 - The live map is the persistent game world. Login and refresh start with all four drawers closed. Only their edge handles and Developer Mode remain above the map.
