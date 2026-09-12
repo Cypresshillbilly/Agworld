@@ -1,0 +1,4 @@
+# Source libraries and extracts contain private dealer/customer material.
+/PRIVATE_KNOWLEDGE/
+*.pyc
+__pycache__/

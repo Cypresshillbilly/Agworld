@@ -7,7 +7,7 @@
   "api-bridge.js?v=20260902",
   "config-gis-v4.js",
   "world-data-mode-v1.js?v=demo-user-world-mode-v1-20260908-1305",
-  "territory-board-v1.js?v=africa-board-20260912",
+  "territory-board-v1.js?v=commander-library-20260912",
   "app-gis-loader-v24.js?v=africa-board-20260912",
   "contractor-gis-control-refresh-v1.js?v=contractor-gis-refresh-v2-20260908-1045",
   "demo-world-seed-v1.js?v=company-fixed-stats-independent-facilities-v8-20260908-1818",
@@ -65,6 +65,7 @@
   "agworld-mission-control-card-polish-v1.js?v=player-command-20260912",
   "player-menu-panels.js?v=africa-board-20260912",
   "branded-sidebar.js?v=africa-board-20260912",
-  "game-reference-theme.js?v=africa-board-20260912",
-  "game-exploration-tools.js?v=africa-board-20260912"
+  "game-reference-theme.js?v=commander-library-20260912",
+  "game-exploration-tools.js?v=africa-board-20260912",
+  "advisor-knowledge.js?v=commander-library-20260912"
 ]

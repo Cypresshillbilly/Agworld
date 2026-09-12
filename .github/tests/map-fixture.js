@@ -5,7 +5,7 @@
     addListener(name,fn){(this.listeners[name]??=[]).push(fn);return {remove:()=>this.listeners[name]=this.listeners[name].filter(x=>x!==fn)};}
     setMap(map){this.options.map=map;} getMap(){return this.options.map;}
     setOptions(options){Object.assign(this.options,options);} setVisible(value){this.options.visible=value;}
-    setIcon(){} setLabel(){} setAnimation(){} setTitle(){} setZIndex(){}
+    setIcon(icon){this.options.icon=icon;} setLabel(){} setAnimation(){} setTitle(){} setZIndex(){}
     getPosition(){return new LatLng(this.options.position||{lat:0,lng:0});}
     getPath(){return {getArray:()=>this.options.paths||[]};}
   }
