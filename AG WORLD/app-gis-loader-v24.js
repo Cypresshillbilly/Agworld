@@ -1262,6 +1262,7 @@ async function loadFarms() {
       // farm or municipal overlays during initial player boot.
       updateZoomStage();
       $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded · loading municipal and town GIS…`;
+      reportAgWorldBootPhase('populate', 97, 'POPULATING MAP');
     }
 
     // Remote GIS layers load independently of both the map and local datasets.
@@ -1328,6 +1329,14 @@ async function fetchSpatialLayerWithRetry(url, label, timeoutMs = 60000, attempt
 
 
 // AG WORLD Progressive World Loading V1
+function reportAgWorldBootPhase(stage, progress, status) {
+  window.dispatchEvent(new CustomEvent('agworld:load-checklist',{detail:{stage}}));
+  if (Number.isFinite(progress)) {
+    window.dispatchEvent(new CustomEvent('agworld:load-progress',{
+      detail:{progress:Math.max(0,Math.min(100,Math.round(progress))),status:status||''}
+    }));
+  }
+}
 // Layer data is fetched only when the player reaches the relevant world level.
 // Each layer is cached for the session once loaded.
 const AGWORLD_WORLD_LOD = { country: 1, provinces: 2, municipalities: 3, towns: 4, farms: 5 };
@@ -1371,6 +1380,7 @@ function loadSpatialLayerOnce(kind) {
         countries[0].properties = record.properties;
       }
       if (map) countries.forEach(addTerritory);
+      reportAgWorldBootPhase('world', 94, 'LOADING SOUTH AFRICA');
     }
     if (kind === 'provinces') {
       const records = normaliseSpatialFeatures(layer, 'province');
@@ -1467,6 +1477,7 @@ function renderGoogleMap() {
 }
 
 function initMap() {
+  reportAgWorldBootPhase('map', 90, 'LOADING MAP ENGINE');
   if (!CONFIG.GOOGLE_MAPS_API_KEY) {
     $('mapStatus').textContent = 'Google satellite mapping is inactive: no API key is available to the dashboard.';
     return;
