@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import {panels} from './drawers.mjs';
 export async function exerciseExplorationTools(page){
  await panels(page,{player:false,map:false,territory:false,command:false});
+ for(let i=0;i<2;i++){
+  await panels(page,{map:true});
+  const clear=await page.evaluate(()=>document.getElementById('agMapAdvisorsToggle').getBoundingClientRect().top>=document.querySelector('.map-header').getBoundingClientRect().bottom+10);
+  assert.equal(clear,true,'Advisor control stays below the map menu after each open animation');
+  await panels(page,{map:false});
+ }
  assert.equal(await page.locator('#developerModeBtn').isVisible(),false,'Developer mode stays inside its closed drawer');
  await page.getByRole('button',{name:'Toggle AgWorld advisors',exact:true}).click();
  assert.equal(await page.locator('#agMapAdvisors [data-map-advisor]').count(),6);

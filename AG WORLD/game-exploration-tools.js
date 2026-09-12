@@ -23,7 +23,9 @@
   if(playerOpen)advisorsOpen=false;
   button.hidden=!!playerOpen;panel.hidden=!advisorsOpen||!!playerOpen;panel.inert=panel.hidden;
   button.setAttribute('aria-expanded',String(!panel.hidden));
-  const top=window.AGWorldDrawers?.getState().map?(document.querySelector('.map-header')?.getBoundingClientRect().bottom||0)+14:18;
+  // Use the drawer's destination geometry; its animated rectangle can still be offscreen.
+  const header=document.querySelector('.map-header');
+  const top=window.AGWorldDrawers?.getState().map?(header?header.offsetTop+header.offsetHeight:0)+14:18;
   button.style.top=top+'px';panel.style.top=(top+56)+'px';
   const g=window.AGWorldDrawers?.geometry();panel.style.maxHeight=Math.max(180,(window.AGWorldDrawers?.getState().command?g.commandTop:window.innerHeight)-top-76)+'px';
   panel.querySelectorAll('[data-map-advisor]').forEach(b=>b.setAttribute('aria-pressed',String(window.AGWorldAdvisorState?.id===b.dataset.mapAdvisor)));
