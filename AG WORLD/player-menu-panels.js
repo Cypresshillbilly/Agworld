@@ -106,6 +106,7 @@
     const earned=d.badges.filter(b=>b.earned).length;
     return '<section class="agmp-card agmp-dark agmp-hero"><span class="agmp-chip">LEVEL '+d.level+' · CHAPTER '+d.chapterId+'</span><div class="agmp-avatar" aria-hidden="true"><span>'+esc(d.initial)+'</span></div><h2>'+esc(d.name)+'</h2><p class="agmp-role">'+esc(d.role)+'</p><p class="agmp-muted">'+esc(d.facility)+'</p><div class="agmp-stats"><div class="agmp-stat"><b>'+fmt(d.xp)+'</b><span>Total XP</span></div><div class="agmp-stat"><b>'+d.completed.length+'</b><span>Missions</span></div><div class="agmp-stat"><b>'+earned+'</b><span>Badges</span></div></div></section>'+
       card('Your next level','<div class="agmp-row"><b>Level '+d.level+' → '+(d.level+1)+'</b><span>'+d.percent+'%</span></div>'+track(d.percent,'Progress to next level')+'<div class="agmp-row"><span>'+fmt(d.remaining)+' XP to go</span><span class="agmp-muted">'+fmt(d.next)+' XP target</span></div>',true)+
+      '<section class="agmp-card agmp-player-skills" id="agCanonicalSkillProfile">'+(window.AGWorldPlayerCards?.skillMarkup?.()||'<h2>Skill profile</h2>')+'</section>'+
       card('Badge collection','<p class="agmp-muted">'+earned+' of '+d.badges.length+' milestones earned. Every badge comes from a completed mission.</p><div class="agmp-badges">'+d.badges.map(b=>'<article class="agmp-badge'+(b.earned?' earned':'')+'" data-badge="'+b.id+'"><div class="agmp-medal" aria-hidden="true">'+b.icon+'</div><strong>'+esc(b.name)+'</strong><small>'+(b.earned?'Earned':'Locked')+'</small><p>'+esc(b.goal)+'</p></article>').join('')+'</div>')+
       card('Mission mastery',d.skills.length?d.skills.map(s=>'<div class="agmp-skill"><div class="agmp-row"><b>'+esc(s.name)+'</b><span>'+s.percent+'%</span></div>'+track(s.percent,s.name)+'<span class="agmp-muted">'+s.earned+' / '+s.total+' training missions completed</span></div>').join(''):empty('Your skills will appear when your mission record is ready.'))+
       card('Your journey','<span class="agmp-status">Current chapter · '+d.chapterId+'</span><h3>'+esc(d.chapter?.title||'Your next assignment')+'</h3><p>'+esc(d.chapter?.subtitle||'Build your capability through Company missions.')+'</p>'+button('View your missions','screen','mission-history'))+
@@ -129,7 +130,7 @@
     switch(current){
       case 'profile':return renderProfile(d);
       case 'mission-history':return renderMissions(d);
-      case 'pipeline':return card('Your territory opportunities','<p>Follow the Company’s recorded relationships across farms and contractors.</p>',true)+[['neutral','Prospects'],['company','Company clients'],['competitor','Competitor clients']].map(([key,label])=>card(label,'<div class="agmp-row"><strong>'+rows.filter(e=>control(e)===key).length+' contacts</strong></div>'+button('Review '+label.toLowerCase(),'contacts',key))).join('');
+      case 'pipeline':return window.AGWorldSalesDashboard?.workspaceMarkup?.()||empty('Connecting your sales activity…');
       case 'clients':{
         const filtered=rows.filter(e=>(clientFilter==='all'||control(e)===clientFilter)&&String(e.name||'').toLowerCase().includes(clientSearch.toLowerCase()));
         return card('Company contact directory','<label><span class="agmp-muted">Search farms and contractors</span><input type="search" data-contact-search aria-label="Search contacts" value="'+esc(clientSearch)+'" placeholder="Search by name"></label><div class="agmp-tabs">'+[['all','All'],['company','Clients'],['neutral','Prospects']].map(([value,label])=>'<button type="button" class="agmp-button agmp-secondary" data-panel-action="filter" data-value="'+value+'" aria-pressed="'+(value===clientFilter)+'">'+label+'</button>').join('')+'</div><p class="agmp-muted" data-contact-count>'+filtered.length+' contacts</p><div data-contact-results>'+entityRows(filtered)+'</div>');
@@ -256,7 +257,7 @@
     },true);
     new MutationObserver(schedule).observe(sidebar,{childList:true,subtree:true});
     new MutationObserver(()=>{if(current!=='dashboard')syncDashboardAccessibility();}).observe(missions,{childList:true});
-    for(const name of ['agworld:player-profile','agworld:player-ready','agworld:player-state','agworld:mission-completed','agworld:territory-control-updated','agworld:dynamic-layers-loaded','agworld:advisor-selected','agworld:advisor-deselected'])window.addEventListener(name,schedule);
+    for(const name of ['agworld:sales-data','agworld:player-profile','agworld:player-ready','agworld:player-state','agworld:mission-completed','agworld:territory-control-updated','agworld:dynamic-layers-loaded','agworld:advisor-selected','agworld:advisor-deselected'])window.addEventListener(name,schedule);
     document.addEventListener('agworld:landing-layout-ready',bind);
     bind();
   }

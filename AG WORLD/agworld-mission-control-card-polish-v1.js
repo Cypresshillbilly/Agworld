@@ -44,15 +44,15 @@ function canonicalPlayer(){
  const player=window.AGWorldPlayer||{};
  const {state}=progressionState();
  const read=(...keys)=>{
+   const sources=state.playerName?[state,player]:[player,state];
+   for(const src of sources)for(const k of keys){if(src&&src[k]!==undefined&&src[k]!==null&&String(src[k]).trim()!=='')return src[k]}
    for(const k of keys){
-     const sources=[player,state];
-     for(const src of sources){if(src&&src[k]!==undefined&&src[k]!==null&&String(src[k]).trim()!=='')return src[k]}
      const a=sessionStorage.getItem('gamechanger.'+k),b=localStorage.getItem('gamechanger.'+k);
      if(a!==null&&a!=='')return a;if(b!==null&&b!=='')return b;
    }
    return null;
  };
- const name=String(read('display_name','displayName','name','username')||'PLAYER').trim().toUpperCase();
+ const name=String(read('playerName','display_name','displayName','name','username')||'PLAYER').trim().toUpperCase();
  const role=String(read('role','title','position')||'AGWORLD FIELD COMMANDER').trim().toUpperCase();
  const level=Math.max(1,Number(read('level')||1));
  const chapter=Math.max(1,Number(read('chapter','currentChapter')||1));
@@ -75,6 +75,7 @@ function renderPlayer(){
 }
 
 const ADVISOR_ASSETS={
+ 'system-administrator':'assets/advisors/system-administrator.webp',
  compliance:'assets/advisors/agworld_compliance_commander_round(1).png',
  sales:'assets/advisors/agworld_sales_commander_round(1).png',
  product:'assets/advisors/agworld_product_commander_round(1).png',
@@ -87,7 +88,7 @@ function installAdvisorPortraits(){
  bay.querySelectorAll('.ag-advisor').forEach(btn=>{
    const id=btn.dataset.advisor,label=(btn.querySelector('.ag-advisor-label')?.textContent||id).trim(),d=portraitData(id,label);
    let img=btn.querySelector('.ag-advisor-portrait');
-   if(!img){img=document.createElement('img');img.className='ag-advisor-portrait';img.alt=label+' Commander';btn.prepend(img)}
+   if(!img){img=document.createElement('img');img.className='ag-advisor-portrait';img.alt=id==='system-administrator'?'System Administrator':label+' Commander';btn.prepend(img)}
    img.onerror=()=>{btn.dataset.agAdvisorAssetError='true';img.removeAttribute('src')};
    if(img.getAttribute('src')!==d.file) img.src=d.file;
    img.dataset.agPortraitSource=d.file;
@@ -99,14 +100,14 @@ function setStrategicCommanderVisible(visible){
  const guide=window.AGWorldStrategicCommander;
  if(visible) guide?.show?.();
  else guide?.hide?.();
- document.body.dataset.agStrategicCommander=visible?'sales-active':'off';
+ document.body.dataset.agStrategicCommander=visible?'system-administrator-active':'off';
 }
 
 function selectAdvisor(btn){
  const bay=document.getElementById(ADVISOR_BAY);if(!bay)return;
  const id=btn.dataset.advisor;
  const wasActive=btn.classList.contains('is-active');
- bay.querySelectorAll('.ag-advisor').forEach(x=>x.classList.remove('is-active'));
+ bay.querySelectorAll('.ag-advisor').forEach(x=>{x.classList.remove('is-active');x.setAttribute('aria-pressed','false');});
 
  if(wasActive){
    window.AGWorldAdvisorState=null;
@@ -115,10 +116,11 @@ function selectAdvisor(btn){
    return;
  }
 
- btn.classList.add('is-active');
+ btn.classList.add('is-active');btn.setAttribute('aria-pressed','true');
  window.AGWorldAdvisorState={id,label:btn.querySelector('.ag-advisor-label')?.textContent||id,screen:'mission-control'};
- setStrategicCommanderVisible(id==='sales');
+ setStrategicCommanderVisible(id==='system-administrator');
  window.dispatchEvent(new CustomEvent('agworld:advisor-selected',{detail:window.AGWorldAdvisorState}));
+ if(id==='system-administrator')window.AG_WORLD_GUIDE?.welcome?.({speak:true});
 }
 
 function bindAdvisors(){

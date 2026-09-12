@@ -5,13 +5,17 @@ export async function exerciseReferenceTheme(page){
   assert.equal(await page.evaluate(()=>document.fonts.check('500 14px AgWorldCondensed')),true,'Self-hosted font loaded');
   const art=await page.locator('.agpc-art img').evaluate(el=>({loaded:el.complete&&el.naturalWidth>0,width:el.getBoundingClientRect().width,parent:el.parentElement.getBoundingClientRect().width}));
   assert.ok(art.loaded&&art.width>=art.parent-3,'Mission artwork fills its card');
-  const scores=await page.locator('.agps-track').evaluateAll(els=>els.map(el=>Number(el.getAttribute('aria-valuenow'))));
+  assert.equal(await page.locator('#agPlayerSalesFunnel').count(),1);
+  assert.equal(await page.locator('#agPlayerProgressionStack #agCanonicalSkillProfile').count(),0);
+  await page.locator('.sidebar [data-ag-screen="profile"]').click();
+  const scores=await page.locator('#agCanonicalSkillProfile .agps-track').evaluateAll(els=>els.map(el=>Number(el.getAttribute('aria-valuenow'))));
   assert.deepEqual(scores,[0,0,0,0,0],'New players have five real zero skill scores');
   assert.equal(await page.locator('.agps-radar-ring').count(),5);
+  await page.locator('.sidebar [data-ag-screen="dashboard"]').click();
   await page.locator('#agAdvisorBay [data-advisor="sales"]').click();
   assert.equal(await page.locator('#agAdvisorBay [data-advisor="sales"]').evaluate(el=>el.classList.contains('is-active')),true);
   await page.locator('#agAdvisorBay [data-advisor="sales"]').click();
-  for(const size of [{width:1600,height:1000},{width:1280,height:900}]){
+  for(const size of [{width:1600,height:1000},{width:1280,height:900},{width:1280,height:720}]){
     await page.setViewportSize(size);
     await page.waitForTimeout(150);
     const g=await page.evaluate(()=>{
@@ -19,14 +23,16 @@ export async function exerciseReferenceTheme(page){
       return {shell:r('.app-shell'),side:r('.sidebar'),missions:r('.missions'),map:r('.map-area'),player:r('#agPlayerMissionProfile'),stack:r('#agPlayerProgressionStack'),advisor:r('#agAdvisorBay'),command:r('#entityInformationSection'),start:r('#agCanonicalMissionCard button'),mission:r('#agCanonicalMissionCard')};
     });
     assert.equal(g.side.width,Math.round(g.shell.width*180/1280));
-    assert.equal(g.missions.width,Math.round(g.shell.width*285/1280));
+    assert.equal(g.missions.width,Math.round(g.shell.width*350/1280));
     assert.ok(Math.abs(g.map.x-g.missions.right)<3,'Original main column geometry');
     assert.ok(Math.abs(g.stack.y-g.player.bottom-10)<3,'Protected player-to-progression gap');
     assert.ok(Math.abs(g.stack.bottom-g.advisor.y+14)<3,'Protected progression-to-advisor gap');
     assert.ok(Math.abs(g.advisor.y-g.command.y)<3,'Advisors remain aligned to the Command Center');
     assert.ok(g.start.bottom<=g.mission.bottom+1,'Mission action is visible within its card: '+JSON.stringify({size,mission:g.mission,start:g.start}));
+    assert.equal(await page.locator('#agCanonicalMissionCard').evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Whole mission fits without scrolling');
+    assert.equal(await page.locator('#agCanonicalMissionCard .agpc-copy').evaluate(el=>el.scrollHeight<=el.clientHeight+1),true,'Mission brief fits without clipping');
     const portraits=await page.locator('.ag-advisor-portrait').evaluateAll(els=>els.map(el=>({loaded:el.complete&&el.naturalWidth>0,rect:el.getBoundingClientRect().toJSON()})));
-    assert.equal(portraits.length,5);assert.ok(portraits.every(p=>p.loaded));
+    assert.equal(portraits.length,6);assert.ok(portraits.every(p=>p.loaded));
     assert.ok(Math.max(...portraits.map(p=>p.rect.y))-Math.min(...portraits.map(p=>p.rect.y))<2,'One aligned row of photographic advisors');
   }
   await page.setViewportSize({width:1600,height:1000});

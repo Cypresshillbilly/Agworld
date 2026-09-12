@@ -1,4 +1,6 @@
-# AgWorld Game Visual System - V1.4
+# AgWorld Game Visual System - V1.5 Player Command addendum
+
+V1.5 adopts the owner-approved [Player Command V2](../PLAYER_SCREEN_V2_BASELINE.md): a wider player column, Sales Funnel on Dashboard, Skills in Profile, six advisors, a brushed-aluminum Command Center rim, non-scrolling illustrated mission, integrated Enter AgWorld control, and a readable sidebar tagline over farmland. This addendum supersedes conflicting composition and bezel rules in V1.4; its visual tokens remain unchanged. The Administrator's current portrait is provisional while the owner supplies likeness references.
 
 Effective 12 September 2026. The product owner's supplied `ChatGPT Image Sep 10, 2026, 09_56_13 PM.png` is the visual authority for the whole game. The reference is reproduced in [the V1.4 guide](guides/AgWorld_Brand_Guide_V1.4_Game_Visual_System.pdf).
 

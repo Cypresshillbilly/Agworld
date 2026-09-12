@@ -1,6 +1,6 @@
 # AgWorld Player Screen — Official Version 1 Baseline
 
-**Status:** LOCKED BASELINE  
+**Status:** Historical baseline; superseded by the owner-approved [Player Command V2](PLAYER_SCREEN_V2_BASELINE.md) on 12 September 2026.
 **Established:** 10 September 2026  
 **Scope:** Player screen geometry and component composition
 

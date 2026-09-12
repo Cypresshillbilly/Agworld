@@ -25,7 +25,13 @@ on:
       - 'AG WORLD/assets/fonts/**'
       - 'AG WORLD/assets/missions/**'
       - 'AG WORLD/developer-*'
-      - 'AG WORLD/agworld-system-guide-v1.js'
+      - 'AG WORLD/system-administrator-guide.js'
+      - 'AG WORLD/player-sales-dashboard.js'
+      - 'AG WORLD/shared-backend-v37.js'
+      - 'AG WORLD/interactive-onboarding-v28.js'
+      - 'AG WORLD/assets/advisors/**'
+      - 'AG WORLD/assets/audio/**'
+      - 'AG WORLD/assets/brand/**'
       - '.github/tests/**'
       - '.github/workflows/agworld-v1-boot-regression.yml'
   pull_request:
@@ -51,7 +57,13 @@ on:
       - 'AG WORLD/assets/fonts/**'
       - 'AG WORLD/assets/missions/**'
       - 'AG WORLD/developer-*'
-      - 'AG WORLD/agworld-system-guide-v1.js'
+      - 'AG WORLD/system-administrator-guide.js'
+      - 'AG WORLD/player-sales-dashboard.js'
+      - 'AG WORLD/shared-backend-v37.js'
+      - 'AG WORLD/interactive-onboarding-v28.js'
+      - 'AG WORLD/assets/advisors/**'
+      - 'AG WORLD/assets/audio/**'
+      - 'AG WORLD/assets/brand/**'
       - '.github/tests/**'
       - '.github/workflows/agworld-v1-boot-regression.yml'
 
@@ -72,6 +84,7 @@ jobs:
           node 'AG WORLD/boot/v1/verify.mjs'
           node --check 'AG WORLD/boot/v1/three.mjs'
           node 'AG WORLD/boot/v1/boot.test.mjs'
+          node .github/tests/sales-dashboard.test.mjs
           node 'AG WORLD/boot/v1/verify-dependencies.mjs'
       - name: Install pinned browser test tooling
         run: |

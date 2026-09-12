@@ -206,7 +206,7 @@
       btn.type='button';
       btn.setAttribute('aria-label','Enter full AgWorld game mode');
       btn.textContent='ENTER AGWORLD';
-      area.appendChild(btn);
+      (area.querySelector('.map-tools')||area.querySelector('.map-header')||area).appendChild(btn);
       btn.addEventListener('click',()=>toggleGameMode());
     }
     return btn;

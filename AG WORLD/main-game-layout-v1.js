@@ -48,6 +48,7 @@
       territoryDrawer.querySelector('#territoryStatsToggle').addEventListener('click',()=>{
         const collapsed=territoryDrawer.classList.toggle('collapsed');
         territoryDrawer.querySelector('#territoryStatsToggle').setAttribute('aria-expanded',String(!collapsed));
+        territoryDrawer.style.setProperty('width',collapsed?'28px':Math.min(272,Math.max(228,Math.round(mapArea.clientWidth*.29)))+'px','important');
       });
     }
     const drawerContent=$('territoryStatsDrawerContent');
@@ -152,7 +153,7 @@
        *
        * This deliberately starts from the last known stable desktop geometry:
        *   sidebar  = 180px
-       *   missions = 285px
+       *   missions = 350px (player-command update approved 2026-09-12)
        *   map      = 815px on the canonical 1280px shell
        *
        * Only three things are changed from that stable layout:
@@ -181,7 +182,7 @@
       const shellW=shell.clientWidth||1280;
       const canonicalScale=shellW/1280;
       const sidebarW=Math.round(180*canonicalScale);
-      const missionsW=Math.round(285*canonicalScale);
+      const missionsW=Math.round(350*canonicalScale);
       const leftStage=sidebarW+missionsW;
       const mapW=Math.max(320,shellW-leftStage);
       const important=(el,prop,val)=>{ if(el) el.style.setProperty(prop,val,'important'); };
@@ -237,9 +238,9 @@
       const heading=$('entityCommandCentreHeading');
       if(heading){
         important(heading,'position','absolute');
-        important(heading,'left','0');
-        important(heading,'top','0');
-        important(heading,'width','100%');
+        important(heading,'left','8px');
+        important(heading,'top','8px');
+        important(heading,'width','calc(100% - 16px)');
         important(heading,'height','34px');
         important(heading,'margin','0');
         important(heading,'z-index','3');
@@ -273,12 +274,12 @@
       const entityCard=$('farmCard');
       if(entityCard){
         important(entityCard,'position','absolute');
-        important(entityCard,'left','0');
-        important(entityCard,'top','42px');
+        important(entityCard,'left','8px');
+        important(entityCard,'top','44px');
         important(entityCard,'right','auto');
         important(entityCard,'bottom','auto');
-        important(entityCard,'width','100%');
-        important(entityCard,'height','calc(100% - 42px)');
+        important(entityCard,'width','calc(100% - 16px)');
+        important(entityCard,'height','calc(100% - 52px)');
         important(entityCard,'min-height','0');
         important(entityCard,'max-width','none');
         important(entityCard,'max-height','none');
@@ -303,7 +304,7 @@
         important(territoryDrawer,'right','0');
         important(territoryDrawer,'top',topInset+'px');
         important(territoryDrawer,'bottom','auto');
-        important(territoryDrawer,'width',Math.min(272,Math.max(228,Math.round(mapW*.29)))+'px');
+        important(territoryDrawer,'width',territoryDrawer.classList.contains('collapsed')?'28px':Math.min(272,Math.max(228,Math.round(mapW*.29)))+'px');
         important(territoryDrawer,'height',drawerH+'px');
         important(territoryDrawer,'max-height',drawerH+'px');
         important(territoryDrawer,'transform','none');
@@ -392,11 +393,11 @@
     if(entity && entityCard){
       important(entity,'overflow','hidden');
       important(entityCard,'position','absolute');
-      important(entityCard,'left','0');
+      important(entityCard,'left','8px');
       important(entityCard,'top','34px');
       important(entityCard,'right','0');
       important(entityCard,'bottom','0');
-      important(entityCard,'width','100%');
+      important(entityCard,'width','calc(100% - 16px)');
       important(entityCard,'height','calc(100% - 34px)');
       important(entityCard,'min-height','calc(100% - 34px)');
       important(entityCard,'max-width','none');

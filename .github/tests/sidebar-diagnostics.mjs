@@ -11,7 +11,7 @@ export async function exerciseSidebarDiagnostics(page){
   assert.ok(shape.logo.width>=120);assert.ok(shape.logo.x>=shape.sidebar.x&&shape.logo.right<=shape.sidebar.right);
   assert.equal(shape.nav,'AgWorld player menu');assert.equal(shape.developerInNav,false);
   const geometry=await page.evaluate(()=>({shell:document.querySelector('.app-shell').clientWidth,side:document.querySelector('.sidebar').getBoundingClientRect().width,mission:document.querySelector('.missions').getBoundingClientRect().width}));
-  assert.equal(geometry.side,Math.round(geometry.shell*180/1280));assert.equal(geometry.mission,Math.round(geometry.shell*285/1280));
+  assert.equal(geometry.side,Math.round(geometry.shell*180/1280));assert.equal(geometry.mission,Math.round(geometry.shell*350/1280));
   const popupPromise=page.waitForEvent('popup');await launcher.click();const dev=await popupPromise;
   await dev.locator('#connectionState').filter({hasText:'CONNECTED TO LIVE GAME'}).waitFor();
   assert.equal(await dev.locator('#appStatus').textContent(),'READY');

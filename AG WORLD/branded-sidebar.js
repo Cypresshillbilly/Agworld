@@ -107,6 +107,8 @@ html body.agmp-reduced-motion #agPrimarySidebar .nav button[data-ag-screen]{tran
     if(!document.getElementById('ag-branded-sidebar-style')){
       const style=document.createElement('style');style.id='ag-branded-sidebar-style';style.textContent=css;document.head.appendChild(style);
     }
+    let footer=sidebar.querySelector('.ag-sidebar-landscape');
+    if(!footer){footer=document.createElement('div');footer.className='ag-sidebar-landscape';footer.innerHTML='<strong>DOMINATE<br>THE TERRITORY</strong><span>Build relationships.<br>Equip farms. Win the future.</span>';sidebar.appendChild(footer);}
     ensureDeveloperButton();
   }
   window.AGWorldSidebar={ensureDeveloperButton};

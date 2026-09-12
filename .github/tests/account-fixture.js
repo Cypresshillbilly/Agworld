@@ -1,6 +1,10 @@
 (() => {
   // Test browser only. This file is not shipped with the application.
-  const user={id:'00000000-0000-4000-8000-000000000001',email:'boot-test@example.test',user_metadata:{display_name:'Boot Test'}};
+  const returning=new URLSearchParams(location.search).has('returning-player');
+  const user={id:'00000000-0000-4000-8000-000000000001',email:'boot-test@example.test',user_metadata:{display_name:returning?'Returning Player':'Boot Test'}};
+  const returningPlayer={id:user.id,display_name:'Returning Player',level:2,xp:460,current_chapter:1};
+  const returningMissions=['c1-welcome','c1-hr','c1-documents'].map(mission_id=>({mission_id,status:'completed',completed_at:'2026-09-01T12:00:00Z'}));
+  const returningQuery=table=>{let q=new Proxy({}, {get:(_,key)=>key==='then'?resolve=>Promise.resolve(resolve({data:table==='ag_players'?returningPlayer:table==='ag_mission_progress'?returningMissions:[],error:null})):()=>q});return q;};
   const account=window.accountTest={signups:[],resends:[],facilityFailures:0,signupError:null,session:false,delay:0};
   const facilities=new Proxy({}, {get:(_,key)=>key==='then'?async resolve=>{
     await new Promise(ok=>setTimeout(ok,account.delay));
@@ -21,7 +25,7 @@
     getSession:async()=>({data:{session:{user}},error:null}),
     onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
     signOut:async()=>({error:null})
-  },from:table=>table==='company_facilities'?facilities:query,rpc:async()=>({data:[],error:null}),channel:()=>({on(){return this},subscribe(){return this}})};
+  },from:table=>table==='company_facilities'?facilities:returning?returningQuery(table):query,rpc:async()=>({data:[],error:null}),channel:()=>({on(){return this},subscribe(){return this}})};
   window.__AGWORLD_SUPABASE_DB__=db;
   Object.defineProperty(window,'supabase',{value:{createClient:()=>db},writable:false});
   const report=data=>fetch('/__test-events',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});
