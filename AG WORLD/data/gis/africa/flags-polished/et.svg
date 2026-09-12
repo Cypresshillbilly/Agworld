@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 128 112">
+<defs>
+ <linearGradient id="agMetal" x1=".1" y1="0" x2=".9" y2="1" gradientUnits="objectBoundingBox"><stop stop-color="#f3ffff"/><stop offset=".12" stop-color="#648487"/><stop offset=".25" stop-color="#162b35"/><stop offset=".49" stop-color="#a5bec0"/><stop offset=".55" stop-color="#d3e3e3"/><stop offset=".68" stop-color="#405860"/><stop offset="1" stop-color="#06121c"/></linearGradient>
+ <linearGradient id="agEdge" x2="0" y2="1"><stop stop-color="#315158"/><stop offset=".45" stop-color="#0b202c"/><stop offset=".8" stop-color="#020a12"/><stop offset="1" stop-color="#527178"/></linearGradient>
+ <linearGradient id="agGlass" x1="0" y1="0" x2=".55" y2="1"><stop stop-color="#fff" stop-opacity=".43"/><stop offset=".42" stop-color="#fff" stop-opacity=".03"/><stop offset=".65" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#00141c" stop-opacity=".35"/></linearGradient>
+ <linearGradient id="agShine" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <radialGradient id="agShadow"><stop stop-color="#000b"/><stop offset="1" stop-color="#0000"/></radialGradient>
+ <clipPath id="agFace"><rect x="16" y="15" width="96" height="72" rx="8"/></clipPath>
+</defs>
+<ellipse cx="64" cy="99" rx="62" ry="12" fill="url(#agShadow)"/>
+<rect x="9" y="17" width="110" height="88" rx="14" fill="url(#agEdge)" stroke="#06121d" stroke-width="2"/>
+<path d="M17 99H111" stroke="#89a4a9" stroke-opacity=".6"/>
+<rect x="9" y="9" width="110" height="88" rx="14" fill="url(#agMetal)" stroke="#b7d2d0" stroke-width="1"/>
+<rect x="13" y="12" width="102" height="79" rx="10" fill="#041923" stroke="#09141b" stroke-width="1.5"/>
+<g clip-path="url(#agFace)"><svg x="16" y="15" width="96" height="72" xmlns="http://www.w3.org/2000/svg" id="flag-icons-et" viewBox="0 0 640 480">
+  <defs>
+    <clipPath id="et-a">
+      <path fill-opacity=".7" d="M-61.3 0h682.7v512H-61.3z"/>
+    </clipPath>
+  </defs>
+  <g fill-rule="evenodd" stroke-width="1pt" clip-path="url(#et-a)" transform="translate(57.5)scale(.94)">
+    <path fill="#ffc621" d="M-238 3.5H800v498H-238z"/>
+    <path fill="#ef2118" d="M-240 342.5H799.3V512H-240z"/>
+    <path fill="#298c08" d="M-238 0H800v180H-238z"/>
+    <circle cx="534.2" cy="353" r="199.7" fill="#006bc6" transform="matrix(.54 0 0 .54 -25.8 74)"/>
+    <path fill="#ffc621" d="m214.3 188.2-6.5 4.5 23.5 33 6.3-4zm29.4 78-9.7-6.8 4-12.7-48.1.7-14-10.7 65.7-.7 12.2-36.9 6.6 15zm76.5-70.7-6.3-4.8-24.3 32.4 5.6 4.7zM254.8 247l3.5-11.2h13.3L256.4 190l6-16.5 20.5 62.4 38.8.5-12.2 10.7zm90.6 51.2 2.7-7.4-38.3-13.3-2.8 7zm-69.1-46.4 11.7-.1 4.1 12.6 38.8-28.5 17.6.6-53.1 38.7 11.5 37.2-14-8.4zm-19.8 102 7.9.2.3-40.5-7.4-.5zm22-80.3 3.8 11.1-10.7 8 39.4 27.7 5 16.8-53.6-38-31.5 22.7 3.5-16 44-32.3zm-103.3 13 2.3 7.5 38.7-12.2-2-7.2zm83.2-4-9.4 7.1-10.8-7.7-14.2 46-14.4 10 19.5-62.7-31.4-23 16.3-1.6z"/>
+  </g>
+</svg>
+<rect x="16" y="15" width="96" height="72" fill="url(#agGlass)"/>
+<path d="M16 15H112V29C79 28 50 42 16 48Z" fill="url(#agShine)"/></g>
+<rect x="16" y="15" width="96" height="72" rx="8" fill="none" stroke="#d7ffff" stroke-opacity=".6"/>
+<path d="M24 11H102" stroke="#fff" stroke-opacity=".8" stroke-linecap="round"/>
+<path d="M13 26V69" stroke="#d6ffff" stroke-opacity=".35"/>
+<path d="M43 94H85" stroke="#b9ed49" stroke-width="2" stroke-linecap="round"/>
+<circle cx="19" cy="93" r="1.5" fill="#89adba"/><circle cx="109" cy="93" r="1.5" fill="#89adba"/>
+</svg>

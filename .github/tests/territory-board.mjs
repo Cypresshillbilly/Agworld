@@ -21,6 +21,9 @@ export async function exerciseTerritoryBoard(page){
  assert.equal(flagSizes.overview,64,'Regional flags are prominent at startup');
  assert.ok(flagSizes.closer<flagSizes.overview,'Flags shrink as the player zooms in');
  assert.equal(flagSizes.restored,flagSizes.overview,'Zooming back out restores flag size');
+ assert.match(await page.evaluate(()=>countries[0]._marker.options.icon.url),/flags-polished/);
+ const badges=await page.evaluate(async()=>Promise.all(countries.map(c=>new Promise(resolve=>{const image=new Image();image.onload=()=>resolve(image.naturalWidth>0);image.onerror=()=>resolve(false);image.src='data/gis/africa/flags-polished/'+c.iso2+'.svg';}))));
+ assert.equal(badges.length,48);assert.ok(badges.every(Boolean),'Every polished national badge decodes in the browser');
  await panels(page,{map:true,territory:true});
  assert.equal(await page.locator('#territoryInfoPanel').getAttribute('data-territory-level'),'country');
  await page.evaluate(async()=>{

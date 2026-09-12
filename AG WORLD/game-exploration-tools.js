@@ -23,17 +23,19 @@
   if(playerOpen)advisorsOpen=false;
   button.hidden=!!playerOpen;panel.hidden=!advisorsOpen||!!playerOpen;panel.inert=panel.hidden;
   button.setAttribute('aria-expanded',String(!panel.hidden));
-  // Use the drawer's destination geometry; its animated rectangle can still be offscreen.
+  // Leave the native map attribution strip clear and open the advisor bay upward.
   const header=document.querySelector('.map-header');
-  const top=window.AGWorldDrawers?.getState().map?(header?header.offsetTop+header.offsetHeight:0)+14:18;
-  button.style.top=top+'px';panel.style.top=(top+56)+'px';
-  const g=window.AGWorldDrawers?.geometry();panel.style.maxHeight=Math.max(180,(window.AGWorldDrawers?.getState().command?g.commandTop:window.innerHeight)-top-76)+'px';
+  const safeTop=window.AGWorldDrawers?.getState().map?(header?header.offsetTop+header.offsetHeight:0)+14:18;
+  const iconHeight=button.offsetHeight||88;
+  const bottom=48,panelBottom=bottom+iconHeight+10;
+  button.style.top='auto';button.style.bottom=bottom+'px';panel.style.top='auto';panel.style.bottom=panelBottom+'px';
+  panel.style.maxHeight=Math.max(160,window.innerHeight-panelBottom-safeTop)+'px';
   panel.querySelectorAll('[data-map-advisor]').forEach(b=>b.setAttribute('aria-pressed',String(window.AGWorldAdvisorState?.id===b.dataset.mapAdvisor)));
  }
  function setupAdvisors(){
   if($('agMapAdvisorsToggle'))return;
   const shell=document.querySelector('.app-shell');if(!shell)return;
-  const button=document.createElement('button');button.id='agMapAdvisorsToggle';button.type='button';button.setAttribute('aria-label','Toggle AgWorld advisors');button.setAttribute('aria-controls','agMapAdvisors');button.innerHTML='<img src="brand/logos/PNG_Transparent/AgWorld_AW_Icon.png" alt="AgWorld"><span>ADVISORS</span>';
+  const button=document.createElement('button');button.id='agMapAdvisorsToggle';button.type='button';button.setAttribute('aria-label','Toggle AgWorld advisors');button.setAttribute('aria-controls','agMapAdvisors');button.innerHTML='<img src="brand/logos/PNG_Transparent/AgWorld_AW_Icon.png" alt="AgWorld">';
   const panel=document.createElement('aside');panel.id='agMapAdvisors';panel.setAttribute('aria-label','Map advisory bay');panel.hidden=true;
   const advisors=[['system-administrator','System Administrator'],['compliance','Compliance'],['sales','Sales'],['product','Product'],['operations','Operations'],['technical','Technical']];
   panel.innerHTML='<header><strong>ADVISORY BAY</strong><button type="button" aria-label="Close map advisors">×</button></header><p>Your guide + five specialists</p><div>'+advisors.map(([id,name])=>'<button type="button" data-map-advisor="'+id+'" aria-pressed="false"><img alt="" src="'+(id==='system-administrator'?'assets/advisors/system-administrator.webp':'assets/advisors/agworld_'+id+'_commander_round(1).png')+'"><span>'+name+'</span></button>').join('')+'</div>';

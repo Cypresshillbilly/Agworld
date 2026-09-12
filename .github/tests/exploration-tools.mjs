@@ -2,6 +2,17 @@ import assert from 'node:assert/strict';
 import {panels} from './drawers.mjs';
 export async function exerciseExplorationTools(page){
  await panels(page,{player:false,map:false,territory:false,command:false});
+ assert.equal(await page.locator('#agMapAdvisorsToggle span').count(),0,'The AgWorld advisor launcher is icon-only');
+ assert.ok(await page.locator('#agMapAdvisorsToggle img').evaluate(e=>e.getBoundingClientRect().width)>=88);
+ assert.ok(await page.locator('#agMapAdvisorsToggle').evaluate(e=>{const r=e.getBoundingClientRect();return r.left<50&&Math.abs(innerHeight-r.bottom-48)<2;}),'AgWorld icon sits above the lower-left map attribution strip');
+ assert.equal(await page.locator('.map-header #agBoundaryCredits').count(),1);
+ assert.equal(await page.locator('#agBoundaryCredits').isVisible(),false,'Boundary credits stay inside the closed map menu');
+ const handleCenter=await page.locator('#agPlayerDrawerToggle').evaluate(e=>{const r=e.getBoundingClientRect();return Math.abs(r.top+r.height/2-innerHeight/2);});
+ assert.ok(handleCenter<2,'Main menu handle is vertically centered');
+ await panels(page,{player:true});
+ assert.equal(await page.locator('.missions').evaluate(e=>e.inert),true,'Opening MENU only reveals gray navigation');
+ assert.equal(await page.locator('.sidebar [aria-current=page]').count(),0);
+ await panels(page,{player:false});
  for(let i=0;i<2;i++){
   await panels(page,{map:true});
   const clear=await page.evaluate(()=>document.getElementById('agMapAdvisorsToggle').getBoundingClientRect().top>=document.querySelector('.map-header').getBoundingClientRect().bottom+10);
@@ -10,6 +21,7 @@ export async function exerciseExplorationTools(page){
  }
  assert.equal(await page.locator('#developerModeBtn').isVisible(),false,'Developer mode stays inside its closed drawer');
  await page.getByRole('button',{name:'Toggle AgWorld advisors',exact:true}).click();
+ assert.ok(await page.evaluate(()=>document.getElementById('agMapAdvisors').getBoundingClientRect().bottom<document.getElementById('agMapAdvisorsToggle').getBoundingClientRect().top),'Advisor bay opens upward');
  assert.equal(await page.locator('#agMapAdvisors [data-map-advisor]').count(),6);
  await page.locator('#agMapAdvisors [data-map-advisor=system-administrator]').click();
  await page.locator('#agWorldSystemGuide.show').waitFor();

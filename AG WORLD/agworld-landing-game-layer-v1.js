@@ -56,9 +56,9 @@
    frame(stats,mapW-statsW,statsTop,statsW,statsH);set(stats,'max-height',statsH+'px');set(stats,'max-width','none');set(stats,'z-index','2300');set(stats,'transform',state.territory?'translateX(0)':'translateX('+(statsW-28)+'px)');
    stats.classList.toggle('collapsed',!state.territory);access($('territoryStatsDrawerContent'),state.territory);
    const handles={player:$('agPlayerDrawerToggle'),workspace:$('agWorkspaceDrawerToggle'),map:$('agMapDrawerToggle'),command:$('agCommandDrawerToggle'),territory:$('territoryStatsToggle')};
-   set(handles.player,'left',(state.player?side:0)+'px');set(handles.player,'top','56px');
+   set(handles.player,'left',(state.player?side:0)+'px');set(handles.player,'top',Math.max(0,Math.round((h-(handles.player.offsetHeight||110))/2))+'px');
    set(handles.workspace,'left',left+'px');set(handles.workspace,'top',Math.max(200,Math.round(h*.45))+'px');
-   handles.workspace.hidden=!state.player;
+   handles.workspace.hidden=!state.player||!state.workspace;
    set(handles.map,'left',Math.round(left+mapW/2)+'px');set(handles.map,'top',state.map?(headerH+24)+'px':'0px');
    set(handles.command,'left',Math.round(left+mapW/2)+'px');set(handles.command,'bottom',state.command?(commandH+bottom)+'px':'0px');
    for(const [key,el]of Object.entries(handles)){if(!el)continue;el.setAttribute('aria-expanded',String(state[key]));el.title=(state[key]?'Close ':'Open ')+names[key];const arrow=el.querySelector('b,.ag-territory-toggle-arrow');if(arrow)arrow.textContent=(key==='player'||key==='workspace')?(state[key]?'‹':'›'):key==='territory'?(state[key]?'›':'‹'):key==='map'?(state[key]?'▴':'▾'):(state[key]?'▾':'▴');}
@@ -70,6 +70,7 @@
  function change(key,open){
    if(!(key in state)||state[key]===!!open)return;
    state[key]=!!open;
+   if(key==='player'&&open)state.workspace=false;
    if(key==='player'&&!open)state.workspace=false;
    if(key==='workspace'&&open)state.player=true;
    if(key==='player'&&open)window.AG_WORLD_GUIDE?.hide?.();

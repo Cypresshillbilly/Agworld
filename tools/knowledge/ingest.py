@@ -30,7 +30,8 @@ def classify(relative):
     if PRIVATE.search(relative) or PRIVATE_EXTRA.search(relative):return 'restricted-records'
     return 'technical' if TECH.search(relative) else 'product'
 def clean(text):
-    return '\n'.join(line.rstrip() for line in str(text).replace('\x00','').replace('\r','').splitlines()).strip()
+    text=re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]',' ',str(text)).replace('\r','')
+    return '\n'.join(line.rstrip() for line in text.splitlines()).strip()
 def paras(root):
     return [clean(''.join(p.itertext())) for p in root]
 def extract(path,ext):
