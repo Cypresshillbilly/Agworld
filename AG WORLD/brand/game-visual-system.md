@@ -1,6 +1,6 @@
-# AgWorld Game Visual System - V1.5 Player Command addendum
+# AgWorld Game Visual System - V1.6 Immersive Drawers
 
-V1.5 adopts the owner-approved [Player Command V2](../PLAYER_SCREEN_V2_BASELINE.md): a wider player column, Sales Funnel on Dashboard, Skills in Profile, six advisors, a brushed-aluminum Command Center rim, non-scrolling illustrated mission, integrated Enter AgWorld control, and a readable sidebar tagline over farmland. This addendum supersedes conflicting composition and bezel rules in V1.4; its visual tokens remain unchanged. The Administrator's current portrait is provisional while the owner supplies likeness references.
+V1.6 adopts the owner-approved [Immersive Drawers V3](../PLAYER_SCREEN_V3_BASELINE.md): Player Hub from the left, Map Menu from the top, Territory Stats from the right and Command Center from the bottom. All start closed over the persistent live game map. There is no Enter AgWorld control. Command Center and Territory Stats share a thick photographic aluminum frame. Sidebar farmland fills the navigation height with its sky fading into dark teal. The wider player column, personal Sales Funnel, Skills in Profile, six advisors and non-scrolling mission from V2 remain. These rules supersede conflicting composition and bezel rules in V1.4/V1.5; their color and type tokens remain unchanged. The Administrator portrait remains provisional pending the owner's likeness references.
 
 Effective 12 September 2026. The product owner's supplied `ChatGPT Image Sep 10, 2026, 09_56_13 PM.png` is the visual authority for the whole game. The reference is reproduced in [the V1.4 guide](guides/AgWorld_Brand_Guide_V1.4_Game_Visual_System.pdf).
 
@@ -8,7 +8,7 @@ The target is the reference's dark cinematic agricultural command interface: con
 
 ## Authority and geometry
 
-This edition supersedes V1.3's light dashboard direction for the game interface. V1.3 continues to govern logo masters, identity protection and print formulas. The approved login and loading surfaces remain separate. The [Player Command V2 baseline](../PLAYER_SCREEN_V2_BASELINE.md) governs the main geometry: the reference's panel arrangement must not replace the existing game arrangement. Panel internals may adapt for readability within their established frames.
+This edition supersedes V1.3's light dashboard direction for the game interface. V1.3 continues to govern logo masters, identity protection and print formulas. The approved login and loading surfaces remain separate. The [Immersive Drawers V3 baseline](../PLAYER_SCREEN_V3_BASELINE.md) governs geometry and movement. The reference's panel arrangement must not replace the existing game arrangement. Panel internals may adapt for readability within their established frames.
 
 ## Production game tokens
 
@@ -27,6 +27,8 @@ This edition supersedes V1.3's light dashboard direction for the game interface.
 | Chart teal | `#36D4A9` | Radar fill at 30-35% opacity |
 
 Main material: a 125-degree gradient from highlight through main panel to panel shadow, a 1 px teal border, a restrained inner top highlight and a short dark shadow. Use 6-7 px main card corners and 4-5 px inner tile corners. Green glow identifies active selection; avoid glowing every surface.
+
+Command Center and Territory Stats use the same 12-14px photographic brushed-silver frame, with 16px outer corners, directional highlights and a dark inset gasket. Preserve deep teal inside the device; silver is the housing, not the card background. Edge handles use dark teal, readable condensed labels, silver boundaries and lime directional cues. Use approximately 280ms drawer motion and disable animation when reduced motion is requested.
 
 ## Typography
 
@@ -53,7 +55,7 @@ Use the existing approved transparent PNG masters without tracing, recoloring or
 
 `game-reference-theme.css` owns the visual system through one CSS layer. `game-reference-theme.js` activates it at the authenticated boot boundary and removes obsolete material overrides without removing layout styles. Existing card owners produce semantic content and live values. New components must extend this theme, not introduce competing appearance controllers.
 
-Review Dashboard, every sidebar route, expanded territory, company/entity views, editing forms, profile windows and advisors at 1600 and 1280 px. Check the approved V2 outer geometry, font/art loading, readable labels, real values, contrast, focus, scrolling, delayed updates and Developer Mode. The guide states a visual target; completion of automated checks alone does not establish pixel identity with a raster reference in a different geometry.
+Review Dashboard, every sidebar route, expanded territory, company/entity views, editing forms, profile windows and advisors at 1600 and 1280 px. Check all 16 V3 drawer combinations, default immersive login/refresh, preserved selections and forms, font/art loading, readable labels, real values, contrast, focus, scrolling, delayed updates and Developer Mode. The guide states a visual target; completion of automated checks alone does not establish pixel identity with a raster reference in a different geometry.
 
 ## Asset provenance
 
@@ -64,3 +66,7 @@ Review Dashboard, every sidebar route, expanded territory, company/entity views,
 ## Player Command media update
 
 Current Safety Training uses `assets/missions/safety-training.webp`: a Company instructor and employees learning field safety with protective equipment. `assets/advisors/system-administrator.webp` is a provisional fictional male guide pending the owner's photos. `assets/brand/sidebar-farmland.webp` supplies the agricultural footer. All three were generated with the built-in image tool and optimized as WebP. `assets/audio/system-administrator-welcome.mp3` is a self-hosted generated male welcome voice, played on explicit advisor selection. These assets do not establish the identity or personality of a real person.
+
+## Immersive drawer material
+
+`assets/brand/brushed-aluminum.webp` was generated using the built-in image tool and optimized to a 512px WebP (27,576 bytes). Prompt: "Use case: photorealistic-natural. Asset type: seamless material texture for a premium agricultural game interface's thick machined aluminum frame. Create a square, edge-to-edge photorealistic macro photograph of clean silver brushed aluminum, fine dense horizontal machining hairlines, subtle microscopic imperfections, realistically reflective satin metal with a restrained broad soft studio-light highlight. Neutral silver and cool graphite variation, luxurious real industrial material, evenly lit, low-contrast enough to tile unobtrusively. Orthographic flat surface, no perspective. No objects, bevels, borders, screws, holes, symbols, lettering, logos or text. No dark vignette. This is only the material texture; the app will supply the frame geometry and bevel."

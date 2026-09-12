@@ -37,34 +37,8 @@ const sidebar=()=>{const s=document.querySelector('.sidebar');if(!s)return;
 };
 const missions=()=>{ /* Mission content is owned exclusively by Player Progression. Never inject demo missions here. */ };
 
-const ensureGameModeControl=()=>{
- let control=document.getElementById('agGameModeControl');
- if(!control){
-   control=document.createElement('button');
-   control.type='button';control.id='agGameModeControl';
-   control.innerHTML='<span class="ag-game-control-dot"></span><span class="ag-game-control-label">ENTER FULL GAME</span>';
-   document.body.appendChild(control);
-   control.addEventListener('click',e=>{
-     e.preventDefault();e.stopPropagation();
-     if(document.body.classList.contains('ag-game-mode'))window.agWorldExitPremium?.();
-     else window.agWorldEnterPremium?.();
-     sync();
-   });
-   const area=document.querySelector('.map-area');
-   if(area)area.addEventListener('click',e=>{
-     if(!document.body.classList.contains('ag-profile-mode'))return;
-     if(e.target.closest('button,a,input,select,textarea,.ag-missions-drawer-handle'))return;
-     control.classList.add('show');
-   },true);
- }
- function sync(){
-   const inGame=document.body.classList.contains('ag-game-mode');
-   control.classList.toggle('show',inGame||control.classList.contains('show'));
-   control.querySelector('.ag-game-control-label').textContent=inGame?'EXIT FULL GAME':'ENTER FULL GAME';
- }
- sync();window.addEventListener('agworld:ui-shell-ready',sync,{once:true});
- return control;
-};
+// The four edge drawers replace the former full-game entry control.
+const ensureGameModeControl=()=>null;
 
 // The shell is mounted once. A late window load event must not replace live
 // navigation buttons after the authenticated player screen is already usable.

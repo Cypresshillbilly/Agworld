@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import {panels} from './drawers.mjs';
 
 export async function exercisePlayerCommand(page){
   await page.goto(new URL('/index.html?returning-player',page.url()).href);
   await page.waitForFunction(()=>window.AGWorldBootDiagnostics?.regression?.pass===true);
+  await panels(page);
   for(const size of [{width:1280,height:720},{width:1600,height:1000}]){
-    await page.setViewportSize(size);await page.waitForTimeout(180);
+    await page.setViewportSize(size);await page.waitForTimeout(350);
     const card=page.locator('#agCanonicalMissionCard');
     assert.match(await card.textContent(),/Complete Mandatory Safety Training/i);
     assert.match(await card.locator('img').getAttribute('src'),/safety-training.webp/);
@@ -44,19 +46,13 @@ export async function exercisePlayerCommand(page){
     await page.waitForFunction(()=>{const el=document.getElementById('territoryStatsDrawer');return Math.abs(el.getBoundingClientRect().width-parseFloat(el.style.width))<1;});
     assert.ok(await page.locator('#territoryStatsDrawer').evaluate(el=>el.getBoundingClientRect().width>200));
     await page.locator('#territoryStatsToggle').click();
-    assert.equal(await page.locator('#territoryStatsDrawer').evaluate(el=>Math.round(el.getBoundingClientRect().width)),28,'Collapsed drawer leaves only its handle');
+    await page.waitForFunction(()=>Math.round(window.innerWidth-document.getElementById('territoryStatsDrawer').getBoundingClientRect().left)===28);
+    assert.equal(await page.locator('#territoryStatsDrawer').evaluate(el=>Math.round(window.innerWidth-el.getBoundingClientRect().left)),28,'Collapsed drawer leaves only its handle');
   }
-  assert.equal(await page.locator('.map-tools #agEnterWorldBtn').count(),1);
-  await page.locator('#agEnterWorldBtn').click();
-  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('ag-full-game-mode')),true);
-  await page.waitForFunction(()=>document.querySelector('.map-area').getBoundingClientRect().left===0);
-  assert.equal(await page.locator('.sidebar').isVisible(),false);
-  assert.equal(await page.locator('.missions').isVisible(),false);
-  assert.equal(await page.locator('.map-area').evaluate(el=>Math.round(el.getBoundingClientRect().width)),1600);
-  await page.locator('#agEnterWorldBtn').click();
-  assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('ag-full-game-mode')),false);
-  await page.waitForFunction(()=>document.querySelector('.sidebar').getBoundingClientRect().width>0);
-  assert.equal(await page.locator('.sidebar').isVisible(),true);
+  assert.equal(await page.locator('#agEnterWorldBtn').count(),0);
+  await panels(page,{player:false,map:false,command:false,territory:false});
+  assert.equal(await page.locator('body').getAttribute('data-ag-immersive'),'true');
   await page.goto(new URL('/index.html',page.url()).href);
   await page.waitForFunction(()=>window.AGWorldBootDiagnostics?.regression?.pass===true);
+  await panels(page);
 }
