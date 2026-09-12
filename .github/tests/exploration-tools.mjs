@@ -32,7 +32,8 @@ export async function exerciseExplorationTools(page){
  await page.evaluate(()=>AGWorldPlayerMenu.select('dashboard'));
  await panels(page,{player:false,map:false,territory:true,command:false});
  const center=await page.locator('#territoryStatsDrawer').evaluate(e=>{const r=e.getBoundingClientRect();return Math.abs((r.top+r.bottom)/2-innerHeight/2);});
- assert.ok(center<2,'Territory stats sits on the vertical screen center; offset '+center);
+ const screenLayout=await page.evaluate(()=>({viewport:[innerWidth,innerHeight],state:AGWorldDrawers.getState(),geometry:AGWorldDrawers.geometry(),elements:['html','body','.app-shell','.map-area','#territoryStatsDrawer'].map(s=>{const e=document.querySelector(s);return {selector:s,rect:e.getBoundingClientRect().toJSON(),scroll:[e.scrollLeft,e.scrollTop],style:e.getAttribute('style')};})}));
+ assert.ok(center<2,'Territory stats sits on the vertical screen center; offset '+center+'; '+JSON.stringify(screenLayout));
  await panels(page,{map:true,command:true});
  const layout=await page.evaluate(()=>{const r=s=>document.querySelector(s).getBoundingClientRect();return {top:r('#territoryStatsDrawer').top,header:r('.map-header').bottom,bottom:r('#territoryStatsDrawer').bottom,command:r('#entityInformationSection').top};});
  assert.ok(layout.top>=layout.header&&layout.bottom<=layout.command,'Stats fits between open top and bottom drawers');
