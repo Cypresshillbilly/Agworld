@@ -246,11 +246,16 @@
             const detail=event.detail||{};
             setProgress(detail.progress,detail.status);
           };
+          let highestChecklistStage=-1;
           const onChecklist=(event)=>{
             const stage=(event.detail||{}).stage;
             const order=['auth','interface','systems','map','world','populate','finalise'];
-            const current=order.indexOf(stage);
-            if(current<0) return;
+            const requested=order.indexOf(stage);
+            if(requested<0) return;
+            // Boot UI is monotonic: a late event may enrich diagnostics but can
+            // never untick or rewind a completed phase.
+            highestChecklistStage=Math.max(highestChecklistStage,requested);
+            const current=highestChecklistStage;
             document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
               const index=order.indexOf(item.dataset.loadStage);
               item.classList.toggle('is-complete',index<current);
