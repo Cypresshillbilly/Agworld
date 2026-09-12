@@ -276,6 +276,20 @@
             requestAnimationFrame(()=>setTimeout(resolve,0));
           });
 
+          // The GIS/world engine already publishes real phased progress. Keep
+          // Loading Page V0 subscribed to those events so map/world/population
+          // phases reflect actual work rather than an artificial timer.
+          const onProgress=(event)=>{
+            const detail=event.detail||{};
+            if(Number.isFinite(Number(detail.progress))) setProgress(detail.progress,detail.status);
+          };
+          const onChecklist=(event)=>{
+            const detail=event.detail||{};
+            if(detail.stage) setStage(detail.stage);
+          };
+          window.addEventListener('agworld:load-progress',onProgress);
+          window.addEventListener('agworld:load-checklist',onChecklist);
+
           // Listen before dispatching authentication lifecycle events. The
           // canonical V1 boot lock owns this event and emits it only when the
           // approved Player V1 surface is genuinely composed and ready.
@@ -308,19 +322,9 @@
           window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
           window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user:data.user}}));
 
-          setProgress(52,'LOADING MAP ENGINE');
-          setStage('map');
-
-          // The V1 source stack continues underneath the loader. Progress phases
-          // remain monotonic and the screen is never exposed until canonical V1
-          // confirms its own layout-ready event.
-          await nextPaint();
-          setProgress(68,'LOADING SOUTH AFRICA');
-          setStage('world');
-          await nextPaint();
-          setProgress(82,'POPULATING MAP');
-          setStage('populate');
-
+          // The V1 source stack continues underneath the loader. The GIS engine
+          // now drives MAP → WORLD → POPULATE using its real phased events.
+          // The screen is never exposed until canonical V1 confirms readiness.
           try{
             await playerReady;
             setProgress(94,'FINALISING PLAYER SCREEN');
@@ -334,6 +338,9 @@
 
             if(gameLoader) gameLoader.classList.remove('is-active');
             reveal();
+          } finally {
+            window.removeEventListener('agworld:load-progress',onProgress);
+            window.removeEventListener('agworld:load-checklist',onChecklist);
           }
         }catch(err){
           console.error('AG World sign-in failed',err);
