@@ -24,7 +24,7 @@ export async function exerciseReferenceTheme(page){
     assert.ok(Math.abs(g.stack.y-g.player.bottom-10)<3,'Protected player-to-progression gap');
     assert.ok(Math.abs(g.stack.bottom-g.advisor.y+14)<3,'Protected progression-to-advisor gap');
     assert.ok(Math.abs(g.advisor.y-g.command.y)<3,'Advisors remain aligned to the Command Center');
-    assert.ok(g.start.bottom<=g.mission.bottom+1,'Mission action is visible within its card');
+    assert.ok(g.start.bottom<=g.mission.bottom+1,'Mission action is visible within its card: '+JSON.stringify({size,mission:g.mission,start:g.start}));
     const portraits=await page.locator('.ag-advisor-portrait').evaluateAll(els=>els.map(el=>({loaded:el.complete&&el.naturalWidth>0,rect:el.getBoundingClientRect().toJSON()})));
     assert.equal(portraits.length,5);assert.ok(portraits.every(p=>p.loaded));
     assert.ok(Math.max(...portraits.map(p=>p.rect.y))-Math.min(...portraits.map(p=>p.rect.y))<2,'One aligned row of photographic advisors');

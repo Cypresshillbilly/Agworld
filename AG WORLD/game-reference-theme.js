@@ -29,6 +29,9 @@
    });
  }
  clean();
+ const shell=document.querySelector('.app-shell');
+ const fit=()=>document.documentElement.classList.toggle('ag-reference-compact',!!shell&&shell.getBoundingClientRect().height<=780);
+ fit();if(shell&&'ResizeObserver'in window)new ResizeObserver(fit).observe(shell);
  let scheduled=false;
  const observer=new MutationObserver(()=>{
    if(scheduled)return;scheduled=true;
