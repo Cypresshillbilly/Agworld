@@ -1213,10 +1213,10 @@ function seedDemoFarms() {
 }
 
 async function loadFarms() {
-  // The base map must never wait for farm or territory JSON.
-  // On slow GitHub Pages responses the old Promise.all kept the UI permanently
-  // on the initial "Loading Agricultural maps" message before initMap() ran.
+  // Player-first boot: the map starts immediately, while farm data is deferred
+  // until the player actually reaches FARM & ASSET level.
   initMap();
+  loadSpatialLayersInBackground();
 
   try {
     const [farmResult, territoryResult] = await Promise.allSettled([
@@ -1258,13 +1258,8 @@ async function loadFarms() {
     initialiseGameTerritories();
 
     if (map) {
-      farms.forEach(farm => { if (!farm._marker) addFarm(farm); });
-      // Country geometry is GIS-only. Do not render the local fallback outline.
-      // Province records are retained as metadata only. Their old rectangular
-      // placeholder boundaries must never be rendered; visible territory
-      // boundaries come from GIS/base-map boundary data.
-      municipalities.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Municipality overlay skipped', error); } });
-      towns.forEach(item => { try { addTerritory(item); } catch (error) { console.warn('Town overlay skipped', error); } });
+      // Geometry/data is activated progressively by zoom. Do not create hidden
+      // farm or municipal overlays during initial player boot.
       updateZoomStage();
       $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded · loading municipal and town GIS…`;
     }
@@ -1331,100 +1326,104 @@ async function fetchSpatialLayerWithRetry(url, label, timeoutMs = 60000, attempt
   throw lastError;
 }
 
-async function loadSpatialLayersInBackground() {
-  console.info('AG World GIS loader v24 started');
-  // Use verified layer-specific field names directly. This avoids a stale
-  // external configuration overriding the query with fields that do not exist.
-  const spatialSources = {
-    // Official GIS geometry only: country, provinces, municipalities and towns.
-    country: 'data/gis/south-africa-country.geojson',
-    provinces: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/109/query?where=1%3D1&outFields=OBJECTID%2CPROVINCE&returnGeometry=true&outSR=4326&geometryPrecision=5&f=geojson',
-    municipalities: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/115/query?where=1%3D1&outFields=OBJECTID%2CMAP_TITLE&returnGeometry=true&outSR=4326&maxAllowableOffset=0.001&geometryPrecision=5&f=geojson',
-    towns: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/130/query?where=1%3D1&outFields=OBJECTID%2CSGTOWN%2CTOWN_EXT%2CSGTOWNCODE&returnGeometry=true&outSR=4326&f=geojson'
-  };
-  $('mapStatus').textContent = 'GIS loading · Country, provinces, municipalities and towns: connecting…';
 
-  const countryPromise = fetchSpatialLayer(spatialSources.country, 'country boundary', 30000);
-  const provincePromise = fetchSpatialLayer(spatialSources.provinces, 'provincial boundaries', 30000);
-  const municipalPromise = fetchSpatialLayerWithRetry(spatialSources.municipalities, 'municipal boundaries', 90000, 3);
-  const townPromise = fetchSpatialLayerWithRetry(spatialSources.towns, 'town boundaries', 90000, 3);
+// AG WORLD Progressive World Loading V1
+// Layer data is fetched only when the player reaches the relevant world level.
+// Each layer is cached for the session once loaded.
+const AGWORLD_WORLD_LOD = { country: 1, provinces: 2, municipalities: 3, towns: 4, farms: 5 };
+const spatialLayerState = {
+  country: { status: 'idle', promise: null },
+  provinces: { status: 'idle', promise: null },
+  municipalities: { status: 'idle', promise: null },
+  towns: { status: 'idle', promise: null }
+};
+const spatialSources = {
+  country: 'data/gis/south-africa-country.geojson',
+  provinces: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/109/query?where=1%3D1&outFields=OBJECTID%2CPROVINCE&returnGeometry=true&outSR=4326&geometryPrecision=5&f=geojson',
+  municipalities: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/115/query?where=1%3D1&outFields=OBJECTID%2CMAP_TITLE&returnGeometry=true&outSR=4326&maxAllowableOffset=0.001&geometryPrecision=5&f=geojson',
+  towns: 'https://law.drdlr.gov.za/server/rest/services/LAW_Spatial_Admin_Boundaries/MapServer/130/query?where=1%3D1&outFields=OBJECTID%2CSGTOWN%2CTOWN_EXT%2CSGTOWNCODE&returnGeometry=true&outSR=4326&f=geojson'
+};
 
-  municipalPromise.then(() => {
-    $('mapStatus').textContent = 'GIS loading · Municipalities: downloaded · Towns: still loading…';
-  }).catch(error => {
-    console.error('Municipal GIS load failed:', error);
-    $('mapStatus').textContent = 'GIS loading · Municipalities: failed · Towns: still loading…';
-  });
+function progressiveStageForZoom(zoom) {
+  return zoom < 5.5 ? 1 : zoom < 8 ? 2 : zoom < 11 ? 3 : zoom < 13 ? 4 : 5;
+}
 
-  townPromise.then(() => {
-    $('mapStatus').textContent = 'GIS loading · Towns: downloaded · Municipalities: still loading…';
-  }).catch(error => {
-    console.error('Town GIS load failed:', error);
-    $('mapStatus').textContent = 'GIS loading · Towns: failed · Municipalities: still loading…';
-  });
-
-  const [countryLayer, provinceLayer, municipalLayer, townLayer] = await Promise.allSettled([
-    countryPromise, provincePromise, municipalPromise, townPromise
-  ]);
-  const errors = [];
-  const errorDetails = [];
-
-  if (countryLayer.status === 'fulfilled') {
-    const gisCountries = normaliseSpatialFeatures(countryLayer.value, 'country');
-    const gisCountry = gisCountries[0];
-    if (gisCountry && countries[0]) {
-      if (countries[0]._polygon) countries[0]._polygon.setMap(null);
-      if (countries[0]._marker) countries[0]._marker.setMap(null);
-      countries[0].boundary = gisCountry.boundary;
-      countries[0].center = gisCountry.center;
-      countries[0].source = gisCountry.source;
-      countries[0].properties = gisCountry.properties;
+function loadSpatialLayerOnce(kind) {
+  const state = spatialLayerState[kind];
+  if (!state) return Promise.resolve();
+  if (state.status === 'loaded') return Promise.resolve();
+  if (state.status === 'loading') return state.promise;
+  state.status = 'loading';
+  const retry = kind === 'municipalities' || kind === 'towns';
+  const timeout = kind === 'country' || kind === 'provinces' ? 30000 : 90000;
+  state.promise = (retry
+    ? fetchSpatialLayerWithRetry(spatialSources[kind], kind + ' boundary', timeout, 3)
+    : fetchSpatialLayer(spatialSources[kind], kind + ' boundary', timeout)
+  ).then(layer => {
+    if (kind === 'country') {
+      const records = normaliseSpatialFeatures(layer, 'country');
+      const record = records[0];
+      if (record && countries[0]) {
+        if (countries[0]._polygon) countries[0]._polygon.setMap(null);
+        countries[0].boundary = record.boundary;
+        countries[0].center = record.center;
+        countries[0].source = record.source;
+        countries[0].properties = record.properties;
+      }
+      if (map) countries.forEach(addTerritory);
     }
-  } else { errors.push('country boundary'); errorDetails.push(countryLayer.reason?.message || 'unknown country error'); }
+    if (kind === 'provinces') {
+      const records = normaliseSpatialFeatures(layer, 'province');
+      const normaliseName = value => String(value || '').toLowerCase().replace(/agricultural territory/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+      records.forEach(record => {
+        const target = territories.find(t => normaliseName(t.regions?.[0]) === normaliseName(record.name));
+        if (!target) return;
+        if (target._polygon) target._polygon.setMap(null);
+        target.boundary = record.boundary;
+        target.center = record.center;
+        target.source = record.source;
+        target.properties = record.properties;
+        target.level = 'province';
+      });
+      if (map) territories.forEach(addTerritory);
+    }
+    if (kind === 'municipalities') {
+      municipalities.forEach(item => item._polygon?.setMap(null));
+      municipalities = normaliseSpatialFeatures(layer, 'municipality');
+      linkHierarchySpatialParents();
+      if (map) municipalities.forEach(addTerritory);
+    }
+    if (kind === 'towns') {
+      towns.forEach(item => item._polygon?.setMap(null));
+      towns = normaliseSpatialFeatures(layer, 'town');
+      linkHierarchySpatialParents();
+    }
+    refreshTerritoryControl();
+    state.status = 'loaded';
+    refreshMapVisibility();
+    return layer;
+  }).catch(error => {
+    state.status = 'error';
+    state.promise = null;
+    console.error('AG World progressive GIS layer failed:', kind, error);
+    return null;
+  });
+  return state.promise;
+}
 
-  if (provinceLayer.status === 'fulfilled') {
-    const gisProvinces = normaliseSpatialFeatures(provinceLayer.value, 'province');
-    const normaliseName = value => String(value || '').toLowerCase()
-      .replace(/agricultural territory/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-    gisProvinces.forEach(gisProvince => {
-      const target = territories.find(t => normaliseName(t.regions?.[0]) === normaliseName(gisProvince.name));
-      if (!target) return;
-      if (target._polygon) target._polygon.setMap(null);
-      if (target._marker) target._marker.setMap(null);
-      target.boundary = gisProvince.boundary;
-      target.center = gisProvince.center;
-      target.source = gisProvince.source;
-      target.properties = gisProvince.properties;
-      target.level = 'province';
-    });
-  } else { errors.push('provincial boundaries'); errorDetails.push(provinceLayer.reason?.message || 'unknown province error'); }
+function ensureSpatialLayersForZoom(zoom) {
+  const stage = progressiveStageForZoom(zoom);
+  // Stage 1: South Africa only. Each deeper layer starts only when required.
+  loadSpatialLayerOnce('country');
+  if (stage >= AGWORLD_WORLD_LOD.provinces) loadSpatialLayerOnce('provinces');
+  if (stage >= AGWORLD_WORLD_LOD.municipalities) loadSpatialLayerOnce('municipalities');
+  if (stage >= AGWORLD_WORLD_LOD.towns) loadSpatialLayerOnce('towns');
+}
 
-  if (municipalLayer.status === 'fulfilled') {
-    municipalities.forEach(item => { if (item._polygon) item._polygon.setMap(null); if (item._marker) item._marker.setMap(null); });
-    municipalities = normaliseSpatialFeatures(municipalLayer.value, 'municipality');
-  } else { errors.push('municipal boundaries'); errorDetails.push(municipalLayer.reason?.message || 'unknown municipal error'); }
-
-  if (townLayer.status === 'fulfilled') {
-    towns.forEach(item => { if (item._polygon) item._polygon.setMap(null); if (item._marker) item._marker.setMap(null); });
-    towns = normaliseSpatialFeatures(townLayer.value, 'town');
-  } else { errors.push('town boundaries'); errorDetails.push(townLayer.reason?.message || 'unknown town error'); }
-
-  linkHierarchySpatialParents();
-  if (window.AG_WORLD_DEMO_MODE) seedDemoFarms();
-  refreshTerritoryControl();
-
-  if (map) {
-    farms.forEach(farm => { if (!farm._marker) addFarm(farm); });
-    countries.forEach(addTerritory);
-    territories.forEach(addTerritory);
-    municipalities.forEach(addTerritory);
-    updateZoomStage();
-    syncVisibleTownOverlays();
-  }
-
-  $('mapStatus').textContent = errors.length
-    ? `GIS finished · ${countries.length} Country · ${territories.length} Provinces · ${municipalities.length} Municipalities · ${towns.length} Towns · failed: ${errors.join(' + ')} · ${errorDetails.join(' | ')}`
-    : `GIS loaded · ${countries.length} Country · ${territories.length} Provinces · ${municipalities.length} Municipalities · ${towns.length} Towns`;
+async function loadSpatialLayersInBackground() {
+  // Compatibility entry point retained for existing callers.
+  // It now loads only the layer required by the current zoom, never the whole world.
+  ensureSpatialLayersForZoom(map?.getZoom?.() ?? 5);
 }
 
 function renderGoogleMap() {
@@ -1451,9 +1450,12 @@ function renderGoogleMap() {
 
     map.addListener('zoom_changed', updateZoomStage);
     map.addListener('idle', () => {
-      if (map.getZoom() >= 11 && map.getZoom() < 13.5) syncVisibleTownOverlays();
+      const zoom = map.getZoom();
+      ensureSpatialLayersForZoom(zoom);
+      if (zoom >= 11 && zoom < 13.5 && spatialLayerState.towns.status === 'loaded') syncVisibleTownOverlays();
     });
-    farms.forEach(addFarm);
+    // No farm overlays at initial map creation.
+    ensureSpatialLayersForZoom(map.getZoom());
     updateZoomStage();
     $('mapStatus').textContent = farms.length
       ? `Satellite map active · ${farms.length} farm records loaded`
@@ -2154,37 +2156,36 @@ function updateMunicipalityLabels(zoom) {
 function refreshMapVisibility() {
   if (!map) return;
   const zoom = map.getZoom();
-  // Legacy placeholder geometry is never rendered; official GIS province
-  // geometry is managed by the zoom rules below.
-  const showBoundaries = zoom >= 8;
-  const showObjects = zoom >= 12;
+  // Progressive World Loading V1: visibility follows the same hierarchy as loading.
+  const stage = progressiveStageForZoom(zoom);
+  const showObjects = stage >= AGWORLD_WORLD_LOD.farms;
   // Hierarchical territory visibility:
   // Country (national) → Province → Municipality → Town → Farm.
   countries.forEach(country => {
-    if (country._polygon) country._polygon.setMap(zoom < 6 ? map : null);
-    if (country._marker) country._marker.setMap(zoom < 5.5 ? map : null);
+    if (country._polygon) country._polygon.setMap(stage === AGWORLD_WORLD_LOD.country ? map : null);
+    if (country._marker) country._marker.setMap(stage === AGWORLD_WORLD_LOD.country ? map : null);
   });
   // Province geometry is populated from the official GIS service.
   territories.forEach(territory => {
     // Provincial boundaries start at zoom 3 and remain visible through all
     // deeper territory levels so the province context is never lost.
     if (territory._polygon) {
-      territory._polygon.setMap(zoom >= 3 ? map : null);
+      territory._polygon.setMap(stage >= AGWORLD_WORLD_LOD.provinces ? map : null);
       territory._polygon.setOptions({ zIndex: 10, strokeWeight: zoom >= 8.5 ? 3.5 : 3.5 });
     }
     if (territory._marker) territory._marker.setMap(zoom >= 5.5 && zoom < 7.5 ? map : null);
   });
   updateMunicipalityLabels(zoom);
   municipalities.forEach(municipality => {
-    if (municipality._polygon) municipality._polygon.setMap(zoom >= 8 && zoom < 11.5 ? map : null);
+    if (municipality._polygon) municipality._polygon.setMap(stage === AGWORLD_WORLD_LOD.municipalities ? map : null);
     // Show only the floating municipality name — no red/default map pin.
-    if (municipality._marker) municipality._marker.setMap(zoom >= 8 && zoom < 11.5 ? map : null);
+    if (municipality._marker) municipality._marker.setMap(stage === AGWORLD_WORLD_LOD.municipalities ? map : null);
   });
   syncVisibleTownOverlays();
   farms.forEach(farm => {
     // Farms must remain visible once the user reaches the territory level.
-    if (farm._polygon) farm._polygon.setMap(zoom >= 7 ? map : null);
-    if (farm._marker) farm._marker.setMap(zoom >= 6 ? map : null);
+    if (farm._polygon) farm._polygon.setMap(stage >= AGWORLD_WORLD_LOD.farms ? map : null);
+    if (farm._marker) farm._marker.setMap(stage >= AGWORLD_WORLD_LOD.farms ? map : null);
   });
   objectMarkers.forEach(marker => marker.setMap(showObjects ? map : null));
 }
@@ -2195,6 +2196,10 @@ function updateZoomStage() {
   const stage = zoom < 5.5 ? 1 : zoom < 8 ? 2 : zoom < 11 ? 3 : zoom < 13 ? 4 : 5;
   const labels = ['COUNTRY · SOUTH AFRICA','PROVINCIAL TERRITORIES','MUNICIPAL TERRITORIES','TOWN TERRITORIES','FARM & ASSET LEVEL'];
   $('zoomStage').textContent = `ZOOM ${stage} · ${labels[stage - 1]}`;
+  ensureSpatialLayersForZoom(zoom);
+  if (stage >= AGWORLD_WORLD_LOD.farms) {
+    farms.forEach(farm => { if (!farm._marker && !farm._polygon) addFarm(farm); });
+  }
   refreshMapVisibility();
   if (stage >= 3 && selected) showFarmDetail(selected);
 }
