@@ -228,21 +228,42 @@
             }catch(err){ console.warn('Unable to clear remembered Ag World username',err); }
           }
           /*
-           * PLAYER-FIRST HANDOFF
-           * Authentication success must never wait for the map/GIS/runtime.
-           * The locked Player V1 shell already exists in index.html, so reveal
-           * it immediately and initialise the heavy world runtime in background.
+           * Controlled game handoff.
+           * Keep the user on a branded progress screen while the canonical
+           * Player V1 runtime loads. This replaces the white intermediate page.
            */
-          error.textContent='ENTERING AGWORLD…';
+          const gameLoader=document.getElementById('agworld-game-loader');
+          const bar=document.getElementById('agworld-game-loader-bar');
+          const percent=document.getElementById('agworld-game-loader-percent');
+          const status=document.getElementById('agworld-game-loader-status');
+          const setProgress=(progress,text)=>{
+            const p=Math.max(0,Math.min(100,Number(progress)||0));
+            if(bar) bar.style.width=p+'%';
+            if(percent) percent.textContent=Math.round(p)+'%';
+            if(status&&text) status.textContent=text;
+          };
+          const onProgress=(event)=>{
+            const detail=event.detail||{};
+            setProgress(detail.progress,detail.status);
+          };
+          window.addEventListener('agworld:load-progress',onProgress);
+
+          error.textContent='LOADING AGWORLD…';
+          setProgress(1,'AUTHENTICATION COMPLETE');
           gate.remove();
-          reveal();
+          if(gameLoader) gameLoader.classList.add('is-active');
+
           window.dispatchEvent(new CustomEvent('gamechanger:authenticated',{detail:{username:displayName,role:'agriculture_sales'}}));
           window.dispatchEvent(new CustomEvent('agworld:supabase-authenticated',{detail:{user:data.user}}));
 
-          if(window.__AGWORLD_BOOT_RUNTIME__){
-            Promise.resolve()
-              .then(()=>window.__AGWORLD_BOOT_RUNTIME__())
-              .catch(err=>console.error('AG World background runtime boot failed',err));
+          try{
+            if(window.__AGWORLD_BOOT_RUNTIME__) await window.__AGWORLD_BOOT_RUNTIME__();
+            setProgress(100,'AGWORLD READY');
+            await new Promise(resolve=>setTimeout(resolve,180));
+            if(gameLoader) gameLoader.classList.remove('is-active');
+            reveal();
+          } finally {
+            window.removeEventListener('agworld:load-progress',onProgress);
           }
         }catch(err){
           console.error('AG World sign-in failed',err);
