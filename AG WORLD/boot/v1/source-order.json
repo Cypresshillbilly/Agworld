@@ -15,7 +15,7 @@
   "farm-zoom-visual.js?v=manual-only-farm-visual-v2",
   "game-hud.js?v=20260903-dupfix",
   "game-view-mode.js?v=immersive-drawers-20260912",
-  "system-administrator-guide.js?v=immersive-commanders-20260912",
+  "system-administrator-guide.js?v=commander-arrival-audio-20260912",
   "mission-history-premium-v1.js?v=mission-history-green-skill-v1-20260910-1010",
   "unified-panel-polish-v1.js?v=unified-panels-v1-20260910-1018",
   "agworld-final-brand-unification-v1.js?v=final-brand-unification-v1-20260910-1022",
@@ -68,5 +68,5 @@
   "game-reference-theme.js?v=polished-map-controls-20260912",
   "game-exploration-tools.js?v=immersive-commanders-20260912",
   "advisor-knowledge.js?v=immersive-commanders-20260912",
-  "commander-companions.js?v=immersive-commanders-20260912"
+  "commander-companions.js?v=commander-arrival-audio-20260912"
 ]

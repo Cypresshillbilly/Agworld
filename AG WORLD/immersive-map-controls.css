@@ -63,3 +63,10 @@
 }
 
 @layer agworld-reference { @media(max-width:550px){ #agWorldSystemGuide.ag-dialogue-above .ag-guide-card{width:calc(100vw - 40px)!important;left:calc(-1 * var(--ag-companion-x, 0px) + 20px)!important} } }
+
+@layer agworld-reference {
+ #agWorldSystemGuide .ag-companion-audio{position:absolute!important;left:8px;bottom:8px;width:164px;min-height:25px;padding:5px 3px!important;border:1px solid #7b9870!important;border-radius:6px!important;background:#082931ed!important;color:#d5ecb8!important;font:10px/1.3 AgWorldCondensed,sans-serif!important;letter-spacing:.4px!important;cursor:pointer;pointer-events:auto!important;z-index:5!important}
+ #agWorldSystemGuide .ag-companion-audio:disabled{cursor:wait;color:#bbd4d1!important;border-color:#3b6267!important}
+ #agWorldSystemGuide[data-playback=error] .ag-companion-audio{border-color:#cd9f5c!important;color:#ffd294!important}
+ #agWorldSystemGuide.is-talking .ag-companion-stage img{box-shadow:0 0 18px #8ecf7755}
+}

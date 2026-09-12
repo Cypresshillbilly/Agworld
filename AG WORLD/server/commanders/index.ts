@@ -1,5 +1,5 @@
 /* Deploy as ag-world-commanders. Credentials are Supabase Edge Function secrets. */
-const allowed = new Set(['https://cypresshillbilly.github.io','http://127.0.0.1:4174','http://localhost:4174']);
+const allowed = new Set(['https://ag-world.onrender.com','https://cypresshillbilly.github.io','http://127.0.0.1:4174','http://localhost:4174']);
 const rates = new Map<string, {count:number; until:number}>();
 const gameGuide = `AgWorld starts on the 16 SADC countries with the drawers collapsed. MENU at the middle of the left edge opens navigation only. Dashboard opens player progress, sales funnel, current mission and advisory bay. Profile contains the five skills, badges and milestones. Sales Funnel uses recorded player sales data. Missions contains the assigned mission history and next mission. Map Menu at the top has Layers, Actions, and Settings & info. Layers includes country/province boundaries and symbols, municipalities, towns, market influence colours, farms, contractors, competitors, facilities, business connections, drones, crops, livestock, machinery, water and infrastructure. Layers follow zoom and user choices; farms and contractors appear at farm zoom 13. Actions creates farms, contractors, competitors and company facilities and contains import/export. Settings includes SADC, Africa, South Africa, Satellite, Elevation Relief (shaded terrain), Satellite + Labels, reset and Developer Mode diagnostics. Territory Stats on the right starts with SADC; a country click selects that country and reveals provinces; a South African province click selects it and reveals municipalities; municipality clicks select municipal stats. Zoom alone does not replace stats selection. Control is based on recorded farms and contractors, weighted by drone quantities and active recorded relationships/status. It is not a census or land-area percentage. The Command Center at the bottom displays inspected entity details. The AgWorld icon at top-right opens advisors to its left; it hides when the Player Hub is open, which has its own advisory bay. Six advisors: System Administrator guides the system; Compliance, Sales, Product, Operations and Technical represent five skills. Clicking the advisor portrait toggles dialogue independently from speech. Production real-time 3D characters and five animated exits are being prepared; the current interface uses portraits. Ask by voice starts microphone capture, and typed questions are available. Product and Technical libraries require explicit approved company staff membership. Profile role changes never grant library access. Personalities use generated character voices, not recordings of real individuals. Never claim a UI action or transaction has been performed by this read-only assistant.`;
 const valid = new Set(['system-administrator','product','technical','sales','operations','compliance']);
@@ -14,7 +14,12 @@ Deno.serve(async req => {
  const origin=req.headers.get('origin')||'';
  const headers={'Content-Type':'application/json','Access-Control-Allow-Origin':allowed.has(origin)?origin:'https://cypresshillbilly.github.io','Access-Control-Allow-Headers':'authorization,content-type,apikey,x-client-info','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin','Cache-Control':'no-store'};
  const reply=(status:number,data:unknown)=>new Response(JSON.stringify(data),{status,headers});
- if(origin&&!allowed.has(origin))return reply(403,{message:'Origin is not allowed.'});
+ if(origin&&!allowed.has(origin)){
+  // Diagnose browser preflight failures without recording tokens, questions or URL paths.
+  let pageOrigin='opaque';try{pageOrigin=new URL(origin).origin;}catch(_){}
+  console.warn(JSON.stringify({event:'commander_origin_rejected',origin:pageOrigin.slice(0,200)}));
+  return reply(403,{message:'Origin is not allowed.'});
+ }
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers});
  if(req.method==='GET')return reply(200,{service:'AgWorld commanders',configured:!!Deno.env.get('OPENAI_API_KEY')});
  if(req.method!=='POST')return reply(405,{message:'Use POST.'});

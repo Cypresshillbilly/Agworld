@@ -19,10 +19,13 @@
  const query=s=>root?.querySelector(s);
  function playback(status){
    if(!root)return;root.dataset.playback=status;root.classList.toggle('is-talking',status==='playing');
-   query('.ag-guide-status span').textContent=({playing:'SPEAKING',paused:'PAUSED',loading:'CONNECTING VOICE',error:'TEXT GUIDE AVAILABLE'})[status]||'READY TO GUIDE';
+   query('.ag-guide-status span').textContent=({playing:'SPEAKING',paused:'PAUSED',loading:'CONNECTING VOICE',blocked:'ENABLE VOICE TO LISTEN',error:'VOICE UNAVAILABLE'})[status]||'READY TO GUIDE';
    query('.ag-guide-play').innerHTML=status==='playing'?'<span>Ⅱ</span><span>PAUSE BRIEFING</span>':status==='paused'?'<span>▶</span><span>RESUME BRIEFING</span>':'<span>▶</span><span>PLAY BRIEFING</span>';
  }
- function stop(){sequence++;speech=null;window.speechSynthesis?.cancel();if(audio){audio.pause();audio.currentTime=0;}playback('idle');}
+ function startAudio(token){
+   audio.play().catch(error=>{if(sequence!==token||!root.classList.contains('show'))return;root.dataset.voiceError=error.name==='NotAllowedError'?'Your browser needs a click to enable the voice.':'The voice audio could not play. Please try again.';playback(error.name==='NotAllowedError'?'blocked':'error');});
+ }
+ function stop(){sequence++;speech=null;if(root)delete root.dataset.voiceError;window.speechSynthesis?.cancel();if(audio){audio.pause();audio.currentTime=0;}playback('idle');}
  function place(){
    if(!root)return;const map=document.querySelector('.map-area')?.getBoundingClientRect();if(!map)return;
    const header=document.querySelector('.map-header')?.getBoundingClientRect();
@@ -51,7 +54,7 @@
  }
  function play(){
    if(root.dataset.playback==='playing'){if(speech)window.speechSynthesis.pause();else audio.pause();playback('paused');return;}
-   if(root.dataset.playback==='paused'){if(speech){window.speechSynthesis.resume();playback('playing');}else audio.play().catch(()=>playback('error'));return;}
+   if(root.dataset.playback==='paused'||root.dataset.playback==='blocked'){if(speech){window.speechSynthesis.resume();playback('playing');}else startAudio(sequence);return;}
    stop();const token=sequence,b=briefing(section);playback('loading');
    if(b.audio){audio.src=b.audio;audio.play().catch(()=>{if(sequence===token&&root.classList.contains('show'))speakText(b.spoken||b.copy,token);});}
    else if(window.AGWorldCompanions?.speakBriefing)window.AGWorldCompanions.speakBriefing(b.spoken||b.copy,token);else speakText(b.spoken||b.copy,token);
@@ -70,7 +73,7 @@
    audio.addEventListener('error',()=>{if(root.dataset.playback==='loading'&&!speech)playback('error');});
    render();
  }
- window.AGWorldVoiceBridge={isCurrent:token=>sequence===token&&root?.classList.contains('show'),load:(url,token)=>{if(sequence!==token||!root?.classList.contains('show'))return;audio.src=url;audio.play().catch(()=>{if(sequence===token)playback('error');});},error:token=>{if(sequence===token)playback('error');}};
+ window.AGWorldVoiceBridge={isCurrent:token=>sequence===token&&root?.classList.contains('show'),load:(url,token)=>{if(sequence!==token||!root?.classList.contains('show'))return;delete root.dataset.voiceError;audio.src=url;startAudio(token);},error:(token,message)=>{if(sequence===token){root.dataset.voiceError=message||'The character voice is unavailable. Please try again.';playback('error');}}};
  window.AGWorldStrategicCommander={show:()=>show({compact:true}),hide,isVisible:()=>!!root?.classList.contains('show')};
  window.AG_WORLD_GUIDE={show:()=>show(),showAvatar:()=>show({compact:true}),hide,select,welcome:({speak=false}={})=>select('welcome',{autoplay:speak}),current:()=>section,stopBriefing:stop,play,
    briefMission:({title,copy,audioSrc}={})=>{ensure();stop();custom={title:title||'Mission briefing',copy:copy||'',audio:audioSrc};section='custom';show();},
