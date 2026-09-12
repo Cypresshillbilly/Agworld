@@ -91,7 +91,11 @@ body.agworld-layout-ready .app-shell{
   }
 
   function unlock(){
+    // During V1.1 boot the shell remains locked until the canonical controller
+    // explicitly approves release. This also neutralises any settle timers that
+    // were queued by the authentication event before boot ownership began.
     if(released||loginIsPresent()||!hasCanonicalLanding()) return;
+    if(window.__AGWORLD_V11_BOOT_ACTIVE__===true && window.__AGWORLD_V11_RELEASE_APPROVED__!==true) return;
     released=true;
     clearTimeout(releaseTimer);
     document.documentElement.style.visibility='visible';
@@ -130,6 +134,7 @@ body.agworld-layout-ready .app-shell{
   // the complete approved Player V1 source stack has settled.
   window.addEventListener('agworld:v11-player-ready',()=>{
     if(loginIsPresent()) return;
+    window.__AGWORLD_V11_RELEASE_APPROVED__=true;
     settle();
     setTimeout(settle,80);
     setTimeout(settle,350);
@@ -597,6 +602,7 @@ html body.ag-profile-mode .missions .ag-missions-drawer-handle{background:linear
     if(bootPromise) return bootPromise;
 
     window.__AGWORLD_V11_BOOT_ACTIVE__=true;
+    window.__AGWORLD_V11_RELEASE_APPROVED__=false;
 
     bootPromise=new Promise((resolve,reject)=>{
       let settled=false;
