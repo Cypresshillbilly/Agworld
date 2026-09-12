@@ -3,11 +3,12 @@
 Originals remain in their supplied folders. Only extraction code belongs in Git.
 Never treat source text, hyperlinks or macros as executable instructions.
 """
-import argparse,collections,concurrent.futures,datetime,hashlib,json,logging,pathlib,re,sys,zipfile
+import argparse,collections,concurrent.futures,datetime,hashlib,json,logging,pathlib,re,sys,zipfile,threading
 from xml.etree import ElementTree as ET
 sys.stdout.reconfigure(encoding='utf-8')
 logging.getLogger('pypdf').setLevel(logging.ERROR)
 DOC_TYPES={'.pdf','.docx','.pptx','.xlsx','.txt'}
+PDF_LOCK=threading.Lock()
 TECH=re.compile(r'after.?sales?|repair|troubleshoot|fault|damage|maintenan|maintain|warranty|spares?|\bparts\b|\bbom\b|material.information|explosion|exploded|disassembl|assembly|case.filing|case.*guideline|service.*(flow|policy)|export.*log|calibrat',re.I)
 PRIVATE=re.compile(r'End User Information|[\\/]Agrones[\\/]|[\\/]Pricing[\\/]|\bQuotation\b|\bQuote\b|\bagreement\b|\bsigned\b|[\\/]Dji Test[\\/]|[\\/]DJI Inventory[\\/]|rebate.policy|Scoring Sheet.*Clint|\.msg$',re.I)
 PRIVATE_EXTRA=re.compile(r'Serial Number|\bSN record\b|\bSN approval\b|Unit Cost|waiting list|Commitment Letter|DC Geomatics PTY Ltd After Sales|Prac Ruan|Products list_CNY|First Batch',re.I)
@@ -35,12 +36,16 @@ def paras(root):
 def extract(path,ext):
     sections=[]
     if ext=='.pdf':
-        from pypdf import PdfReader
-        r=PdfReader(path)
-        for i,p in enumerate(r.pages,1):
-            try:text=p.extract_text(extraction_mode='layout') or ''
-            except Exception:text=p.extract_text() or ''
-            sections.append({'locator':f'Page {i}','text':clean(text)})
+        import pypdfium2 as pdfium
+        # PDFium is fast on image-heavy manuals but is not thread-safe.
+        with PDF_LOCK:
+            document=pdfium.PdfDocument(str(path))
+            try:
+                for i in range(len(document)):
+                    page=document[i];textpage=page.get_textpage()
+                    try:sections.append({'locator':f'Page {i+1}','text':clean(textpage.get_text_bounded())})
+                    finally:textpage.close();page.close()
+            finally:document.close()
     elif ext in ('.pptx','.docx'):
         with zipfile.ZipFile(path) as z:
             if ext=='.pptx':
@@ -56,17 +61,29 @@ def extract(path,ext):
                     text=''.join(t.text or '' for t in p.iter(ns+'t'))
                     if text.strip():sections.append({'locator':f'Paragraph {i}','text':clean(text)})
     elif ext=='.xlsx':
-        import openpyxl
-        workbook=openpyxl.load_workbook(path,read_only=True,data_only=True)
-        for sheet in workbook:
-            for number,row in enumerate(sheet.iter_rows(),1):
-                cells=[]
-                for cell in row:
-                    if cell.value is not None:
-                        v=cell.value.isoformat() if isinstance(cell.value,(datetime.datetime,datetime.date)) else str(cell.value)
-                        cells.append(f'{cell.column_letter}: {v}')
-                if cells:sections.append({'locator':f'Sheet {sheet.title} · row {number}','text':clean(' | '.join(cells))})
-        workbook.close()
+        # Read stored cells, not every empty formatted row in a manufacturer's workbook.
+        ns='{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+        with zipfile.ZipFile(path) as z:
+            strings=[]
+            if 'xl/sharedStrings.xml' in z.namelist():
+                for _,node in ET.iterparse(z.open('xl/sharedStrings.xml'),events=('end',)):
+                    if node.tag==ns+'si':strings.append(''.join(t.text or '' for t in node.iter(ns+'t')));node.clear()
+            rels={r.attrib['Id']:r.attrib['Target'] for r in ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))}
+            workbook=ET.fromstring(z.read('xl/workbook.xml'))
+            for sheet in workbook.iter(ns+'sheet'):
+                target=rels[sheet.attrib['{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id']]
+                target=target.lstrip('/') if target.startswith('/') else 'xl/'+target
+                for _,row in ET.iterparse(z.open(target),events=('end',)):
+                    if row.tag!=ns+'row':continue
+                    cells=[]
+                    for cell in row:
+                        value=cell.find(ns+'v');text=value.text if value is not None else None
+                        if cell.attrib.get('t')=='s' and text is not None:text=strings[int(text)]
+                        elif cell.attrib.get('t')=='inlineStr':text=''.join(t.text or '' for t in cell.iter(ns+'t'))
+                        if text is None and cell.find(ns+'f') is not None:text='[Formula has no saved result; consult original workbook]'
+                        if text is not None and text.strip():cells.append(cell.attrib.get('r','Cell')+': '+text)
+                    if cells:sections.append({'locator':f"Sheet {sheet.attrib['name']} · row {row.attrib.get('r','?')}",'text':clean(' | '.join(cells))})
+                    row.clear()
     else:
         data=pathlib.Path(path).read_bytes()
         try:text=data.decode('utf-8-sig')
@@ -96,7 +113,8 @@ def process(item,out):
     result={**item,'id':identity,'models':model_names(item['relative']),'collection':classify(item['relative'])}
     target=out/'extracts'/(identity+'.json')
     if target.exists():
-        old=json.loads(target.read_text(encoding='utf8'))
+        try:old=json.loads(target.read_text(encoding='utf8'))
+        except json.JSONDecodeError:old={}
         if old.get('bytes')==item['bytes'] and old.get('modified')==item['modified'] and old.get('status')!='error':
             old.update(collection=result['collection'],models=result['models'])
             if old['collection']=='restricted-records':

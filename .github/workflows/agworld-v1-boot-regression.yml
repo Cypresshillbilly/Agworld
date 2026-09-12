@@ -10,6 +10,10 @@ on:
       - 'AG WORLD/app-gis-loader-v24.js'
       - 'AG WORLD/territory-board-v1.js'
       - 'AG WORLD/game-exploration-tools.js'
+      - 'AG WORLD/advisor-knowledge.js'
+      - 'AG WORLD/knowledge/**'
+      - 'AG WORLD/server/knowledge-schema.sql'
+      - 'tools/knowledge/**'
       - 'AG WORLD/data/gis/**'
       - 'AG WORLD/main-game-layout-v1.js'
       - 'AG WORLD/agworld-player-surface-final-v1.js'
@@ -45,6 +49,10 @@ on:
       - 'AG WORLD/app-gis-loader-v24.js'
       - 'AG WORLD/territory-board-v1.js'
       - 'AG WORLD/game-exploration-tools.js'
+      - 'AG WORLD/advisor-knowledge.js'
+      - 'AG WORLD/knowledge/**'
+      - 'AG WORLD/server/knowledge-schema.sql'
+      - 'tools/knowledge/**'
       - 'AG WORLD/data/gis/**'
       - 'AG WORLD/main-game-layout-v1.js'
       - 'AG WORLD/agworld-player-surface-final-v1.js'
@@ -93,6 +101,8 @@ jobs:
           node .github/tests/sales-dashboard.test.mjs
           node .github/tests/territory-control.test.mjs
           node 'AG WORLD/boot/v1/verify-dependencies.mjs'
+      - name: Verify knowledge classification and citations
+        run: python tools/knowledge/test_ingest.py
       - name: Install pinned browser test tooling
         run: |
           npm install --prefix "$RUNNER_TEMP/agworld-tests" --ignore-scripts --no-audit --no-fund playwright@1.58.2
