@@ -10,7 +10,7 @@
     getPath(){return {getArray:()=>this.options.paths||[]};}
   }
   class LatLng {
-    constructor(lat,lng){this.latitude=typeof lat==='object'?lat.lat:lat;this.longitude=typeof lat==='object'?lat.lng:lng;}
+    constructor(lat,lng){this.latitude=typeof lat==='object'?(typeof lat.lat==='function'?lat.lat():lat.lat):lat;this.longitude=typeof lat==='object'?(typeof lat.lng==='function'?lat.lng():lat.lng):lng;}
     lat(){return this.latitude;} lng(){return this.longitude;}
     toJSON(){return {lat:this.lat(),lng:this.lng()};}
   }
@@ -31,7 +31,7 @@
       setTimeout(()=>{event.trigger(this,'idle');event.trigger(this,'tilesloaded');},150);
     }
     getZoom(){return this.options.zoom;} setZoom(zoom){if(this.options.zoom===zoom)return;this.options.zoom=zoom;event.trigger(this,'zoom_changed');queueMicrotask(()=>event.trigger(this,'idle'));}
-    getCenter(){return new LatLng(this.options.center);} setCenter(center){this.options.center=center;}
+    getCenter(){return new LatLng(this.options.center);} setCenter(center){this.options.center=new LatLng(center).toJSON();}
     getBounds(){return new Bounds();} fitBounds(){} panTo(center){this.setCenter(center);}
     getMapTypeId(){return this.options.mapTypeId;} setMapTypeId(type){this.options.mapTypeId=type;}
     getDiv(){return this.element;}
