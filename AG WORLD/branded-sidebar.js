@@ -73,7 +73,7 @@ html body #agPrimarySidebar .nav button[data-ag-screen]:focus-visible {
 html body #agPrimarySidebar .nav button[data-ag-screen="settings"]{margin-top:8px!important;border-top-color:#28483b!important}
 html body #agPrimarySidebar .nav button[data-ag-screen="logout"]{color:#b8c6bb!important}
 html body #developerModeBtn {
-  position:fixed!important;left:8px!important;top:7px!important;right:auto!important;bottom:auto!important;
+  position:static!important;left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;
   z-index:1250!important;display:inline-flex!important;align-items:center!important;gap:6px!important;
   min-width:0!important;width:auto!important;height:25px!important;padding:0 8px!important;
   border:1px solid #345444!important;border-radius:4px!important;background:#0B2C20!important;
@@ -97,7 +97,7 @@ html body.agmp-reduced-motion #agPrimarySidebar .nav button[data-ag-screen]{tran
     button.type='button';button.textContent='⚙ Developer Mode ↗';
     button.setAttribute('aria-label','Open Developer Mode diagnostics');
     button.title='Open live component diagnostics in a separate tab';
-    if(button.parentElement!==document.body)document.body.appendChild(button);
+    const tools=document.querySelector('.map-tools');if(tools&&button.parentElement!==tools)tools.appendChild(button);
     button.onclick=()=>window.open('developer-mode.html?v=brand-diagnostics-20260912','agworldDeveloperMode');
     return button;
   }

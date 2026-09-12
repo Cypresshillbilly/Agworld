@@ -26,16 +26,16 @@
     trigger:(object,name,...args)=>[...(object.listeners?.[name]||[])].forEach(fn=>fn(...args))
   };
   class MapFixture extends Base {
-    constructor(element,options){super(options);this.element=element;this.data=new Data();this.options.zoom=5;
+    constructor(element,options){super(options);this.element=element;this.data=new Data();this.options.zoom=options.zoom;
       const surface=document.createElement('div');surface.setAttribute('role','region');surface.setAttribute('aria-label','Map test fixture');surface.style.cssText='width:100%;height:100%;background:#183640';element.appendChild(surface);
       setTimeout(()=>{event.trigger(this,'idle');event.trigger(this,'tilesloaded');},150);
     }
-    getZoom(){return this.options.zoom;} setZoom(zoom){this.options.zoom=zoom;}
+    getZoom(){return this.options.zoom;} setZoom(zoom){if(this.options.zoom===zoom)return;this.options.zoom=zoom;event.trigger(this,'zoom_changed');queueMicrotask(()=>event.trigger(this,'idle'));}
     getCenter(){return new LatLng(this.options.center);} setCenter(center){this.options.center=center;}
     getBounds(){return new Bounds();} fitBounds(){} panTo(center){this.setCenter(center);}
     getMapTypeId(){return this.options.mapTypeId;} setMapTypeId(type){this.options.mapTypeId=type;}
     getDiv(){return this.element;}
   }
   class Data extends Base {setStyle(){} addGeoJson(){return [];} forEach(){} loadGeoJson(url,options,callback){callback?.([]);}}
-  window.google={maps:{Map:MapFixture,Marker:Base,Polygon:Base,Polyline:Base,Data,LatLng,LatLngBounds:Bounds,event,SymbolPath:{CIRCLE:0,FORWARD_CLOSED_ARROW:1},Animation:{BOUNCE:1}}};
+  window.google={maps:{Size:class{constructor(width,height){this.width=width;this.height=height;}},Point:class{constructor(x,y){this.x=x;this.y=y;}},Map:MapFixture,Marker:Base,Polygon:Base,Polyline:Base,Data,LatLng,LatLngBounds:Bounds,event,SymbolPath:{CIRCLE:0,FORWARD_CLOSED_ARROW:1},Animation:{BOUNCE:1}}};
 })();

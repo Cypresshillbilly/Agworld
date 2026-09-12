@@ -1,4 +1,6 @@
-# AgWorld Game Visual System - V1.6 Immersive Drawers
+# AgWorld Game Visual System - V1.7 Territory Board
+
+V1.7 adopts [Territory Board and Nested Player Hub V4](../PLAYER_SCREEN_V4_BASELINE.md). The SADC region with national flags is the opening game board, territory colors and statistics share the same live market calculation, and the player information drawer can retract beneath the navigation rail. No route is highlighted in menu-only mode. The Dashboard now places its four dark game cards on a white workspace, as requested by the owner. Other workspaces retain the V1.6 palette, materials and type. Map tools and developer diagnostics live in the top drawer; a separate map advisor drawer is available when the player menu is closed.
 
 V1.6 adopts the owner-approved [Immersive Drawers V3](../PLAYER_SCREEN_V3_BASELINE.md): Player Hub from the left, Map Menu from the top, Territory Stats from the right and Command Center from the bottom. All start closed over the persistent live game map. There is no Enter AgWorld control. Command Center and Territory Stats share a thick photographic aluminum frame. Sidebar farmland fills the navigation height with its sky fading into dark teal. The wider player column, personal Sales Funnel, Skills in Profile, six advisors and non-scrolling mission from V2 remain. These rules supersede conflicting composition and bezel rules in V1.4/V1.5; their color and type tokens remain unchanged. The Administrator portrait remains provisional pending the owner's likeness references.
 

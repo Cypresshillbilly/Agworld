@@ -1,8 +1,8 @@
 /* Four independent drawers over one persistent game world. */
 (()=>{
  'use strict';
- const state={player:false,map:false,territory:false,command:false};
- const names={player:'Player Hub',map:'Map Menu',territory:'Territory Stats',command:'Command Center'};
+ const state={player:false,workspace:false,map:false,territory:false,command:false};
+ const names={player:'Player Hub',workspace:'Player Panel',map:'Map Menu',territory:'Territory Stats',command:'Command Center'};
  let geo=null,queued=false;
  const $=id=>document.getElementById(id);
  const set=(el,k,v)=>{if(el&&el.style.getPropertyValue(k)!==String(v))el.style.setProperty(k,String(v),'important');};
@@ -22,7 +22,8 @@
    document.body.classList.remove('ag-full-game-mode');
    $('agEnterWorldBtn')?.remove();$('agGameModeControl')?.remove();
    if(!header.id)header.id='agMapMenuDrawer';
-   button('agPlayerDrawerToggle','player','agPrimarySidebar agPlayerWorkspace','PLAYER HUB');
+   button('agPlayerDrawerToggle','player','agPrimarySidebar','MENU');
+   button('agWorkspaceDrawerToggle','workspace','agPlayerWorkspace','PLAYER PANEL');
    button('agMapDrawerToggle','map',header.id,'MAP MENU');
    button('agCommandDrawerToggle','command','entityInformationSection','COMMAND CENTER');
    const auth=$('agAuth'),tools=header.querySelector('.map-tools');
@@ -33,11 +34,15 @@
    if(!ensure())return;
    const shell=document.querySelector('.app-shell'),sidebar=document.querySelector('.sidebar'),missions=document.querySelector('.missions'),map=document.querySelector('.map-area'),header=document.querySelector('.map-header'),command=$('entityInformationSection'),stats=$('territoryStatsDrawer');
    if(!sidebar||!missions||!map||!command||!stats)return;
-   const w=shell.clientWidth,h=shell.clientHeight,s=w/1280,side=Math.round(180*s),workspace=Math.round(350*s),span=side+workspace,left=state.player?span:0,mapW=w-left;
+   const w=shell.clientWidth,h=shell.clientHeight,s=w/1280,side=Math.round(180*s),workspace=Math.round(350*s),span=side+workspace,left=state.player?(side+(state.workspace?workspace:0)):0,mapW=w-left;
    const bayH=Math.max(Math.round(160*s),Math.round(h*.19)),bottom=Math.max(18,Math.round(h*.024)),commandH=bayH+28,commandW=Math.min(Math.round(mapW*.93),Math.round(900*s)),commandTop=h-commandH-bottom,commandLeft=left+Math.round((mapW-commandW)/2);
    geo={shellW:w,shellH:h,sidebarW:side,missionsW:workspace,leftStage:left,mapW,commandTop,commandHeight:commandH,advisorTop:h-bayH-bottom,advisorHeight:bayH};
    frame(sidebar,0,0,side,h);frame(missions,side,0,workspace,h);
-   [sidebar,missions].forEach(el=>{el.style.removeProperty('display');set(el,'transform',state.player?'translateX(0)':'translateX(-'+span+'px)');access(el,state.player);});
+   sidebar.style.removeProperty('display');missions.style.removeProperty('display');
+   set(sidebar,'transform',state.player?'translateX(0)':'translateX(-'+side+'px)');access(sidebar,state.player);
+   set(missions,'transform',state.player&&state.workspace?'translateX(0)':'translateX(-'+span+'px)');
+   if(state.player&&!state.workspace)set(missions,'transform','translateX(-'+workspace+'px)');
+   access(missions,state.player&&state.workspace);
    frame(map,left,0,mapW,h);set(map,'z-index','1');set(map,'overflow','hidden');set(map,'transform','none');
    set(header,'position','absolute');set(header,'left','14px');set(header,'right','14px');set(header,'top','12px');set(header,'width','auto');set(header,'height','auto');set(header,'bottom','auto');
    const headerH=Math.max(64,header.offsetHeight);
@@ -46,14 +51,17 @@
    ['background','border','box-shadow'].forEach(k=>command.style.removeProperty(k));
    frame($('entityCommandCentreHeading'),14,14,commandW-28,34);set($('entityCommandCentreHeading'),'z-index','3');
    frame($('farmCard'),14,48,commandW-28,commandH-62);set($('farmCard'),'min-height','0');set($('farmCard'),'max-height','none');set($('farmCard'),'max-width','none');set($('farmCard'),'margin','0');set($('farmCard'),'z-index','2');
-   const statsTop=state.map?headerH+36:72,statsH=Math.max(220,Math.min(450,h-statsTop-(state.command?commandH+bottom+14:28))),statsW=300;
+   const safeTop=state.map?headerH+42:24,safeBottom=state.command?commandTop-14:h-24;
+   const statsH=Math.max(120,Math.min(450,safeBottom-safeTop)),statsTop=Math.max(safeTop,Math.min((h-statsH)/2,safeBottom-statsH)),statsW=300;
    frame(stats,mapW-statsW,statsTop,statsW,statsH);set(stats,'max-height',statsH+'px');set(stats,'max-width','none');set(stats,'z-index','2300');set(stats,'transform',state.territory?'translateX(0)':'translateX('+(statsW-28)+'px)');
    stats.classList.toggle('collapsed',!state.territory);access($('territoryStatsDrawerContent'),state.territory);
-   const handles={player:$('agPlayerDrawerToggle'),map:$('agMapDrawerToggle'),command:$('agCommandDrawerToggle'),territory:$('territoryStatsToggle')};
-   set(handles.player,'left',left+'px');set(handles.player,'top',Math.max(90,Math.round(h*.45))+'px');
+   const handles={player:$('agPlayerDrawerToggle'),workspace:$('agWorkspaceDrawerToggle'),map:$('agMapDrawerToggle'),command:$('agCommandDrawerToggle'),territory:$('territoryStatsToggle')};
+   set(handles.player,'left',(state.player?side:0)+'px');set(handles.player,'top','56px');
+   set(handles.workspace,'left',left+'px');set(handles.workspace,'top',Math.max(200,Math.round(h*.45))+'px');
+   handles.workspace.hidden=!state.player;
    set(handles.map,'left',Math.round(left+mapW/2)+'px');set(handles.map,'top',state.map?(headerH+24)+'px':'0px');
    set(handles.command,'left',Math.round(left+mapW/2)+'px');set(handles.command,'bottom',state.command?(commandH+bottom)+'px':'0px');
-   for(const [key,el]of Object.entries(handles)){if(!el)continue;el.setAttribute('aria-expanded',String(state[key]));el.title=(state[key]?'Close ':'Open ')+names[key];const arrow=el.querySelector('b,.ag-territory-toggle-arrow');if(arrow)arrow.textContent=key==='player'?(state[key]?'‹':'›'):key==='territory'?(state[key]?'›':'‹'):key==='map'?(state[key]?'▴':'▾'):(state[key]?'▾':'▴');}
+   for(const [key,el]of Object.entries(handles)){if(!el)continue;el.setAttribute('aria-expanded',String(state[key]));el.title=(state[key]?'Close ':'Open ')+names[key];const arrow=el.querySelector('b,.ag-territory-toggle-arrow');if(arrow)arrow.textContent=(key==='player'||key==='workspace')?(state[key]?'‹':'›'):key==='territory'?(state[key]?'›':'‹'):key==='map'?(state[key]?'▴':'▾'):(state[key]?'▾':'▴');}
    document.body.dataset.agImmersive=String(!Object.values(state).some(Boolean));
    set(document.querySelector('.bottom.user-profile-section'),'display','none');
    window.__AGWORLD_MAIN_LAYOUT_GEOMETRY__={...geo,mode:'drawers',owner:'agworld-drawers-v1',map:'persistent-live-map',drawers:{...state}};
@@ -62,11 +70,15 @@
  function change(key,open){
    if(!(key in state)||state[key]===!!open)return;
    state[key]=!!open;
-   if(key==='player'&&!open)window.AG_WORLD_GUIDE?.hide?.();
+   if(key==='player'&&!open)state.workspace=false;
+   if(key==='workspace'&&open)state.player=true;
+   if(key==='player'&&open)window.AG_WORLD_GUIDE?.hide?.();
+   if((key==='player'||key==='workspace')&&!open)window.AG_WORLD_GUIDE?.hide?.();
    layout();window.dispatchEvent(new Event('resize'));
    window.dispatchEvent(new CustomEvent('agworld:drawers-changed',{detail:{...state}}));
    window.dispatchEvent(new CustomEvent('agworld:game-mode-changed',{detail:{mode:Object.values(state).some(Boolean)?'panels':'game'}}));
-   if(key==='player')setTimeout(()=>{for(const m of [window.map,window.agMap,window.AGWorldMap,window.leafletMap])try{m?.invalidateSize?.({animate:false});}catch(_){}window.dispatchEvent(new Event('resize'));},300);
+   if(key==='player'||key==='workspace')setTimeout(()=>{for(const m of [window.map,window.agMap,window.AGWorldMap,window.leafletMap])try{m?.invalidateSize?.({animate:false});}catch(_){}const gm=window.__AGWORLD_GOOGLE_MAP__;if(gm&&window.google?.maps?.event){const center=gm.getCenter();google.maps.event.trigger(gm,'resize');gm.setCenter(center);}
+     window.dispatchEvent(new Event('resize'));},300);
  }
  window.AGWorldDrawers={layout,getState:()=>({...state}),geometry:()=>geo,set:change,toggle:key=>change(key,!state[key])};
  window.AGWorldGameLayer={enter:()=>Object.keys(state).forEach(k=>change(k,false)),exit:()=>change('player',true),toggle:()=>change('player',!state.player)};

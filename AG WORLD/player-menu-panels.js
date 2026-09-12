@@ -157,7 +157,7 @@
         const total=rows.length;
         return card('Territory footprint','<p>Live ownership across the loaded farm and contractor records.</p>',true)+card('Company presence',[['company','Company'],['competitor','Competitor'],['neutral','Neutral']].map(([key,label])=>{const count=rows.filter(e=>control(e)===key).length,pct=total?Math.round(count/total*100):0;return '<div class="agmp-skill"><div class="agmp-row"><b>'+label+'</b><span>'+count+' / '+total+'</span></div>'+track(pct,label+' territory share')+'</div>';}).join('')+(total?'':empty('Ownership graphics will fill as territory records become available.')))+card('Map controls',button('National overview','map','national')+button('Toggle satellite view','map','satellite',true));
       }
-      case 'settings':return card('Player session','<h3>'+esc(d.name)+'</h3><p>'+esc(d.facility)+'</p>'+button('View player profile','screen','profile'))+card('Display','<label class="agmp-row"><span>Reduce panel motion</span><input type="checkbox" data-panel-motion '+(document.body.classList.contains('agmp-reduced-motion')?'checked':'')+'></label><p class="agmp-muted">Applies to the player menu on this browser.</p>')+card('Your landing screen','<p>Dashboard opens when you enter the player screen. Use it at any time to return to your active mission and advisors.</p>'+button('Return to Dashboard','screen','dashboard'));
+      case 'settings':return card('Player session','<h3>'+esc(d.name)+'</h3><p>'+esc(d.facility)+'</p>'+button('View player profile','screen','profile'))+card('Display','<label class="agmp-row"><span>Reduce panel motion</span><input type="checkbox" data-panel-motion '+(document.body.classList.contains('agmp-reduced-motion')?'checked':'')+'></label><p class="agmp-muted">Applies to the player menu on this browser.</p>')+card('Your landing screen','<p>The game opens on the SADC region with its drawers closed. Open the menu and choose Dashboard to see your active mission and advisors.</p>'+button('Return to Dashboard','screen','dashboard'));
       default:return '';
     }
   }
@@ -172,7 +172,7 @@
   }
   function syncSelection(){
     sidebar?.querySelectorAll('.nav [data-ag-screen]').forEach(b=>{
-      const active=b.dataset.agScreen===current;
+      const active=b.dataset.agScreen===current&&(!window.AGWorldDrawers||window.AGWorldDrawers.getState().workspace);
       b.classList.toggle('active',active);
       if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
       b.setAttribute('aria-controls','agPlayerWorkspace');
@@ -193,6 +193,8 @@
   }
   function select(key){
     if(!Object.hasOwn(TITLES,key)||!panel)return;
+    window.AGWorldDrawers?.set('workspace',true);
+    if(current===key){syncSelection();return;}
     const content=panel.querySelector('.agmp-content');
     scrollPositions.set(current,content.scrollTop);
     current=key;missions.dataset.agScreen=key;missions.classList.remove('ag-missions-collapsed');
@@ -253,8 +255,11 @@
     sidebar.addEventListener('click',event=>{
       const b=event.target.closest('.nav [data-ag-screen]');
       if(!b||!Object.hasOwn(TITLES,b.dataset.agScreen))return;
-      event.preventDefault();event.stopImmediatePropagation();select(b.dataset.agScreen);
+      event.preventDefault();event.stopImmediatePropagation();
+      if(current===b.dataset.agScreen&&window.AGWorldDrawers?.getState().workspace)window.AGWorldDrawers.set('workspace',false);
+      else select(b.dataset.agScreen);
     },true);
+    window.addEventListener('agworld:drawers-changed',syncSelection);
     new MutationObserver(schedule).observe(sidebar,{childList:true,subtree:true});
     new MutationObserver(()=>{if(current!=='dashboard')syncDashboardAccessibility();}).observe(missions,{childList:true});
     for(const name of ['agworld:sales-data','agworld:player-profile','agworld:player-ready','agworld:player-state','agworld:mission-completed','agworld:territory-control-updated','agworld:dynamic-layers-loaded','agworld:advisor-selected','agworld:advisor-deselected'])window.addEventListener(name,schedule);

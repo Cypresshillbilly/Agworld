@@ -4,6 +4,8 @@ import http from 'node:http';
 import assert from 'node:assert/strict';
 import {exercisePlayerCommand} from './player-command.mjs';
 import {exerciseDrawers,panels} from './drawers.mjs';
+import {exerciseExplorationTools} from './exploration-tools.mjs';
+import {exerciseTerritoryBoard,installTerritoryFixtures} from './territory-board.mjs';
 import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
 import {exerciseSidebarDiagnostics} from './sidebar-diagnostics.mjs';
@@ -32,6 +34,7 @@ const browser=await chromium.launch({headless:true});
 const results=[];
 async function newTest(){
   const context=await browser.newContext({viewport:{width:1600,height:1000}});
+  await installTerritoryFixtures(context);
   // Fixture identity and map do not contact production auth or mutate game data.
   await context.route(/\/api\//,route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
   const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -113,11 +116,16 @@ try{
     results.push('Create Account before game boot: facility retry, validation, account error retry, '+(immediateSession?'authenticated signup enters game':'email confirmation, resend, return to sign-in'));
   }
   const good=await newTest();
+  const board=await newTest();
+  await board.page.goto(base+'/index.html');await login(board.page);await ready(board.page);
+  await exerciseTerritoryBoard(board.page);assert.deepEqual(board.errors,[]);await board.context.close();
+  results.push('South Africa framed and selected, country-only startup, click-selected provincial/municipal statistics, consistent farm/contractor colors and shared detail zoom');
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
   await exerciseDrawers(good.page);
-  results.push('Four independent drawers: all 16 combinations, immersive login/refresh, map identity, preserved workspace, accessible hidden panels and aluminum texture');
+  await exerciseExplorationTools(good.page);
+  results.push('Nested Player Hub: all 24 drawer combinations, menu-only state, route selection opens its panel, preserved workspace and keyboard controls');
   await exerciseReferenceTheme(good.page);
   results.push('Reference theme: self-hosted assets, five real skill values, all menu routes, protected geometry at two widths, advisors, territory ring and entity editor');
   await exercisePlayerMenu(good.page);

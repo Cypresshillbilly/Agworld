@@ -292,4 +292,44 @@ html.ag-reference-compact[data-ag-drawers] #agPrimarySidebar .nav{padding-bottom
 html.ag-reference-compact[data-ag-drawers] #agPrimarySidebar .ag-sidebar-landscape{min-height:105px!important;flex-basis:105px!important;padding-top:23px!important}
 @media(prefers-reduced-motion:reduce){html[data-ag-drawers] :is(.sidebar,.missions,.map-area,.map-header,#entityInformationSection,#territoryStatsDrawer,.ag-drawer-handle,#territoryStatsDrawerContent){transition:none!important}}
 
+
+/* Nested Player Hub: the workspace retracts beneath the navigation rail. */
+html[data-ag-drawers] #agWorkspaceDrawerToggle{width:28px!important;height:148px!important;writing-mode:vertical-rl!important;border-radius:0 7px 7px 0!important}
+html[data-ag-drawers] #agWorkspaceDrawerToggle[hidden]{display:none!important}
+html[data-ag-drawers] #agPlayerDrawerToggle{height:110px!important}
+html[data-ag-drawers] #agPrimarySidebar .nav button[data-ag-screen]:not([aria-current]){border-color:#25646c55!important;box-shadow:none!important}
+html[data-ag-drawers] #territoryInfoPanel .territory-national-right{flex-direction:column!important}
+html[data-ag-drawers] #territoryInfoPanel .ag-territory-basis{font:400 10px/1.4 AgWorldCondensed,sans-serif!important;color:#a9ccd2!important;padding:8px 2px!important;flex:0 0 auto!important}
+
+/* Dashboard floats above a clean white workspace; game cards keep their materials. */
+html[data-ag-drawers] #territoryInfoPanel .territory-national-right{flex:none!important;min-height:0!important}
+html[data-ag-drawers] #territoryInfoPanel .territory-info-grid{height:auto!important;grid-template-rows:repeat(3,minmax(51px,auto)) auto!important;flex:none!important}
+html[data-ag-drawers] .ag-exploration-menu .map-tools>button{background:linear-gradient(#06323b,#001a22)!important;border:1px solid #32636c!important;color:#dff2f6!important;border-radius:4px!important;min-height:28px!important;font:600 10px/1 AgWorldCondensed,sans-serif!important;cursor:pointer!important}
+html[data-ag-drawers] .ag-exploration-menu .map-tools>button:hover{border-color:#b8ec24!important;color:#d6f292!important}
+html[data-ag-game-theme=reference] body .missions[data-ag-screen=dashboard]{background:#fff!important;box-shadow:inset -1px 0 #becfce!important}
+.missions[data-ag-screen=dashboard] :is(#agPlayerMissionProfile,#agPlayerSalesFunnel,#agCanonicalMissionCard,#agAdvisorBay){box-shadow:0 5px 12px #14333335,0 1px 2px #14333355,inset 0 1px #a1e5c328!important}
+.missions[data-ag-screen=dashboard] [data-open-screen]{cursor:pointer!important}
+.missions[data-ag-screen=dashboard] [data-open-screen]:hover{border-color:#9ece37!important}
+.missions[data-ag-screen=dashboard] [data-open-screen]:focus-visible{outline:2px solid #70a91e!important;outline-offset:3px!important}
+html[data-ag-drawers] .ag-exploration-menu{display:flex!important;flex-direction:column!important;gap:7px!important;max-height:48vh!important;overflow:auto!important}
+html[data-ag-drawers] .ag-exploration-menu>div:first-child{display:flex!important;align-items:center!important;gap:8px!important}
+html[data-ag-drawers] .ag-exploration-menu .map-tools{position:static!important;inset:auto!important;display:flex!important;width:auto!important;max-width:none!important;flex-wrap:wrap!important;padding:0!important}
+html[data-ag-drawers] .ag-exploration-menu :is(#createFarmBtn,#createContractorBtn,#createCompetitorBtn,#createCompanyFacilityBtn,#developerModeBtn){position:static!important;inset:auto!important;display:inline-flex!important;opacity:1!important;min-height:28px!important;font-size:10px!important}
+html[data-ag-drawers] #developerModeBtn{margin-left:auto!important}
+#agMapLayers{border-top:1px solid #2f6268!important;padding-top:6px!important;font-size:12px!important}
+#agMapLayers summary{cursor:pointer!important;color:#c6ee81!important;font-weight:700!important;letter-spacing:.7px!important}
+#agMapLayers p{margin:7px 0 0!important;color:#a9ccd2!important;font-size:11px!important}
+.ag-layer-grid{display:grid!important;grid-template-columns:repeat(4,minmax(100px,1fr))!important;gap:8px 14px!important;padding-top:10px!important}
+.ag-layer-grid label{display:flex!important;align-items:center!important;gap:6px!important;cursor:pointer!important;white-space:nowrap!important}
+.ag-layer-grid input{accent-color:#b8ec24!important;width:14px!important;height:14px!important;margin:0!important}
+#agBoundaryCredits{position:absolute!important;left:8px!important;bottom:25px!important;font:10px/1.2 Arial,sans-serif!important;background:#001820ad!important;color:#e4edf0!important;padding:3px 5px!important;z-index:100!important;border-radius:3px!important}
+#agMapAdvisorsToggle{position:absolute!important;left:40px!important;z-index:4000!important;width:82px!important;height:52px!important;display:flex!important;align-items:center!important;gap:3px!important;padding:3px 6px!important;border:1px solid #548c88!important;border-radius:8px!important;background:#001a22dd!important;color:#d5eeae!important;box-shadow:0 5px 16px #0007!important;cursor:pointer!important}
+#agMapAdvisorsToggle img{width:36px!important;height:40px!important;object-fit:contain!important}#agMapAdvisorsToggle span{font-size:9px!important;letter-spacing:.5px!important}
+#agMapAdvisors{position:absolute!important;left:40px!important;z-index:3900!important;width:280px!important;overflow:auto!important;padding:12px!important;border:1px solid #5b9b9a!important;border-radius:10px!important;background:var(--agr-panel)!important;color:var(--agr-ink)!important;box-shadow:0 15px 35px #0009!important;box-sizing:border-box!important}
+#agMapAdvisors header{display:flex!important;justify-content:space-between!important;align-items:center!important}#agMapAdvisors header strong{font-size:17px!important;letter-spacing:1px!important}#agMapAdvisors header button{font-size:24px!important;background:transparent!important;color:#d8ede7!important;border:0!important;cursor:pointer!important}
+#agMapAdvisors>p{margin:0 0 10px!important;color:#aac9c4!important;font-size:12px!important}#agMapAdvisors>div{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:7px!important}
+#agMapAdvisors [data-map-advisor]{padding:5px!important;border:1px solid #34646b!important;border-radius:6px!important;background:#01222c!important;color:#eaf5f7!important;cursor:pointer!important;display:flex!important;flex-direction:column!important;align-items:center!important;gap:6px!important;min-width:0!important}
+#agMapAdvisors [data-map-advisor] img{width:62px!important;height:66px!important;object-fit:cover!important;border-radius:4px!important}#agMapAdvisors [data-map-advisor] span{font-size:10px!important;line-height:1.15!important;min-height:23px!important}#agMapAdvisors [aria-pressed=true]{border-color:#b8ec24!important;box-shadow:0 0 8px #b8ec2477!important}
+html[data-ag-drawers] :is(#agMapAdvisorsToggle,#agMapAdvisors)[hidden]{display:none!important}
+@media(max-width:1000px){.ag-layer-grid{grid-template-columns:repeat(2,minmax(100px,1fr))!important}}
 }

@@ -40,15 +40,15 @@
     const nav=q('.sidebar .nav'),buttons=[...(nav?.querySelectorAll('[data-ag-screen]')||[])],active=buttons.filter(b=>b.getAttribute('aria-current')==='page');
     const routes=['dashboard','profile','pipeline','clients','products','after-sales','mission-history','ai-assistant','territory-campaigns','territory-graphics','settings','logout'];
     const missing=routes.filter(key=>!buttons.some(b=>b.dataset.agScreen===key));
-    const panel=byId('agMenuPanel'),selection=active.length===1&&active[0].dataset.agScreen===report.screen;
+    const drawers=w.AGWorldDrawers?.getState(),panel=byId('agMenuPanel'),selection=drawers&&!drawers.workspace?active.length===0:active.length===1&&active[0].dataset.agScreen===report.screen;
     const correctPanel=!!panel&&(report.screen==='dashboard'?panel.hidden:!panel.hidden);
     add('navigation','Sidebar & panel navigation',required(!missing.length&&selection&&correctPanel),[
-      ['Current screen',report.screen],['Routes available',routes.length-missing.length+' / '+routes.length],['One matching selection',selection],['Panel visibility matches selection',correctPanel],['Missing routes',missing.join(', ')||'None']
+      ['Current screen',report.screen],['Routes available',routes.length-missing.length+' / '+routes.length],['Selection matches open panel',selection],['Panel visibility matches selection',correctPanel],['Missing routes',missing.join(', ')||'None']
     ]);
     const dashboard=['agPlayerMissionProfile','agPlayerSalesFunnel','agCanonicalMissionCard','agAdvisorBay'];
     add('dashboard','Dashboard components',required(dashboard.every(id=>!!byId(id)?.isConnected)),dashboard.map(id=>[{'agPlayerMissionProfile':'Player profile','agPlayerSalesFunnel':'Sales funnel','agCanonicalMissionCard':'Mission card','agAdvisorBay':'Advisor pane'}[id],!!byId(id)?.isConnected]),'Panels remain mounted while another menu screen is open.');
     const rect=el=>el?.getBoundingClientRect(),side=rect(q('.sidebar')),mission=rect(q('.missions')),map=rect(q('.map-area'));
-    const joined=!!side&&!!mission&&!!map&&Math.abs(side.right-mission.left)<3&&Math.abs(mission.right-map.left)<3;
+    const geometry=w.AGWorldDrawers?.geometry(),joined=geometry?!!map&&Math.abs(map.left-geometry.leftStage)<3&&Math.abs(map.width-geometry.mapW)<3:!!side&&!!mission&&!!map&&Math.abs(side.right-mission.left)<3&&Math.abs(mission.right-map.left)<3;
     add('layout','Screen layout',required(joined&&!!byId('entityInformationSection')&&!!byId('territoryStatsDrawer')),[
       ['Sidebar, panels and map aligned',joined],['Command Center',!!byId('entityInformationSection')],['Territory drawer',!!byId('territoryStatsDrawer')],['Layout lock',!!w.__AGWORLD_MAIN_LAYOUT_LOCKED__]
     ],'Checks the current floating Command Center and territory drawer layout.');

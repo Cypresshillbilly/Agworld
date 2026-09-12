@@ -101,7 +101,7 @@
     const retry=document.getElementById('agworld-game-loader-retry');
     const stages=['auth','interface','systems','map','world','populate','finalise'];
     const progress=[8,12,70,78,86,94,98];
-    const labels=['AUTHENTICATION COMPLETE','LOADING GAME INTERFACE','INITIALISING GAME SYSTEMS','LOADING MAP ENGINE','LOADING SOUTH AFRICA','POPULATING MAP','FINALISING PLAYER SCREEN'];
+    const labels=['AUTHENTICATION COMPLETE','LOADING GAME INTERFACE','INITIALISING GAME SYSTEMS','LOADING MAP ENGINE','LOADING SADC TERRITORIES','POPULATING MAP','FINALISING PLAYER SCREEN'];
     const checks=[...document.querySelectorAll('#agworld-game-loader-checklist .agl-check')];
     const pendingStages=new Set();
     const marks=window.__AGWORLD_BOOT_MARKS__||(window.__AGWORLD_BOOT_MARKS__={});
