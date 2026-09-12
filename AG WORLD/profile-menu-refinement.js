@@ -1086,7 +1086,7 @@ function normaliseSidebarMenu(nav){
    for(const [needle,label] of SIDEBAR_MENU){
      if(!matched.has(needle) && (key===needle || key.includes(needle) || (needle==='profile' && key.includes('my profile')) || (needle==='pipeline' && key.includes('my pipeline')) || (needle==='clients' && key.includes('my clients')) || (needle==='products' && key.includes('my products')))){
        matched.set(needle,el);
-       el.textContent=label;
+       if(el.textContent!==label)el.textContent=label;
        el.setAttribute('data-ag-menu-label',label);
        break;
      }
@@ -1094,7 +1094,14 @@ function normaliseSidebarMenu(nav){
  });
  // Remove only stale navigation entries; matching keeps the original elements, IDs and click handlers intact.
  nodes.forEach(el=>{if(!Array.from(matched.values()).includes(el))el.remove()});
- SIDEBAR_MENU.forEach(([needle])=>{const el=matched.get(needle);if(el)nav.appendChild(el)});
+ // Moving an already ordered button interrupts pointer down/up and creates
+ // another observer cycle. Move only the entries whose position changed.
+ let next=nav.firstElementChild;
+ SIDEBAR_MENU.forEach(([needle])=>{
+   const el=matched.get(needle);if(!el)return;
+   if(el!==next)nav.insertBefore(el,next);
+   next=el.nextElementSibling;
+ });
  const missionMenu=matched.get('mission history');
  if(missionMenu&&!missionMenu.dataset.agMissionsBound){
    missionMenu.dataset.agMissionsBound='1';

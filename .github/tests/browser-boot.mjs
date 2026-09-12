@@ -59,7 +59,8 @@ try{
     new MutationObserver(records=>window.navMutations+=records.length).observe(document.querySelector('.sidebar .nav'),{childList:true});
   });
   await good.page.waitForTimeout(5000);
-  assert.ok(await good.page.evaluate(()=>window.navMutations<10),'Navigation must settle after startup');
+  const navigationUpdates=await good.page.evaluate(()=>window.navMutations);
+  assert.ok(navigationUpdates<10,'Navigation must settle after startup: '+navigationUpdates+' mutations');
   await good.page.getByRole('button',{name:'Toggle Territory Stats',exact:true}).click();
   assert.equal(await good.page.locator('#territoryStatsToggle').getAttribute('aria-expanded'),'true');
   await good.page.reload();await ready(good.page);
