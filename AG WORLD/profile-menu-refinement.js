@@ -1027,6 +1027,7 @@ function playerCardHTML(d){
  return '<div class="ag-player-identity"><div class="ag-player-avatar-frame"><div class="ag-player-avatar" aria-hidden="true">'+d.initial+'</div><span class="ag-player-online-dot"></span></div><div class="ag-player-summary"><span class="ag-player-kicker">ACTIVE PLAYER</span><strong class="ag-player-name">'+d.name+'</strong><span class="ag-player-role">AGWORLD FIELD COMMANDER</span><div class="ag-player-meta"><span class="ag-player-level">LVL '+d.level+'</span><span class="ag-player-chapter">CH '+d.chapter+'</span></div><div class="ag-player-xp-label"><span>PROGRESS</span><b>'+d.pct+'%</b></div><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:'+d.pct+'%"></i></span><span class="ag-player-xp-text"><b>'+d.xp.toLocaleString()+' XP</b><b>NEXT '+d.next.toLocaleString()+'</b></span></div></div>';
 }
 const SIDEBAR_MENU=[
+ ['dashboard','Dashboard'],
  ['profile','Profile'],
  ['pipeline','Sales Funnel'],
  ['clients','Client List'],
@@ -1088,6 +1089,7 @@ function normaliseSidebarMenu(nav){
        matched.set(needle,el);
        if(el.textContent!==label)el.textContent=label;
        el.setAttribute('data-ag-menu-label',label);
+       el.setAttribute('data-ag-screen',needle.replace(/ /g,'-'));
        break;
      }
    }
