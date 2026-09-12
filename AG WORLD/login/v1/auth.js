@@ -200,18 +200,68 @@
       if(submitButton){submitButton.dataset.busy='1';submitButton.disabled=true;}
       if(!master){
         const error=gate.querySelector('.ag-login-error');
-        error.textContent='SIGNING IN…';
+        const email=username.value.trim();
+        const pass=password.value;
+        if(!email||!pass){
+          error.textContent='ENTER YOUR EMAIL AND PASSWORD';
+          if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}
+          return;
+        }
+
+        // Performance marker for the official V1 boot path. These marks make
+        // the click → loader paint → auth → V1-ready timings measurable in
+        // browser performance tooling without changing the user experience.
+        try{performance.mark('agworld-login-click');}catch(_){}
+
+        // The loader must be the first visible response to Enter AgWorld.
+        // Show it before waiting on Supabase or any network work.
+        const preAuthLoader=document.getElementById('agworld-game-loader');
+        const preAuthBar=document.getElementById('agworld-game-loader-bar');
+        const preAuthPercent=document.getElementById('agworld-game-loader-percent');
+        const preAuthStatus=document.getElementById('agworld-game-loader-status');
+        const resetPreAuthLoader=()=>{
+          if(preAuthLoader) preAuthLoader.classList.remove('is-active');
+          if(preAuthBar) preAuthBar.style.width='0%';
+          if(preAuthPercent) preAuthPercent.textContent='0%';
+          if(preAuthStatus) preAuthStatus.textContent='AUTHENTICATION COMPLETE';
+          document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
+            item.classList.remove('is-loading','is-complete');
+          });
+        };
+
+        if(preAuthBar) preAuthBar.style.width='2%';
+        if(preAuthPercent) preAuthPercent.textContent='2%';
+        if(preAuthStatus) preAuthStatus.textContent='AUTHENTICATING SECURE SESSION';
+        document.querySelectorAll('#agworld-game-loader-checklist .agl-check').forEach(item=>{
+          item.classList.remove('is-complete');
+          item.classList.toggle('is-loading',item.dataset.loadStage==='auth');
+        });
+        if(preAuthLoader) preAuthLoader.classList.add('is-active');
+
+        // Two animation frames ensure the branded loader is actually presented
+        // before the authentication request can occupy the main thread.
+        await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+        try{performance.mark('agworld-loader-painted');}catch(_){}
+
         try{
           // The client is normally already warm by the time the user clicks
           // Enter AgWorld. Reuse the shared promise if the prewarm is still
           // finishing instead of downloading/initialising during the click.
           const db=await ensureAgworldSupabase();
-          const email=username.value.trim();
-          const pass=password.value;
-          if(!email||!pass){error.textContent='ENTER YOUR EMAIL AND PASSWORD';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
           const {data,error:authError}=await db.auth.signInWithPassword({email,password:pass});
-          if(authError){error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
-          if(!data?.user){error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}return;}
+          if(authError){
+            resetPreAuthLoader();
+            error.textContent=authError.message||'INVALID EMAIL OR PASSWORD';
+            if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}
+            return;
+          }
+          if(!data?.user){
+            resetPreAuthLoader();
+            error.textContent='UNABLE TO SIGN IN. PLEASE TRY AGAIN.';
+            if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}
+            return;
+          }
+          try{performance.mark('agworld-auth-complete');}catch(_){}
           const displayName=data.user.user_metadata?.display_name||email;
           window.__AGWORLD_EXPLICIT_AUTH__=true;
           sessionStorage.setItem('gamechanger.authenticated','1');
@@ -252,7 +302,26 @@
           const status=document.getElementById('agworld-game-loader-status');
           const stages=['auth','interface','systems','map','world','populate','finalise'];
 
-          let highestProgress=0;
+          const stageProgress={
+            auth:8,
+            interface:22,
+            systems:40,
+            map:58,
+            world:76,
+            populate:92,
+            finalise:98
+          };
+          const stageStatus={
+            auth:'AUTHENTICATION COMPLETE',
+            interface:'LOADING GAME INTERFACE',
+            systems:'INITIALISING GAME SYSTEMS',
+            map:'LOADING MAP ENGINE',
+            world:'LOADING SOUTH AFRICA',
+            populate:'POPULATING MAP',
+            finalise:'FINALISING PLAYER SCREEN'
+          };
+
+          let highestProgress=2;
           const setProgress=(progress,text)=>{
             const requested=Math.max(0,Math.min(100,Number(progress)||0));
             highestProgress=Math.max(highestProgress,requested);
@@ -274,6 +343,11 @@
               item.classList.toggle('is-loading',index===current);
             });
           };
+          const advanceStage=(stage,text)=>{
+            setStage(stage);
+            setProgress(stageProgress[stage]??highestProgress,text||stageStatus[stage]||'');
+            try{performance.mark('agworld-stage-'+stage);}catch(_){}
+          };
 
           const nextPaint=()=>new Promise(resolve=>{
             requestAnimationFrame(()=>setTimeout(resolve,0));
@@ -284,11 +358,14 @@
           // phases reflect actual work rather than an artificial timer.
           const onProgress=(event)=>{
             const detail=event.detail||{};
-            if(Number.isFinite(Number(detail.progress))) setProgress(detail.progress,detail.status);
+            // Source percentages were written for an older boot model (90/94/97)
+            // and therefore overstated total V1 progress. Preserve the genuine
+            // status text but keep the bar tied to canonical stage completion.
+            if(detail.status) setProgress(highestProgress,detail.status);
           };
           const onChecklist=(event)=>{
             const detail=event.detail||{};
-            if(detail.stage) setStage(detail.stage);
+            if(detail.stage) advanceStage(detail.stage,stageStatus[detail.stage]);
           };
           window.addEventListener('agworld:load-progress',onProgress);
           window.addEventListener('agworld:load-checklist',onChecklist);
@@ -301,8 +378,7 @@
           });
 
           error.textContent='LOADING AGWORLD…';
-          setProgress(1,'AUTHENTICATION COMPLETE');
-          setStage('auth');
+          advanceStage('auth');
 
           if(gameLoader) gameLoader.classList.add('is-active');
 
@@ -313,12 +389,10 @@
 
           gate.remove();
 
-          setProgress(12,'LOADING GAME INTERFACE');
-          setStage('interface');
+          advanceStage('interface');
           await nextPaint();
 
-          setProgress(28,'INITIALISING GAME SYSTEMS');
-          setStage('systems');
+          advanceStage('systems');
 
           // These events resume the canonical V1 lifecycle. They are deliberately
           // fired only after Loading Page V0 is visible on screen.
@@ -330,14 +404,14 @@
           // The screen is never exposed until canonical V1 confirms readiness.
           try{
             await playerReady;
-            setProgress(94,'FINALISING PLAYER SCREEN');
-            setStage('finalise');
+            advanceStage('finalise');
 
             // Allow the already-approved V1 to paint one complete frame beneath
             // the overlay before removing Loading Page V0.
             await nextPaint();
             setProgress(100,'AGWORLD READY');
-            await new Promise(resolve=>setTimeout(resolve,180));
+            try{performance.mark('agworld-player-ready');performance.measure('agworld-login-to-ready','agworld-login-click','agworld-player-ready');}catch(_){}
+            await new Promise(resolve=>setTimeout(resolve,80));
 
             if(gameLoader) gameLoader.classList.remove('is-active');
             reveal();
@@ -347,6 +421,7 @@
           }
         }catch(err){
           console.error('AG World sign-in failed',err);
+          resetPreAuthLoader?.();
           error.textContent='UNABLE TO CONNECT TO THE COMPANY ACCOUNT SERVICE';
           if(submitButton){submitButton.dataset.busy='0';submitButton.disabled=false;}
         }
