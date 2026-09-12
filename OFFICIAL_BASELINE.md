@@ -2,6 +2,8 @@
 
 Release date: 13 September 2026 (Africa/Johannesburg).
 
+**Release status:** The player frontends, commander function version 7 and V2 database migrations are published. Both frontends match the reviewed runtime files and their regression checks passed. The Render API has not yet picked up the reviewed authorization/error-path changes: its unauthenticated farm write still returns the earlier 500 response instead of the required 401. Render workspace confirmation is pending before that deployment can be inspected. **Final all-service signoff and creation of `baseline/development-v2` remain pending.** This status takes precedence over the target release description below.
+
 This is the product-owner-authorized Development Version 2 source baseline for the complete repository and all included pages. It supersedes earlier screen-version descriptions where the documented behaviour differs. A development baseline records a reproducible state; it does not certify all legacy pages for unrestricted production administration.
 
 ## Restore points and documentation
