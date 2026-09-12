@@ -1249,8 +1249,10 @@ function start(){
    const hasAdvisor=!!document.querySelector('#agAdvisorBay');
    const missions=document.querySelector('.missions');
    const missionCards=missionCardCandidates(missions);
-   const hasLandingMission=!!missions?.querySelector('#agLandingMissionCard.ag-landing-mission');
-   const skill=missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
+   // The progression stack replaces the legacy landing card. Recognise its
+   // canonical card so late mutations do not rebuild the sidebar during clicks.
+   const hasLandingMission=!!missions?.querySelector('#agLandingMissionCard.ag-landing-mission,#agCanonicalMissionCard');
+   const skill=missions?.querySelector('#agCanonicalSkillProfile')||missions?.querySelector('#agMissionSkillProfile,.ag-mission-skill-profile');
    const correctProfileOrder=!skill||!!(document.querySelector('#agPlayerMissionProfile')?.compareDocumentPosition(skill)&Node.DOCUMENT_POSITION_FOLLOWING);
    // Do not short-circuit while late mission data is arriving or while another
    // module has put Skill Profile above Player Profile.

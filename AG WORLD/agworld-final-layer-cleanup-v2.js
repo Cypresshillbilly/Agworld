@@ -130,7 +130,7 @@
 
   function run(){
     installStyle();
-    document.getElementById('mapStatus')?.remove();
+    // GIS callbacks still own this status node; the existing CSS keeps it hidden.
     purgeLegacyLayers();
   }
 

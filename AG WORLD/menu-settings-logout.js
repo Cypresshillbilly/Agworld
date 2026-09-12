@@ -54,11 +54,13 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded',()=>{
+  const install=()=>{
     addItems();
     const observer=new MutationObserver(addItems);
     observer.observe(document.body,{childList:true,subtree:true});
     setTimeout(addItems,500);
     setTimeout(addItems,1500);
-  });
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
 })();
