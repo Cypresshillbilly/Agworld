@@ -345,7 +345,6 @@
             // the overlay before removing Loading Page V0.
             await nextPaint();
             setProgress(100,'AGWORLD READY');
-            try{performance.mark('agworld-player-ready');performance.measure('agworld-login-to-ready','agworld-login-click','agworld-player-ready');}catch(_){}
             await new Promise(resolve=>setTimeout(resolve,80));
 
             if(gameLoader) gameLoader.classList.remove('is-active');
