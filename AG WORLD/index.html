@@ -135,122 +135,17 @@ body.agworld-layout-ready .app-shell{
 
 <script>
 /* AG WORLD — canonical deferred V1 game boot.
-   Approved V1 game sources remain byte-for-byte in their existing order.
-   This orchestrator optimises transport and hand-off without changing source
-   ownership, source order, or execution semantics. */
+   Approved V1 game sources remain byte-for-byte in their existing order; this
+   orchestrator changes only WHEN they execute. */
 (function(){
-  'use strict';
-
   const TYPE='text/agworld-deferred-script';
-  const PRELOAD_ID='agworld-game-source-preload-';
-  const CRITICAL=[
-    'https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.min.js',
-    'core/role-config.js',
-    'core/bootstrap.js',
-    'builds/agriculture/profile/profile.manifest.js',
-    'builds/agriculture/profile/profile.module.js',
-    'api-bridge.js',
-    'config-gis-v4.js',
-    'world-data-mode-v1.js',
-    'app-gis-loader-v24.js',
-    'shared-backend-v37.js',
-    'shared-farm-world-v38.js',
-    'main-game-layout-v1.js',
-    'agworld-command-territory-final-v3.js',
-    'agworld-player-surface-final-v1.js',
-    'agworld-landing-game-layer-v1.js',
-    'agworld-player-progression-stack-v1.js',
-    'agworld-mission-control-card-polish-v1.js'
-  ];
-
   let bootPromise=null;
-  let warmPromise=null;
   window.__AGWORLD_GAME_BOOTED__=false;
-
-  function deferredNodes(){
-    return [...document.querySelectorAll('script[type="'+TYPE+'"]')];
-  }
-
-  function normalise(url){
-    try{return new URL(url,document.baseURI).href;}catch(_){return url;}
-  }
-
-  function isCritical(src){
-    const value=String(src||'');
-    return CRITICAL.some(token=>value.includes(token));
-  }
-
-  function ensureConnectionHints(){
-    const origins=[
-      'https://maps.googleapis.com',
-      'https://maps.gstatic.com',
-      'https://cdn.jsdelivr.net'
-    ];
-    origins.forEach((href,index)=>{
-      const id='agworld-preconnect-'+index;
-      if(document.getElementById(id)) return;
-      const link=document.createElement('link');
-      link.id=id;
-      link.rel='preconnect';
-      link.href=href;
-      link.crossOrigin='anonymous';
-      document.head.appendChild(link);
-    });
-    const dns='https://law.drdlr.gov.za';
-    if(!document.getElementById('agworld-dns-gis')){
-      const link=document.createElement('link');
-      link.id='agworld-dns-gis';
-      link.rel='dns-prefetch';
-      link.href=dns;
-      document.head.appendChild(link);
-    }
-  }
-
-  function preloadNode(node){
-    if(!node.src) return;
-    const src=node.src;
-    const id=PRELOAD_ID+btoa(normalise(src)).replace(/[^a-z0-9]/gi,'').slice(0,72);
-    if(document.getElementById(id)) return;
-    const link=document.createElement('link');
-    link.id=id;
-    link.rel='preload';
-    link.as='script';
-    link.href=src;
-    if(new URL(src,document.baseURI).origin!==location.origin) link.crossOrigin='anonymous';
-    document.head.appendChild(link);
-  }
-
-  function warmGameSources({all=false}={}){
-    ensureConnectionHints();
-    const nodes=deferredNodes();
-    nodes.forEach(node=>{
-      if(all||isCritical(node.src)) preloadNode(node);
-    });
-    return Promise.resolve();
-  }
-
-  window.__AGWORLD_WARM_GAME_SOURCES__=function(options){
-    if(!warmPromise){
-      warmPromise=warmGameSources(options||{all:false});
-    }else if(options?.all){
-      warmGameSources({all:true});
-    }
-    return warmPromise;
-  };
-
   window.__AGWORLD_BOOT_GAME__=function(){
     if(bootPromise) return bootPromise;
-
     bootPromise=(async()=>{
-      // Promote every remaining approved source to a transport request before
-      // sequential execution begins. Network downloads can overlap; execution
-      // remains in the original V1 source order.
-      await warmGameSources({all:true});
-
-      const nodes=deferredNodes();
-      for(let index=0; index<nodes.length; index++){
-        const node=nodes[index];
-
+      const nodes=[...document.querySelectorAll('script[type="'+TYPE+'"]')];
+      for(const node of nodes){
         await new Promise((resolve,reject)=>{
           const script=document.createElement('script');
           if(node.src){
@@ -260,37 +155,18 @@ body.agworld-layout-ready .app-shell{
             script.onerror=()=>reject(new Error('Failed to load '+node.getAttribute('data-agworld-src')));
           }else{
             script.text=node.textContent||'';
-            script.onload=resolve;
+            resolve();
           }
           script.dataset.agworldBootLoaded='1';
           document.head.appendChild(script);
           node.remove();
-          if(!node.src) resolve();
         });
-
-        // Keep the visible loader composited during a long source chain without
-        // changing execution order or delaying dependent source execution.
-        if((index+1)%10===0 && index<nodes.length-1){
-          await new Promise(resolve=>requestAnimationFrame(resolve));
-        }
       }
-
       window.__AGWORLD_GAME_BOOTED__=true;
       window.dispatchEvent(new CustomEvent('agworld:game-sources-ready'));
     })();
-
     return bootPromise;
   };
-
-  // Login stays CPU-light. Once the login has painted, warm only the critical
-  // transport path during browser idle time. Nothing is executed until auth.
-  const scheduleWarm=()=>{
-    const run=()=>window.__AGWORLD_WARM_GAME_SOURCES__({all:false});
-    if('requestIdleCallback' in window) window.requestIdleCallback(run,{timeout:900});
-    else setTimeout(run,450);
-  };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',scheduleWarm,{once:true});
-  else scheduleWarm();
 })();
 </script><main class="app-shell"><aside class="sidebar"><div class="brand"><img class="brand-logo" src="brand/logos/PNG_Transparent/AgWorld_Primary_Horizontal.png?v=sidebar-logo-final-v1" alt="AgWorld"></div><div class="menu-user"><div class="menu-user-avatar" aria-label="User profile picture"><span>N</span></div><div class="menu-user-name">NICO VAN ROOYEN</div><div class="menu-user-role">SALES REPRESENTATIVE</div><div class="menu-user-level">LEVEL 7</div><div class="menu-user-xp"><span></span></div><div class="menu-user-xptext"><span>6,820 / 10,000 XP</span><b>68%</b></div></div><nav class="nav"><button class="active" data-view="map">◉ TERRITORY MAP</button><button data-view="missions">◆ MISSIONS</button><button data-view="training">◇ TRAINING</button><button data-view="leaderboard">★ LEADERBOARD</button><button id="worldEventsNavBtn" data-view="world-events">◈ WORLD EVENTS</button><button id="developerModeBtn" type="button">⚙ DEVELOPER MODE ↗</button><button data-view="profile">● MY PROFILE</button></nav><div class="profile"><strong>SALES REPRESENTATIVE</strong>Level 7 · Territory 03<br><span style="color:#7e969f">Connected</span></div></aside><section class="missions"><section id="agPlayerMissionProfile" class="ag-player-mission-profile" aria-label="Player profile"><div class="ag-player-avatar" aria-hidden="true">N</div><div class="ag-player-summary"><strong class="ag-player-name">NICO VAN ROOYEN</strong><span class="ag-player-role">AG WORLD PLAYER</span><span class="ag-player-level">Level 1 · Chapter 1</span><span class="ag-player-xp-track"><i class="ag-player-xp-fill" style="width:0%"></i></span><span class="ag-player-xp-text"><b>0 / 1,000 XP</b><b>0%</b></span></div></section><div class="eyebrow">Sales Rep · Territory 03</div><h1>MISSION CONTROL</h1><div class="level">Level 7 · 6,820 / 10,000 XP</div><div class="xpbar"><span></span></div><div class="xptext"><span>Current XP</span><span>68%</span></div><div class="section-title">Assigned missions</div></section><section class="map-area"><div class="map-header"><div><div class="map-title">SOUTH AFRICA · AGRICULTURAL TERRITORY</div><div id="zoomStage" class="zoom-stage">ZOOM 1 · NATIONAL OVERVIEW</div></div><div class="map-tools"><button id="nationalBtn">NATIONAL</button><button id="satelliteBtn">SATELLITE</button><button id="importBtn">IMPORT DATA</button><button id="exportBtn">EXPORT DATA</button><button id="createFarmBtn">+ CREATE FARM</button><button id="createContractorBtn">+ CONTRACTOR</button><button id="createCompetitorBtn">+ COMPETITOR</button><button id="createCompanyFacilityBtn">+ COMPANY FACILITY</button><button id="resetBtn">RESET</button><input id="datasetFile" type="file" accept=".json,.geojson,.csv" hidden></div></div><div id="map" class="map"></div><div id="mapStatus" class="map-status" aria-live="polite" style="display:none!important" aria-hidden="true">Loading agricultural map…</div><div id="farmCard" class="farm-card"><h2 id="farmName">Farm</h2><div id="farmMeta" class="meta"></div><div class="stats"><div class="stat"><b id="farmDrones">—</b><span>DRONES</span></div><div class="stat"><b id="farmTractors">—</b><span>TRACTORS</span></div><div class="stat"><b id="farmCrops">—</b><span>CROPS</span></div><div class="stat"><b id="farmScore">—</b><span>OPPORTUNITY</span></div></div><div class="farm-extra"><div><span>LIVESTOCK</span><b id="farmLivestock">—</b></div><div><span>HARVEST</span><b id="farmHarvest">—</b></div><div><span>LAST SERVICE</span><b id="farmService">—</b></div></div><p id="farmDetailText" class="farm-detail-text"></p><div id="agworldV2FarmDetailHost" aria-live="polite"><div class="agworld-v2-placeholder"><strong>AG WORLD V2 ENTITY ENGINE</strong><span>Preparing connected entity data…</span></div></div><div id="farmActions" class="farm-actions"><button id="farm3d" type="button">UPDATE FARM DETAILS</button><button id="fleetTransactionAction" class="save-farm" type="button" hidden>🚁 SELL / MANAGE FLEET</button><button id="fleetHistoryAction" type="button" hidden>📊 SALES HISTORY & FLEET</button><button id="farmHistoryBtn" type="button">FARM HISTORY</button></div></div></section><section class="bottom user-profile-section"><div class="user-profile-heading"><div><div class="profile-eyebrow">AG WORLD · EMPLOYEE PROFILE</div><h2>USER PROFILE</h2></div><div class="profile-status">● CONNECTED</div></div><div class="user-profile-grid"><div class="user-identity"><div class="user-avatar">N</div><div><strong>NICO</strong><span>SALES REPRESENTATIVE</span><small>Territory 03</small></div></div><div class="user-level"><div class="profile-label">PROGRESSION</div><strong>LEVEL 7</strong><div class="profile-xpbar"><span></span></div><div class="profile-xptext"><span>6,820 / 10,000 XP</span><span>68%</span></div></div><div class="user-territory"><div class="profile-label">TERRITORY</div><div><b>74%</b><span>Controlled</span></div><div><b>#2</b><span>Regional position</span></div><div><b>#11</b><span>National position</span></div></div><div class="user-achievements"><div class="profile-label">ACHIEVEMENTS</div><div class="badges"><div class="badge" title="Territory">◆</div><div class="badge" title="Customer">★</div><div class="badge" title="Training">◇</div><div class="badge" title="Sales">●</div></div></div></div></section><div id="toast" class="toast"></div><div id="dynamicEntityModal" class="farm3d-modal"><div class="farm3d-window farm-create-window"><div class="farm3d-head"><div><strong id="dynamicEntityModalTitle">CREATE CONTRACTOR</strong><span id="dynamicEntityModalSubtitle">Shared dynamic game-layer record</span></div><button id="closeDynamicEntity">×</button></div><div class="farm-wizard">
 <div class="farm-wizard-progress"><span id="dynamicEntityProgress">STEP 1 OF 4</span><strong id="dynamicEntityStepTitle">SELECT LOCATION</strong></div>
