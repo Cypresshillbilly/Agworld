@@ -1212,7 +1212,15 @@ function seedDemoFarms() {
   return farms;
 }
 
+let farmLoadInFlight = null;
+
 async function loadFarms() {
+  // The GIS module can receive authentication, refresh and map-ready signals
+  // close together. Coalesce concurrent requests so the same farm/territory
+  // JSON is never downloaded and parsed twice during one boot.
+  if (farmLoadInFlight) return farmLoadInFlight;
+
+  farmLoadInFlight = (async () => {
   // Player-first boot: the map starts immediately, while farm data is deferred
   // until the player actually reaches FARM & ASSET level.
   initMap();
@@ -1257,13 +1265,15 @@ async function loadFarms() {
     linkHierarchySpatialParents();
     initialiseGameTerritories();
 
+    // Geometry/data is activated progressively by zoom. Do not create hidden
+    // farm or municipal overlays during initial player boot. The data milestone
+    // is real regardless of whether the asynchronous Google Maps script paints
+    // a few milliseconds before or after this point.
     if (map) {
-      // Geometry/data is activated progressively by zoom. Do not create hidden
-      // farm or municipal overlays during initial player boot.
       updateZoomStage();
       $('mapStatus').textContent = `Satellite map active · ${farms.length} farm records loaded · loading municipal and town GIS…`;
-      reportAgWorldBootPhase('populate', 92, 'POPULATING MAP');
     }
+    reportAgWorldBootPhase('populate', 92, 'POPULATING MAP');
 
     // Remote GIS layers load independently of both the map and local datasets.
     loadSpatialLayersInBackground();
@@ -1276,6 +1286,16 @@ async function loadFarms() {
   }
 }
 
+  })();
+
+  try {
+    return await farmLoadInFlight;
+  } finally {
+    // This guard is for overlapping boot calls, not permanent memoisation.
+    // Later controlled retries remain possible if the world needs them.
+    farmLoadInFlight = null;
+  }
+}
 async function fetchWithTimeout(url, timeoutMs, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
