@@ -64,9 +64,10 @@ language sql stable security invoker set search_path='' as $$
    replace(plainto_tsquery('english'::regconfig,left(coalesce(p_query,''),500))::text,' & ',' | ')::tsquery as broad
  ), matches as (
  select d.id,d.title,d.models,d.source_reference,d.source_year,c.locator,c.content,
-   (ts_rank_cd(c.fts,q.broad)+(case when c.fts@@q.exact then 1 else 0 end)+
-    (case when p_model<>'' and p_model=any(d.models) then .2 else 0 end))::real as score,
-   row_number() over(partition by d.id order by (c.fts@@q.exact) desc,ts_rank_cd(c.fts,q.broad) desc,c.id) as occurrence
+   ((case when c.fts@@q.exact then 2 else 0 end)+4*ts_rank_cd(c.fts,q.exact,32)+.2*ts_rank_cd(c.fts,q.broad,32)+
+    (case when p_model<>'' and p_model=any(d.models) then 1 else 0 end)+
+    (case when to_tsvector('english'::regconfig,d.title)@@q.exact then 3 else 0 end))::real as score,
+   row_number() over(partition by d.id order by (c.fts@@q.exact) desc,ts_rank_cd(c.fts,q.exact,32) desc,ts_rank_cd(c.fts,q.broad,32) desc,c.id) as occurrence
  from public.ag_knowledge_chunks c join public.ag_knowledge_documents d on d.id=c.document_id cross join query q
  where c.collection=p_collection and d.collection=p_collection and d.status='indexed'
   and (coalesce(p_model,'')='' or p_model=any(d.models) or 'GENERAL'=any(d.models))

@@ -930,8 +930,8 @@ let nationalBoardInitialised=false;
 let countryFlagOverviewZoom=3.6;
 function countryFlagIcon(territory,zoom){
   const width=Math.round(Math.max(28,Math.min(80,64*Math.pow(.65,Number(zoom)-countryFlagOverviewZoom))));
-  const height=Math.round(width*.75);
-  return {url:'data/gis/africa/flags/'+territory.iso2+'.svg',scaledSize:new google.maps.Size(width,height),anchor:new google.maps.Point(width/2,height/2)};
+  const height=Math.round(width*.875);
+  return {url:'data/gis/africa/flags-polished/'+territory.iso2+'.svg',scaledSize:new google.maps.Size(width,height),anchor:new google.maps.Point(width/2,height/2)};
 }
 function selectTerritory(territory, zoom=false) {
   if(!territory)return;
@@ -975,7 +975,7 @@ function initialiseNationalBoard(){
   nationalBoardInitialised=true;selectTerritory(countries[0],false);fitSADC();
   if(!$('africaBtn')){const b=document.createElement('button');b.id='africaBtn';b.textContent='AFRICA';b.onclick=fitAfrica;document.querySelector('.map-tools')?.prepend(b);}
   if(!$('sadcBtn')){const b=document.createElement('button');b.id='sadcBtn';b.textContent='SADC';b.onclick=fitSADC;document.querySelector('.map-tools')?.prepend(b);}
-  if(!$('agBoundaryCredits')){const a=document.createElement('a');a.id='agBoundaryCredits';a.href='data/gis/africa/attribution.html';a.target='_blank';a.rel='noopener';a.textContent='Boundaries: Natural Earth · geoBoundaries';document.querySelector('.map-area')?.append(a);}
+  if(!$('agBoundaryCredits')){const a=document.createElement('a');a.id='agBoundaryCredits';a.href='data/gis/africa/attribution.html';a.target='_blank';a.rel='noopener';a.textContent='Boundaries: Natural Earth · geoBoundaries';document.querySelector('.map-header .map-tools')?.append(a);}
 }
 window.AGWorldTerritoryBoard={getSelection:()=>selectedBoardTerritory,getCountry:()=>activeBoardCountry,fitSouthAfrica,fitAfrica,fitSADC,stageForZoom:progressiveStageForZoom};
 window.addEventListener('agworld:player-visible',()=>{

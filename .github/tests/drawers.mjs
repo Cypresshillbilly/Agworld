@@ -6,7 +6,10 @@ export async function panels(page,wanted={player:true,workspace:true,map:true,co
   if(!(key in wanted))continue;
   if(key==='workspace'&&wanted.player===false)continue;
   const button=page.locator(handles[key]);
-  if(await button.getAttribute('aria-expanded')!==String(wanted[key]))await button.click();
+  if(await button.getAttribute('aria-expanded')!==String(wanted[key])){
+   if(key==='workspace'&&wanted[key]&&!await button.isVisible())await page.locator('.sidebar [data-ag-screen="'+await page.locator('.missions').getAttribute('data-ag-screen')+'"]').click();
+   else await button.click();
+  }
  }
  await page.waitForTimeout(340);
  await page.waitForFunction(()=>{const s=window.AGWorldDrawers?.getState(),g=window.AGWorldDrawers?.geometry();if(!s||!g)return false;const map=document.querySelector('.map-area').getBoundingClientRect(),stats=document.getElementById('territoryStatsDrawer'),r=stats.getBoundingClientRect();return Math.abs(map.left-g.leftStage)<1&&Math.abs(map.width-g.mapW)<1&&Math.abs(r.top-map.top-parseFloat(stats.style.top))<1&&Math.abs(r.height-parseFloat(stats.style.height))<1;});
@@ -39,7 +42,8 @@ export async function exerciseDrawers(page){
  assert.equal(await page.locator('#agMenuPanel h1').textContent(),'Player Profile');
  await panels(page,{workspace:false});
  assert.equal(await page.locator('.sidebar [aria-current=page]').count(),0);
- await page.locator(handles.workspace).focus();await page.keyboard.press('Enter');await panels(page,{workspace:true});
+ assert.equal(await page.locator(handles.workspace).isVisible(),false,'Closed information panel opens through a gray menu item');
+ await page.locator('.sidebar [data-ag-screen=profile]').focus();await page.keyboard.press('Enter');await panels(page,{workspace:true});
  assert.equal(await page.locator('#agMenuPanel h1').textContent(),'Player Profile','Panel survives sliding beneath the menu');
  await page.locator('.sidebar [data-ag-screen=profile]').click();
  assert.equal(await page.locator(handles.workspace).getAttribute('aria-expanded'),'false','Selected item toggles its information panel closed');
