@@ -697,8 +697,8 @@ function renderGoogleMap() {
   try {
     // Exact V1 base-map path: create the satellite map before any farm or GIS work.
     map = new google.maps.Map($('map'), {
-      center: { lat: -6, lng: 17 },
-      zoom: 3,
+      center: { lat: -16.5, lng: 33.5 },
+      zoom: 3.5,
       mapTypeId: 'satellite',
       fullscreenControl: false,
       streetViewControl: false,
@@ -855,7 +855,7 @@ function addTerritory(territory) {
   }
   if(level==='country'&&territory.iso2){
     marker=new google.maps.Marker({position:territory.center,map,title:territory.name,clickable:true,zIndex:15,
-      icon:{url:'data/gis/africa/flags/'+territory.iso2+'.svg',scaledSize:new google.maps.Size(28,21),anchor:new google.maps.Point(14,10)}});
+      icon:countryFlagIcon(territory,map.getZoom())});
     marker.addListener('click',()=>{if(!creatingFarm)window.selectTerritory(territory,true);});
     territoryMarkers.push(marker);
   }
@@ -927,6 +927,12 @@ function renderTerritoryInformationPanel(territory,summary){
 
 let selectedBoardTerritory=null;
 let nationalBoardInitialised=false;
+let countryFlagOverviewZoom=3.6;
+function countryFlagIcon(territory,zoom){
+  const width=Math.round(Math.max(28,Math.min(80,64*Math.pow(.65,Number(zoom)-countryFlagOverviewZoom))));
+  const height=Math.round(width*.75);
+  return {url:'data/gis/africa/flags/'+territory.iso2+'.svg',scaledSize:new google.maps.Size(width,height),anchor:new google.maps.Point(width/2,height/2)};
+}
 function selectTerritory(territory, zoom=false) {
   if(!territory)return;
   const previous=selectedBoardTerritory;
@@ -958,11 +964,12 @@ function fitTerritories(records,minZoom=1,maxZoom=5.49){
   const xFraction=Math.max(.00001,(east-west)/360),yFraction=Math.max(.00001,(yNorth-ySouth)/(2*Math.PI));
   const width=Math.max(128,host.clientWidth-padding*2),height=Math.max(128,host.clientHeight-padding*2);
   const zoom=Math.min(maxZoom,Math.log2(width/(256*xFraction)),Math.log2(height/(256*yFraction)));
-  map.setCenter({lat:latitude,lng:(west+east)/2});map.setZoom(Math.max(minZoom,zoom));updateZoomStage();
+  const fittedZoom=Math.max(minZoom,zoom);
+  map.setCenter({lat:latitude,lng:(west+east)/2});map.setZoom(fittedZoom);updateZoomStage();return fittedZoom;
 }
 function fitSouthAfrica(){fitTerritories([countries[0]]);}
 function fitAfrica(){boardRegion='AFRICA';fitTerritories(countries,1,4.5);}
-function fitSADC(){boardRegion='SADC';fitTerritories(countries.filter(c=>SADC_COUNTRIES.has(c.countryCode)),1,4.8);}
+function fitSADC(){boardRegion='SADC';const zoom=fitTerritories(countries.filter(c=>SADC_COUNTRIES.has(c.countryCode)),1,4.8);if(Number.isFinite(zoom))countryFlagOverviewZoom=zoom;refreshMapVisibility();}
 function initialiseNationalBoard(){
   if(nationalBoardInitialised||!map||!africaManifest)return;
   nationalBoardInitialised=true;selectTerritory(countries[0],false);fitSADC();
@@ -971,7 +978,10 @@ function initialiseNationalBoard(){
   if(!$('agBoundaryCredits')){const a=document.createElement('a');a.id='agBoundaryCredits';a.href='data/gis/africa/attribution.html';a.target='_blank';a.rel='noopener';a.textContent='Boundaries: Natural Earth · geoBoundaries';document.querySelector('.map-area')?.append(a);}
 }
 window.AGWorldTerritoryBoard={getSelection:()=>selectedBoardTerritory,getCountry:()=>activeBoardCountry,fitSouthAfrica,fitAfrica,fitSADC,stageForZoom:progressiveStageForZoom};
-window.addEventListener('agworld:player-visible',()=>{if(nationalBoardInitialised)fitSADC();},{once:true});
+window.addEventListener('agworld:player-visible',()=>{
+  // Frame the region after the authenticated screen has its final dimensions.
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(nationalBoardInitialised){window.AGWorldDrawers?.layout();fitSADC();}}));
+},{once:true});
 
 function municipalityDisplayName(name) {
   // Keep the official database name intact for gameplay/data matching, but
@@ -1011,6 +1021,7 @@ function refreshMapVisibility() {
       t._polygon?.setMap(visible?map:null);
       // Country flags share polygon visibility; deeper administrative labels are text.
       t._marker?.setMap(visible?map:null);
+      if(visible&&level===1&&t._marker&&t.iso2)t._marker.setIcon(countryFlagIcon(t,zoom));
       if(visible)applyTerritoryControlStyle(t);
     });
   }

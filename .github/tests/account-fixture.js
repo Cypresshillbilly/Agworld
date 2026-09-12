@@ -26,7 +26,13 @@
     getSession:async()=>({data:{session:{user}},error:null}),
     onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
     signOut:async()=>({error:null})
-  },from:table=>account.worldRows?.[table]?worldQuery(table):table==='company_facilities'?facilities:returning?returningQuery(table):query,rpc:async()=>({data:[],error:null}),channel:()=>({on(){return this},subscribe(){return this}})};
+  },from:table=>account.worldRows?.[table]?worldQuery(table):table==='company_facilities'?facilities:returning?returningQuery(table):query,rpc:async(name,args)=>{
+    if(!name.startsWith('ag_knowledge_'))return {data:[],error:null};
+    const k=account.knowledge||{};(k.calls||=[]).push({name,args});
+    await new Promise(ok=>setTimeout(ok,k.delay||0));
+    if(k.error)return {data:null,error:{message:'Test connection error'}};
+    return {data:name==='ag_knowledge_catalog'?{approved:!!k.approved,documents:12,media:20,models:['GENERAL','T100','T55']}:k.results||[],error:null};
+  },channel:()=>({on(){return this},subscribe(){return this}})};
   window.__AGWORLD_SUPABASE_DB__=db;
   Object.defineProperty(window,'supabase',{value:{createClient:()=>db},writable:false});
   const report=data=>fetch('/__test-events',{method:'POST',body:JSON.stringify(data)}).catch(()=>{});

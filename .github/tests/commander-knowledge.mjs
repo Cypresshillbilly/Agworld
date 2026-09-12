@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {panels} from './drawers.mjs';
+export async function exerciseCommanderKnowledge(page){
+ await panels(page,{player:false,map:false,territory:false,command:false});
+ await page.evaluate(()=>accountTest.knowledge={approved:false,calls:[]});
+ await page.getByRole('button',{name:'Toggle AgWorld advisors',exact:true}).click();
+ await page.locator('#agMapAdvisors [data-map-advisor=product]').click();
+ const pane=page.locator('#agCommanderKnowledge');
+ await pane.getByText(/available to approved company staff/).waitFor();
+ assert.equal(await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).isDisabled(),true);
+ await pane.getByRole('button',{name:'Close commander knowledge'}).click();
+ await page.evaluate(()=>{accountTest.knowledge.approved=true;AGWorldKnowledge.open('product');});
+ await pane.getByText('12 searchable documents · 20 media references',{exact:true}).waitFor();
+ await pane.getByRole('combobox').selectOption('T100');
+ await page.evaluate(()=>accountTest.knowledge.results=[{title:'Synthetic T100 product manual',locator:'Page 7',source_year:2026,content:'<img src=x onerror=alert(1)> Test specification',source_reference:'Product/T100/fixture.pdf'}]);
+ await pane.getByRole('textbox').fill('spraying capacity');
+ await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).click();
+ await pane.locator('.agk-source').waitFor();
+ assert.equal(await pane.locator('.agk-source img').count(),0,'Source content is text, never executable HTML');
+ assert.match(await pane.locator('.agk-reference').textContent(),/Page 7.*2026/);
+ assert.deepEqual(await page.evaluate(()=>accountTest.knowledge.calls.at(-1).args),{p_collection:'product',p_query:'spraying capacity',p_model:'T100',p_limit:8});
+ await page.evaluate(()=>{AGWorldKnowledge.open('technical');accountTest.knowledge.results=[];});
+ await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).waitFor();
+ await page.waitForFunction(()=>!document.querySelector('#agCommanderKnowledge form button').disabled);
+ assert.equal(await pane.locator('.agk-source').count(),0,'Switching commanders clears the previous collection');
+ await pane.getByRole('textbox').fill('motor');await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).click();
+ await pane.getByText(/No matching passage/).waitFor();
+ assert.equal(await page.evaluate(()=>accountTest.knowledge.calls.at(-1).args.p_collection),'technical');
+ await page.evaluate(()=>accountTest.knowledge.error=true);
+ await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).click();await pane.getByText(/Search could not complete/).waitFor();
+ await page.evaluate(()=>{accountTest.knowledge.error=false;accountTest.knowledge.delay=400;});
+ await pane.getByRole('button',{name:'SEARCH LIBRARY',exact:true}).click();
+ await pane.getByRole('button',{name:'Close commander knowledge'}).click();
+ await page.waitForTimeout(500);assert.equal(await pane.isVisible(),false,'Late results cannot reopen a closed panel');
+ await page.evaluate(()=>accountTest.knowledge.delay=0);
+ await page.getByRole('button',{name:'Toggle AgWorld advisors',exact:true}).click();
+}

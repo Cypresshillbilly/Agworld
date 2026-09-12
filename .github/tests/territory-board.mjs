@@ -13,6 +13,14 @@ export async function exerciseTerritoryBoard(page){
  assert.ok(start.zoom>2&&start.zoom<5.5,'SADC fills the initial country view');
  assert.ok(start.center.lat>-23&&start.center.lat<-10&&start.center.lng>25&&start.center.lng<40);
  assert.equal(start.country,true);assert.equal(start.flags,16);assert.equal(start.count,48);assert.equal(start.selected,'country');assert.equal(start.provinceLayer,undefined);
+ const flagSizes=await page.evaluate(()=>{
+  const zoom=map.getZoom(),width=()=>countries[0]._marker.options.icon.scaledSize.width;
+  const overview=width();map.setZoom(Math.min(5.4,zoom+.6));const closer=width();map.setZoom(zoom);
+  return {overview,closer,restored:width()};
+ });
+ assert.equal(flagSizes.overview,64,'Regional flags are prominent at startup');
+ assert.ok(flagSizes.closer<flagSizes.overview,'Flags shrink as the player zooms in');
+ assert.equal(flagSizes.restored,flagSizes.overview,'Zooming back out restores flag size');
  await panels(page,{map:true,territory:true});
  assert.equal(await page.locator('#territoryInfoPanel').getAttribute('data-territory-level'),'country');
  await page.evaluate(async()=>{

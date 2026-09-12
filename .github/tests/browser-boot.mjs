@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {exercisePlayerCommand} from './player-command.mjs';
 import {exerciseDrawers,panels} from './drawers.mjs';
 import {exerciseExplorationTools} from './exploration-tools.mjs';
+import {exerciseCommanderKnowledge} from './commander-knowledge.mjs';
 import {exerciseTerritoryBoard,installTerritoryFixtures} from './territory-board.mjs';
 import {fileURLToPath} from 'node:url';
 import {exercisePlayerMenu} from './menu-panels.mjs';
@@ -125,6 +126,8 @@ try{
   await login(good.page);await ready(good.page);
   await exerciseDrawers(good.page);
   await exerciseExplorationTools(good.page);
+  await exerciseCommanderKnowledge(good.page);
+  results.push('Staff commander source libraries: access gating, model routing, citations, safe text, empty/error states and late-response cancellation');
   results.push('Nested Player Hub: all 24 drawer combinations, menu-only state, route selection opens its panel, preserved workspace and keyboard controls');
   await exerciseReferenceTheme(good.page);
   results.push('Reference theme: self-hosted assets, five real skill values, all menu routes, protected geometry at two widths, advisors, territory ring and entity editor');
