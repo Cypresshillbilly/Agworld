@@ -81,10 +81,12 @@
   function prewarmAgworldAuth(){
     if(master || window.__AGWORLD_SUPABASE_DB__ || __agworldSupabasePromise) return;
     const warm=()=>ensureAgworldSupabase().catch(err=>console.warn('AgWorld auth prewarm failed',err));
-    // Start immediately after the login has been mounted, not at the end of a
-    // long idle window. This moves CDN/client initialisation into the time while
-    // the player is entering credentials without delaying the first login paint.
-    requestAnimationFrame(()=>setTimeout(warm,0));
+    // Supabase SDK parsing is measurable main-thread work. Run it only during a
+    // genuine idle slice so keyboard input is never made sluggish. The loader
+    // now paints immediately on click, so prewarming no longer has to compete
+    // with the player's typing to keep the transition responsive.
+    if('requestIdleCallback' in window) window.requestIdleCallback(warm,{timeout:4000});
+    else setTimeout(warm,700);
   }
 
   function showGate(){
@@ -168,9 +170,15 @@
       }
     };
     if(!master){
+      let rememberWriteTimer=null;
+      const scheduleRememberWrite=()=>{
+        clearTimeout(rememberWriteTimer);
+        rememberWriteTimer=setTimeout(persistAgRemember,220);
+      };
       remember.addEventListener('change',persistAgRemember);
-      username.addEventListener('input',persistAgRemember);
-      password.addEventListener('input',persistAgRemember);
+      username.addEventListener('input',scheduleRememberWrite);
+      // Password changes never affect Remember Me storage: passwords are not
+      // retained, so do not perform synchronous storage work per keystroke.
     }
 
     // Login fields are ordinary inputs. Do not clear, lock, reset or mutate them
