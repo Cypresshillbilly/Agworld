@@ -97,7 +97,7 @@ html body.agmp-reduced-motion #agPrimarySidebar .nav button[data-ag-screen]{tran
     button.type='button';button.textContent='⚙ Developer Mode ↗';
     button.setAttribute('aria-label','Open Developer Mode diagnostics');
     button.title='Open live component diagnostics in a separate tab';
-    const tools=document.querySelector('.map-tools');if(tools&&button.parentElement!==tools)tools.appendChild(button);
+    const tools=document.querySelector('.map-tools');if(tools&&!tools.contains(button))tools.appendChild(button);
     button.onclick=()=>window.open('developer-mode.html?v=brand-diagnostics-20260912','agworldDeveloperMode');
     return button;
   }

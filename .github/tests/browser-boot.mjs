@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {exercisePlayerCommand} from './player-command.mjs';
 import {exerciseDrawers,panels} from './drawers.mjs';
 import {exerciseExplorationTools} from './exploration-tools.mjs';
+import {exerciseCompanions} from './companions.mjs';
 import {exerciseCommanderKnowledge} from './commander-knowledge.mjs';
 import {exerciseTerritoryBoard,installTerritoryFixtures} from './territory-board.mjs';
 import {fileURLToPath} from 'node:url';
@@ -31,14 +32,15 @@ const server=http.createServer((req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base=`http://127.0.0.1:${server.address().port}`;
-const browser=await chromium.launch({headless:true});
+const browser=await chromium.launch({headless:true,...(process.env.AG_TEST_BROWSER?{executablePath:process.env.AG_TEST_BROWSER}:{})});
 const results=[];
 async function newTest(){
   const context=await browser.newContext({viewport:{width:1600,height:1000}});
   await installTerritoryFixtures(context);
+  await context.route('**/functions/v1/ag-world-commanders',route=>{const body=route.request().postDataJSON();return body.action==='speak'?route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({audio:fs.readFileSync(path.join(root,'assets/audio/system-administrator-welcome.mp3')).toString('base64'),mime:'audio/mpeg',voice:'fixture-only'})}):route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({message:'Test model offline'})});});
   // Fixture identity and map do not contact production auth or mutate game data.
   await context.route(/\/api\//,route=>route.fulfill({status:200,contentType:'application/json',body:'[]'}));
-  const page=await context.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  const page=await context.newPage();page.setDefaultTimeout(25000);const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(()=>{
     window.bootStages=[];window.bootCounts={ready:0,sources:0};
     document.addEventListener('agworld:landing-layout-ready',()=>window.bootCounts.ready++);
@@ -119,11 +121,14 @@ try{
   const good=await newTest();
   const board=await newTest();
   await board.page.goto(base+'/index.html');await login(board.page);await ready(board.page);
+  await exerciseCompanions(board.page);
+  await board.page.evaluate(()=>AGWorldCompanions.hide());
   await exerciseTerritoryBoard(board.page);assert.deepEqual(board.errors,[]);await board.context.close();
   results.push('SADC startup with 16 flags, 48-country Africa board, country-to-province drill-down, explicit province/municipality selection, country data isolation, live market colors and shared farm/contractor zoom');
   await good.page.goto(base+'/index.html');
   assert.equal(await good.page.locator('script[data-agworld-boot-loaded]').count(),0);
   await login(good.page);await ready(good.page);
+  await good.page.evaluate(()=>AGWorldCompanions.hide());
   await exerciseDrawers(good.page);
   await exerciseExplorationTools(good.page);
   await exerciseCommanderKnowledge(good.page);

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><title>Elephant · AgWorld provincial palette</title><defs>
+ <path id="body" d="M14 56Q15 36 41 34L67 34Q92 28 105 44L111 62L104 90Q101 98 92 96L90 91L98 84L98 63L90 66L85 56L84 94L71 94L69 70L45 70L42 94L29 94L28 66L18 68L16 81L11 80Z"/><clipPath id="face"><use href="#body"/></clipPath>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a4d4da"/><stop offset=".2" stop-color="#183742"/><stop offset=".6" stop-color="#061421"/><stop offset="1" stop-color="#81a8a9"/></linearGradient>
+ <linearGradient id="glaze" x1=".1" y1="0" x2=".9" y2="1"><stop stop-color="#fff" stop-opacity=".65"/><stop offset=".24" stop-color="#fff" stop-opacity=".06"/><stop offset=".49" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#001b2e" stop-opacity=".35"/><stop offset="1" stop-color="#001321" stop-opacity=".65"/></linearGradient>
+ <radialGradient id="shadow"><stop stop-color="#001019" stop-opacity=".75"/><stop offset="1" stop-color="#001019" stop-opacity="0"/></radialGradient>
+ </defs><ellipse cx="76" cy="127" rx="65" ry="13" fill="url(#shadow)"/>
+ <g transform="translate(6 5) matrix(.95 -.12 .05 .99 0 8)">
+ <use href="#body" transform="translate(7 9)" fill="url(#metal)" stroke="#04121c" stroke-width="4" stroke-linejoin="round"/>
+ <use href="#body" transform="translate(4 5)" fill="url(#metal)" stroke="#4f7a80" stroke-width="3" stroke-linejoin="round"/>
+ <use href="#body" fill="url(#metal)" stroke="#b5d9d5" stroke-width="3" stroke-linejoin="round"/>
+ <g clip-path="url(#face)"><rect x="0" y="0" width="128" height="43" fill="#145b45"/><rect x="0" y="42" width="128" height="43" fill="#e6b552"/><rect x="0" y="84" width="128" height="43" fill="#276580"/><use href="#body" fill="url(#glaze)"/>
+ <path d="M0 0H132V28Q71 22 0 74Z" fill="#fff" opacity=".12"/></g>
+ <path d="M14 56Q15 36 41 34L67 34Q92 28 105 44L111 62L104 90Q101 98 92 96L90 91L98 84L98 63L90 66L85 56L84 94L71 94L69 70L45 70L42 94L29 94L28 66L18 68L16 81L11 80Z" fill="none" stroke="#eaffff" stroke-width="1.4" stroke-opacity=".45" stroke-linejoin="round"/>
+ </g></svg>

@@ -276,6 +276,7 @@
   }
 
   async function render(selection, attempt) {
+    if(global.agWorldGetLayerState?.().relationships===false){clear();return;}
     if (!selection?.id) return;
 
     const request = ++state.request;
@@ -386,6 +387,7 @@
     }
 
     clear();
+    if(global.agWorldGetLayerState?.().relationships===false)return;
 
     resolved.forEach(({ rel, source, target }) => {
       const color = style(rel.relationshipType);

@@ -27,6 +27,7 @@ function territoryFarmSet(territory) {
   if (level === 'town') return farms.filter(f => f.townId === territory.id);
   if (level === 'municipality') return farms.filter(f => f.municipalityId === territory.id);
   if (level === 'province') return farms.filter(f => f.territoryId === territory.id);
+  if (level === 'region') return farms.filter(f=>countries.some(c=>SADC_COUNTRIES.has(c.countryCode)&&entityInCountry(f,c)));
   if (level === 'country') return farms.filter(f=>entityInCountry(f,territory));
   return [];
 }
@@ -115,6 +116,7 @@ function invalidateContractorSpatialIndex() {
 function territoryContractorSet(territory) {
   const index = getContractorSpatialIndex();
   const level = territory.level || 'province';
+  if (level === 'region') return index.country.filter(f=>countries.some(c=>SADC_COUNTRIES.has(c.countryCode)&&entityInCountry(f,c)));
   if (level === 'country') return index.country.filter(c=>entityInCountry(c,territory));
   if (level === 'town') return (index.town.get(String(territory.id)) || []).slice();
   if (level === 'municipality') return (index.municipality.get(String(territory.id)) || []).slice();
@@ -413,7 +415,7 @@ function territoryControlStyle(territory) {
 function applyTerritoryControlStyle(territory) {
   if (!territory || !territory._polygon) return;
   const base = territory._baseStyle || {};
-  const controlStyle = territoryControlStyle(territory);
+  const controlStyle = window.agWorldGetLayerState?.().control===false?{strokeColor:base.strokeColor,fillColor:base.fillColor,fillOpacity:.025}:territoryControlStyle(territory);
   territory._polygon.setOptions({
     strokeColor: controlStyle.strokeColor,
     fillColor: controlStyle.fillColor,
@@ -490,7 +492,7 @@ function refreshTerritoryControl() {
   });
   initialiseGameTerritories();
   if(selectedBoardTerritory){
-    const live=[...countries,...territories,...municipalities,...towns].find(t=>t.id===selectedBoardTerritory.id);
+    const live=selectedBoardTerritory.level==='region'?selectedBoardTerritory:[...countries,...territories,...municipalities,...towns].find(t=>t.id===selectedBoardTerritory.id);
     if(live){selectedBoardTerritory=live;window.__AGWORLD_SELECTED_TERRITORY__=live;window.__AG_WORLD_SELECTED_TERRITORY=live;applyTerritoryControlStyle(live);renderTerritoryInformationPanel(live,territoryGameSummary(live));}
   }
 }
@@ -815,7 +817,7 @@ function addTerritory(territory) {
     fillOpacity: style.fillOpacity,
     zIndex: level === 'country' ? 1 : level === 'town' ? 4 : level === 'municipality' ? 6 : level === 'province' ? 10 : 1
   };
-  polygon.addListener('click', () => { if (!creatingFarm) window.selectTerritory(territory, level==='country'); });
+  polygon.addListener('click', () => { if (!creatingFarm) window.selectTerritory(territory, level==='country'||level==='province'); });
 
   // Municipal territories use floating names rather than map-pin icons.
   // The marker itself is fully transparent; only the municipality name is drawn.
@@ -847,10 +849,10 @@ function addTerritory(territory) {
       map,
       title: territory.name,
       clickable: !creatingFarm,
-      icon:territoryLabelIcon(territory.regions?.[0]||territory.name),
+      icon:provinceSymbolIcon(territory,map.getZoom()),
       label: { text: String(territory.regions?.[0]||territory.name).toUpperCase(), color: '#eff9fc', fontSize: '12px', fontWeight: '700' }
     });
-    marker.addListener('click', () => selectTerritory(territory, false));
+    marker.addListener('click', () => selectTerritory(territory, level==='province'));
     territoryMarkers.push(marker);
   }
   if(level==='country'&&territory.iso2){
@@ -908,20 +910,21 @@ function territoryStrategicStatus(summary) {
 function renderTerritoryInformationPanel(territory,summary){
  const panel=$('territoryInfoPanel');if(!panel)return;
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const national=territory.level==='country',scope=national?'NATIONAL':String(territory.level||'territory').toUpperCase();
+ const national=territory.level==='country',scope=territory.level==='region'?'REGIONAL':national?'NATIONAL':String(territory.level||'territory').toUpperCase();
  const name=territory.level==='municipality'?municipalityDisplayName(territory.name):territory.name;
  const control=Number(summary.control||0),enemy=Number(summary.enemyControl||0),neutral=Number(summary.neutralControl||0);
  const status=territoryStrategicStatus(summary);
  const metrics=[[summary.farms.total,'Total Farms'],[summary.contractors.total,'Contractors'],[summary.company,'Company Entities'],[summary.competitor,'Competitor Entities'],[summary.contested,'Contested'],[summary.neutral,'Open Market']];
  panel.dataset.territoryId=territory.id;panel.dataset.territoryLevel=territory.level;
  panel.dataset.companyControl=control;panel.dataset.enemyControl=enemy;
- panel.innerHTML='<div class="territory-national-layout">'+
+ panel.innerHTML='<nav class="ag-territory-breadcrumb" aria-label="Territory navigation"><button type="button" data-territory-up="sadc">SADC · 16 countries</button>'+ (territory.level!=='region'?'<button type="button" data-territory-up="country">'+esc(countries.find(c=>c.countryCode===(territory.countryCode||activeBoardCountry))?.name||'Country')+'</button>':'')+'</nav><div class="territory-national-layout">'+
   '<section class="territory-national-left"><div class="territory-info-header"><div><div class="territory-info-level">'+scope+' TERRITORY</div><div class="territory-info-name">'+esc(name)+'</div></div></div>'+
   '<div class="territory-info-control"><div class="territory-info-control-value">'+control+'%</div><div><div class="territory-info-control-title">THE COMPANY CONTROL</div><div class="territory-info-status">'+esc(status.title)+'</div></div></div>'+
   '<div class="territory-info-progress" aria-label="'+control+'% Company, '+enemy+'% Competitor, '+neutral+'% Open market"><div class="territory-info-progress-company" style="width:'+control+'%"></div><div class="territory-info-progress-enemy" style="width:'+enemy+'%"></div><div class="territory-info-progress-neutral" style="width:'+neutral+'%"></div></div>'+
   '<div class="territory-info-legend"><span>🟢 Company '+control+'%</span><span>🔴 Competitor '+enemy+'%</span><span>⚪ Open market '+neutral+'%</span></div></section>'+
   '<section class="territory-national-right"><div class="territory-info-grid">'+metrics.map(([value,label])=>'<div><strong>'+value+'</strong><span>'+label+'</span></div>').join('')+
   '<div class="territory-national-scope"><strong>'+scope+'</strong><span>Selected Scope</span></div></div><div class="ag-territory-basis">'+summary.total+' farms + contractors · drone quantities and recorded relationships/status</div></section></div>';
+ panel.querySelector('[data-territory-up=sadc]').onclick=fitSADC;const up=panel.querySelector('[data-territory-up=country]');if(up)up.onclick=()=>selectTerritory(countries.find(c=>c.countryCode===(territory.countryCode||activeBoardCountry)),true);
  panel.classList.add('show');
 }
 
@@ -930,9 +933,17 @@ let nationalBoardInitialised=false;
 let countryFlagOverviewZoom=3.6;
 function countryFlagIcon(territory,zoom){
   const width=Math.round(Math.max(28,Math.min(80,64*Math.pow(.65,Number(zoom)-countryFlagOverviewZoom))));
-  const height=Math.round(width*.875);
-  return {url:'data/gis/africa/flags-polished/'+territory.iso2+'.svg',scaledSize:new google.maps.Size(width,height),anchor:new google.maps.Point(width/2,height/2)};
+  const height=width;
+  return {url:'data/gis/africa/symbols/'+territory.iso2+'.svg',scaledSize:new google.maps.Size(width,height),anchor:new google.maps.Point(width/2,height/2)};
 }
+function provinceSymbolIcon(territory,zoom){
+ const key=String(territory.regions?.[0]||territory.name).toLowerCase().replace(/[^a-z]/g,'');
+ const local=territory.countryCode==='ZAF';
+ const width=Math.round(Math.max(36,Math.min(68,62*Math.pow(.85,Number(zoom)-6))));
+ const iso=countries.find(c=>c.countryCode===territory.countryCode)?.iso2||'za';
+ return {url:local?'data/gis/africa/symbols/provinces/'+key+'.svg':'data/gis/africa/symbols/'+iso+'.svg',scaledSize:new google.maps.Size(width,width),anchor:new google.maps.Point(width/2,width/2),labelOrigin:new google.maps.Point(width/2,width+7)};
+}
+function selectSADC(){selectTerritory({id:'region-sadc',name:'SADC',level:'region',countryCount:16},false);}
 function selectTerritory(territory, zoom=false) {
   if(!territory)return;
   const previous=selectedBoardTerritory;
@@ -947,9 +958,9 @@ function selectTerritory(territory, zoom=false) {
   applyTerritoryControlStyle(territory);
   renderTerritoryInformationPanel(territory,summary);
   window.dispatchEvent(new CustomEvent('agworld:territory-selected',{detail:{territory,summary}}));
-  // A polygon click selects; deliberate navigation can request a closer view.
+  // Country and province clicks select statistics and reveal the next division.
   if(territory.level==='country'){activeBoardCountry=territory.countryCode||'ZAF';if(map&&zoom){fitTerritories([territory],5.5,7.7);loadCountryProvinces(activeBoardCountry);}else refreshMapVisibility();}
-  else if(map&&zoom){map.panTo(territory.center||centroid(territory.boundary));map.setZoom({province:7,municipality:10,town:12}[territory.level]||7);}
+  else if(map&&zoom){if(territory.level==='province'){fitTerritories([territory],8,10.8);if(activeBoardCountry==='ZAF')loadSpatialLayerOnce('municipalities');}else{map.panTo(territory.center||centroid(territory.boundary));map.setZoom({municipality:10,town:12}[territory.level]||7);}}
   const status=$('mapStatus');if(status)status.textContent=territory.name+' · '+window.__AGWORLD_TERRITORY_SCOPE__+' · '+summary.control+'% Company influence';
 }
 function fitTerritories(records,minZoom=1,maxZoom=5.49){
@@ -969,10 +980,10 @@ function fitTerritories(records,minZoom=1,maxZoom=5.49){
 }
 function fitSouthAfrica(){fitTerritories([countries[0]]);}
 function fitAfrica(){boardRegion='AFRICA';fitTerritories(countries,1,4.5);}
-function fitSADC(){boardRegion='SADC';const zoom=fitTerritories(countries.filter(c=>SADC_COUNTRIES.has(c.countryCode)),1,4.8);if(Number.isFinite(zoom))countryFlagOverviewZoom=zoom;refreshMapVisibility();}
+function fitSADC(){boardRegion='SADC';selectSADC();const zoom=fitTerritories(countries.filter(c=>SADC_COUNTRIES.has(c.countryCode)),1,4.8);if(Number.isFinite(zoom))countryFlagOverviewZoom=zoom;refreshMapVisibility();}
 function initialiseNationalBoard(){
   if(nationalBoardInitialised||!map||!africaManifest)return;
-  nationalBoardInitialised=true;selectTerritory(countries[0],false);fitSADC();
+  nationalBoardInitialised=true;fitSADC();
   if(!$('africaBtn')){const b=document.createElement('button');b.id='africaBtn';b.textContent='AFRICA';b.onclick=fitAfrica;document.querySelector('.map-tools')?.prepend(b);}
   if(!$('sadcBtn')){const b=document.createElement('button');b.id='sadcBtn';b.textContent='SADC';b.onclick=fitSADC;document.querySelector('.map-tools')?.prepend(b);}
   if(!$('agBoundaryCredits')){const a=document.createElement('a');a.id='agBoundaryCredits';a.href='data/gis/africa/attribution.html';a.target='_blank';a.rel='noopener';a.textContent='Boundaries: Natural Earth · geoBoundaries';document.querySelector('.map-header .map-tools')?.append(a);}
@@ -1017,11 +1028,12 @@ function refreshMapVisibility() {
   const zoom=map.getZoom(),stage=progressiveStageForZoom(zoom),filters=window.agWorldGetLayerState?.()||{};
   for(const [records,level] of [[countries,1],[territories,2],[municipalities,3]]){
     records.forEach(t=>{
-      const visible=(level===1?stage===1&&filters.countries!==false&&(boardRegion==='AFRICA'||SADC_COUNTRIES.has(t.countryCode)):level===2?(stage===2||(activeBoardCountry!=='ZAF'&&stage>2))&&t.countryCode===activeBoardCountry&&filters.provinces!==false:stage===3&&activeBoardCountry==='ZAF'&&filters.municipalities!==false);
-      t._polygon?.setMap(visible?map:null);
-      // Country flags share polygon visibility; deeper administrative labels are text.
-      t._marker?.setMap(visible?map:null);
+      const visible=(level===1?stage===1&&(boardRegion==='AFRICA'||SADC_COUNTRIES.has(t.countryCode)):level===2?(stage===2||(activeBoardCountry!=='ZAF'&&stage>2))&&t.countryCode===activeBoardCountry:stage===3&&activeBoardCountry==='ZAF');
+      t._polygon?.setMap(visible&&filters[level===1?'countries':level===2?'provinces':'municipalities']!==false?map:null);
+      // Boundaries and symbols can be switched independently at the same scale.
+      t._marker?.setMap(visible&&filters[level===1?'country-icons':level===2?'province-icons':'municipalities']!==false?map:null);
       if(visible&&level===1&&t._marker&&t.iso2)t._marker.setIcon(countryFlagIcon(t,zoom));
+      if(visible&&level===2&&t._marker)t._marker.setIcon(provinceSymbolIcon(t,zoom));
       if(visible)applyTerritoryControlStyle(t);
     });
   }

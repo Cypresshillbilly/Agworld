@@ -23,7 +23,7 @@
     resend:async args=>{account.resends.push(args);return {error:null};},
     signInWithPassword:async()=>({data:{user},error:null}),
     getUser:async()=>({data:{user},error:null}),
-    getSession:async()=>({data:{session:{user}},error:null}),
+    getSession:async()=>({data:{session:{user,access_token:'synthetic-test-token'}},error:null}),
     onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),
     signOut:async()=>({error:null})
   },from:table=>account.worldRows?.[table]?worldQuery(table):table==='company_facilities'?facilities:returning?returningQuery(table):query,rpc:async(name,args)=>{

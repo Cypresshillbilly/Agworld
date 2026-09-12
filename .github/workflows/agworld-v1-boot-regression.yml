@@ -10,6 +10,11 @@ on:
       - 'AG WORLD/app-gis-loader-v24.js'
       - 'AG WORLD/territory-board-v1.js'
       - 'AG WORLD/game-exploration-tools.js'
+      - 'AG WORLD/commander-companions.js'
+      - 'AG WORLD/immersive-map-controls.css'
+      - 'AG WORLD/game-map-filters-v2.js'
+      - 'AG WORLD/relationship-network-canonical-v2.js'
+      - 'AG WORLD/server/commanders/**'
       - 'AG WORLD/advisor-knowledge.js'
       - 'AG WORLD/knowledge/**'
       - 'AG WORLD/server/knowledge-schema.sql'
@@ -49,6 +54,11 @@ on:
       - 'AG WORLD/app-gis-loader-v24.js'
       - 'AG WORLD/territory-board-v1.js'
       - 'AG WORLD/game-exploration-tools.js'
+      - 'AG WORLD/commander-companions.js'
+      - 'AG WORLD/immersive-map-controls.css'
+      - 'AG WORLD/game-map-filters-v2.js'
+      - 'AG WORLD/relationship-network-canonical-v2.js'
+      - 'AG WORLD/server/commanders/**'
       - 'AG WORLD/advisor-knowledge.js'
       - 'AG WORLD/knowledge/**'
       - 'AG WORLD/server/knowledge-schema.sql'
@@ -100,6 +110,7 @@ jobs:
           node 'AG WORLD/boot/v1/boot.test.mjs'
           node .github/tests/sales-dashboard.test.mjs
           node .github/tests/territory-control.test.mjs
+          node .github/tests/commander-service.test.mjs
           node 'AG WORLD/boot/v1/verify-dependencies.mjs'
       - name: Verify knowledge classification and citations
         run: python tools/knowledge/test_ingest.py
