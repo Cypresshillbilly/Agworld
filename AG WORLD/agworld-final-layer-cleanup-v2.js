@@ -1,14 +1,62 @@
-/* AG WORLD — Final landing/map layer cleanup.
-   Single-purpose final guard: the Player Profile owns player identity; the map owns
-   world controls. No stale player/HUD clone may survive in or over the map. */
+/* AG WORLD — Final landing/map layer cleanup + V1 Player Screen release guard.
+   The approved Player Screen V1 is the only surface allowed to become visible
+   after the loading page. This guard prevents the intermediate legacy shell from
+   flashing while late canonical modules finish composing the locked V1 layout. */
 (()=>{
   'use strict';
 
-  const css = `
-    /* The GIS status belongs to Developer Mode, not the player landing/game HUD. */
-    #mapStatus{display:none!important;visibility:hidden!important;pointer-events:none!important}
+  const READY_CLASS='agworld-v1-player-screen-ready';
+  const GUARD_STYLE_ID='agworld-v1-player-release-guard';
+  let released=false;
+  let releaseRaf=0;
 
-    /* Hard stop for any known duplicate player shells left by older modules. */
+  function installReleaseGuard(){
+    if(document.getElementById(GUARD_STYLE_ID)) return;
+    const style=document.createElement('style');
+    style.id=GUARD_STYLE_ID;
+    style.textContent=
+      'body:not(.'+READY_CLASS+') .app-shell{visibility:hidden!important;opacity:0!important;pointer-events:none!important}'+
+      'body.'+READY_CLASS+' .app-shell{visibility:visible!important;opacity:1!important;pointer-events:auto!important;transition:opacity .16s ease-out!important}';
+    document.head.appendChild(style);
+  }
+
+  function hasApprovedV1PlayerScreen(){
+    const required=[
+      '.app-shell',
+      '.sidebar',
+      '.missions',
+      '#agPlayerMissionProfile',
+      '#agPlayerProgressionStack',
+      '#agCanonicalSkillProfile',
+      '#agCanonicalMissionCard',
+      '#agAdvisorBay',
+      '.map-area',
+      '#map',
+      '#entityInformationSection',
+      '#territoryStatsDrawer'
+    ];
+    return required.every(selector=>!!document.querySelector(selector));
+  }
+
+  function releaseApprovedV1(){
+    if(released || !hasApprovedV1PlayerScreen()) return false;
+    released=true;
+    document.body.classList.add(READY_CLASS);
+    document.dispatchEvent(new CustomEvent('agworld:v1-player-screen-ready'));
+    return true;
+  }
+
+  function scheduleReleaseCheck(){
+    if(released || releaseRaf) return;
+    releaseRaf=requestAnimationFrame(()=>{
+      releaseRaf=0;
+      releaseApprovedV1();
+    });
+  }
+
+  /* Existing final cleanup behaviour. */
+  const css = `
+    #mapStatus{display:none!important;visibility:hidden!important;pointer-events:none!important}
     [data-agworld-stale-player-layer="true"]{
       display:none!important;visibility:hidden!important;pointer-events:none!important;
     }
@@ -48,8 +96,7 @@
 
   function compactOverlay(el){
     const r=el?.getBoundingClientRect?.();
-    if(!r || r.width<=0 || r.height<=0) return false;
-    return r.width<=620 && r.height<=320;
+    return !!(r && r.width>0 && r.height>0 && r.width<=620 && r.height<=320);
   }
 
   function markAndRemove(root){
@@ -78,18 +125,11 @@
 
   function purgeNamedDuplicates(){
     const names=playerNames();
-
     [...document.querySelectorAll('body *')].forEach(el=>{
       if(protectedNode(el) || !isPlayerText(el,names)) return;
-
-      // Work from the smallest matching text node upward.
-      const childMatches=[...el.children].some(child=>isPlayerText(child,names));
-      if(childMatches) return;
-
+      if([...el.children].some(child=>isPlayerText(child,names))) return;
       const candidate=nearestOverlay(el);
       if(!candidate || protectedNode(candidate)) return;
-
-      // Only remove clones that are part of/over the map or are compact floating HUDs.
       const inMap=!!candidate.closest?.('.map-area');
       const cs=getComputedStyle(candidate);
       const floating=['fixed','absolute','sticky'].includes(cs.position);
@@ -118,28 +158,23 @@
   }
 
   function purgeLegacyLayers(){
-    // Remove only superseded map/player shells. Canonical game HUD surfaces are protected.
     document.querySelectorAll(
       '#agControlDashboardButton,#agCompanyCommandButton,#agControlDashboard,#agCompanyCommand,'+
       '[data-agworld-legacy-surface="true"],[data-agworld-duplicate-player-overlay="true"]'
     ).forEach(el=>el.remove());
-
     purgeNamedDuplicates();
     purgeTopRightAvatarClone();
   }
 
   function run(){
+    installReleaseGuard();
     installStyle();
     document.getElementById('mapStatus')?.remove();
     purgeLegacyLayers();
+    scheduleReleaseCheck();
   }
 
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run,{once:true});
-  else run();
-
-  // Older modules still mutate the map after boot; clean after each late mutation
-  // without moving canonical controls or rebuilding the map.
-  const observe=()=>{
+  function observe(){
     const root=document.body;
     if(!root) return;
     let queued=false;
@@ -149,10 +184,15 @@
       requestAnimationFrame(()=>{
         queued=false;
         purgeLegacyLayers();
+        scheduleReleaseCheck();
       });
     }).observe(root,{childList:true,subtree:true});
-    [0,50,150,400,900,1800,3500,7000].forEach(ms=>setTimeout(purgeLegacyLayers,ms));
-  };
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',observe,{once:true});
-  else observe();
+    [0,50,150,400,900,1800,3500,7000].forEach(ms=>setTimeout(()=>{
+      purgeLegacyLayers();
+      scheduleReleaseCheck();
+    },ms));
+  }
+
+  run();
+  observe();
 })();
