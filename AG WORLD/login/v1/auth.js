@@ -287,15 +287,14 @@
           };
           const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
 
-          // The GIS/world engine already publishes real phased progress. Keep
-          // Loading Page V0 subscribed to those events so map/world/population
-          // phases reflect actual work rather than an artificial timer.
+          // GIS/world phases publish actual completion milestones. Consume both
+          // the status and the monotonic progress value so Loading Page V0 tracks
+          // real boot work rather than an artificial timer.
           const onProgress=(event)=>{
             const detail=event.detail||{};
-            // Source percentages were written for an older boot model (90/94/97)
-            // and therefore overstated total V1 progress. Preserve the genuine
-            // status text but keep the bar tied to canonical stage completion.
-            if(detail.status) setProgress(highestProgress,detail.status);
+            const progress=Number(detail.progress);
+            if(Number.isFinite(progress)) setProgress(progress,detail.status||'');
+            else if(detail.status) setProgress(highestProgress,detail.status);
           };
           const onChecklist=(event)=>{
             const detail=event.detail||{};
@@ -442,7 +441,9 @@
         const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
         const onProgress=event=>{
           const detail=event.detail||{};
-          if(detail.status) setProgress(highest,detail.status);
+          const progress=Number(detail.progress);
+          if(Number.isFinite(progress)) setProgress(progress,detail.status||'');
+          else if(detail.status) setProgress(highest,detail.status);
         };
         const onChecklist=event=>{
           const detail=event.detail||{};
