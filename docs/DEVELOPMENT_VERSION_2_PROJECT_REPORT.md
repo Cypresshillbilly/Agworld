@@ -222,11 +222,14 @@ The compact player card is inspected at 1280 × 720 and 1600 × 1000. The broade
 
 Domain/service tests cover Company control, player-owned sales activity, commander CORS/authentication/source isolation, directed voices, API authorization, mission catalogue consistency and boot sequencing. The database transaction test checks prerequisites, required readiness, one-time rewards, player isolation and private folder ownership; all synthetic database fixtures are rolled back.
 
-Production player records are not reset or used as test fixtures. The user previously confirmed live Administrator audio after the Render-origin fix. New voice content reuses that service; automated audio tests use a controlled response rather than charging the user for repeated generated briefings.
+Production player records are not reset or mutated by tests. The user previously confirmed live Administrator audio after the Render-origin fix. New voice content reuses that service; automated audio tests use a controlled response rather than charging the user for repeated generated briefings.
+
+Final deployment verification on 13 September confirmed all 18 reviewed runtime files on both frontends, commander preflight 204 and unsigned speech 401 for both permitted origins, API health 200, and unsigned farm/private-profile requests 401. A read-only deployed-module diagnostic used a controlled verified-identity response and the real player table to check enrollment and replacement of a forged audit identity. It did not perform a new end-to-end player login or write a production farm.
 
 Remaining reviewed limitations:
 
 - Legacy master administration still needs a trusted role/permission migration before unrestricted production administration.
+- The unused Render `/api/users` adapters reference an absent legacy `users` table. Retire or migrate them before reuse; the active player profile and progression use `ag_players`.
 - Product lessons are source presentations and learner reflections, with initial T50/T100 photo coverage, not a complete reviewed product-certification course.
 - Compliance submission has no staffed approval queue yet. Document types and retention periods need Company policy decisions.
 - Sales missions provide the first persisted scouting-to-meeting sequence. A recurring assignment engine, quotation/order integration and independently verified sales outcomes remain future work.
@@ -238,6 +241,8 @@ Database warning references: [password protection](https://supabase.com/docs/gui
 ## 12 Deployment and restoration
 
 Review work on a feature branch. Verify boot/source order, relevant domain tests and the isolated browser suite before merging. GitHub Pages runs its regression workflow before publishing. Render follows the configured repository deployment. After publishing, compare the live changed files to the reviewed source and check health, allowed-origin preflight and unauthenticated request denial.
+
+The Render API belongs to My Workspace (`tea-dac4e8mk1f9s73e4ss00`), service `srv-dac4r6f40ujc73b1btn0`. Its canonical root is `AG WORLD/server`, branch `main`, with `npm install` and `npm start`. Keep automatic deployment enabled. On 13 September, correcting the old `server` shortcut root triggered successful deployment `dep-daj3s70ae00c738h21e0` from `c54f3d57f923fbadfbc3c2604130e12af7be109a`. Render had excluded changes outside the shortcut path, leaving the API on its 9 September revision. Configuration now watches the actual API source directory.
 
 The V2 database sources are `server/development-v2.sql` and `server/development-v2-access.sql`. They describe deployed migrations, not browser-executable code. Do not rerun policy-creation scripts blindly against an already migrated project. New database work should use a new reviewed migration and an explicit rollback plan.
 

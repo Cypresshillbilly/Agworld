@@ -2,7 +2,7 @@
 
 Release date: 13 September 2026 (Africa/Johannesburg).
 
-**Release status:** The player frontends, commander function version 7 and V2 database migrations are published. Both frontends match the reviewed runtime files and their regression checks passed. The Render API has not yet picked up the reviewed authorization/error-path changes: its unauthenticated farm write still returns the earlier 500 response instead of the required 401. Render workspace confirmation is pending before that deployment can be inspected. **Final all-service signoff and creation of `baseline/development-v2` remain pending.** This status takes precedence over the target release description below.
+**Release status:** Development Version 2 is published and verified within the development-release scope below. Both player frontends match all 18 reviewed runtime files. Commander version 7, the V2 database migrations and the reviewed Render API are deployed. The API health check returns 200; unsigned farm writes and private profile requests return 401. The release checkpoint is `baseline/development-v2`; the companion release record identifies its exact revision and verification limits.
 
 This is the product-owner-authorized Development Version 2 source baseline for the complete repository and all included pages. It supersedes earlier screen-version descriptions where the documented behaviour differs. A development baseline records a reproducible state; it does not certify all legacy pages for unrestricted production administration.
 
@@ -37,10 +37,14 @@ Supabase project: `vcnkspaljmsjvonftfcw`.
 - Migration sources: `AG WORLD/server/development-v2.sql` and `AG WORLD/server/development-v2-access.sql`.
 - Render API writes and private profile reads require a verified enrolled player. The server derives audit identity from that token.
 
+Render workspace: **My Workspace** (`tea-dac4e8mk1f9s73e4ss00`). API service: `srv-dac4r6f40ujc73b1btn0`, branch `main`, root directory **`AG WORLD/server`**, build `npm install`, start `npm start`, automatic deployment on commits. The old `server` shortcut prevented changes under the real directory from triggering deployment. Correcting the root directory triggered successful deployment `dep-daj3s70ae00c738h21e0` on 13 September 2026 at 06:10 UTC, from revision `c54f3d57f923fbadfbc3c2604130e12af7be109a`.
+
 Commander POST requests validate the signed-in player inside the function. Product/Technical additionally enforce library membership. The OpenAI key remains in provider secrets. Preserve authentication and the exact permitted game origins when redeploying.
 
 ## Verification and remaining work
 
-Local verification passed: full browser regression, two mission-card viewport inspections, boot/dependency checks, domain/commander/auth tests, catalogue consistency and transaction/error-path tests. Database fixtures verified mission ordering, one-time rewards, player isolation, private uploads and relationship ownership and were rolled back. The release process also requires passing remote checks and matching live files before creating the checkpoint.
+Verification passed: full local and remote browser regression, two mission-card viewport inspections, boot/dependency checks, domain/commander/auth tests, catalogue consistency and transaction/error-path tests. Database fixtures verified mission ordering, one-time rewards, player isolation, private uploads and relationship ownership and were rolled back. Live file comparison, commander allowed-origin/auth checks and API health/unsigned-request checks passed. A read-only diagnostic of the deployed authorization module confirmed enrollment and audit-identity replacement against the live player table using a controlled verified-identity fixture; this does not claim a fresh end-to-end player login or a production farm save.
+
+The unused legacy `/api/users` adapters still reference the absent `users` schema and need retirement or migration. The current player interface uses `ag_players`; keep that as the XP authority. No production player data was changed during these release checks.
 
 The reviewed database error-level findings were resolved. Leaked-password protection remains a provider warning. Legacy administration role migration, curated product assessments, a compliance review queue, recurring sales assignments and production real-time 3D models/animations remain roadmap work. See the report for scope and evidence; do not describe every line as manually audited or every device as visually certified.
